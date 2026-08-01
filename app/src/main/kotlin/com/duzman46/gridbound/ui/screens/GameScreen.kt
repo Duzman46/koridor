@@ -109,7 +109,7 @@ private fun GameScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Gridbound", fontWeight = FontWeight.Black)
+                        Text("Koridor", fontWeight = FontWeight.Black)
                         Text("Tur ${state.boardState.turnNumber}", style = MaterialTheme.typography.labelSmall)
                     }
                 },

@@ -78,7 +78,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
-                Text("GRIDBOUND", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
+                Text("KORİDOR", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
                 Text("Yolunu aç. Rakibinin yolunu değiştir.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -104,7 +104,7 @@ fun MainMenuScreen(
                     modifier = Modifier.size(72.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-                Text("Gridbound", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
+                Text("Koridor", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
                 Text(
                     "Her hamle yeni bir yol.",
                     modifier = Modifier.padding(bottom = 24.dp),

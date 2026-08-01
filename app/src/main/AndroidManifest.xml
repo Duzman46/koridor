@@ -10,7 +10,7 @@
         android:appCategory="game"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Gridbound"
+        android:label="Koridor"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity

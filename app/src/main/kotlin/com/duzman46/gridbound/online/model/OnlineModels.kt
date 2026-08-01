@@ -2,6 +2,7 @@ package com.duzman46.gridbound.online.model
 
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.PlayerId
+import com.duzman46.gridbound.domain.models.LocalizedText
 
 enum class OnlineRoomStatus {
     WAITING,
@@ -40,6 +41,5 @@ data class OnlineRoom(
 
 sealed interface OnlineLobbyResult {
     data class Success(val session: OnlineSession) : OnlineLobbyResult
-    data class Failure(val message: String) : OnlineLobbyResult
+    data class Failure(val message: LocalizedText) : OnlineLobbyResult
 }
-

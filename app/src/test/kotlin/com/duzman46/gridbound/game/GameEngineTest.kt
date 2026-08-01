@@ -43,6 +43,8 @@ class GameEngineTest {
         val finalState = (result as ActionResult.Success).state
         assertEquals(GameStatus.PLAYER_ONE_WON, finalState.status)
         assertEquals(PlayerId.PLAYER_ONE, finalState.currentPlayer)
+        assertEquals(1, finalState.turnNumber)
+        assertEquals(Position(0, 4), finalState.player(PlayerId.PLAYER_ONE).position)
     }
 
     @Test

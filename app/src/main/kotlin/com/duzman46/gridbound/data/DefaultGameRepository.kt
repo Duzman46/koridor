@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppSettings
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
@@ -31,6 +32,7 @@ class DefaultGameRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : GameRepository {
     private object Keys {
+        val language = stringPreferencesKey(Constants.Data.KEY_LANGUAGE)
         val themeMode = stringPreferencesKey(Constants.Data.KEY_THEME_MODE)
         val dynamicColor = booleanPreferencesKey(Constants.Data.KEY_DYNAMIC_COLOR)
         val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
@@ -55,6 +57,7 @@ class DefaultGameRepository @Inject constructor(
 
     override val settings: Flow<AppSettings> = preferences.map { values ->
         AppSettings(
+            language = enumValueOrDefault(values[Keys.language], AppLanguage.TURKISH),
             themeMode = enumValueOrDefault(values[Keys.themeMode], ThemeMode.SYSTEM),
             dynamicColor = values[Keys.dynamicColor] ?: true,
             soundEnabled = values[Keys.soundEnabled] ?: true,
@@ -83,6 +86,7 @@ class DefaultGameRepository @Inject constructor(
         )
     }
 
+    override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
     override suspend fun setDynamicColor(enabled: Boolean) = update(Keys.dynamicColor, enabled)
     override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.ui.localization.localized
 
 @Composable
 fun GradientBackground(content: @Composable () -> Unit) {
@@ -138,9 +139,8 @@ fun ScreenTopBar(title: String, onBack: () -> Unit) {
         title = { Text(title, fontWeight = FontWeight.Bold) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Geri")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = localized("Geri", "Back"))
             }
         },
     )
 }
-

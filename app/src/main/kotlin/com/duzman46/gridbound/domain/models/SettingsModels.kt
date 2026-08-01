@@ -8,7 +8,23 @@ enum class ThemeMode {
     DARK,
 }
 
+enum class AppLanguage {
+    TURKISH,
+    ENGLISH,
+}
+
+data class LocalizedText(
+    val turkish: String,
+    val english: String,
+) {
+    fun value(language: AppLanguage): String = when (language) {
+        AppLanguage.TURKISH -> turkish
+        AppLanguage.ENGLISH -> english
+    }
+}
+
 data class AppSettings(
+    val language: AppLanguage = AppLanguage.TURKISH,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
     val soundEnabled: Boolean = true,
@@ -31,4 +47,3 @@ data class GameStatistics(
             return if (competitiveGames == 0) 0f else totalWins.toFloat() / competitiveGames
         }
 }
-

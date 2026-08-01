@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.duzman46.gridbound.game.models.Difficulty
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
@@ -43,7 +44,7 @@ private object Routes {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(language: AppLanguage, onLanguage: (AppLanguage) -> Unit) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) {
@@ -55,6 +56,8 @@ fun AppNavigation() {
         }
         composable(Routes.HOME) {
             MainMenuScreen(
+                language = language,
+                onLanguage = onLanguage,
                 onPlay = { navController.navigate(Routes.MODE) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onStatistics = { navController.navigate(Routes.STATISTICS) },
@@ -157,6 +160,7 @@ fun AppNavigation() {
             SettingsScreen(
                 state = state,
                 onBack = navController::popBackStack,
+                onLanguage = viewModel::setLanguage,
                 onThemeMode = viewModel::setThemeMode,
                 onDynamicColor = viewModel::setDynamicColor,
                 onSound = viewModel::setSoundEnabled,

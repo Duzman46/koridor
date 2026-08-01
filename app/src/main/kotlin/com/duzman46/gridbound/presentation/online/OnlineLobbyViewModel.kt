@@ -3,6 +3,7 @@ package com.duzman46.gridbound.presentation.online
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.domain.models.LocalizedText
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
@@ -26,7 +27,7 @@ data class OnlineLobbyUiState(
     val roomCodeInput: String = "",
     val isLoading: Boolean = false,
     val waitingSession: OnlineSession? = null,
-    val errorMessage: String? = null,
+    val errorMessage: LocalizedText? = null,
 )
 
 sealed interface OnlineLobbyEvent {
@@ -56,7 +57,7 @@ class OnlineLobbyViewModel @Inject constructor(
     fun joinRoom() {
         val roomCode = _uiState.value.roomCodeInput
         if (roomCode.length != Constants.Online.ROOM_CODE_LENGTH) {
-            _uiState.update { it.copy(errorMessage = "6 karakterli oda kodunu gir.") }
+            _uiState.update { it.copy(errorMessage = LocalizedText("6 karakterli oda kodunu gir.", "Enter the 6-character room code.")) }
             return
         }
         executeLobbyAction({ repository.joinRoom(roomCode) }, waitForOpponent = false)
@@ -100,7 +101,8 @@ class OnlineLobbyViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             waitingSession = null,
-                            errorMessage = error.localizedMessage ?: "Oda bağlantısı kesildi.",
+                            errorMessage = error.localizedMessage?.let { LocalizedText(it, it) }
+                                ?: LocalizedText("Oda bağlantısı kesildi.", "The room connection was lost."),
                         )
                     }
                 }
@@ -111,7 +113,7 @@ class OnlineLobbyViewModel @Inject constructor(
                             roomJob?.cancel()
                         }
                         OnlineRoomStatus.ABANDONED -> _uiState.update {
-                            it.copy(waitingSession = null, errorMessage = "Oda kapatıldı.")
+                            it.copy(waitingSession = null, errorMessage = LocalizedText("Oda kapatıldı.", "The room was closed."))
                         }
                         else -> Unit
                     }
@@ -119,4 +121,3 @@ class OnlineLobbyViewModel @Inject constructor(
         }
     }
 }
-

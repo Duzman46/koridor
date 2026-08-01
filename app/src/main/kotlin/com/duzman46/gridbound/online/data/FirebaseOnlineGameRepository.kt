@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.online.data
 
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.domain.models.LocalizedText
 import com.duzman46.gridbound.game.engine.GameEngine
 import com.duzman46.gridbound.game.models.ActionResult
 import com.duzman46.gridbound.game.models.BoardState
@@ -65,24 +66,24 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 )
             }
         }
-        OnlineLobbyResult.Failure("Boş bir oda kodu üretilemedi. Lütfen tekrar dene.")
+        OnlineLobbyResult.Failure(LocalizedText("Boş bir oda kodu üretilemedi. Lütfen tekrar dene.", "A free room code could not be created. Please try again."))
     }
 
     override suspend fun joinRoom(roomCode: String): OnlineLobbyResult = onlineCall {
         val normalizedCode = roomCode.trim().uppercase(Locale.ROOT)
         if (!isValidRoomCode(normalizedCode)) {
-            return@onlineCall OnlineLobbyResult.Failure("Oda kodu 6 harf veya rakamdan oluşmalı.")
+            return@onlineCall OnlineLobbyResult.Failure(LocalizedText("Oda kodu 6 harf veya rakamdan oluşmalı.", "The room code must contain 6 letters or numbers."))
         }
         val userId = authenticatedUserId()
         val reference = roomReference(normalizedCode)
         val initialRoom = codec.decodeRoom(normalizedCode, reference.get().awaitValue().value)
-            ?: return@onlineCall OnlineLobbyResult.Failure("Oda bulunamadı veya kapatıldı.")
+            ?: return@onlineCall OnlineLobbyResult.Failure(LocalizedText("Oda bulunamadı veya kapatıldı.", "The room was not found or has been closed."))
         if (
             initialRoom.hostUid != userId &&
             initialRoom.guestUid != userId &&
             (initialRoom.status != OnlineRoomStatus.WAITING || initialRoom.guestUid != null)
         ) {
-            return@onlineCall OnlineLobbyResult.Failure("Oda dolu veya artık aktif değil.")
+            return@onlineCall OnlineLobbyResult.Failure(LocalizedText("Oda dolu veya artık aktif değil.", "The room is full or no longer active."))
         }
         var assignedPlayer: PlayerId? = null
         val joined = reference.transact { current ->
@@ -104,7 +105,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
         if (joined && playerId != null) {
             OnlineLobbyResult.Success(OnlineSession(normalizedCode, userId, playerId))
         } else {
-            OnlineLobbyResult.Failure("Oda bulunamadı, dolu veya artık aktif değil.")
+            OnlineLobbyResult.Failure(LocalizedText("Oda bulunamadı, dolu veya artık aktif değil.", "The room was not found, is full, or is no longer active."))
         }
     }
 
@@ -196,9 +197,16 @@ class FirebaseOnlineGameRepository @Inject constructor(
         code.length == Constants.Online.ROOM_CODE_LENGTH && code.all(Constants.Online.ROOM_CODE_ALPHABET::contains)
 
     private suspend fun onlineCall(block: suspend () -> OnlineLobbyResult): OnlineLobbyResult {
-        if (!isConfigured) return OnlineLobbyResult.Failure("Çevrimiçi servis henüz yapılandırılmadı.")
+        if (!isConfigured) return OnlineLobbyResult.Failure(LocalizedText("Çevrimiçi servis henüz yapılandırılmadı.", "The online service is not configured yet."))
         return runCatching { block() }.getOrElse {
-            OnlineLobbyResult.Failure(it.localizedMessage ?: "Bağlantı kurulamadı. İnternetini kontrol et.")
+            val detail = it.localizedMessage
+            OnlineLobbyResult.Failure(
+                if (detail.isNullOrBlank()) {
+                    LocalizedText("Bağlantı kurulamadı. İnternetini kontrol et.", "Could not connect. Check your internet connection.")
+                } else {
+                    LocalizedText(detail, detail)
+                },
+            )
         }
     }
 }

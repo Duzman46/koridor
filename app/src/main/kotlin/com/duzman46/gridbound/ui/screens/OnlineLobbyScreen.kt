@@ -39,6 +39,8 @@ import com.duzman46.gridbound.presentation.online.OnlineLobbyViewModel
 import com.duzman46.gridbound.ui.components.CenteredContent
 import com.duzman46.gridbound.ui.components.GradientBackground
 import com.duzman46.gridbound.ui.components.ScreenTopBar
+import com.duzman46.gridbound.ui.localization.localized
+import com.duzman46.gridbound.ui.localization.localized as localizedMessage
 
 @Composable
 fun OnlineLobbyRoute(
@@ -71,7 +73,7 @@ private fun OnlineLobbyScreen(
     onJoin: () -> Unit,
     onCancelWaiting: () -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar("Çevrimiçi Oyun", onBack) }) { padding ->
+    Scaffold(topBar = { ScreenTopBar(localized("Çevrimiçi Oyun", "Online Game"), onBack) }) { padding ->
         GradientBackground {
             CenteredContent(Modifier.padding(padding)) {
                 Column(
@@ -84,14 +86,14 @@ private fun OnlineLobbyScreen(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Text("İnternetten rakibinle oyna", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(localized("İnternetten rakibinle oyna", "Play your opponent online"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     when {
                         !state.isConfigured -> ConfigurationNotice()
                         state.waitingSession != null -> WaitingRoom(state.waitingSession.roomCode, onCancelWaiting)
                         else -> LobbyActions(state, onRoomCode, onCreate, onJoin)
                     }
                     state.errorMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                        Text(it.localizedMessage(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                     }
                     if (state.isLoading) CircularProgressIndicator()
                 }
@@ -109,21 +111,21 @@ private fun LobbyActions(
 ) {
     Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Yeni oda", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Bir oda oluştur, kodu arkadaşına gönder ve onun katılmasını bekle.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localized("Yeni oda", "New room"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(localized("Bir oda oluştur, kodu arkadaşına gönder ve onun katılmasını bekle.", "Create a room, send the code to your friend, and wait for them to join."), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onCreate, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth()) {
                 androidx.compose.material3.Icon(Icons.Rounded.AddCircle, contentDescription = null)
-                Text("Oda Oluştur")
+                Text(localized("Oda Oluştur", "Create Room"))
             }
         }
     }
     Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Odaya katıl", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(localized("Odaya katıl", "Join a room"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = state.roomCodeInput,
                 onValueChange = onRoomCode,
-                label = { Text("6 karakterli oda kodu") },
+                label = { Text(localized("6 karakterli oda kodu", "6-character room code")) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, keyboardType = KeyboardType.Ascii),
                 modifier = Modifier.fillMaxWidth(),
@@ -134,7 +136,7 @@ private fun LobbyActions(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 androidx.compose.material3.Icon(Icons.Rounded.Groups, contentDescription = null)
-                Text("Odaya Katıl")
+                Text(localized("Odaya Katıl", "Join Room"))
             }
         }
     }
@@ -149,13 +151,13 @@ private fun WaitingRoom(roomCode: String, onCancel: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             CircularProgressIndicator()
-            Text("Rakip bekleniyor", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Bu kodu arkadaşına gönder:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localized("Rakip bekleniyor", "Waiting for opponent"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(localized("Bu kodu arkadaşına gönder:", "Send this code to your friend:"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             SelectionContainer {
                 Text(roomCode, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
             }
-            Text("Kodun üzerine basılı tutarak kopyalayabilirsin.", style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Odayı Kapat") }
+            Text(localized("Kodun üzerine basılı tutarak kopyalayabilirsin.", "Touch and hold the code to copy it."), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text(localized("Odayı Kapat", "Close Room")) }
         }
     }
 }
@@ -164,9 +166,8 @@ private fun WaitingRoom(roomCode: String, onCancel: () -> Unit) {
 private fun ConfigurationNotice() {
     Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.errorContainer) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Çevrimiçi servis hazırlanıyor", fontWeight = FontWeight.Bold)
-            Text("Firebase bağlantısı tamamlandığında oda oluşturma ve katılma burada açılacak.")
+            Text(localized("Çevrimiçi servis hazırlanıyor", "Online service is being prepared"), fontWeight = FontWeight.Bold)
+            Text(localized("Firebase bağlantısı tamamlandığında oda oluşturma ve katılma burada açılacak.", "Room creation and joining will appear here when the Firebase connection is ready."))
         }
     }
 }
-

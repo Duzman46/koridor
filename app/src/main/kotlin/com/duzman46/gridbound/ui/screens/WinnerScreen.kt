@@ -39,6 +39,7 @@ import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.ui.components.GradientBackground
+import com.duzman46.gridbound.ui.localization.localized
 
 @Composable
 fun WinnerScreen(
@@ -82,24 +83,27 @@ fun WinnerScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        if (humanLost) "Bu kez AI kazandı" else "Zafer!",
+                        if (humanLost) localized("Bu kez yapay zekâ kazandı", "AI won this time") else localized("Zafer!", "Victory!"),
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        if (humanLost) "Yeni bir stratejiyle tekrar dene." else
-                            "${if (winner == PlayerId.PLAYER_ONE) "Mavi" else "Turuncu"} oyuncu hedef kenara ulaştı.",
+                        if (humanLost) localized("Yeni bir stratejiyle tekrar dene.", "Try again with a new strategy.") else
+                            localized(
+                                "${if (winner == PlayerId.PLAYER_ONE) "Mavi" else "Turuncu"} oyuncu hedef kenara ulaştı.",
+                                "${if (winner == PlayerId.PLAYER_ONE) "Blue" else "Orange"} player reached the goal edge.",
+                            ),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Replay, contentDescription = null)
-                        Text("Tekrar Oyna", Modifier.padding(start = 8.dp))
+                        Text(localized("Tekrar Oyna", "Play Again"), Modifier.padding(start = 8.dp))
                     }
                     OutlinedButton(onClick = onHome, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Home, contentDescription = null)
-                        Text("Ana Menü", Modifier.padding(start = 8.dp))
+                        Text(localized("Ana Menü", "Main Menu"), Modifier.padding(start = 8.dp))
                     }
                 }
             }

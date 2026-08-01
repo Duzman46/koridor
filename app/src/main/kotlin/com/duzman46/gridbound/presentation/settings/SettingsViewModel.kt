@@ -6,6 +6,7 @@ import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.data.SettingsManager
 import com.duzman46.gridbound.data.StatisticsManager
 import com.duzman46.gridbound.domain.models.AppSettings
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
@@ -38,6 +39,7 @@ class SettingsViewModel @Inject constructor(
     )
 
     fun setThemeMode(mode: ThemeMode) = launchUpdate { settingsManager.setThemeMode(mode) }
+    fun setLanguage(language: AppLanguage) = launchUpdate { settingsManager.setLanguage(language) }
     fun setDynamicColor(enabled: Boolean) = launchUpdate { settingsManager.setDynamicColor(enabled) }
     fun setSoundEnabled(enabled: Boolean) = launchUpdate { settingsManager.setSoundEnabled(enabled) }
     fun setHapticsEnabled(enabled: Boolean) = launchUpdate { settingsManager.setHapticsEnabled(enabled) }
@@ -47,4 +49,3 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { update() }
     }
 }
-

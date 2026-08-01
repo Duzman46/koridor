@@ -11,14 +11,15 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Brightness6
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -34,24 +35,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.domain.models.GameStatistics
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.presentation.settings.SettingsUiState
 import com.duzman46.gridbound.ui.components.GradientBackground
 import com.duzman46.gridbound.ui.components.ScreenTopBar
+import com.duzman46.gridbound.ui.localization.localized
 import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
+    onLanguage: (AppLanguage) -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
     onDynamicColor: (Boolean) -> Unit,
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onDifficulty: (Difficulty) -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar("Ayarlar", onBack) }) { padding ->
+    Scaffold(topBar = { ScreenTopBar(localized("Ayarlar", "Settings"), onBack) }) { padding ->
         GradientBackground {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -60,13 +64,27 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 item {
-                    SettingsCard("Görünüm") {
+                    SettingsCard(localized("Dil", "Language")) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AppLanguage.entries.forEach { language ->
+                                FilterChip(
+                                    selected = state.settings.language == language,
+                                    onClick = { onLanguage(language) },
+                                    label = { Text(if (language == AppLanguage.TURKISH) "Türkçe" else "English") },
+                                    leadingIcon = { Icon(Icons.Rounded.Language, contentDescription = null) },
+                                )
+                            }
+                        }
+                    }
+                }
+                item {
+                    SettingsCard(localized("Görünüm", "Appearance")) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             ThemeMode.entries.forEach { mode ->
                                 val (label, icon) = when (mode) {
-                                    ThemeMode.SYSTEM -> "Sistem" to Icons.Rounded.PhoneAndroid
-                                    ThemeMode.LIGHT -> "Açık" to Icons.Rounded.LightMode
-                                    ThemeMode.DARK -> "Koyu" to Icons.Rounded.DarkMode
+                                    ThemeMode.SYSTEM -> localized("Sistem", "System") to Icons.Rounded.PhoneAndroid
+                                    ThemeMode.LIGHT -> localized("Açık", "Light") to Icons.Rounded.LightMode
+                                    ThemeMode.DARK -> localized("Koyu", "Dark") to Icons.Rounded.DarkMode
                                 }
                                 FilterChip(
                                     selected = state.settings.themeMode == mode,
@@ -76,17 +94,17 @@ fun SettingsScreen(
                                 )
                             }
                         }
-                        SettingSwitch("Dinamik renk", "Cihazının renk paletini kullanır.", Icons.Rounded.ColorLens, state.settings.dynamicColor, onDynamicColor)
+                        SettingSwitch(localized("Dinamik renk", "Dynamic color"), localized("Cihazının renk paletini kullanır.", "Uses your device color palette."), Icons.Rounded.ColorLens, state.settings.dynamicColor, onDynamicColor)
                     }
                 }
                 item {
-                    SettingsCard("Oyun deneyimi") {
-                        SettingSwitch("Sesler", "Hamle, duvar ve sonuç sesleri.", Icons.Rounded.VolumeUp, state.settings.soundEnabled, onSound)
-                        SettingSwitch("Dokunsal geri bildirim", "Hamlelerde ve hatalarda titreşim.", Icons.Rounded.TouchApp, state.settings.hapticsEnabled, onHaptics)
+                    SettingsCard(localized("Oyun deneyimi", "Game experience")) {
+                        SettingSwitch(localized("Sesler", "Sounds"), localized("Hamle, duvar ve sonuç sesleri.", "Move, wall, and result sounds."), Icons.AutoMirrored.Rounded.VolumeUp, state.settings.soundEnabled, onSound)
+                        SettingSwitch(localized("Dokunsal geri bildirim", "Haptic feedback"), localized("Hamlelerde ve hatalarda titreşim.", "Vibration for moves and errors."), Icons.Rounded.TouchApp, state.settings.hapticsEnabled, onHaptics)
                     }
                 }
                 item {
-                    SettingsCard("Varsayılan AI") {
+                    SettingsCard(localized("Varsayılan yapay zekâ", "Default AI")) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Difficulty.entries.forEach { difficulty ->
                                 FilterChip(
@@ -106,7 +124,7 @@ fun SettingsScreen(
 
 @Composable
 fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
-    Scaffold(topBar = { ScreenTopBar("İstatistikler", onBack) }) { padding ->
+    Scaffold(topBar = { ScreenTopBar(localized("İstatistikler", "Statistics"), onBack) }) { padding ->
         GradientBackground {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -119,24 +137,24 @@ fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
                         Modifier.fillMaxWidth().widthIn(max = 760.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text("Kariyer özeti", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        Text(localized("Kariyer özeti", "Career summary"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            StatCard("Oyun", statistics.totalGames.toString(), Modifier.weight(1f))
-                            StatCard("Galibiyet", statistics.totalWins.toString(), Modifier.weight(1f))
-                            StatCard("Oran", "%${(statistics.winRate * 100).roundToInt()}", Modifier.weight(1f))
+                            StatCard(localized("Oyun", "Games"), statistics.totalGames.toString(), Modifier.weight(1f))
+                            StatCard(localized("Galibiyet", "Wins"), statistics.totalWins.toString(), Modifier.weight(1f))
+                            StatCard(localized("Oran", "Rate"), "%${(statistics.winRate * 100).roundToInt()}", Modifier.weight(1f))
                         }
-                        SettingsCard("Detaylar") {
-                            StatLine("Mağlubiyet", statistics.totalLosses)
-                            StatLine("Yerel oyun", statistics.localGames)
-                            StatLine("Toplam tur", statistics.totalTurns)
+                        SettingsCard(localized("Detaylar", "Details")) {
+                            StatLine(localized("Mağlubiyet", "Losses"), statistics.totalLosses)
+                            StatLine(localized("Yerel oyun", "Local games"), statistics.localGames)
+                            StatLine(localized("Toplam tur", "Total turns"), statistics.totalTurns)
                         }
-                        SettingsCard("Zorluklara göre") {
+                        SettingsCard(localized("Zorluklara göre", "By difficulty")) {
                             Difficulty.entries.forEach { difficulty ->
                                 val wins = statistics.winsByDifficulty[difficulty] ?: 0
                                 val losses = statistics.lossesByDifficulty[difficulty] ?: 0
                                 ListItem(
                                     headlineContent = { Text(difficulty.label(), fontWeight = FontWeight.SemiBold) },
-                                    supportingContent = { Text("$wins galibiyet · $losses mağlubiyet") },
+                                    supportingContent = { Text(localized("$wins galibiyet · $losses mağlubiyet", "$wins wins · $losses losses")) },
                                     leadingContent = { Icon(Icons.Rounded.SmartToy, contentDescription = null) },
                                 )
                             }
@@ -196,8 +214,9 @@ private fun StatLine(label: String, value: Int) {
     }
 }
 
+@Composable
 private fun Difficulty.label(): String = when (this) {
-    Difficulty.EASY -> "Kolay"
-    Difficulty.MEDIUM -> "Orta"
-    Difficulty.HARD -> "Zor"
+    Difficulty.EASY -> localized("Kolay", "Easy")
+    Difficulty.MEDIUM -> localized("Orta", "Medium")
+    Difficulty.HARD -> localized("Zor", "Hard")
 }

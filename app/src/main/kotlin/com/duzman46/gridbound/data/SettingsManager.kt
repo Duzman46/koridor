@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.data
 
 import com.duzman46.gridbound.domain.models.AppSettings
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.game.models.Difficulty
@@ -12,10 +13,10 @@ class SettingsManager @Inject constructor(
 ) {
     val settings: Flow<AppSettings> = repository.settings
 
+    suspend fun setLanguage(language: AppLanguage) = repository.setLanguage(language)
     suspend fun setThemeMode(mode: ThemeMode) = repository.setThemeMode(mode)
     suspend fun setDynamicColor(enabled: Boolean) = repository.setDynamicColor(enabled)
     suspend fun setSoundEnabled(enabled: Boolean) = repository.setSoundEnabled(enabled)
     suspend fun setHapticsEnabled(enabled: Boolean) = repository.setHapticsEnabled(enabled)
     suspend fun setDifficulty(difficulty: Difficulty) = repository.setDifficulty(difficulty)
 }
-

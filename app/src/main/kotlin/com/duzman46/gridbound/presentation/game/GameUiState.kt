@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.presentation.game
 
 import com.duzman46.gridbound.game.audio.SoundEffect
+import com.duzman46.gridbound.domain.models.LocalizedText
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
@@ -25,7 +26,7 @@ data class GameUiState(
     val isAiThinking: Boolean = false,
     val isOnlineConnected: Boolean = false,
     val isOnlineSyncing: Boolean = false,
-    val onlineMessage: String? = null,
+    val onlineMessage: LocalizedText? = null,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,

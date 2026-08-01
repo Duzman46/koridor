@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.domain.repository
 
 import com.duzman46.gridbound.domain.models.AppSettings
+import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
@@ -12,6 +13,7 @@ interface GameRepository {
     val settings: Flow<AppSettings>
     val statistics: Flow<GameStatistics>
 
+    suspend fun setLanguage(language: AppLanguage)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setDynamicColor(enabled: Boolean)
     suspend fun setSoundEnabled(enabled: Boolean)

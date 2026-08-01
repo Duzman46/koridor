@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +23,7 @@ import com.duzman46.gridbound.game.board.CanvasRenderer
 import com.duzman46.gridbound.game.board.TouchController
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.presentation.game.GameUiState
+import com.duzman46.gridbound.ui.localization.localized
 
 @Composable
 fun GameBoard(
@@ -63,12 +63,12 @@ fun GameBoard(
             selection = colors.primary,
         )
     }
+    val boardDescription = localized("Dokuz çarpı dokuz oyun tahtası", "Nine by nine game board")
 
     Canvas(
         modifier = modifier
-            .fillMaxWidth()
             .aspectRatio(1f)
-            .semantics { contentDescription = "Dokuz çarpı dokuz oyun tahtası" }
+            .semantics { contentDescription = boardDescription }
             .pointerInput(state.wallMode, state.wallOrientation, state.acceptsHumanInput) {
                 detectTapGestures { offset ->
                     if (!state.acceptsHumanInput) return@detectTapGestures

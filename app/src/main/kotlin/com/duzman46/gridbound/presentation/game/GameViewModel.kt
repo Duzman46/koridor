@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.data.SettingsManager
 import com.duzman46.gridbound.data.StatisticsManager
+import com.duzman46.gridbound.domain.models.LocalizedText
 import com.duzman46.gridbound.game.ai.AIEngineFactory
 import com.duzman46.gridbound.game.animation.AnimationManager
 import com.duzman46.gridbound.game.audio.SoundEffect
@@ -324,7 +325,13 @@ class GameViewModel @Inject constructor(
             val accepted = onlineRepository.submitAction(session, onlineRevision, action)
             if (!accepted) {
                 _uiState.update {
-                    it.copy(isOnlineSyncing = false, onlineMessage = "Hamle gönderilemedi; oyun yeniden eşitleniyor.")
+                    it.copy(
+                        isOnlineSyncing = false,
+                        onlineMessage = LocalizedText(
+                            "Hamle gönderilemedi; oyun yeniden eşitleniyor.",
+                            "The move could not be sent; the game is resynchronizing.",
+                        ),
+                    )
                 }
                 feedback(SoundEffect.ERROR)
             }
@@ -334,7 +341,9 @@ class GameViewModel @Inject constructor(
     private fun observeOnlineRoom() {
         val session = onlineSession
         if (session == null) {
-            _uiState.update { it.copy(onlineMessage = "Çevrimiçi oturum bilgisi eksik.") }
+            _uiState.update {
+                it.copy(onlineMessage = LocalizedText("Çevrimiçi oturum bilgisi eksik.", "Online session information is missing."))
+            }
             return
         }
         viewModelScope.launch {
@@ -344,13 +353,19 @@ class GameViewModel @Inject constructor(
                         it.copy(
                             isOnlineConnected = false,
                             isOnlineSyncing = false,
-                            onlineMessage = error.localizedMessage ?: "Oda bağlantısı kesildi.",
+                            onlineMessage = error.localizedMessage?.let { LocalizedText(it, it) }
+                                ?: LocalizedText("Oda bağlantısı kesildi.", "The room connection was lost."),
                         )
                     }
                 }
                 .collect { room ->
                     if (room.playerFor(session.userId) != session.playerId) {
-                        _uiState.update { it.copy(isOnlineConnected = false, onlineMessage = "Oda üyeliği doğrulanamadı.") }
+                        _uiState.update {
+                            it.copy(
+                                isOnlineConnected = false,
+                                onlineMessage = LocalizedText("Oda üyeliği doğrulanamadı.", "Room membership could not be verified."),
+                            )
+                        }
                         return@collect
                     }
                     val previous = _uiState.value.boardState
@@ -371,8 +386,8 @@ class GameViewModel @Inject constructor(
                             isOnlineConnected = room.status == OnlineRoomStatus.ACTIVE || room.status == OnlineRoomStatus.FINISHED,
                             isOnlineSyncing = false,
                             onlineMessage = when (room.status) {
-                                OnlineRoomStatus.ABANDONED -> "Rakip odadan ayrıldı."
-                                OnlineRoomStatus.WAITING -> "Rakip yeniden bağlanıyor…"
+                                OnlineRoomStatus.ABANDONED -> LocalizedText("Rakip odadan ayrıldı.", "Your opponent left the room.")
+                                OnlineRoomStatus.WAITING -> LocalizedText("Rakip yeniden bağlanıyor…", "Your opponent is reconnecting…")
                                 else -> null
                             },
                             canUndo = false,

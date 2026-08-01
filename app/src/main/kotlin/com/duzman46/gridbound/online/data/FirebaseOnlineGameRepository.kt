@@ -74,8 +74,18 @@ class FirebaseOnlineGameRepository @Inject constructor(
             return@onlineCall OnlineLobbyResult.Failure("Oda kodu 6 harf veya rakamdan oluşmalı.")
         }
         val userId = authenticatedUserId()
+        val reference = roomReference(normalizedCode)
+        val initialRoom = codec.decodeRoom(normalizedCode, reference.get().awaitValue().value)
+            ?: return@onlineCall OnlineLobbyResult.Failure("Oda bulunamadı veya kapatıldı.")
+        if (
+            initialRoom.hostUid != userId &&
+            initialRoom.guestUid != userId &&
+            (initialRoom.status != OnlineRoomStatus.WAITING || initialRoom.guestUid != null)
+        ) {
+            return@onlineCall OnlineLobbyResult.Failure("Oda dolu veya artık aktif değil.")
+        }
         var assignedPlayer: PlayerId? = null
-        val joined = roomReference(normalizedCode).transact { current ->
+        val joined = reference.transact { current ->
             val room = codec.decodeRoom(normalizedCode, current.value) ?: return@transact Transaction.abort()
             when {
                 room.hostUid == userId -> assignedPlayer = PlayerId.PLAYER_ONE

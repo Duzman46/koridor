@@ -4,47 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.duzman46.gridbound.navigation.AppNavigation
+import com.duzman46.gridbound.presentation.AppViewModel
+import com.duzman46.gridbound.theme.GridboundTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            GridboundApp()
-        }
-    }
-}
-
-@Composable
-private fun GridboundApp() {
-    MaterialTheme {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = APP_NAME,
-                    style = MaterialTheme.typography.displayMedium,
-                )
+            val viewModel: AppViewModel = hiltViewModel()
+            val settings by viewModel.settings.collectAsStateWithLifecycle()
+            GridboundTheme(settings) {
+                AppNavigation()
             }
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-private fun GridboundAppPreview() {
-    GridboundApp()
-}
-
-private const val APP_NAME = "Gridbound"

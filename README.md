@@ -1,25 +1,73 @@
 # Gridbound
 
-Gridbound is an original Android strategy board game inspired by path-building board mechanics.
+Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android strateji oyunudur. İki oyuncu, 9×9 tahta üzerinde rakibin başladığı kenara ilk ulaşan taraf olmak için yarışır.
 
-## Technology
+## Özellikler
 
-- Kotlin
-- Jetpack Compose and Material 3
-- Clean Architecture and MVVM
-- Hilt
-- Coroutines and StateFlow
-- DataStore
-- Minimum SDK 26
-- Target SDK 37
+- Aynı cihazda iki oyuncu
+- Easy, Medium ve Hard yapay zekâ
+- Resmî düz atlama ve engelli durumda çapraz atlama kuralları
+- Her duvar öncesi iki oyuncu için BFS yol doğrulaması
+- AI için A*, minimax, alpha-beta pruning ve evaluation function
+- Canvas tabanlı responsive tahta, telefon ve tablet düzenleri
+- Piyon/duvar animasyonları, konfeti, ses ve haptik geri bildirim
+- Açık, koyu ve Android 12+ dinamik renk temaları
+- DataStore tabanlı ayarlar ve istatistikler
+- Hamle geçmişi, restart ve undo
+- Tamamen Kotlin + Jetpack Compose + Material 3
 
-The implementation is being delivered in verified milestones. The full technical roadmap is available in [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md).
+## Teknik temel
 
-## Local build
+- Android 17 / API 37, minimum API 26
+- Kotlin 2.4.10
+- Android Gradle Plugin 9.3.1, Gradle 9.6.1
+- Compose BOM 2026.06.01
+- MVVM, Clean Architecture sınırları, immutable state
+- Hilt, Coroutines, StateFlow ve Preferences DataStore
 
-Use Android Studio's bundled JDK and run:
+## Mimari
+
+```text
+com.duzman46.gridbound
+├── core
+├── data
+├── domain
+├── presentation
+├── navigation
+├── ui
+├── game
+│   ├── ai
+│   ├── animation
+│   ├── audio
+│   ├── board
+│   ├── engine
+│   ├── models
+│   ├── pathfinding
+│   └── rules
+├── di
+├── theme
+└── util
+```
+
+Oyun motoru UI kararlarından bağımsız saf Kotlin modelleri üzerinde çalışır. Compose yalnızca `GameUiState` çizer ve kullanıcı niyetlerini `GameViewModel` üzerinden motora iletir.
+
+## Derleme
+
+Android Studio'nun gömülü JDK'sını kullanın:
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
 ```
+
+Tam kalite kapısı:
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease
+```
+
+## Test kapsamı
+
+JVM testleri BFS, A*, normal hareket, düz atlama, çapraz atlama, duvar overlap/kesişim/yol kapatma, tur/zafer/undo ve üç AI seviyesini kapsar.
+
+Detaylı teknik plan: [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md)
 

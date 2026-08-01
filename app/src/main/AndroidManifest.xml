@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
+        android:name=".GridboundApplication"
         android:allowBackup="true"
+        android:appCategory="game"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="Gridbound"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">

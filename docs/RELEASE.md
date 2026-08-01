@@ -15,5 +15,8 @@ Production signing credentials must never be committed. Create an upload key in 
 2. Confirm the version code and version name.
 3. Test the signed build on at least one API 26 device and one API 37 device.
 4. Verify phone, tablet, light theme, dark theme, sound-off and haptics-off flows.
-5. Publish the privacy policy at a public HTTPS URL and add it to Play Console.
-6. Complete Play Console content rating and data safety forms truthfully.
+5. Run an online match from two separate installations and verify room create/join, moves, walls and disconnect handling.
+6. Deploy `auth,database` from `firebase.json` and confirm the Firebase rules release.
+7. Publish the privacy policy at a public HTTPS URL and add it to Play Console.
+8. Declare anonymous Firebase identifiers and game-state storage in the Play Console Data safety form.
+9. Complete Play Console content rating forms truthfully.

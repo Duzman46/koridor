@@ -5,6 +5,8 @@ Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android
 ## Özellikler
 
 - Aynı cihazda iki oyuncu
+- Oda koduyla internet üzerinden iki oyuncu
+- Firebase anonim oturum, Realtime Database ve sıra/revizyon korumalı atomik hamleler
 - Easy, Medium ve Hard yapay zekâ
 - Resmî düz atlama ve engelli durumda çapraz atlama kuralları
 - Her duvar öncesi iki oyuncu için BFS yol doğrulaması
@@ -14,6 +16,7 @@ Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android
 - Açık, koyu ve Android 12+ dinamik renk temaları
 - DataStore tabanlı ayarlar ve istatistikler
 - Hamle geçmişi, restart ve undo
+- Büyük duvar dokunma alanı, belirgin önizleme ve onay/iptal akışı
 - Tamamen Kotlin + Jetpack Compose + Material 3
 
 ## Teknik temel
@@ -24,6 +27,7 @@ Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android
 - Compose BOM 2026.06.01
 - MVVM, Clean Architecture sınırları, immutable state
 - Hilt, Coroutines, StateFlow ve Preferences DataStore
+- Firebase Android BoM 34.17.0, Authentication ve Realtime Database
 
 ## Mimari
 
@@ -34,6 +38,10 @@ com.duzman46.gridbound
 ├── domain
 ├── presentation
 ├── navigation
+├── online
+│   ├── data
+│   ├── domain
+│   └── model
 ├── ui
 ├── game
 │   ├── ai
@@ -51,6 +59,8 @@ com.duzman46.gridbound
 
 Oyun motoru UI kararlarından bağımsız saf Kotlin modelleri üzerinde çalışır. Compose yalnızca `GameUiState` çizer ve kullanıcı niyetlerini `GameViewModel` üzerinden motora iletir.
 
+Çevrimiçi oyunlarda aynı saf kural motoru Firebase transaction içinde uygulanır. Oda güvenliği anonim kimlik, iki kişilik üyelik, aktif oyuncu kimliği ve artan revizyon numarasıyla korunur.
+
 ## Derleme
 
 Android Studio'nun gömülü JDK'sını kullanın:
@@ -65,9 +75,18 @@ Tam kalite kapısı:
 .\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease
 ```
 
+## Çevrimiçi servis
+
+Uygulama `gridbound-duzman46` Firebase projesine bağlıdır. Bağlantı değerleri `firebase.properties`, Authentication/Realtime Database dağıtım tanımı `firebase.json`, erişim politikası ise `database.rules.json` içindedir.
+
+Kuralları yeniden yayınlamak için Firebase CLI oturumuyla:
+
+```powershell
+firebase deploy --only auth,database
+```
+
 ## Test kapsamı
 
-JVM testleri BFS, A*, normal hareket, düz atlama, çapraz atlama, duvar overlap/kesişim/yol kapatma, tur/zafer/undo ve üç AI seviyesini kapsar.
+JVM testleri BFS, A*, normal hareket, düz atlama, çapraz atlama, duvar overlap/kesişim/yol kapatma, geniş duvar dokunma hedefi, çevrimiçi durum serileştirme, tur/zafer/undo ve üç AI seviyesini kapsar.
 
 Detaylı teknik plan: [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md)
-

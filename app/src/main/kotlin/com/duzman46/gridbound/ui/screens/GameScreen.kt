@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
@@ -81,6 +83,8 @@ fun GameRoute(
         onWallTap = viewModel::onWallTapped,
         onToggleWall = viewModel::toggleWallMode,
         onOrientation = viewModel::setWallOrientation,
+        onConfirmWall = viewModel::confirmPendingWall,
+        onCancelWall = viewModel::cancelPendingWall,
     )
 }
 
@@ -96,6 +100,8 @@ private fun GameScreen(
     onWallTap: (com.duzman46.gridbound.game.models.Wall) -> Unit,
     onToggleWall: () -> Unit,
     onOrientation: (WallOrientation) -> Unit,
+    onConfirmWall: () -> Unit,
+    onCancelWall: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -140,6 +146,8 @@ private fun GameScreen(
                         state,
                         onToggleWall,
                         onOrientation,
+                        onConfirmWall,
+                        onCancelWall,
                         Modifier.weight(0.75f).widthIn(max = 420.dp),
                     )
                 }
@@ -151,7 +159,14 @@ private fun GameScreen(
                 ) {
                     TurnSummary(state)
                     GameBoard(state, onTileTap, onWallTap, Modifier.widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp))
-                    GameControlPanel(state, onToggleWall, onOrientation, Modifier.fillMaxWidth())
+                    GameControlPanel(
+                        state,
+                        onToggleWall,
+                        onOrientation,
+                        onConfirmWall,
+                        onCancelWall,
+                        Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
@@ -163,6 +178,8 @@ private fun GameControlPanel(
     state: GameUiState,
     onToggleWall: () -> Unit,
     onOrientation: (WallOrientation) -> Unit,
+    onConfirmWall: () -> Unit,
+    onCancelWall: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -171,7 +188,11 @@ private fun GameControlPanel(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Hamle", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    if (state.wallMode) "Tahtada duvar konumuna dokun." else "Piyonuna dokun ve yeşil kareyi seç.",
+                    when {
+                        state.pendingWall != null -> "Seçilen duvar tahtada parlıyor. Konumu kontrol edip onayla."
+                        state.wallMode -> "Tahtada istediğin bölgeye dokun; en yakın duvar yuvası seçilir."
+                        else -> "Piyonuna dokun ve yeşil kareyi seç."
+                    },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -188,7 +209,44 @@ private fun GameControlPanel(
                     }
                 }
                 if (state.wallMode) {
-                    Button(onClick = onToggleWall, modifier = Modifier.fillMaxWidth()) { Text("Piyon Moduna Dön") }
+                    if (state.pendingWall != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text("Bu duvarı yerleştirmek istiyor musun?", fontWeight = FontWeight.Bold)
+                                Text(
+                                    if (state.pendingWall.orientation == WallOrientation.HORIZONTAL) {
+                                        "Yatay duvar"
+                                    } else {
+                                        "Dikey duvar"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    OutlinedButton(onClick = onCancelWall, modifier = Modifier.weight(1f)) {
+                                        Icon(Icons.Rounded.Close, contentDescription = null)
+                                        Text("İptal")
+                                    }
+                                    Button(onClick = onConfirmWall, modifier = Modifier.weight(1f)) {
+                                        Icon(Icons.Rounded.Check, contentDescription = null)
+                                        Text("Onayla")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    OutlinedButton(onClick = onToggleWall, modifier = Modifier.fillMaxWidth()) {
+                        Text("Piyon Moduna Dön")
+                    }
                 } else {
                     OutlinedButton(
                         onClick = onToggleWall,

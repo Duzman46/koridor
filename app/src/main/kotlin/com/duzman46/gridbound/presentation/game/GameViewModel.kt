@@ -110,6 +110,8 @@ class GameViewModel @Inject constructor(
                 pawnSelected = false,
                 validMoves = emptySet(),
                 validWalls = if (enabled) it.validWalls else emptySet(),
+                pendingWall = null,
+                invalidWallPreview = null,
             )
         }
         if (enabled) {
@@ -121,16 +123,23 @@ class GameViewModel @Inject constructor(
     }
 
     fun setWallOrientation(orientation: WallOrientation) {
-        _uiState.update { it.copy(wallOrientation = orientation) }
+        _uiState.update {
+            it.copy(
+                wallOrientation = orientation,
+                pendingWall = null,
+                invalidWallPreview = null,
+            )
+        }
     }
 
     fun onWallTapped(wall: Wall) {
         val state = _uiState.value
         if (!state.acceptsHumanInput || !state.wallMode) return
         if (wall in state.validWalls) {
-            performAction(GameAction.PlaceWall(wall))
+            _uiState.update { it.copy(pendingWall = wall, invalidWallPreview = null) }
+            feedback(SoundEffect.MOVE)
         } else {
-            _uiState.update { it.copy(invalidWallPreview = wall) }
+            _uiState.update { it.copy(pendingWall = null, invalidWallPreview = wall) }
             feedback(SoundEffect.ERROR)
             viewModelScope.launch {
                 delay(animationManager.invalidPreviewMillis)
@@ -139,6 +148,21 @@ class GameViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun confirmPendingWall() {
+        val state = _uiState.value
+        val wall = state.pendingWall ?: return
+        if (!state.acceptsHumanInput || !state.wallMode || wall !in state.validWalls) {
+            _uiState.update { it.copy(pendingWall = null) }
+            feedback(SoundEffect.ERROR)
+            return
+        }
+        performAction(GameAction.PlaceWall(wall))
+    }
+
+    fun cancelPendingWall() {
+        _uiState.update { it.copy(pendingWall = null, invalidWallPreview = null) }
     }
 
     fun restart() {
@@ -231,6 +255,7 @@ class GameViewModel @Inject constructor(
                 validMoves = emptySet(),
                 wallMode = false,
                 validWalls = emptySet(),
+                pendingWall = null,
                 invalidWallPreview = null,
                 recentlyPlacedWall = recentlyPlacedWall,
                 isAiThinking = isAiThinking,

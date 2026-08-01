@@ -90,6 +90,7 @@ fun GameBoard(
             validMoves = state.validMoves,
             validWalls = state.validWalls,
             wallOrientation = state.wallOrientation,
+            pendingWall = state.pendingWall,
             invalidWall = state.invalidWallPreview,
             recentWall = state.recentlyPlacedWall,
             recentWallProgress = wallProgress.value,

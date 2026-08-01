@@ -20,9 +20,19 @@ class TouchController @Inject constructor() {
 
     fun wallAt(offset: Offset, geometry: BoardGeometry, orientation: WallOrientation): Wall? {
         if (offset.x !in 0f..geometry.boardSize || offset.y !in 0f..geometry.boardSize) return null
-        val row = floor(offset.y / geometry.step).toInt().coerceIn(0, Constants.Board.WALL_GRID_SIZE - 1)
-        val column = floor(offset.x / geometry.step).toInt().coerceIn(0, Constants.Board.WALL_GRID_SIZE - 1)
-        return Wall(row, column, orientation)
+        return buildList {
+            repeat(Constants.Board.WALL_GRID_SIZE) { row ->
+                repeat(Constants.Board.WALL_GRID_SIZE) { column ->
+                    add(Wall(row, column, orientation))
+                }
+            }
+        }.minByOrNull { wall ->
+            val center = geometry.wallRect(wall).center
+            val horizontalWeight = if (orientation == WallOrientation.HORIZONTAL) 0.45f else 1f
+            val verticalWeight = if (orientation == WallOrientation.VERTICAL) 0.45f else 1f
+            val deltaX = (offset.x - center.x) * horizontalWeight
+            val deltaY = (offset.y - center.y) * verticalWeight
+            deltaX * deltaX + deltaY * deltaY
+        }
     }
 }
-

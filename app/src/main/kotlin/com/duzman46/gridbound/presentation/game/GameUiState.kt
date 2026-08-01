@@ -18,6 +18,7 @@ data class GameUiState(
     val wallMode: Boolean = false,
     val wallOrientation: WallOrientation = WallOrientation.HORIZONTAL,
     val validWalls: Set<Wall> = emptySet(),
+    val pendingWall: Wall? = null,
     val invalidWallPreview: Wall? = null,
     val recentlyPlacedWall: Wall? = null,
     val isAiThinking: Boolean = false,
@@ -33,4 +34,3 @@ data class GameUiState(
 sealed interface GameEvent {
     data class Feedback(val effect: SoundEffect, val hapticsEnabled: Boolean) : GameEvent
 }
-

@@ -37,6 +37,7 @@ class CanvasRenderer @Inject constructor() {
         validMoves: Set<Position>,
         validWalls: Set<Wall>,
         wallOrientation: WallOrientation,
+        pendingWall: Wall?,
         invalidWall: Wall?,
         recentWall: Wall?,
         recentWallProgress: Float,
@@ -84,6 +85,10 @@ class CanvasRenderer @Inject constructor() {
             val progress = if (wall == recentWall) recentWallProgress else 1f
             drawWall(geometry, wall, palette.wall, progress)
         }
+        pendingWall?.let { wall ->
+            drawWallHighlight(geometry, wall, palette.selection)
+            drawWall(geometry, wall, palette.valid, 1f)
+        }
         invalidWall?.let { drawWall(geometry, it, palette.invalid.copy(alpha = 0.9f), 1f) }
 
         drawPawn(
@@ -101,6 +106,17 @@ class CanvasRenderer @Inject constructor() {
             color = palette.playerTwo,
             selected = selected && state.currentPlayer == PlayerId.PLAYER_TWO,
             selectionColor = palette.selection,
+        )
+    }
+
+    private fun DrawScope.drawWallHighlight(geometry: BoardGeometry, wall: Wall, color: Color) {
+        val rect = geometry.wallRect(wall)
+        val padding = geometry.wallThickness * 0.72f
+        drawRoundRect(
+            color = color.copy(alpha = 0.32f),
+            topLeft = Offset(rect.left - padding, rect.top - padding),
+            size = Size(rect.width + padding * 2f, rect.height + padding * 2f),
+            cornerRadius = CornerRadius(geometry.wallThickness),
         )
     }
 
@@ -152,4 +168,3 @@ class CanvasRenderer @Inject constructor() {
         alpha = first.alpha,
     )
 }
-

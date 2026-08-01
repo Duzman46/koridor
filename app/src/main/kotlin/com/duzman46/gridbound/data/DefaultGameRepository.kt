@@ -93,6 +93,7 @@ class DefaultGameRepository @Inject constructor(
         mode: GameMode,
         difficulty: Difficulty,
         winner: PlayerId,
+        localPlayer: PlayerId,
         turns: Int,
     ) {
         context.gridboundDataStore.edit { values ->
@@ -100,7 +101,7 @@ class DefaultGameRepository @Inject constructor(
             values[Keys.totalTurns] = (values[Keys.totalTurns] ?: 0) + turns
             if (mode == GameMode.LOCAL_TWO_PLAYER) {
                 values[Keys.localGames] = (values[Keys.localGames] ?: 0) + 1
-            } else if (winner == PlayerId.PLAYER_ONE) {
+            } else if (winner == localPlayer) {
                 values[Keys.totalWins] = (values[Keys.totalWins] ?: 0) + 1
                 val key = winKey(difficulty)
                 values[key] = (values[key] ?: 0) + 1

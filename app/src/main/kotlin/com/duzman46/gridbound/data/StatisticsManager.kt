@@ -13,8 +13,13 @@ class StatisticsManager @Inject constructor(
 ) {
     val statistics: Flow<GameStatistics> = repository.statistics
 
-    suspend fun recordGame(mode: GameMode, difficulty: Difficulty, winner: PlayerId, turns: Int) {
-        repository.recordCompletedGame(mode, difficulty, winner, turns)
+    suspend fun recordGame(
+        mode: GameMode,
+        difficulty: Difficulty,
+        winner: PlayerId,
+        localPlayer: PlayerId,
+        turns: Int,
+    ) {
+        repository.recordCompletedGame(mode, difficulty, winner, localPlayer, turns)
     }
 }
-

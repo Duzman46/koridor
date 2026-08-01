@@ -17,6 +17,7 @@ import com.duzman46.gridbound.ui.screens.DifficultySelectionScreen
 import com.duzman46.gridbound.ui.screens.GameRoute
 import com.duzman46.gridbound.ui.screens.MainMenuScreen
 import com.duzman46.gridbound.ui.screens.ModeSelectionScreen
+import com.duzman46.gridbound.ui.screens.OnlineLobbyRoute
 import com.duzman46.gridbound.ui.screens.SettingsScreen
 import com.duzman46.gridbound.ui.screens.SplashScreen
 import com.duzman46.gridbound.ui.screens.StatisticsScreen
@@ -30,10 +31,13 @@ private object Routes {
     const val DIFFICULTY = "difficulty"
     const val SETTINGS = "settings"
     const val STATISTICS = "statistics"
-    const val GAME = "game/{mode}/{difficulty}"
+    const val ONLINE = "online"
+    const val GAME = "game/{mode}/{difficulty}?roomCode={roomCode}&playerId={playerId}&userId={userId}"
     const val WINNER = "winner/{winner}/{mode}/{difficulty}"
 
     fun game(mode: GameMode, difficulty: Difficulty): String = "game/${mode.name}/${difficulty.name}"
+    fun onlineGame(roomCode: String, playerId: PlayerId, userId: String): String =
+        "game/${GameMode.ONLINE.name}/${Difficulty.MEDIUM.name}?roomCode=$roomCode&playerId=${playerId.name}&userId=$userId"
     fun winner(winner: PlayerId, mode: GameMode, difficulty: Difficulty): String =
         "winner/${winner.name}/${mode.name}/${difficulty.name}"
 }
@@ -61,6 +65,17 @@ fun AppNavigation() {
                 onBack = navController::popBackStack,
                 onAi = { navController.navigate(Routes.DIFFICULTY) },
                 onLocal = { navController.navigate(Routes.game(GameMode.LOCAL_TWO_PLAYER, Difficulty.MEDIUM)) },
+                onOnline = { navController.navigate(Routes.ONLINE) },
+            )
+        }
+        composable(Routes.ONLINE) {
+            OnlineLobbyRoute(
+                onBack = navController::popBackStack,
+                onOpenGame = { session ->
+                    navController.navigate(Routes.onlineGame(session.roomCode, session.playerId, session.userId)) {
+                        popUpTo(Routes.ONLINE) { inclusive = true }
+                    }
+                },
             )
         }
         composable(Routes.DIFFICULTY) {
@@ -74,6 +89,18 @@ fun AppNavigation() {
             arguments = listOf(
                 navArgument("mode") { type = NavType.StringType },
                 navArgument("difficulty") { type = NavType.StringType },
+                navArgument("roomCode") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("playerId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) {
             GameRoute(
@@ -106,8 +133,14 @@ fun AppNavigation() {
                 winner = winner,
                 mode = mode,
                 onReplay = {
-                    navController.navigate(Routes.game(mode, difficulty)) {
-                        popUpTo(Routes.WINNER) { inclusive = true }
+                    if (mode == GameMode.ONLINE) {
+                        navController.navigate(Routes.ONLINE) {
+                            popUpTo(Routes.WINNER) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Routes.game(mode, difficulty)) {
+                            popUpTo(Routes.WINNER) { inclusive = true }
+                        }
                     }
                 },
                 onHome = {

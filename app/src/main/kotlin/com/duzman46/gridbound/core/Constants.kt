@@ -77,4 +77,12 @@ object Constants {
         const val KEY_MEDIUM_LOSSES = "medium_losses"
         const val KEY_HARD_LOSSES = "hard_losses"
     }
+
+    object Online {
+        const val ROOM_CODE_LENGTH = 6
+        const val ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        const val MAX_ROOM_CREATE_ATTEMPTS = 8
+        const val ROOMS_PATH = "rooms"
+        const val ROOM_EXPIRY_MILLIS = 86_400_000L
+    }
 }

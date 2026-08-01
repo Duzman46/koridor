@@ -13,6 +13,7 @@ data class GameUiState(
     val boardState: BoardState = BoardState.initial(),
     val mode: GameMode = GameMode.VS_AI,
     val difficulty: Difficulty = Difficulty.MEDIUM,
+    val localPlayer: PlayerId? = null,
     val pawnSelected: Boolean = false,
     val validMoves: Set<Position> = emptySet(),
     val wallMode: Boolean = false,
@@ -22,13 +23,19 @@ data class GameUiState(
     val invalidWallPreview: Wall? = null,
     val recentlyPlacedWall: Wall? = null,
     val isAiThinking: Boolean = false,
+    val isOnlineConnected: Boolean = false,
+    val isOnlineSyncing: Boolean = false,
+    val onlineMessage: String? = null,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
 ) {
     val acceptsHumanInput: Boolean
-        get() = !isAiThinking &&
-            (mode == GameMode.LOCAL_TWO_PLAYER || boardState.currentPlayer == PlayerId.PLAYER_ONE)
+        get() = !isAiThinking && !isOnlineSyncing && when (mode) {
+            GameMode.LOCAL_TWO_PLAYER -> true
+            GameMode.VS_AI -> boardState.currentPlayer == PlayerId.PLAYER_ONE
+            GameMode.ONLINE -> isOnlineConnected && boardState.currentPlayer == localPlayer
+        }
 }
 
 sealed interface GameEvent {

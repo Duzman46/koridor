@@ -21,7 +21,7 @@ interface GameRepository {
         mode: GameMode,
         difficulty: Difficulty,
         winner: PlayerId,
+        localPlayer: PlayerId,
         turns: Int,
     )
 }
-

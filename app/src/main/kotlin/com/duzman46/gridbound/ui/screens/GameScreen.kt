@@ -44,6 +44,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.GameAction
+import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.GameStatus
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.TurnRecord
@@ -116,10 +117,15 @@ private fun GameScreen(
                     IconButton(onClick = onHome) { Icon(Icons.Rounded.Home, contentDescription = "Ana menü") }
                 },
                 actions = {
-                    IconButton(onClick = onUndo, enabled = state.canUndo && !state.isAiThinking) {
+                    IconButton(
+                        onClick = onUndo,
+                        enabled = state.mode != GameMode.ONLINE && state.canUndo && !state.isAiThinking,
+                    ) {
                         Icon(Icons.Rounded.Undo, contentDescription = "Geri al")
                     }
-                    IconButton(onClick = onRestart) { Icon(Icons.Rounded.Refresh, contentDescription = "Yeniden başlat") }
+                    IconButton(onClick = onRestart, enabled = state.mode != GameMode.ONLINE) {
+                        Icon(Icons.Rounded.Refresh, contentDescription = "Yeniden başlat")
+                    }
                     IconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, contentDescription = "Ayarlar") }
                 },
             )
@@ -184,6 +190,14 @@ private fun GameControlPanel(
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TurnSummary(state)
+        state.onlineMessage?.let { message ->
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Text(message, Modifier.fillMaxWidth().padding(12.dp), fontWeight = FontWeight.SemiBold)
+            }
+        }
         Surface(shape = RoundedCornerShape(20.dp), tonalElevation = 3.dp) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Hamle", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -265,22 +279,38 @@ private fun GameControlPanel(
 @Composable
 private fun TurnSummary(state: GameUiState) {
     val current = state.boardState.currentPlayer
+    val turnTitle = when {
+        state.mode == GameMode.ONLINE && state.isOnlineSyncing -> "Hamle gönderiliyor…"
+        state.mode == GameMode.ONLINE && !state.isOnlineConnected -> "Odaya bağlanılıyor…"
+        state.mode == GameMode.ONLINE && current == state.localPlayer ->
+            "Senin sıran · ${if (current == PlayerId.PLAYER_ONE) "Mavi" else "Turuncu"}"
+        state.mode == GameMode.ONLINE -> "Rakibin sırası"
+        state.isAiThinking -> "AI düşünüyor…"
+        current == PlayerId.PLAYER_ONE -> "Mavi oyuncunun sırası"
+        else -> "Turuncu oyuncunun sırası"
+    }
     Surface(shape = RoundedCornerShape(20.dp), tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text(
-                        if (state.isAiThinking) "AI düşünüyor…" else if (current == PlayerId.PLAYER_ONE) "Mavi oyuncunun sırası" else "Turuncu oyuncunun sırası",
+                        turnTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        if (state.mode == com.duzman46.gridbound.game.models.GameMode.VS_AI) "${state.difficulty.label()} yapay zekâ" else "Aynı cihazda iki oyuncu",
+                        when (state.mode) {
+                            GameMode.VS_AI -> "${state.difficulty.label()} yapay zekâ"
+                            GameMode.LOCAL_TWO_PLAYER -> "Aynı cihazda iki oyuncu"
+                            GameMode.ONLINE -> "Çevrimiçi oda · anlık eşzamanlama"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                if (state.isAiThinking) CircularProgressIndicator()
+                if (state.isAiThinking || state.isOnlineSyncing || (state.mode == GameMode.ONLINE && !state.isOnlineConnected)) {
+                    CircularProgressIndicator()
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 PlayerWalls("Mavi", state.boardState.player(PlayerId.PLAYER_ONE).wallsRemaining)

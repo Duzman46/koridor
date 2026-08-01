@@ -3,6 +3,7 @@ package com.duzman46.gridbound.game.models
 enum class GameMode {
     LOCAL_TWO_PLAYER,
     VS_AI,
+    ONLINE,
 }
 
 enum class Difficulty {
@@ -46,4 +47,3 @@ data class TurnRecord(
     val player: PlayerId,
     val action: GameAction,
 )
-

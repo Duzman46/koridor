@@ -20,6 +20,9 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.Position
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.WallOrientation
+import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.OnlineRoomStatus
+import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.util.enumValueOrDefault
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,6 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,14 +50,28 @@ class GameViewModel @Inject constructor(
     private val statisticsManager: StatisticsManager,
     private val soundManager: SoundManager,
     private val animationManager: AnimationManager,
+    private val onlineRepository: OnlineGameRepository,
 ) : ViewModel() {
     private val mode = enumValueOrDefault(savedStateHandle.get<String>("mode"), GameMode.VS_AI)
     private val difficulty = enumValueOrDefault(savedStateHandle.get<String>("difficulty"), Difficulty.MEDIUM)
+    private val roomCode = savedStateHandle.get<String>("roomCode").orEmpty()
+    private val onlineSession = if (mode == GameMode.ONLINE) {
+        val userId = savedStateHandle.get<String>("userId").orEmpty()
+        val playerId = runCatching {
+            PlayerId.valueOf(savedStateHandle.get<String>("playerId").orEmpty())
+        }.getOrNull()
+        playerId?.takeIf { roomCode.isNotBlank() && userId.isNotBlank() }?.let {
+            OnlineSession(roomCode, userId, it)
+        }
+    } else {
+        null
+    }
     private val _uiState = MutableStateFlow(
         GameUiState(
             boardState = gameManager.restart(),
             mode = mode,
             difficulty = difficulty,
+            localPlayer = onlineSession?.playerId,
         ),
     )
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -62,6 +80,7 @@ class GameViewModel @Inject constructor(
     val events: SharedFlow<GameEvent> = _events.asSharedFlow()
     private var aiJob: Job? = null
     private var recordedWinner: PlayerId? = null
+    private var onlineRevision = -1L
 
     init {
         viewModelScope.launch {
@@ -73,6 +92,8 @@ class GameViewModel @Inject constructor(
         }
         if (mode == GameMode.VS_AI) {
             viewModelScope.launch { settingsManager.setDifficulty(difficulty) }
+        } else if (mode == GameMode.ONLINE) {
+            observeOnlineRoom()
         }
     }
 
@@ -166,6 +187,10 @@ class GameViewModel @Inject constructor(
     }
 
     fun restart() {
+        if (mode == GameMode.ONLINE) {
+            feedback(SoundEffect.ERROR)
+            return
+        }
         aiJob?.cancel()
         recordedWinner = null
         val prior = _uiState.value
@@ -179,6 +204,10 @@ class GameViewModel @Inject constructor(
     }
 
     fun undo() {
+        if (mode == GameMode.ONLINE) {
+            feedback(SoundEffect.ERROR)
+            return
+        }
         aiJob?.cancel()
         val state = _uiState.value
         val steps = if (
@@ -195,6 +224,10 @@ class GameViewModel @Inject constructor(
     }
 
     private fun performAction(action: GameAction) {
+        if (mode == GameMode.ONLINE) {
+            submitOnlineAction(action)
+            return
+        }
         when (val result = gameManager.perform(action)) {
             is ActionResult.Invalid -> feedback(SoundEffect.ERROR)
             is ActionResult.Success -> {
@@ -209,7 +242,12 @@ class GameViewModel @Inject constructor(
         val winner = state.status.winner
         if (winner != null) {
             recordWinner(winner, state.turnNumber)
-            feedback(if (mode == GameMode.VS_AI && winner == PlayerId.PLAYER_TWO) SoundEffect.LOSS else SoundEffect.WIN)
+            val humanLost = when (mode) {
+                GameMode.VS_AI -> winner == PlayerId.PLAYER_TWO
+                GameMode.ONLINE -> winner != onlineSession?.playerId
+                GameMode.LOCAL_TWO_PLAYER -> false
+            }
+            feedback(if (humanLost) SoundEffect.LOSS else SoundEffect.WIN)
         } else if (mode == GameMode.VS_AI && state.currentPlayer == PlayerId.PLAYER_TWO) {
             runAiTurn()
         }
@@ -259,8 +297,92 @@ class GameViewModel @Inject constructor(
                 invalidWallPreview = null,
                 recentlyPlacedWall = recentlyPlacedWall,
                 isAiThinking = isAiThinking,
-                canUndo = gameManager.canUndo(),
+                isOnlineSyncing = false,
+                canUndo = mode != GameMode.ONLINE && gameManager.canUndo(),
             )
+        }
+    }
+
+    private fun submitOnlineAction(action: GameAction) {
+        val session = onlineSession ?: run {
+            feedback(SoundEffect.ERROR)
+            return
+        }
+        val state = _uiState.value
+        if (!state.acceptsHumanInput) return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isOnlineSyncing = true,
+                    pawnSelected = false,
+                    validMoves = emptySet(),
+                    wallMode = false,
+                    validWalls = emptySet(),
+                    pendingWall = null,
+                )
+            }
+            val accepted = onlineRepository.submitAction(session, onlineRevision, action)
+            if (!accepted) {
+                _uiState.update {
+                    it.copy(isOnlineSyncing = false, onlineMessage = "Hamle gönderilemedi; oyun yeniden eşitleniyor.")
+                }
+                feedback(SoundEffect.ERROR)
+            }
+        }
+    }
+
+    private fun observeOnlineRoom() {
+        val session = onlineSession
+        if (session == null) {
+            _uiState.update { it.copy(onlineMessage = "Çevrimiçi oturum bilgisi eksik.") }
+            return
+        }
+        viewModelScope.launch {
+            onlineRepository.observeRoom(session.roomCode)
+                .catch { error ->
+                    _uiState.update {
+                        it.copy(
+                            isOnlineConnected = false,
+                            isOnlineSyncing = false,
+                            onlineMessage = error.localizedMessage ?: "Oda bağlantısı kesildi.",
+                        )
+                    }
+                }
+                .collect { room ->
+                    if (room.playerFor(session.userId) != session.playerId) {
+                        _uiState.update { it.copy(isOnlineConnected = false, onlineMessage = "Oda üyeliği doğrulanamadı.") }
+                        return@collect
+                    }
+                    val previous = _uiState.value.boardState
+                    val recentWall = (room.boardState.walls - previous.walls).singleOrNull()
+                    val revisionChanged = onlineRevision >= 0L && room.revision > onlineRevision
+                    onlineRevision = room.revision
+                    gameManager.synchronize(room.boardState)
+                    _uiState.update {
+                        it.copy(
+                            boardState = room.boardState,
+                            pawnSelected = false,
+                            validMoves = emptySet(),
+                            wallMode = false,
+                            validWalls = emptySet(),
+                            pendingWall = null,
+                            invalidWallPreview = null,
+                            recentlyPlacedWall = recentWall,
+                            isOnlineConnected = room.status == OnlineRoomStatus.ACTIVE || room.status == OnlineRoomStatus.FINISHED,
+                            isOnlineSyncing = false,
+                            onlineMessage = when (room.status) {
+                                OnlineRoomStatus.ABANDONED -> "Rakip odadan ayrıldı."
+                                OnlineRoomStatus.WAITING -> "Rakip yeniden bağlanıyor…"
+                                else -> null
+                            },
+                            canUndo = false,
+                        )
+                    }
+                    if (revisionChanged) {
+                        feedback(if (recentWall != null) SoundEffect.WALL else SoundEffect.MOVE)
+                    }
+                    finishOrRunAi(room.boardState)
+                }
         }
     }
 
@@ -274,7 +396,13 @@ class GameViewModel @Inject constructor(
         if (recordedWinner == winner) return
         recordedWinner = winner
         viewModelScope.launch {
-            statisticsManager.recordGame(mode, difficulty, winner, turns)
+            statisticsManager.recordGame(
+                mode = mode,
+                difficulty = difficulty,
+                winner = winner,
+                localPlayer = onlineSession?.playerId ?: PlayerId.PLAYER_ONE,
+                turns = turns,
+            )
         }
     }
 

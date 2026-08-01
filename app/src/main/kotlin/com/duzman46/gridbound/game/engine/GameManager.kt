@@ -53,4 +53,13 @@ class GameManager @Inject constructor(
     fun validWalls(): Set<Wall> = wallValidator.validWalls(state)
 
     fun canUndo(steps: Int = 1): Boolean = undoStack.size >= steps
+
+    @Synchronized
+    fun synchronize(remoteState: BoardState): BoardState {
+        if (state != remoteState) {
+            undoStack.clear()
+            state = remoteState
+        }
+        return state
+    }
 }

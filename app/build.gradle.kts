@@ -1,9 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
+
+val firebaseProperties = Properties().apply {
+    val configuration = rootProject.file("firebase.properties")
+    if (configuration.exists()) configuration.inputStream().use(::load)
+}
+
+fun firebaseValue(name: String): String =
+    (firebaseProperties.getProperty(name) ?: System.getenv(name) ?: "")
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
 
 android {
     namespace = "com.duzman46.gridbound"
@@ -15,6 +27,11 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+
+        buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseValue("GRIDBOUND_FIREBASE_API_KEY")}\"")
+        buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseValue("GRIDBOUND_FIREBASE_APP_ID")}\"")
+        buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${firebaseValue("GRIDBOUND_FIREBASE_PROJECT_ID")}\"")
+        buildConfigField("String", "FIREBASE_DATABASE_URL", "\"${firebaseValue("GRIDBOUND_FIREBASE_DATABASE_URL")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -66,6 +83,9 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.lifecycle.viewmodel.compose)

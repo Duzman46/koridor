@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -119,7 +120,7 @@ fun MainMenuScreen(
 }
 
 @Composable
-fun ModeSelectionScreen(onBack: () -> Unit, onAi: () -> Unit, onLocal: () -> Unit) {
+fun ModeSelectionScreen(onBack: () -> Unit, onAi: () -> Unit, onLocal: () -> Unit, onOnline: () -> Unit) {
     Scaffold(topBar = { ScreenTopBar("Oyun Modu", onBack) }) { padding ->
         GradientBackground {
             CenteredContent(Modifier.padding(padding)) {
@@ -130,6 +131,7 @@ fun ModeSelectionScreen(onBack: () -> Unit, onAi: () -> Unit, onLocal: () -> Uni
                     Text("Nasıl oynamak istersin?", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     SelectionCard("Yapay Zekâya Karşı", "Üç farklı zorluk seviyesinde stratejini dene.", Icons.Rounded.SmartToy, onAi)
                     SelectionCard("İki Oyuncu", "Aynı cihazda sırayla oynayın.", Icons.Rounded.Groups, onLocal)
+                    SelectionCard("Çevrimiçi", "Oda koduyla internet üzerinden arkadaşına karşı oyna.", Icons.Rounded.Wifi, onOnline)
                 }
             }
         }

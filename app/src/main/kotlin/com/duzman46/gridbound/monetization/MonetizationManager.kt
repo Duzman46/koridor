@@ -269,6 +269,6 @@ class MonetizationManager @Inject constructor(
     private companion object {
         const val PREMIUM_CACHE_KEY = "premium_owned"
         const val COMPLETED_MATCHES_KEY = "completed_matches_since_interstitial"
-        const val MATCHES_PER_INTERSTITIAL = 3
+        const val MATCHES_PER_INTERSTITIAL = 1
     }
 }

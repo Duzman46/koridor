@@ -33,3 +33,8 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 Ücretsiz sürüm ana menüde banner ve tamamlanan her maçtan sonra geçiş reklamı gösterebilir. Tek seferlik Premium “Reklamları Kaldır” satın alımı reklamları kalıcı olarak kapatır. Oyun sırasında reklam gösterilmez.
 
 Çevrimdışı modlar internet bağlantısı olmadan oynanabilir. Çevrimiçi oyun, reklam ve satın alma doğrulaması internet bağlantısı gerektirir. Ayrıntılar için mağaza sayfasındaki gizlilik politikasını inceleyin.
+
+## İletişim ve gizlilik
+
+- Destek e-postası: `furkanduzman46@gmail.com`
+- Gizlilik politikası: `https://gridbound-duzman46.web.app/privacy/`

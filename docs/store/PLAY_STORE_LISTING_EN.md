@@ -33,3 +33,8 @@ FEATURES
 The free version may show a banner on the main menu and an interstitial after every completed match. A one-time Premium “Remove Ads” purchase permanently disables ads. Ads are never shown during a match.
 
 Offline modes work without an internet connection. Online play, ads, and purchase verification require internet access. See the privacy policy on the store listing for details.
+
+## Contact and privacy
+
+- Support email: `furkanduzman46@gmail.com`
+- Privacy policy: `https://gridbound-duzman46.web.app/privacy/`

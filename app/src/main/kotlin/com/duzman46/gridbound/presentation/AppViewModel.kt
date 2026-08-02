@@ -36,6 +36,9 @@ class AppViewModel @Inject constructor(
 
     fun showPrivacyOptions(activity: Activity) = monetizationManager.showPrivacyOptions(activity)
 
+    fun showInterstitialAfterCompletedMatch(activity: Activity, onFinished: () -> Unit) =
+        monetizationManager.showInterstitialAfterCompletedMatch(activity, onFinished)
+
     fun setLanguage(language: AppLanguage) {
         viewModelScope.launch { settingsManager.setLanguage(language) }
     }

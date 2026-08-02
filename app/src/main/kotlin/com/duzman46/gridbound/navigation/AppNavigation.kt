@@ -52,6 +52,7 @@ fun AppNavigation(
     onBuyPremium: () -> Unit,
     onRestorePurchases: () -> Unit,
     onPrivacyOptions: () -> Unit,
+    onCompletedMatchExit: (onFinished: () -> Unit) -> Unit,
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
@@ -145,20 +146,24 @@ fun AppNavigation(
                 winner = winner,
                 mode = mode,
                 onReplay = {
-                    if (mode == GameMode.ONLINE) {
-                        navController.navigate(Routes.ONLINE) {
-                            popUpTo(Routes.WINNER) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Routes.game(mode, difficulty)) {
-                            popUpTo(Routes.WINNER) { inclusive = true }
+                    onCompletedMatchExit {
+                        if (mode == GameMode.ONLINE) {
+                            navController.navigate(Routes.ONLINE) {
+                                popUpTo(Routes.WINNER) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Routes.game(mode, difficulty)) {
+                                popUpTo(Routes.WINNER) { inclusive = true }
+                            }
                         }
                     }
                 },
                 onHome = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = false }
-                        launchSingleTop = true
+                    onCompletedMatchExit {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.HOME) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                 },
             )

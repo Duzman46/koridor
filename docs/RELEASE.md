@@ -4,7 +4,7 @@
 
 - Release builds use R8 code optimization and resource shrinking.
 - Only Turkish and English resources are packaged; Play’s app bundle creates device-specific splits.
-- Development builds always use Google’s official test banner ID.
+- Development builds always use Google’s official test banner and interstitial IDs.
 - Release builds do not request ads unless real AdMob IDs are supplied.
 - Premium is a one-time, non-consumable Play product with ID `remove_ads`.
 - Purchases are granted only in the `PURCHASED` state, acknowledged, cached for offline use, and restored from Google Play.
@@ -12,7 +12,7 @@
 
 ## Required private configuration
 
-1. Copy `monetization.properties.example` to `monetization.properties` and add the real AdMob app/banner IDs.
+1. Copy `monetization.properties.example` to `monetization.properties` and add the real AdMob app, banner, and interstitial IDs.
 2. Create an active one-time Play Console product named `remove_ads`.
 3. Create a private upload key, copy `keystore.properties.example` to `keystore.properties`, and fill in its path/passwords.
 4. Never commit either private properties file or the `.jks` key. They are ignored by Git.

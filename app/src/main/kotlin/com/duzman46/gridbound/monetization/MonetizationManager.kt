@@ -16,6 +16,11 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.duzman46.gridbound.BuildConfig
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.UserMessagingPlatform
@@ -49,6 +54,9 @@ class MonetizationManager @Inject constructor(
     private var productDetails: ProductDetails? = null
     private var billingConnectionStarted = false
     private var adsInitialized = false
+    private var interstitialAd: InterstitialAd? = null
+    private var interstitialLoading = false
+    private var interstitialShowing = false
     private val billingClient = BillingClient.newBuilder(context)
         .setListener(this)
         .enablePendingPurchases(
@@ -93,6 +101,39 @@ class MonetizationManager @Inject constructor(
 
     fun showPrivacyOptions(activity: Activity) {
         UserMessagingPlatform.showPrivacyOptionsForm(activity) { updateConsentState() }
+    }
+
+    @SuppressLint("UseKtx")
+    fun showInterstitialAfterCompletedMatch(activity: Activity, onFinished: () -> Unit) {
+        if (interstitialShowing || _state.value.isPremium || !_state.value.adsAllowed) {
+            onFinished()
+            return
+        }
+        val completedSinceAd = preferences.getInt(COMPLETED_MATCHES_KEY, 0) + 1
+        val ad = interstitialAd
+        if (completedSinceAd < MATCHES_PER_INTERSTITIAL || ad == null) {
+            preferences.edit().putInt(COMPLETED_MATCHES_KEY, completedSinceAd).apply()
+            if (ad == null) loadInterstitial()
+            onFinished()
+            return
+        }
+        preferences.edit().putInt(COMPLETED_MATCHES_KEY, 0).apply()
+        interstitialShowing = true
+        interstitialAd = null
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                interstitialShowing = false
+                loadInterstitial()
+                onFinished()
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                interstitialShowing = false
+                loadInterstitial()
+                onFinished()
+            }
+        }
+        ad.show(activity)
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
@@ -198,11 +239,36 @@ class MonetizationManager @Inject constructor(
         }
         if (adsAllowed && !adsInitialized) {
             adsInitialized = true
-            MobileAds.initialize(context)
+            MobileAds.initialize(context) { loadInterstitial() }
+        } else if (adsAllowed && interstitialAd == null) {
+            loadInterstitial()
         }
+    }
+
+    private fun loadInterstitial() {
+        if (interstitialLoading || interstitialAd != null || !_state.value.adsAllowed) return
+        interstitialLoading = true
+        InterstitialAd.load(
+            context,
+            BuildConfig.ADMOB_INTERSTITIAL_ID,
+            com.google.android.gms.ads.AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(ad: InterstitialAd) {
+                    interstitialLoading = false
+                    interstitialAd = ad
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    interstitialLoading = false
+                    interstitialAd = null
+                }
+            },
+        )
     }
 
     private companion object {
         const val PREMIUM_CACHE_KEY = "premium_owned"
+        const val COMPLETED_MATCHES_KEY = "completed_matches_since_interstitial"
+        const val MATCHES_PER_INTERSTITIAL = 3
     }
 }

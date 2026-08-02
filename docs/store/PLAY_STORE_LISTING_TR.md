@@ -30,6 +30,6 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 - Hamle geçmişi, yeniden başlatma ve geri alma
 - Cihazda tutulan oyun istatistikleri
 
-Ücretsiz sürüm ana menüde reklam gösterebilir. Tek seferlik Premium “Reklamları Kaldır” satın alımı reklamları kalıcı olarak kapatır. Oyun sırasında reklam gösterilmez.
+Ücretsiz sürüm ana menüde banner ve her üçüncü tamamlanan maçtan sonra geçiş reklamı gösterebilir. Tek seferlik Premium “Reklamları Kaldır” satın alımı reklamları kalıcı olarak kapatır. Oyun sırasında reklam gösterilmez.
 
 Çevrimdışı modlar internet bağlantısı olmadan oynanabilir. Çevrimiçi oyun, reklam ve satın alma doğrulaması internet bağlantısı gerektirir. Ayrıntılar için mağaza sayfasındaki gizlilik politikasını inceleyin.

@@ -39,10 +39,14 @@ fun monetizationValue(name: String, fallback: String = ""): String =
 
 val testAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
 val testBannerAdUnitId = "ca-app-pub-3940256099942544/9214589741"
+val testInterstitialAdUnitId = "ca-app-pub-3940256099942544/1033173712"
 val configuredAdMobAppId = monetizationValue("KORIDOR_ADMOB_APP_ID")
 val configuredBannerAdUnitId = monetizationValue("KORIDOR_ADMOB_BANNER_ID")
+val configuredInterstitialAdUnitId = monetizationValue("KORIDOR_ADMOB_INTERSTITIAL_ID")
 val premiumProductId = monetizationValue("KORIDOR_PREMIUM_PRODUCT_ID", "remove_ads")
-val monetizationConfigured = configuredAdMobAppId.isNotBlank() && configuredBannerAdUnitId.isNotBlank()
+val monetizationConfigured = configuredAdMobAppId.isNotBlank() &&
+    configuredBannerAdUnitId.isNotBlank() &&
+    configuredInterstitialAdUnitId.isNotBlank()
 
 android {
     namespace = "com.duzman46.gridbound"
@@ -62,9 +66,11 @@ android {
         buildConfigField("String", "PREMIUM_PRODUCT_ID", "\"$premiumProductId\"")
         buildConfigField("boolean", "MONETIZATION_CONFIGURED", monetizationConfigured.toString())
         manifestPlaceholders["ADMOB_APP_ID"] = configuredAdMobAppId.ifBlank { testAdMobAppId }
-        resourceConfigurations += listOf("en", "tr")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    androidResources {
+        localeFilters += listOf("en", "tr")
     }
 
     signingConfigs {
@@ -81,9 +87,11 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "ADMOB_BANNER_ID", "\"$testBannerAdUnitId\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$testInterstitialAdUnitId\"")
         }
         release {
             buildConfigField("String", "ADMOB_BANNER_ID", "\"${configuredBannerAdUnitId.ifBlank { testBannerAdUnitId }}\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${configuredInterstitialAdUnitId.ifBlank { testInterstitialAdUnitId }}\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

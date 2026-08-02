@@ -36,6 +36,9 @@ class MainActivity : ComponentActivity() {
                         onBuyPremium = { viewModel.buyPremium(this@MainActivity) },
                         onRestorePurchases = viewModel::restorePurchases,
                         onPrivacyOptions = { viewModel.showPrivacyOptions(this@MainActivity) },
+                        onCompletedMatchExit = { onFinished ->
+                            viewModel.showInterstitialAfterCompletedMatch(this@MainActivity, onFinished)
+                        },
                     )
                 }
             }

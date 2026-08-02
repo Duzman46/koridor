@@ -13,15 +13,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.board.BoardGeometry
+import com.duzman46.gridbound.game.board.BoardOrientation
 import com.duzman46.gridbound.game.board.BoardPalette
 import com.duzman46.gridbound.game.board.CanvasRenderer
 import com.duzman46.gridbound.game.board.TouchController
 import com.duzman46.gridbound.game.models.Wall
+import com.duzman46.gridbound.game.models.GameMode
+import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.presentation.game.GameUiState
 import com.duzman46.gridbound.ui.localization.localized
 
@@ -34,6 +39,7 @@ fun GameBoard(
 ) {
     val renderer = remember { CanvasRenderer() }
     val touchController = remember { TouchController() }
+    val flipped = state.mode == GameMode.ONLINE && state.localPlayer == PlayerId.PLAYER_TWO
     val playerOne = state.boardState.player(com.duzman46.gridbound.game.models.PlayerId.PLAYER_ONE)
     val playerTwo = state.boardState.player(com.duzman46.gridbound.game.models.PlayerId.PLAYER_TWO)
     val p1Row by animateFloatAsState(playerOne.position.row.toFloat(), tween(Constants.Animation.PAWN_DURATION_MILLIS), label = "p1Row")
@@ -73,32 +79,36 @@ fun GameBoard(
                 detectTapGestures { offset ->
                     if (!state.acceptsHumanInput) return@detectTapGestures
                     val geometry = BoardGeometry(minOf(size.width, size.height).toFloat())
+                    val modelOffset = BoardOrientation.toModelOffset(offset, size.width.toFloat(), size.height.toFloat(), flipped)
                     if (state.wallMode) {
-                        touchController.wallAt(offset, geometry, state.wallOrientation)?.let(onWallTap)
+                        touchController.wallAt(modelOffset, geometry, state.wallOrientation)?.let(onWallTap)
                     } else {
-                        touchController.tileAt(offset, geometry)?.let(onTileTap)
+                        touchController.tileAt(modelOffset, geometry)?.let(onTileTap)
                     }
                 }
             },
     ) {
         val geometry = BoardGeometry(size.minDimension)
-        renderer.draw(
-            scope = this,
-            geometry = geometry,
-            state = state.boardState,
-            palette = palette,
-            validMoves = state.validMoves,
-            validWalls = state.validWalls,
-            wallOrientation = state.wallOrientation,
-            pendingWall = state.pendingWall,
-            invalidWall = state.invalidWallPreview,
-            recentWall = state.recentlyPlacedWall,
-            recentWallProgress = wallProgress.value,
-            playerOneRow = p1Row,
-            playerOneColumn = p1Column,
-            playerTwoRow = p2Row,
-            playerTwoColumn = p2Column,
-            selected = state.pawnSelected,
-        )
+        val renderBoard: DrawScope.() -> Unit = {
+            renderer.draw(
+                scope = this,
+                geometry = geometry,
+                state = state.boardState,
+                palette = palette,
+                validMoves = state.validMoves,
+                validWalls = state.validWalls,
+                wallOrientation = state.wallOrientation,
+                pendingWall = state.pendingWall,
+                invalidWall = state.invalidWallPreview,
+                recentWall = state.recentlyPlacedWall,
+                recentWallProgress = wallProgress.value,
+                playerOneRow = p1Row,
+                playerOneColumn = p1Column,
+                playerTwoRow = p2Row,
+                playerTwoColumn = p2Column,
+                selected = state.pawnSelected,
+            )
+        }
+        if (flipped) rotate(180f, center, renderBoard) else renderBoard()
     }
 }

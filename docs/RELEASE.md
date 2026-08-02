@@ -1,22 +1,40 @@
-# Release guide
+# Play Store release guide
 
-## Verified artifacts
+## Automated release protections
 
-- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
-- Unsigned release bundle: `app/build/outputs/bundle/release/app-release.aab`
+- Release builds use R8 code optimization and resource shrinking.
+- Only Turkish and English resources are packaged; Play’s app bundle creates device-specific splits.
+- Development builds always use Google’s official test banner ID.
+- Release builds do not request ads unless real AdMob IDs are supplied.
+- Premium is a one-time, non-consumable Play product with ID `remove_ads`.
+- Purchases are granted only in the `PURCHASED` state, acknowledged, cached for offline use, and restored from Google Play.
+- EEA/UK consent is requested through Google User Messaging Platform before ads can load.
 
-## Signing
+## Required private configuration
 
-Production signing credentials must never be committed. Create an upload key in Android Studio, keep it outside the repository, and configure signing through local environment variables or an untracked `keystore.properties` file before uploading the bundle to Google Play.
+1. Copy `monetization.properties.example` to `monetization.properties` and add the real AdMob app/banner IDs.
+2. Create an active one-time Play Console product named `remove_ads`.
+3. Create a private upload key, copy `keystore.properties.example` to `keystore.properties`, and fill in its path/passwords.
+4. Never commit either private properties file or the `.jks` key. They are ignored by Git.
 
-## Pre-release checklist
+When `keystore.properties` is missing, `bundleRelease` intentionally creates an unsigned AAB suitable only for verification.
 
-1. Run `./gradlew :app:testDebugUnitTest :app:lintDebug :app:bundleRelease`.
-2. Confirm the version code and version name.
-3. Test the signed build on at least one API 26 device and one API 37 device.
-4. Verify phone, tablet, light theme, dark theme, sound-off and haptics-off flows.
-5. Run an online match from two separate installations and verify room create/join, moves, walls and disconnect handling.
-6. Deploy `auth,database` from `firebase.json` and confirm the Firebase rules release.
-7. Publish the privacy policy at a public HTTPS URL and add it to Play Console.
-8. Declare anonymous Firebase identifiers and game-state storage in the Play Console Data safety form.
-9. Complete Play Console content rating forms truthfully.
+## Verification command
+
+`./gradlew :app:testDebugUnitTest :app:lintDebug :app:bundleRelease`
+
+## Play Console checklist
+
+1. Confirm version code/name and upload the signed AAB.
+2. Test through Play internal testing so Billing uses a licensed tester account.
+3. Finish a complete online game from both player perspectives, including orange-side rotation, wall placement, disconnect, and winning move.
+4. Test back and Home-icon exit confirmation in AI, local two-player, and online modes.
+5. Publish both privacy policies at a public HTTPS URL and add the developer contact email.
+6. Complete Data safety declarations for Firebase anonymous IDs/game state, AdMob advertising/diagnostics, and Play Billing purchase data.
+7. Complete target audience, ads, content rating, app access, and advertising ID declarations truthfully.
+8. Add store screenshots for phone and tablet, feature graphic, descriptions, support email, and privacy URL.
+9. Use Play pre-launch reports and resolve every crash, ANR, accessibility, and security warning before production rollout.
+
+## Security note
+
+The client verifies and acknowledges purchases through Google Play. Before a large commercial launch, add backend verification of purchase tokens through the Google Play Developer API for stronger fraud resistance.

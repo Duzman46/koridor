@@ -18,14 +18,19 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.PrivacyTip
+import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.WorkspacePremium
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -38,6 +43,7 @@ import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
+import com.duzman46.gridbound.monetization.MonetizationState
 import com.duzman46.gridbound.presentation.settings.SettingsUiState
 import com.duzman46.gridbound.ui.components.GradientBackground
 import com.duzman46.gridbound.ui.components.ScreenTopBar
@@ -54,6 +60,10 @@ fun SettingsScreen(
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onDifficulty: (Difficulty) -> Unit,
+    monetization: MonetizationState,
+    onBuyPremium: () -> Unit,
+    onRestorePurchases: () -> Unit,
+    onPrivacyOptions: () -> Unit,
 ) {
     Scaffold(topBar = { ScreenTopBar(localized("Ayarlar", "Settings"), onBack) }) { padding ->
         GradientBackground {
@@ -63,6 +73,57 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                item {
+                    SettingsCard(localized("Premium ve reklamlar", "Premium and ads")) {
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    if (monetization.isPremium) localized("Premium etkin", "Premium active")
+                                    else localized("Reklamları kaldır", "Remove ads"),
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    when {
+                                        monetization.isPremium -> localized(
+                                            "Bu hesapta reklamlar kalıcı olarak kapalı.",
+                                            "Ads are permanently disabled for this account.",
+                                        )
+                                        monetization.premiumPrice != null -> localized(
+                                            "${monetization.premiumPrice} · Tek seferlik satın alma",
+                                            "${monetization.premiumPrice} · One-time purchase",
+                                        )
+                                        else -> localized(
+                                            "Fiyat bilgisi Play Store bağlantısı kurulunca görünür.",
+                                            "The price appears after connecting to the Play Store.",
+                                        )
+                                    },
+                                )
+                            },
+                            leadingContent = { Icon(Icons.Rounded.WorkspacePremium, contentDescription = null) },
+                        )
+                        if (!monetization.isPremium) {
+                            Button(
+                                onClick = onBuyPremium,
+                                enabled = monetization.billingReady && monetization.premiumPrice != null,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(localized("Premium Satın Al", "Buy Premium"))
+                            }
+                        }
+                        OutlinedButton(onClick = onRestorePurchases, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.Restore, contentDescription = null)
+                            Text(localized("Satın Almayı Geri Yükle", "Restore Purchase"), Modifier.padding(start = 8.dp))
+                        }
+                        if (monetization.privacyOptionsRequired) {
+                            OutlinedButton(onClick = onPrivacyOptions, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Rounded.PrivacyTip, contentDescription = null)
+                                Text(localized("Reklam Gizlilik Seçenekleri", "Ad Privacy Options"), Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                }
                 item {
                     SettingsCard(localized("Dil", "Language")) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

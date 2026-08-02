@@ -13,6 +13,9 @@
         android:label="Koridor"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${ADMOB_APP_ID}" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

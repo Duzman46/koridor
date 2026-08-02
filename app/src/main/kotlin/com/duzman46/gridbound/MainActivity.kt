@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.navigation.AppNavigation
@@ -22,11 +23,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: AppViewModel = hiltViewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
+            val monetization by viewModel.monetization.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) {
+                viewModel.initializeMonetization(this@MainActivity)
+            }
             GridboundTheme(settings) {
                 CompositionLocalProvider(LocalAppLanguage provides settings.language) {
                     AppNavigation(
                         language = settings.language,
                         onLanguage = viewModel::setLanguage,
+                        monetization = monetization,
+                        onBuyPremium = { viewModel.buyPremium(this@MainActivity) },
+                        onRestorePurchases = viewModel::restorePurchases,
+                        onPrivacyOptions = { viewModel.showPrivacyOptions(this@MainActivity) },
                     )
                 }
             }

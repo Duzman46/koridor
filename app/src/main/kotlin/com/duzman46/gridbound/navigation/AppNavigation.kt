@@ -13,6 +13,7 @@ import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
+import com.duzman46.gridbound.monetization.MonetizationState
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.ui.screens.DifficultySelectionScreen
 import com.duzman46.gridbound.ui.screens.GameRoute
@@ -44,7 +45,14 @@ private object Routes {
 }
 
 @Composable
-fun AppNavigation(language: AppLanguage, onLanguage: (AppLanguage) -> Unit) {
+fun AppNavigation(
+    language: AppLanguage,
+    onLanguage: (AppLanguage) -> Unit,
+    monetization: MonetizationState,
+    onBuyPremium: () -> Unit,
+    onRestorePurchases: () -> Unit,
+    onPrivacyOptions: () -> Unit,
+) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) {
@@ -61,6 +69,7 @@ fun AppNavigation(language: AppLanguage, onLanguage: (AppLanguage) -> Unit) {
                 onPlay = { navController.navigate(Routes.MODE) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onStatistics = { navController.navigate(Routes.STATISTICS) },
+                showAdBanner = monetization.adsAllowed,
             )
         }
         composable(Routes.MODE) {
@@ -166,6 +175,10 @@ fun AppNavigation(language: AppLanguage, onLanguage: (AppLanguage) -> Unit) {
                 onSound = viewModel::setSoundEnabled,
                 onHaptics = viewModel::setHapticsEnabled,
                 onDifficulty = viewModel::setDifficulty,
+                monetization = monetization,
+                onBuyPremium = onBuyPremium,
+                onRestorePurchases = onRestorePurchases,
+                onPrivacyOptions = onPrivacyOptions,
             )
         }
         composable(Routes.STATISTICS) {

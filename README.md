@@ -1,6 +1,6 @@
-# Gridbound
+# Koridor
 
-Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android strateji oyunudur. İki oyuncu, 9×9 tahta üzerinde rakibin başladığı kenara ilk ulaşan taraf olmak için yarışır.
+Koridor, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android strateji oyunudur. İki oyuncu, 9×9 tahta üzerinde rakibin başladığı kenara ilk ulaşan taraf olmak için yarışır.
 
 ## Özellikler
 
@@ -15,6 +15,8 @@ Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android
 - Piyon/duvar animasyonları, konfeti, ses ve haptik geri bildirim
 - Açık, koyu ve Android 12+ dinamik renk temaları
 - DataStore tabanlı ayarlar ve istatistikler
+- Google Play üzerinden tek seferlik Premium ve reklamsız kullanım
+- AdMob banner ile UMP reklam gizliliği onayı
 - Hamle geçmişi, restart ve undo
 - Büyük duvar dokunma alanı, belirgin önizleme ve onay/iptal akışı
 - Tamamen Kotlin + Jetpack Compose + Material 3
@@ -28,6 +30,7 @@ Gridbound, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android
 - MVVM, Clean Architecture sınırları, immutable state
 - Hilt, Coroutines, StateFlow ve Preferences DataStore
 - Firebase Android BoM 34.17.0, Authentication ve Realtime Database
+- Google Play Billing 9.1.0, Mobile Ads 25.4.0 ve UMP 4.0.0
 
 ## Mimari
 

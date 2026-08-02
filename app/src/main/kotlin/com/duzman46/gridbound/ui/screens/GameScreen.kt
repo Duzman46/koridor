@@ -1,5 +1,13 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,6 +54,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -87,7 +98,7 @@ fun GameRoute(
     }
     GameScreen(
         state = state,
-        onHome = onHome,
+        onExit = { viewModel.leaveGame(onHome) },
         onSettings = onSettings,
         onRestart = viewModel::restart,
         onUndo = viewModel::undo,
@@ -104,7 +115,7 @@ fun GameRoute(
 @Composable
 private fun GameScreen(
     state: GameUiState,
-    onHome: () -> Unit,
+    onExit: () -> Unit,
     onSettings: () -> Unit,
     onRestart: () -> Unit,
     onUndo: () -> Unit,
@@ -116,8 +127,32 @@ private fun GameScreen(
     onCancelWall: () -> Unit,
 ) {
     var showHistory by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
+    BackHandler(enabled = !showExitConfirmation) { showExitConfirmation = true }
     if (showHistory) {
         HistoryDialog(state.boardState.history, onDismiss = { showHistory = false })
+    }
+    if (showExitConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmation = false },
+            title = { Text(localized("Oyundan çıkılsın mı?", "Leave the game?")) },
+            text = {
+                Text(
+                    localized(
+                        "Mevcut oyun sona erecek. Oyundan çıkmak istediğine emin misin?",
+                        "The current game will end. Are you sure you want to leave?",
+                    ),
+                )
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmation = false }) {
+                    Text(localized("Oyuna Devam", "Keep Playing"))
+                }
+            },
+            confirmButton = {
+                Button(onClick = onExit) { Text(localized("Oyundan Çık", "Leave Game")) }
+            },
+        )
     }
     Scaffold(
         topBar = {
@@ -132,7 +167,7 @@ private fun GameScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onHome) {
+                    IconButton(onClick = { showExitConfirmation = true }) {
                         Icon(Icons.Rounded.Home, contentDescription = localized("Ana menü", "Home"))
                     }
                 },
@@ -316,11 +351,32 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
         current == PlayerId.PLAYER_ONE -> localized("Mavi oyuncunun sırası", "Blue player's turn")
         else -> localized("Turuncu oyuncunun sırası", "Orange player's turn")
     }
-    Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 3.dp) {
+    val activeColor = if (current == PlayerId.PLAYER_ONE) Color(0xFF3F82FF) else Color(0xFFFF8A34)
+    val shouldPulse = state.acceptsHumanInput || state.mode == GameMode.LOCAL_TWO_PLAYER
+    val transition = rememberInfiniteTransition(label = "turnBeacon")
+    val beaconAlpha by transition.animateFloat(
+        initialValue = if (shouldPulse) 0.42f else 0.72f,
+        targetValue = if (shouldPulse) 1f else 0.72f,
+        animationSpec = infiniteRepeatable(tween(720), RepeatMode.Reverse),
+        label = "turnBeaconAlpha",
+    )
+    Surface(
+        modifier = Modifier.border(2.dp, activeColor.copy(alpha = beaconAlpha), RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 3.dp,
+    ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(turnTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .alpha(beaconAlpha)
+                                .background(activeColor, RoundedCornerShape(50)),
+                        )
+                        Text(turnTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
                     Text(
                         when (state.mode) {
                             GameMode.VS_AI -> localized("${state.difficulty.label()} yapay zekâ", "${state.difficulty.label()} AI")

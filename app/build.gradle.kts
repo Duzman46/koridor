@@ -12,10 +12,37 @@ val firebaseProperties = Properties().apply {
     if (configuration.exists()) configuration.inputStream().use(::load)
 }
 
+val monetizationProperties = Properties().apply {
+    val configuration = rootProject.file("monetization.properties")
+    if (configuration.exists()) configuration.inputStream().use(::load)
+}
+
+val keystoreProperties = Properties().apply {
+    val configuration = rootProject.file("keystore.properties")
+    if (configuration.exists()) configuration.inputStream().use(::load)
+}
+val releaseStoreFile = keystoreProperties.getProperty("storeFile").orEmpty()
+val releaseSigningConfigured = releaseStoreFile.isNotBlank() &&
+    keystoreProperties.getProperty("storePassword").orEmpty().isNotBlank() &&
+    keystoreProperties.getProperty("keyAlias").orEmpty().isNotBlank() &&
+    keystoreProperties.getProperty("keyPassword").orEmpty().isNotBlank()
+
 fun firebaseValue(name: String): String =
     (firebaseProperties.getProperty(name) ?: System.getenv(name) ?: "")
         .replace("\\", "\\\\")
         .replace("\"", "\\\"")
+
+fun monetizationValue(name: String, fallback: String = ""): String =
+    (monetizationProperties.getProperty(name) ?: System.getenv(name) ?: fallback)
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+
+val testAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
+val testBannerAdUnitId = "ca-app-pub-3940256099942544/9214589741"
+val configuredAdMobAppId = monetizationValue("KORIDOR_ADMOB_APP_ID")
+val configuredBannerAdUnitId = monetizationValue("KORIDOR_ADMOB_BANNER_ID")
+val premiumProductId = monetizationValue("KORIDOR_PREMIUM_PRODUCT_ID", "remove_ads")
+val monetizationConfigured = configuredAdMobAppId.isNotBlank() && configuredBannerAdUnitId.isNotBlank()
 
 android {
     namespace = "com.duzman46.gridbound"
@@ -25,22 +52,44 @@ android {
         applicationId = "com.duzman46.gridbound"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
         buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseValue("GRIDBOUND_FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseValue("GRIDBOUND_FIREBASE_APP_ID")}\"")
         buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${firebaseValue("GRIDBOUND_FIREBASE_PROJECT_ID")}\"")
         buildConfigField("String", "FIREBASE_DATABASE_URL", "\"${firebaseValue("GRIDBOUND_FIREBASE_DATABASE_URL")}\"")
+        buildConfigField("String", "PREMIUM_PRODUCT_ID", "\"$premiumProductId\"")
+        buildConfigField("boolean", "MONETIZATION_CONFIGURED", monetizationConfigured.toString())
+        manifestPlaceholders["ADMOB_APP_ID"] = configuredAdMobAppId.ifBlank { testAdMobAppId }
+        resourceConfigurations += listOf("en", "tr")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$testBannerAdUnitId\"")
+        }
         release {
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"${configuredBannerAdUnitId.ifBlank { testBannerAdUnitId }}\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -86,6 +135,9 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
+    implementation(libs.play.billing)
+    implementation(libs.play.services.ads)
+    implementation(libs.ump)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.lifecycle.viewmodel.compose)

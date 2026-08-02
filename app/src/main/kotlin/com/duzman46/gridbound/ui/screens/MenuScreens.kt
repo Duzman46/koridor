@@ -50,6 +50,7 @@ import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.ui.components.CenteredContent
+import com.duzman46.gridbound.ui.components.AdBanner
 import com.duzman46.gridbound.ui.components.GradientBackground
 import com.duzman46.gridbound.ui.components.MenuButton
 import com.duzman46.gridbound.ui.components.ScreenTopBar
@@ -101,6 +102,7 @@ fun MainMenuScreen(
     onPlay: () -> Unit,
     onSettings: () -> Unit,
     onStatistics: () -> Unit,
+    showAdBanner: Boolean,
 ) {
     var languageMenuOpen by remember { mutableStateOf(false) }
     GradientBackground {
@@ -150,6 +152,9 @@ fun MainMenuScreen(
                     MenuButton(localized("İstatistikler", "Statistics"), Icons.Rounded.BarChart, onStatistics)
                     MenuButton(localized("Ayarlar", "Settings"), Icons.Rounded.Settings, onSettings)
                 }
+            }
+            if (showAdBanner) {
+                AdBanner(Modifier.align(Alignment.BottomCenter))
             }
         }
     }

@@ -59,7 +59,7 @@ object Constants {
     object Data {
         const val STATE_FLOW_STOP_TIMEOUT_MILLIS = 5_000L
         const val SETTINGS_FILE_NAME = "gridbound_preferences"
-        const val DEFAULT_VERSION_NAME = "0.2.0"
+        const val DEFAULT_VERSION_NAME = "0.3.0"
         const val KEY_LANGUAGE = "language"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_DYNAMIC_COLOR = "dynamic_color"

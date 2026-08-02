@@ -187,6 +187,19 @@ class GameViewModel @Inject constructor(
         _uiState.update { it.copy(pendingWall = null, invalidWallPreview = null) }
     }
 
+    fun leaveGame(onFinished: () -> Unit) {
+        aiJob?.cancel()
+        val session = onlineSession
+        if (session == null) {
+            onFinished()
+            return
+        }
+        viewModelScope.launch {
+            runCatching { onlineRepository.leaveRoom(session) }
+            onFinished()
+        }
+    }
+
     fun restart() {
         if (mode == GameMode.ONLINE) {
             feedback(SoundEffect.ERROR)

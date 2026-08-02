@@ -11,4 +11,4 @@ captures/
 *.jks
 *.keystore
 keystore.properties
-
+monetization.properties

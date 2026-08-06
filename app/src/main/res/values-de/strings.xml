@@ -107,7 +107,6 @@
     <string name="account_terms_of_service">Nutzungsbedingungen</string>
     <string name="account_legal_unavailable">Dieses Dokument ist noch nicht veröffentlicht.</string>
 
-    <string name="tutorial_replay">Tutorial wiederholen</string>
     <string name="tutorial_skip_confirm_title">Tutorial überspringen?</string>
     <string name="tutorial_skip_confirm_message">Du kannst es jederzeit über das Hauptmenü oder die Einstellungen wiederholen.</string>
     <string name="tutorial_progress">Schritt %1$d von %2$d</string>
@@ -196,20 +195,10 @@
     <string name="cd_leaderboard_row">Platz %1$d, %2$s, Wertung %3$d</string>
 
     <string name="menu_statistics">Statistiken</string>
-    <string name="mode_title">Spielmodus</string>
-    <string name="mode_vs_ai">Gegen die KI</string>
-    <string name="mode_vs_ai_description">Teste deine Strategie in drei Schwierigkeitsgraden.</string>
-    <string name="mode_two_players">Zwei Spieler</string>
-    <string name="mode_two_players_description">Spielt abwechselnd auf einem Gerät.</string>
-    <string name="mode_online">Online</string>
-    <string name="mode_online_description">Spiele online gegen eine Freundin oder einen Freund mit einem Raumcode.</string>
     <string name="difficulty_title">Schwierigkeit</string>
     <string name="difficulty_easy">Leicht</string>
-    <string name="difficulty_easy_description">Entspannte und abwechslungsreiche Züge.</string>
     <string name="difficulty_medium">Mittel</string>
-    <string name="difficulty_medium_description">Erkennt den kürzesten Weg und bremst dich aus.</string>
     <string name="difficulty_hard">Schwer</string>
-    <string name="difficulty_hard_description">Rechnet mit Minimax und Alpha-Beta mehrere Züge voraus.</string>
 
     <string name="game_turn">Runde %1$d</string>
     <string name="game_home">Hauptmenü</string>
@@ -259,13 +248,11 @@
     <string name="winner_main_menu">Hauptmenü</string>
 
     <string name="settings_language">Sprache</string>
-    <string name="settings_language_system">Gerätesprache</string>
+    <string name="settings_language_device">Gerätesprache verwenden</string>
     <string name="settings_appearance">Darstellung</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>
-    <string name="settings_dynamic_color">Dynamische Farben</string>
-    <string name="settings_dynamic_color_description">Verwendet die Farbpalette deines Geräts.</string>
     <string name="settings_game_experience">Spielerlebnis</string>
     <string name="settings_sounds">Töne</string>
     <string name="settings_sounds_description">Töne für Züge, Mauern und Ergebnisse.</string>
@@ -286,25 +273,14 @@
     <string name="stats_wins_losses">%1$d S · %2$d N</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">Shop</string>
-    <string name="store_empty">Es gibt noch nichts zu kaufen. Schau bald wieder vorbei.</string>
-    <string name="store_owned">Im Besitz</string>
-    <string name="store_pending">Zahlung ausstehend</string>
-    <string name="store_pending_explainer">Deine Zahlung wird verarbeitet. Der Inhalt wird automatisch freigeschaltet, sobald sie durch ist.</string>
-    <string name="store_buy">Kaufen</string>
     <string name="store_restore">Käufe wiederherstellen</string>
     <string name="store_guest_warning">Du spielst als Gast. Verknüpfe ein Konto, damit deine Käufe auf andere Geräte mitkommen.</string>
-    <string name="store_no_pay_to_win">Alles hier ist rein optisch. Nichts davon verändert, wie gespielt wird.</string>
 
     <string name="billing_error_unavailable">Der Shop ist gerade nicht verfügbar. Versuche es später erneut.</string>
     <string name="billing_error_unsupported">Käufe werden auf diesem Gerät nicht unterstützt.</string>
     <string name="billing_error_failed">Der Kauf konnte nicht abgeschlossen werden.</string>
     <string name="billing_restore_complete">Käufe wiederhergestellt.</string>
 
-    <string name="theme_board_label">Brett-Design</string>
-    <string name="theme_board_default">Klassisch</string>
-    <string name="theme_board_midnight">Mitternacht</string>
-    <string name="theme_board_sunset">Sonnenuntergang</string>
 
     <string name="friends_title">Freunde</string>
     <string name="friends_search_label">Nach Benutzernamen suchen</string>
@@ -337,14 +313,19 @@
 
     <string name="cd_board">Spielbrett, 9 mal 9 Felder</string>
     <string name="cd_avatar">Profilbild</string>
-    <string name="menu_quick_play">Schnelles Spiel</string>
-    <string name="menu_create_room">Raum erstellen</string>
-    <string name="menu_join_room">Raum beitreten</string>
-    <string name="menu_modes">Modi</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Setze eine senkrechte Mauer</string>
     <string name="tutorial_step_wall_vertical_message">Senkrechte Mauern stehen zwischen zwei Spalten. Tippe auf den markierten Schlitz, um den Seitenschritt deines Gegners zu sperren.</string>
     <string name="tutorial_step_wall_horizontal_title">Setze eine waagerechte Mauer</string>
     <string name="tutorial_step_wall_horizontal_message">Waagerechte Mauern stehen zwischen zwei Reihen. Tippe auf den markierten Schlitz, um deinem Gegner den Weg nach vorn zu versperren.</string>
     <string name="tutorial_step_correct">Richtig. Tippe auf Weiter, um fortzufahren.</string>
+    <string name="menu_play">Spielen</string>
+    <string name="menu_online">Online</string>
+    <string name="menu_more">Mehr</string>
+    <string name="play_vs_bot">Gegen den Bot</string>
+    <string name="play_local">Zwei Spieler an einem Gerät</string>
+    <string name="play_custom_start">Eigenes Spiel starten</string>
+    <string name="online_play_with_friend">Mit Freund spielen</string>
+    <string name="store_remove_ads">Werbung entfernen</string>
+    <string name="more_about_version">Version %1$s</string>
 </resources>

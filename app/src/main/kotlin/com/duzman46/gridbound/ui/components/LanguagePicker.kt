@@ -71,7 +71,7 @@ private fun LanguageRow(language: AppLanguage, isSelected: Boolean, onClick: () 
     ) {
         Text(
             text = if (language.followsDevice) {
-                stringResource(R.string.settings_language_system)
+                stringResource(R.string.settings_language_device)
             } else {
                 language.endonym
             },

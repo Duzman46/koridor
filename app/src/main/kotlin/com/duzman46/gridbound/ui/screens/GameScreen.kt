@@ -262,7 +262,6 @@ private fun GameScreen(
                             onTileTap,
                             onWallTap,
                             Modifier.weight(1.25f).fillMaxHeight().widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp),
-                            theme = state.boardTheme,
                         )
                         CompactGameControls(
                             state,
@@ -283,7 +282,6 @@ private fun GameScreen(
                             onTileTap,
                             onWallTap,
                             Modifier.fillMaxHeight().widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp),
-                            theme = state.boardTheme,
                         )
                     }
                     CompactGameControls(

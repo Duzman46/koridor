@@ -119,7 +119,6 @@
     <string name="account_terms_of_service">شروط الاستخدام</string>
     <string name="account_legal_unavailable">لم يُنشر هذا المستند بعد.</string>
 
-    <string name="tutorial_replay">إعادة الدليل التعليمي</string>
     <string name="tutorial_skip_confirm_title">تخطّي الدليل التعليمي؟</string>
     <string name="tutorial_skip_confirm_message">يمكنك إعادته في أي وقت من القائمة الرئيسية أو الإعدادات.</string>
     <string name="tutorial_progress">الخطوة %1$d من %2$d</string>
@@ -208,20 +207,10 @@
     <string name="cd_leaderboard_row">المركز %1$d، %2$s، التصنيف %3$d</string>
 
     <string name="menu_statistics">الإحصاءات</string>
-    <string name="mode_title">وضع اللعب</string>
-    <string name="mode_vs_ai">ضد الذكاء الاصطناعي</string>
-    <string name="mode_vs_ai_description">اختبر استراتيجيتك على ثلاثة مستويات صعوبة.</string>
-    <string name="mode_two_players">لاعبان</string>
-    <string name="mode_two_players_description">العبا بالتناوب على الجهاز نفسه.</string>
-    <string name="mode_online">عبر الإنترنت</string>
-    <string name="mode_online_description">العب مع صديق عبر الإنترنت باستخدام رمز غرفة.</string>
     <string name="difficulty_title">الصعوبة</string>
     <string name="difficulty_easy">سهل</string>
-    <string name="difficulty_easy_description">نقلات هادئة ومتنوعة.</string>
     <string name="difficulty_medium">متوسط</string>
-    <string name="difficulty_medium_description">يقرأ أقصر طريق ويعرقل تقدّمك.</string>
     <string name="difficulty_hard">صعب</string>
-    <string name="difficulty_hard_description">يحسب عدة نقلات مسبقًا باستخدام minimax وتقليم ألفا-بيتا.</string>
 
     <string name="game_turn">الدور %1$d</string>
     <string name="game_home">القائمة الرئيسية</string>
@@ -275,13 +264,11 @@
     <string name="winner_main_menu">القائمة الرئيسية</string>
 
     <string name="settings_language">اللغة</string>
-    <string name="settings_language_system">لغة الجهاز</string>
+    <string name="settings_language_device">استخدام لغة الجهاز</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_theme_system">النظام</string>
     <string name="settings_theme_light">فاتح</string>
     <string name="settings_theme_dark">داكن</string>
-    <string name="settings_dynamic_color">الألوان الديناميكية</string>
-    <string name="settings_dynamic_color_description">يستخدم لوحة ألوان جهازك.</string>
     <string name="settings_game_experience">تجربة اللعب</string>
     <string name="settings_sounds">الأصوات</string>
     <string name="settings_sounds_description">أصوات النقلات والجدران والنتيجة.</string>
@@ -302,25 +289,14 @@
     <string name="stats_wins_losses">%1$d فوز · %2$d خسارة</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">المتجر</string>
-    <string name="store_empty">لا شيء معروض للبيع بعد. عُد قريبًا.</string>
-    <string name="store_owned">مملوك</string>
-    <string name="store_pending">في انتظار الدفع</string>
-    <string name="store_pending_explainer">تجري معالجة دفعتك. سيُفتح المحتوى تلقائيًا بمجرد اكتمالها.</string>
-    <string name="store_buy">شراء</string>
     <string name="store_restore">استعادة المشتريات</string>
     <string name="store_guest_warning">أنت تلعب كضيف. اربط حسابًا لتنتقل مشترياتك معك إلى أجهزة أخرى.</string>
-    <string name="store_no_pay_to_win">كل ما هنا تجميلي. لا شيء معروض للبيع يغيّر طريقة اللعب.</string>
 
     <string name="billing_error_unavailable">المتجر غير متاح حاليًا. حاول لاحقًا.</string>
     <string name="billing_error_unsupported">الشراء غير مدعوم على هذا الجهاز.</string>
     <string name="billing_error_failed">تعذّر إتمام عملية الشراء.</string>
     <string name="billing_restore_complete">تمت استعادة المشتريات.</string>
 
-    <string name="theme_board_label">مظهر الرقعة</string>
-    <string name="theme_board_default">كلاسيكي</string>
-    <string name="theme_board_midnight">منتصف الليل</string>
-    <string name="theme_board_sunset">الغروب</string>
 
     <string name="friends_title">الأصدقاء</string>
     <string name="friends_search_label">البحث باسم المستخدم</string>
@@ -353,14 +329,19 @@
 
     <string name="cd_board">رقعة اللعب، 9 في 9 مربعات</string>
     <string name="cd_avatar">صورة الملف الشخصي</string>
-    <string name="menu_quick_play">لعب سريع</string>
-    <string name="menu_create_room">إنشاء غرفة</string>
-    <string name="menu_join_room">انضم إلى غرفة</string>
-    <string name="menu_modes">الأنماط</string>
     <string name="menu_tutorial">الدليل</string>
     <string name="tutorial_step_wall_vertical_title">ضع جدارًا رأسيًا</string>
     <string name="tutorial_step_wall_vertical_message">تقع الجدران الرأسية بين عمودين. المس الفتحة المميزة لقطع خطوة خصمك الجانبية.</string>
     <string name="tutorial_step_wall_horizontal_title">ضع جدارًا أفقيًا</string>
     <string name="tutorial_step_wall_horizontal_message">تقع الجدران الأفقية بين صفين. المس الفتحة المميزة لسد طريق خصمك إلى الأمام.</string>
     <string name="tutorial_step_correct">صحيح. المس التالي للمتابعة.</string>
+    <string name="menu_play">العب</string>
+    <string name="menu_online">عبر الإنترنت</string>
+    <string name="menu_more">المزيد</string>
+    <string name="play_vs_bot">ضد الروبوت</string>
+    <string name="play_local">لاعبان على جهاز واحد</string>
+    <string name="play_custom_start">ابدأ لعبة مخصصة</string>
+    <string name="online_play_with_friend">العب مع صديق</string>
+    <string name="store_remove_ads">إزالة الإعلانات</string>
+    <string name="more_about_version">الإصدار %1$s</string>
 </resources>

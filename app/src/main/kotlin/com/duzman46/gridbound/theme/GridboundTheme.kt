@@ -1,15 +1,11 @@
 package com.duzman46.gridbound.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.ThemeMode
 
@@ -60,13 +56,10 @@ fun GridboundTheme(settings: AppSettings, content: @Composable () -> Unit) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    val context = LocalContext.current
-    val scheme = when {
-        settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && dark -> dynamicDarkColorScheme(context)
-        settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicLightColorScheme(context)
-        dark -> DarkColors
-        else -> LightColors
-    }
+    // No dynamic colour branch. Material You repainted the game in whatever the wallpaper
+    // happened to be, which meant it had no look of its own and every screenshot was
+    // different. Light, dark and follow-the-system remain; the palette does not.
+    val scheme = if (dark) DarkColors else LightColors
     MaterialTheme(colorScheme = scheme, content = content)
 }
 

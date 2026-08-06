@@ -24,6 +24,11 @@ enum class GlyphKind {
     TUTORIAL,
     STATISTICS,
     SETTINGS,
+    VS_BOT,
+    ONLINE,
+    PROFILE,
+    MORE,
+    REMOVE_ADS,
 }
 
 /**
@@ -124,6 +129,43 @@ fun KoridorGlyph(
                 tile(s * 0.23f, s * 0.28f, s * 0.20f, tint)
                 bar(s * 0.62f, s * 0.10f, s * 0.10f, s * 0.80f, muted)
                 tile(s * 0.57f, s * 0.56f, s * 0.20f, tint)
+            }
+
+            GlyphKind.VS_BOT -> {
+                // A pawn facing a square-headed one: you against the machine.
+                drawPawnMark(Offset(s * 0.30f, s * 0.54f), s * 0.62f, tint)
+                tile(s * 0.58f, s * 0.22f, s * 0.30f, muted)
+                bar(s * 0.64f, s * 0.60f, s * 0.18f, s * 0.09f, muted)
+            }
+
+            GlyphKind.ONLINE -> {
+                // Two pawns on their own tiles, far apart, with the channel between them
+                // open. Read as a dumbbell when it was two plain squares and a bar, so the
+                // pawns are what say "two players" rather than "two objects".
+                tile(s * 0.02f, s * 0.20f, s * 0.40f, muted)
+                drawPawnMark(Offset(s * 0.22f, s * 0.40f), s * 0.40f, tint)
+                tile(s * 0.58f, s * 0.20f, s * 0.40f, muted)
+                drawPawnMark(Offset(s * 0.78f, s * 0.40f), s * 0.40f, tint)
+                bar(s * 0.06f, s * 0.80f, s * 0.88f, s * 0.09f, tint.copy(alpha = 0.30f))
+            }
+
+            GlyphKind.PROFILE -> {
+                // A single pawn on its own tile.
+                tile(s * 0.14f, s * 0.14f, s * 0.72f, muted)
+                drawPawnMark(Offset(s * 0.50f, s * 0.52f), s * 0.62f, tint)
+            }
+
+            GlyphKind.MORE -> {
+                // Three wall pieces stacked, the way spare walls sit beside the board.
+                bar(s * 0.12f, s * 0.20f, s * 0.76f, s * 0.11f, tint)
+                bar(s * 0.12f, s * 0.445f, s * 0.76f, s * 0.11f, muted)
+                bar(s * 0.12f, s * 0.69f, s * 0.76f, s * 0.11f, muted)
+            }
+
+            GlyphKind.REMOVE_ADS -> {
+                // A tile with the bar lifted off it.
+                tile(s * 0.10f, s * 0.34f, s * 0.52f, muted)
+                bar(s * 0.34f, s * 0.08f, s * 0.56f, s * 0.11f, tint)
             }
         }
     }

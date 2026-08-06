@@ -107,7 +107,6 @@
     <string name="account_terms_of_service">सेवा की शर्तें</string>
     <string name="account_legal_unavailable">यह दस्तावेज़ अभी प्रकाशित नहीं हुआ है।</string>
 
-    <string name="tutorial_replay">ट्यूटोरियल दोबारा देखें</string>
     <string name="tutorial_skip_confirm_title">ट्यूटोरियल छोड़ें?</string>
     <string name="tutorial_skip_confirm_message">आप इसे कभी भी मुख्य मेनू या सेटिंग्स से दोबारा चला सकते हैं।</string>
     <string name="tutorial_progress">चरण %1$d / %2$d</string>
@@ -196,20 +195,10 @@
     <string name="cd_leaderboard_row">रैंक %1$d, %2$s, रेटिंग %3$d</string>
 
     <string name="menu_statistics">आँकड़े</string>
-    <string name="mode_title">गेम मोड</string>
-    <string name="mode_vs_ai">AI के ख़िलाफ़</string>
-    <string name="mode_vs_ai_description">तीन कठिनाई स्तरों पर अपनी रणनीति आज़माएँ।</string>
-    <string name="mode_two_players">दो खिलाड़ी</string>
-    <string name="mode_two_players_description">एक ही डिवाइस पर बारी-बारी से खेलें।</string>
-    <string name="mode_online">ऑनलाइन</string>
-    <string name="mode_online_description">कमरा कोड से किसी दोस्त के साथ ऑनलाइन खेलें।</string>
     <string name="difficulty_title">कठिनाई</string>
     <string name="difficulty_easy">आसान</string>
-    <string name="difficulty_easy_description">आराम से चली जाने वाली और अलग-अलग चालें।</string>
     <string name="difficulty_medium">मध्यम</string>
-    <string name="difficulty_medium_description">सबसे छोटा रास्ता पहचानता है और आपको धीमा करता है।</string>
     <string name="difficulty_hard">कठिन</string>
-    <string name="difficulty_hard_description">मिनिमैक्स और अल्फ़ा-बीटा प्रूनिंग से कई चालें आगे तक सोचता है।</string>
 
     <string name="game_turn">बारी %1$d</string>
     <string name="game_home">मुख्य मेन्यू</string>
@@ -259,13 +248,11 @@
     <string name="winner_main_menu">मुख्य मेन्यू</string>
 
     <string name="settings_language">भाषा</string>
-    <string name="settings_language_system">डिवाइस की भाषा</string>
+    <string name="settings_language_device">डिवाइस की भाषा उपयोग करें</string>
     <string name="settings_appearance">रूप</string>
     <string name="settings_theme_system">सिस्टम</string>
     <string name="settings_theme_light">हल्का</string>
     <string name="settings_theme_dark">गहरा</string>
-    <string name="settings_dynamic_color">डायनामिक रंग</string>
-    <string name="settings_dynamic_color_description">आपके डिवाइस का रंग पैलेट इस्तेमाल करता है।</string>
     <string name="settings_game_experience">खेल का अनुभव</string>
     <string name="settings_sounds">आवाज़ें</string>
     <string name="settings_sounds_description">चाल, दीवार और नतीजे की आवाज़ें।</string>
@@ -286,25 +273,14 @@
     <string name="stats_wins_losses">%1$d जीत · %2$d हार</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">स्टोर</string>
-    <string name="store_empty">अभी बिक्री के लिए कुछ नहीं है। जल्द फिर देखें।</string>
-    <string name="store_owned">आपके पास है</string>
-    <string name="store_pending">भुगतान का इंतज़ार</string>
-    <string name="store_pending_explainer">आपका भुगतान संसाधित हो रहा है। पूरा होते ही यह अपने आप खुल जाएगा।</string>
-    <string name="store_buy">ख़रीदें</string>
     <string name="store_restore">ख़रीदारी बहाल करें</string>
     <string name="store_guest_warning">आप अतिथि के रूप में खेल रहे हैं। खाता जोड़ें ताकि आपकी ख़रीदारी दूसरे डिवाइस पर भी आपके साथ रहे।</string>
-    <string name="store_no_pay_to_win">यहाँ सब कुछ सिर्फ़ दिखावटी है। बिक्री की कोई चीज़ खेल के तरीक़े को नहीं बदलती।</string>
 
     <string name="billing_error_unavailable">स्टोर अभी उपलब्ध नहीं है। बाद में कोशिश करें।</string>
     <string name="billing_error_unsupported">इस डिवाइस पर ख़रीदारी समर्थित नहीं है।</string>
     <string name="billing_error_failed">ख़रीदारी पूरी नहीं हो सकी।</string>
     <string name="billing_restore_complete">ख़रीदारी बहाल हो गई।</string>
 
-    <string name="theme_board_label">बोर्ड थीम</string>
-    <string name="theme_board_default">क्लासिक</string>
-    <string name="theme_board_midnight">मध्यरात्रि</string>
-    <string name="theme_board_sunset">सूर्यास्त</string>
 
     <string name="friends_title">दोस्त</string>
     <string name="friends_search_label">उपयोगकर्ता नाम से खोजें</string>
@@ -337,14 +313,19 @@
 
     <string name="cd_board">गेम बोर्ड, 9 गुणा 9 ख़ाने</string>
     <string name="cd_avatar">प्रोफ़ाइल तस्वीर</string>
-    <string name="menu_quick_play">त्वरित खेल</string>
-    <string name="menu_create_room">कक्ष बनाएँ</string>
-    <string name="menu_join_room">कक्ष में शामिल हों</string>
-    <string name="menu_modes">मोड</string>
     <string name="menu_tutorial">ट्यूटोरियल</string>
     <string name="tutorial_step_wall_vertical_title">खड़ी दीवार रखें</string>
     <string name="tutorial_step_wall_vertical_message">खड़ी दीवारें दो स्तंभों के बीच बैठती हैं। प्रतिद्वंद्वी का बगल का कदम रोकने के लिए चिह्नित खाँचे पर टैप करें।</string>
     <string name="tutorial_step_wall_horizontal_title">पड़ी दीवार रखें</string>
     <string name="tutorial_step_wall_horizontal_message">पड़ी दीवारें दो पंक्तियों के बीच बैठती हैं। प्रतिद्वंद्वी का आगे का रास्ता रोकने के लिए चिह्नित खाँचे पर टैप करें।</string>
     <string name="tutorial_step_correct">सही। जारी रखने के लिए आगे पर टैप करें।</string>
+    <string name="menu_play">खेलें</string>
+    <string name="menu_online">ऑनलाइन</string>
+    <string name="menu_more">और</string>
+    <string name="play_vs_bot">बॉट के विरुद्ध</string>
+    <string name="play_local">एक डिवाइस, दो खिलाड़ी</string>
+    <string name="play_custom_start">कस्टम खेल शुरू करें</string>
+    <string name="online_play_with_friend">मित्र के साथ खेलें</string>
+    <string name="store_remove_ads">विज्ञापन हटाएँ</string>
+    <string name="more_about_version">संस्करण %1$s</string>
 </resources>

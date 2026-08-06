@@ -1,7 +1,6 @@
 package com.duzman46.gridbound.monetization
 
 import com.duzman46.gridbound.BuildConfig
-import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.monetization.domain.Entitlement
 import com.duzman46.gridbound.monetization.domain.ProductCatalog
 import com.duzman46.gridbound.monetization.domain.ProductKind
@@ -22,7 +21,7 @@ class PurchaseModelTest {
     @Test
     fun `an unconfigured product is never offered`() {
         // This is what stops a purchase flow being shown against an id Play does not know.
-        val unconfigured = StoreProduct("", Entitlement.THEME_SUNSET, ProductKind.NON_CONSUMABLE)
+        val unconfigured = StoreProduct("", Entitlement.REMOVE_ADS, ProductKind.NON_CONSUMABLE)
         assertFalse(unconfigured.isConfigured)
         assertTrue(ProductCatalog.configured.all(StoreProduct::isConfigured))
     }
@@ -104,30 +103,15 @@ class PurchaseModelTest {
         assertFalse(offer(price = null).isPurchasable)
     }
 
-    // --- Themes -----------------------------------------------------------------------
+    // --- What may be sold ---------------------------------------------------------------
 
     @Test
-    fun `the classic board theme is always free`() {
-        assertTrue(BoardTheme.CLASSIC.isFree)
-        assertNull(BoardTheme.CLASSIC.entitlement)
-    }
-
-    @Test
-    fun `paid themes each require their own entitlement`() {
-        val paid = BoardTheme.entries.filterNot(BoardTheme::isFree)
-        assertTrue(paid.isNotEmpty())
-        assertEquals(paid.size, paid.mapNotNull(BoardTheme::entitlement).distinct().size)
-    }
-
-    @Test
-    fun `every purchasable entitlement is cosmetic or ad related`() {
-        // A guard on the design commitment: nothing on sale may affect play.
-        val allowed = setOf(
-            Entitlement.REMOVE_ADS,
-            Entitlement.THEME_MIDNIGHT,
-            Entitlement.THEME_SUNSET,
-        )
-        assertEquals(allowed, Entitlement.entries.toSet())
+    fun `the only thing on sale is removing ads`() {
+        // A guard on the design commitment. Board skins used to be sold too; they were
+        // removed because a cosmetic store earned little and cost a whole screen, a purchase
+        // flow and an entitlement per theme. Anything added back here must still be unable to
+        // affect play — no wall counts, no clocks, no AI.
+        assertEquals(setOf(Entitlement.REMOVE_ADS), Entitlement.entries.toSet())
     }
 
     private fun record(

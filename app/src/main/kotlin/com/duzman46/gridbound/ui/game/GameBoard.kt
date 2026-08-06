@@ -22,7 +22,7 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.board.BoardGeometry
 import com.duzman46.gridbound.game.board.BoardOrientation
-import com.duzman46.gridbound.game.board.BoardTheme
+import com.duzman46.gridbound.game.board.boardPalette
 import com.duzman46.gridbound.game.board.CanvasRenderer
 import com.duzman46.gridbound.game.board.TouchController
 import com.duzman46.gridbound.game.models.Wall
@@ -36,7 +36,6 @@ fun GameBoard(
     onTileTap: (com.duzman46.gridbound.game.models.Position) -> Unit,
     onWallTap: (Wall) -> Unit,
     modifier: Modifier = Modifier,
-    theme: BoardTheme = BoardTheme.CLASSIC,
 ) {
     val renderer = remember { CanvasRenderer() }
     val touchController = remember { TouchController() }
@@ -55,7 +54,7 @@ fun GameBoard(
         }
     }
     val colors = MaterialTheme.colorScheme
-    val palette = remember(colors, theme) { theme.palette(colors) }
+    val palette = remember(colors) { boardPalette(colors) }
     val boardDescription = stringResource(R.string.cd_board)
 
     Canvas(

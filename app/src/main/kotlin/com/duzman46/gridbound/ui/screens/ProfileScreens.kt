@@ -48,6 +48,8 @@ import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.ui.components.AvatarPalette
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.ScreenBackground
+import com.duzman46.gridbound.ui.components.EmptyState
+import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.components.ScreenTopBar
@@ -101,13 +103,28 @@ fun UsernameScreen(
 @Composable
 fun ProfileScreen(
     profile: UserProfile?,
+    hasAccount: Boolean,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onAccount: () -> Unit,
+    onLeaderboard: () -> Unit,
+    onFriends: () -> Unit,
 ) {
     Scaffold(topBar = { ScreenTopBar(stringResource(R.string.profile_title), onBack) }) { padding ->
         ScreenBackground {
             if (profile == null) {
-                LoadingState(Modifier.padding(padding))
+                // A null profile is only a loading state when there is an account behind it.
+                // A guest playing locally has none and never will, so spinning forever here
+                // was a dead end on the one screen that is supposed to explain who you are.
+                if (hasAccount) {
+                    LoadingState(Modifier.padding(padding))
+                } else {
+                    EmptyState(
+                        message = stringResource(R.string.auth_guest_explainer),
+                        modifier = Modifier.padding(padding),
+                        title = stringResource(R.string.profile_title),
+                    )
+                }
                 return@ScreenBackground
             }
             Column(
@@ -161,6 +178,23 @@ fun ProfileScreen(
                 SubmitButton(
                     text = stringResource(R.string.profile_edit_title),
                     onClick = onEdit,
+                    modifier = Modifier.widthIn(max = 620.dp),
+                )
+                // The leaderboard and the friend list used to be buttons on the home screen.
+                // They belong to the player, so they hang off the player's own screen.
+                SecondarySubmitButton(
+                    text = stringResource(R.string.leaderboard_title),
+                    onClick = onLeaderboard,
+                    modifier = Modifier.widthIn(max = 620.dp),
+                )
+                SecondarySubmitButton(
+                    text = stringResource(R.string.friends_title),
+                    onClick = onFriends,
+                    modifier = Modifier.widthIn(max = 620.dp),
+                )
+                SecondarySubmitButton(
+                    text = stringResource(R.string.account_title),
+                    onClick = onAccount,
                     modifier = Modifier.widthIn(max = 620.dp),
                 )
             }

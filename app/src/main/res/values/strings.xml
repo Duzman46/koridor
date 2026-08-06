@@ -123,7 +123,6 @@
     <string name="account_legal_unavailable">This document is not published yet.</string>
 
     <!-- Tutorial -->
-    <string name="tutorial_replay">Replay tutorial</string>
     <string name="tutorial_skip_confirm_title">Skip the tutorial?</string>
     <string name="tutorial_skip_confirm_message">You can replay it any time from the main menu or Settings.</string>
     <string name="tutorial_progress">Step %1$d of %2$d</string>
@@ -221,20 +220,10 @@
 
     <!-- Main menu and mode selection -->
     <string name="menu_statistics">Statistics</string>
-    <string name="mode_title">Game Mode</string>
-    <string name="mode_vs_ai">Against AI</string>
-    <string name="mode_vs_ai_description">Test your strategy at three difficulty levels.</string>
-    <string name="mode_two_players">Two Players</string>
-    <string name="mode_two_players_description">Take turns on the same device.</string>
-    <string name="mode_online">Online</string>
-    <string name="mode_online_description">Play a friend online with a room code.</string>
     <string name="difficulty_title">Difficulty</string>
     <string name="difficulty_easy">Easy</string>
-    <string name="difficulty_easy_description">Relaxed and varied moves.</string>
     <string name="difficulty_medium">Medium</string>
-    <string name="difficulty_medium_description">Reads the shortest path and slows you down.</string>
     <string name="difficulty_hard">Hard</string>
-    <string name="difficulty_hard_description">Calculates several moves ahead with minimax and alpha-beta.</string>
 
     <!-- In game -->
     <string name="game_turn">Turn %1$d</string>
@@ -287,13 +276,11 @@
 
     <!-- Settings and statistics -->
     <string name="settings_language">Language</string>
-    <string name="settings_language_system">Device language</string>
+    <string name="settings_language_device">Use device language</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
-    <string name="settings_dynamic_color">Dynamic color</string>
-    <string name="settings_dynamic_color_description">Uses your device colour palette.</string>
     <string name="settings_game_experience">Game experience</string>
     <string name="settings_sounds">Sounds</string>
     <string name="settings_sounds_description">Move, wall, and result sounds.</string>
@@ -315,25 +302,14 @@
     <string name="stats_percentage">%1$d%%</string>
 
     <!-- Store and purchases -->
-    <string name="store_title">Store</string>
-    <string name="store_empty">There is nothing on sale yet. Check back soon.</string>
-    <string name="store_owned">Owned</string>
-    <string name="store_pending">Waiting for payment</string>
-    <string name="store_pending_explainer">Your payment is being processed. This unlocks automatically once it clears.</string>
-    <string name="store_buy">Buy</string>
     <string name="store_restore">Restore purchases</string>
     <string name="store_guest_warning">You are playing as a guest. Link an account so purchases follow you to other devices.</string>
-    <string name="store_no_pay_to_win">Everything here is cosmetic. Nothing on sale changes how the game is played.</string>
 
     <string name="billing_error_unavailable">The store is unavailable right now. Please try again later.</string>
     <string name="billing_error_unsupported">Purchases are not supported on this device.</string>
     <string name="billing_error_failed">The purchase could not be completed.</string>
     <string name="billing_restore_complete">Purchases restored.</string>
 
-    <string name="theme_board_label">Board theme</string>
-    <string name="theme_board_default">Classic</string>
-    <string name="theme_board_midnight">Midnight</string>
-    <string name="theme_board_sunset">Sunset</string>
 
     <!-- Friends -->
     <string name="friends_title">Friends</string>
@@ -368,14 +344,19 @@
     <!-- Accessibility -->
     <string name="cd_board">Game board, 9 by 9 squares</string>
     <string name="cd_avatar">Profile picture</string>
-    <string name="menu_quick_play">Quick Play</string>
-    <string name="menu_create_room">Create Room</string>
-    <string name="menu_join_room">Join Room</string>
-    <string name="menu_modes">Modes</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Place a vertical wall</string>
     <string name="tutorial_step_wall_vertical_message">Vertical walls sit between two columns. Tap the highlighted slot to cut off your rival\'s sideways step.</string>
     <string name="tutorial_step_wall_horizontal_title">Place a horizontal wall</string>
     <string name="tutorial_step_wall_horizontal_message">Horizontal walls sit between two rows. Tap the highlighted slot to block your rival\'s way forward.</string>
     <string name="tutorial_step_correct">Correct. Tap Next to continue.</string>
+    <string name="menu_play">Play</string>
+    <string name="menu_online">Online</string>
+    <string name="menu_more">More</string>
+    <string name="play_vs_bot">Against the bot</string>
+    <string name="play_local">Two players, one device</string>
+    <string name="play_custom_start">Start custom game</string>
+    <string name="online_play_with_friend">Play with a friend</string>
+    <string name="store_remove_ads">Remove ads</string>
+    <string name="more_about_version">Version %1$s</string>
 </resources>

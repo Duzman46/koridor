@@ -207,6 +207,32 @@ private fun Modifier.streakRing(streak: Int): Modifier = drawWithContent {
 }
 
 /**
+ * A round glyph button on the well, matching the language chip and the crest beside it.
+ * Used for settings, which belongs near the player's own things rather than in the menu.
+ */
+@Composable
+fun WellIconButton(
+    glyph: GlyphKind,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .size(Dimens.CrestHeight)
+            .semantics(mergeDescendants = true) { contentDescription = label },
+        shape = CircleShape,
+        color = HomePalette.ChipFill.copy(alpha = 0.92f),
+        border = BorderStroke(1.dp, HomePalette.ChipStroke),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            KoridorGlyph(glyph, Modifier.size(20.dp), tint = HomePalette.OnWell)
+        }
+    }
+}
+
+/**
  * The language switch, as the two-letter code of the language you are currently reading.
  *
  * A globe says "language settings exist"; "TR" says which one you are on, needs no

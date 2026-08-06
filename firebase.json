@@ -10,14 +10,38 @@
   "functions": {
     "source": "functions",
     "codebase": "default",
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
-    "ignore": ["node_modules", ".git", "*.log"]
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ],
+    "ignore": [
+      "node_modules",
+      ".git",
+      "*.log"
+    ]
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "database": { "port": 9000 },
-    "functions": { "port": 5001 },
-    "ui": { "enabled": true, "port": 4000 },
+    "auth": {
+      "port": 9099
+    },
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
     "singleProjectMode": true
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true
   }
 }

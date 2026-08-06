@@ -4,9 +4,3 @@ KORIDOR_ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
 KORIDOR_ADMOB_BANNER_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
 KORIDOR_ADMOB_INTERSTITIAL_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
 KORIDOR_PREMIUM_PRODUCT_ID=remove_ads
-
-# Cosmetic board themes. Leave a value EMPTY until the product actually exists in the
-# Play Console: an unconfigured product is hidden from the store rather than shown as a
-# button that would fail at checkout.
-KORIDOR_THEME_MIDNIGHT_PRODUCT_ID=
-KORIDOR_THEME_SUNSET_PRODUCT_ID=

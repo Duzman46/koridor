@@ -101,7 +101,6 @@ class GameViewModel @Inject constructor(
                     it.copy(
                         soundEnabled = settings.soundEnabled,
                         hapticsEnabled = settings.hapticsEnabled,
-                        boardTheme = settings.boardTheme,
                     )
                 }
             }

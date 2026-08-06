@@ -12,7 +12,6 @@ import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
-import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
@@ -246,10 +245,6 @@ class FakeGameRepository : GameRepository {
         settingsState.value = settingsState.value.copy(themeMode = mode)
     }
 
-    override suspend fun setDynamicColor(enabled: Boolean) {
-        settingsState.value = settingsState.value.copy(dynamicColor = enabled)
-    }
-
     override suspend fun setSoundEnabled(enabled: Boolean) {
         settingsState.value = settingsState.value.copy(soundEnabled = enabled)
     }
@@ -260,10 +255,6 @@ class FakeGameRepository : GameRepository {
 
     override suspend fun setDifficulty(difficulty: Difficulty) {
         settingsState.value = settingsState.value.copy(difficulty = difficulty)
-    }
-
-    override suspend fun setBoardTheme(theme: BoardTheme) {
-        settingsState.value = settingsState.value.copy(boardTheme = theme)
     }
 
     override suspend fun recordCompletedGame(

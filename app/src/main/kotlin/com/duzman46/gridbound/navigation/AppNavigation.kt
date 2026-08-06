@@ -35,20 +35,17 @@ import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.session.SessionStatus
 import com.duzman46.gridbound.ui.screens.AccountScreen
-import com.duzman46.gridbound.ui.screens.DifficultySelectionScreen
 import com.duzman46.gridbound.ui.screens.EditProfileScreen
 import com.duzman46.gridbound.ui.screens.FriendsRoute
 import com.duzman46.gridbound.ui.screens.GameRoute
 import com.duzman46.gridbound.ui.screens.LeaderboardRoute
 import com.duzman46.gridbound.ui.screens.LobbyTab
 import com.duzman46.gridbound.ui.screens.MainMenuScreen
-import com.duzman46.gridbound.ui.screens.ModeSelectionScreen
 import com.duzman46.gridbound.ui.screens.OnlineLobbyRoute
 import com.duzman46.gridbound.ui.screens.ProfileScreen
 import com.duzman46.gridbound.ui.screens.SettingsScreen
 import com.duzman46.gridbound.ui.screens.SplashScreen
 import com.duzman46.gridbound.ui.screens.StatisticsScreen
-import com.duzman46.gridbound.ui.screens.StoreScreen
 import com.duzman46.gridbound.ui.screens.TutorialRoute
 import com.duzman46.gridbound.ui.screens.UsernameScreen
 import com.duzman46.gridbound.ui.screens.WinnerScreen
@@ -68,8 +65,6 @@ private object Routes {
     const val USERNAME = "username"
     const val TUTORIAL = "tutorial"
     const val HOME = "home"
-    const val MODE = "mode"
-    const val DIFFICULTY = "difficulty"
     const val SETTINGS = "settings"
     const val STATISTICS = "statistics"
     const val PROFILE = "profile"
@@ -77,7 +72,6 @@ private object Routes {
     const val ACCOUNT = "account"
     const val LEADERBOARD = "leaderboard"
     const val FRIENDS = "friends"
-    const val STORE = "store"
     const val ONLINE = "online?inviteCode={inviteCode}&tab={tab}"
     const val GAME = "game/{mode}/{difficulty}?roomCode={roomCode}&playerId={playerId}&userId={userId}"
     const val WINNER = "winner/{winner}/{mode}/{difficulty}"
@@ -220,21 +214,36 @@ fun AppNavigation(
             MainMenuScreen(
                 session = session,
                 language = language,
+                adsRemoved = billing.entitlements.contains(Entitlement.REMOVE_ADS),
                 onLanguage = onLanguage,
-                // Straight into a match against the AI at the difficulty already chosen in
-                // settings. Quick play must not ask a question — the online lobby's own
-                // quick match is one tap further in, behind "create"/"join".
-                onQuickPlay = { navController.navigate(Routes.quickPlay(quickPlayDifficulty)) },
+                onPlayBot = { difficulty ->
+                    navController.navigate(Routes.game(GameMode.VS_AI, difficulty))
+                },
+                onPlayLocal = {
+                    navController.navigate(Routes.game(GameMode.LOCAL_TWO_PLAYER, Difficulty.MEDIUM))
+                },
+                onQuickMatch = { navController.navigate(Routes.online(tab = LobbyTab.PLAY)) },
                 onCreateRoom = { navController.navigate(Routes.online(tab = LobbyTab.CREATE)) },
-                onJoinRoom = { navController.navigate(Routes.online(tab = LobbyTab.PLAY)) },
-                onModes = { navController.navigate(Routes.MODE) },
+                onJoinRoom = { navController.navigate(Routes.online(tab = LobbyTab.BROWSE)) },
                 onFriends = { navController.navigate(Routes.FRIENDS) },
                 onLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
-                onTutorial = { navController.navigate(Routes.TUTORIAL) },
                 onProfile = { navController.navigate(Routes.PROFILE) },
                 onStatistics = { navController.navigate(Routes.STATISTICS) },
+                onTutorial = { navController.navigate(Routes.TUTORIAL) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
+                onRemoveAds = {
+                    // A guest has no account for Play to attach the purchase to, so it would
+                    // not survive a reinstall or follow them to another device. Link first.
+                    if (session.isGuest) {
+                        navController.navigate(Routes.ACCOUNT)
+                    } else {
+                        onBuy(Entitlement.REMOVE_ADS)
+                    }
+                },
+                onRestorePurchases = onRestorePurchases,
+                onOpenUrl = openUrl,
                 showAdBanner = monetization.adsAllowed,
+                defaultDifficulty = quickPlayDifficulty,
             )
         }
 
@@ -256,8 +265,12 @@ fun AppNavigation(
             val state by viewModel.session.collectAsStateWithLifecycle()
             ProfileScreen(
                 profile = state.profile,
+                hasAccount = state.status == SessionStatus.SIGNED_IN,
                 onBack = navController::popBackStack,
                 onEdit = { navController.navigate(Routes.EDIT_PROFILE) },
+                onAccount = { navController.navigate(Routes.ACCOUNT) },
+                onLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
+                onFriends = { navController.navigate(Routes.FRIENDS) },
             )
         }
 
@@ -306,15 +319,6 @@ fun AppNavigation(
             )
         }
 
-        composable(Routes.MODE) {
-            ModeSelectionScreen(
-                onBack = navController::popBackStack,
-                onAi = { navController.navigate(Routes.DIFFICULTY) },
-                onLocal = { navController.navigate(Routes.game(GameMode.LOCAL_TWO_PLAYER, Difficulty.MEDIUM)) },
-                onOnline = { navController.navigate(Routes.online()) },
-            )
-        }
-
         composable(
             route = Routes.ONLINE,
             arguments = listOf(
@@ -346,13 +350,6 @@ fun AppNavigation(
             )
         }
 
-
-        composable(Routes.DIFFICULTY) {
-            DifficultySelectionScreen(
-                onBack = navController::popBackStack,
-                onSelected = { navController.navigate(Routes.game(GameMode.VS_AI, it)) },
-            )
-        }
 
         composable(
             route = Routes.GAME,
@@ -435,28 +432,12 @@ fun AppNavigation(
                 onBack = navController::popBackStack,
                 onLanguage = viewModel::setLanguage,
                 onThemeMode = viewModel::setThemeMode,
-                onDynamicColor = viewModel::setDynamicColor,
                 onSound = viewModel::setSoundEnabled,
                 onHaptics = viewModel::setHapticsEnabled,
                 onDifficulty = viewModel::setDifficulty,
-                onReplayTutorial = { navController.navigate(Routes.TUTORIAL) },
                 onAccount = { navController.navigate(Routes.ACCOUNT) },
-                onStore = { navController.navigate(Routes.STORE) },
-                onBoardTheme = viewModel::setBoardTheme,
-                ownedEntitlements = billing.entitlements,
                 monetization = monetization,
-                onRestorePurchases = onRestorePurchases,
                 onPrivacyOptions = onPrivacyOptions,
-            )
-        }
-
-        composable(Routes.STORE) {
-            StoreScreen(
-                state = billing,
-                isGuest = session.isGuest,
-                onBack = { navController.popBackStack() },
-                onBuy = onBuy,
-                onRestore = onRestorePurchases,
             )
         }
 

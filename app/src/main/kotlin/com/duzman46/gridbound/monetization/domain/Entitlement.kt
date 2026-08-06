@@ -10,12 +10,8 @@ import com.duzman46.gridbound.BuildConfig
  * not pay — the game stays decided by play alone.
  */
 enum class Entitlement {
-    /** Removes banner and interstitial advertising. */
+    /** Removes banner and interstitial advertising. The only thing this game sells. */
     REMOVE_ADS,
-
-    /** Alternative board colour schemes. */
-    THEME_MIDNIGHT,
-    THEME_SUNSET,
 }
 
 /** How Play treats the product behind an entitlement. */
@@ -57,16 +53,6 @@ object ProductCatalog {
         StoreProduct(
             productId = BuildConfig.PREMIUM_PRODUCT_ID,
             entitlement = Entitlement.REMOVE_ADS,
-            kind = ProductKind.NON_CONSUMABLE,
-        ),
-        StoreProduct(
-            productId = BuildConfig.THEME_MIDNIGHT_PRODUCT_ID,
-            entitlement = Entitlement.THEME_MIDNIGHT,
-            kind = ProductKind.NON_CONSUMABLE,
-        ),
-        StoreProduct(
-            productId = BuildConfig.THEME_SUNSET_PRODUCT_ID,
-            entitlement = Entitlement.THEME_SUNSET,
             kind = ProductKind.NON_CONSUMABLE,
         ),
     )

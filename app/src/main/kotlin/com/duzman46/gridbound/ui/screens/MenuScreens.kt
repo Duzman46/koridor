@@ -19,14 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Bolt
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.SmartToy
-import androidx.compose.material.icons.rounded.SportsEsports
-import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,19 +39,23 @@ import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.components.AdBanner
-import com.duzman46.gridbound.ui.components.CenteredContent
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.LanguagePickerDialog
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.ui.components.home.BoardShowcase
-import com.duzman46.gridbound.ui.components.home.Destination
-import com.duzman46.gridbound.ui.components.home.DestinationChips
 import com.duzman46.gridbound.ui.components.home.GlyphKind
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.duzman46.gridbound.BuildConfig
+import com.duzman46.gridbound.ui.components.home.HomeChoice
+import com.duzman46.gridbound.ui.components.home.HomeSheet
+import com.duzman46.gridbound.ui.components.home.SheetAction
+import com.duzman46.gridbound.ui.components.home.SheetChoice
+import com.duzman46.gridbound.ui.components.home.SheetDivider
+import com.duzman46.gridbound.ui.components.home.SheetLink
+import com.duzman46.gridbound.ui.components.home.SheetVersion
 import com.duzman46.gridbound.ui.components.home.PlaySlab
-import com.duzman46.gridbound.ui.components.home.RoomPair
 import com.duzman46.gridbound.ui.components.ScreenBackground
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SelectionCard
 import kotlinx.coroutines.delay
 
 @Composable
@@ -94,28 +91,39 @@ fun SplashScreen(onFinished: () -> Unit) {
 /**
  * The home screen.
  *
- * A real Koridor position fills the top of the screen — mid-game, walls placed, one pawn
- * forced the long way round. Below it: one loud action, the two room actions, and everything
- * else as a wrapping row of quiet chips. No paragraph explains any of it; the board does.
+ * Four choices and nothing else. Everything the app can do used to be a button here, which
+ * made the first screen a directory rather than a way in; each of these opens a sheet holding
+ * the handful of things that belong under it. Settings, language and the player's own profile
+ * are small marks on the board panel, not entries in the list.
  */
 @Composable
 fun MainMenuScreen(
     session: SessionState,
     language: AppLanguage,
+    adsRemoved: Boolean,
     onLanguage: (AppLanguage) -> Unit,
-    onQuickPlay: () -> Unit,
+    onPlayBot: (Difficulty) -> Unit,
+    onPlayLocal: () -> Unit,
+    onQuickMatch: () -> Unit,
     onCreateRoom: () -> Unit,
     onJoinRoom: () -> Unit,
-    onModes: () -> Unit,
     onFriends: () -> Unit,
     onLeaderboard: () -> Unit,
-    onTutorial: () -> Unit,
     onProfile: () -> Unit,
     onStatistics: () -> Unit,
+    onTutorial: () -> Unit,
     onSettings: () -> Unit,
+    onRemoveAds: () -> Unit,
+    onRestorePurchases: () -> Unit,
+    onOpenUrl: (String) -> Unit,
     showAdBanner: Boolean,
+    defaultDifficulty: Difficulty,
 ) {
+    var openSheet by rememberSaveable { mutableStateOf(HomeMenu.NONE) }
     var languagePickerOpen by remember { mutableStateOf(false) }
+    var customDifficulty by rememberSaveable { mutableStateOf(defaultDifficulty) }
+    val dismiss = { openSheet = HomeMenu.NONE }
+
     if (languagePickerOpen) {
         LanguagePickerDialog(
             selected = language,
@@ -127,27 +135,88 @@ fun MainMenuScreen(
         )
     }
 
-    val destinations = listOf(
-        Destination(stringResource(R.string.menu_modes), GlyphKind.MODES, onModes),
-        Destination(stringResource(R.string.leaderboard_title), GlyphKind.LEADERBOARD, onLeaderboard),
-        Destination(stringResource(R.string.friends_title), GlyphKind.FRIENDS, onFriends),
-        Destination(stringResource(R.string.menu_tutorial), GlyphKind.TUTORIAL, onTutorial),
-        Destination(stringResource(R.string.menu_statistics), GlyphKind.STATISTICS, onStatistics),
-        Destination(stringResource(R.string.game_settings), GlyphKind.SETTINGS, onSettings),
-    )
+    when (openSheet) {
+        HomeMenu.NONE -> Unit
+
+        HomeMenu.PLAY -> HomeSheet(stringResource(R.string.menu_play), dismiss) {
+            SheetAction(stringResource(R.string.play_vs_bot), GlyphKind.VS_BOT, {
+                dismiss(); onPlayBot(defaultDifficulty)
+            }, emphasised = true)
+            SheetAction(stringResource(R.string.play_local), GlyphKind.FRIENDS, {
+                dismiss(); onPlayLocal()
+            })
+            SheetDivider()
+            // The custom game is the same bot match with the settings that used to be a
+            // whole screen of their own, folded in where they are actually chosen.
+            SheetChoice(
+                label = stringResource(R.string.difficulty_title),
+                options = Difficulty.entries,
+                selected = customDifficulty,
+                optionLabel = { it.label() },
+                onSelect = { customDifficulty = it },
+            )
+            SheetAction(stringResource(R.string.play_custom_start), GlyphKind.SETTINGS, {
+                dismiss(); onPlayBot(customDifficulty)
+            })
+        }
+
+        HomeMenu.ONLINE -> HomeSheet(stringResource(R.string.menu_online), dismiss) {
+            SheetAction(stringResource(R.string.online_quick_match), GlyphKind.QUICK_PLAY, {
+                dismiss(); onQuickMatch()
+            }, emphasised = true)
+            SheetAction(stringResource(R.string.online_create_room), GlyphKind.CREATE_ROOM, {
+                dismiss(); onCreateRoom()
+            })
+            SheetAction(stringResource(R.string.online_join_by_code), GlyphKind.JOIN_ROOM, {
+                dismiss(); onJoinRoom()
+            })
+            SheetAction(stringResource(R.string.online_play_with_friend), GlyphKind.FRIENDS, {
+                dismiss(); onFriends()
+            })
+            SheetDivider()
+            SheetLink(stringResource(R.string.leaderboard_title), onClick = { dismiss(); onLeaderboard() })
+        }
+
+        HomeMenu.MORE -> HomeSheet(stringResource(R.string.menu_more), dismiss) {
+            SheetAction(stringResource(R.string.menu_tutorial), GlyphKind.TUTORIAL, {
+                dismiss(); onTutorial()
+            })
+            // Hidden once bought: an upgrade you already own is not an offer.
+            if (!adsRemoved) {
+                SheetAction(stringResource(R.string.store_remove_ads), GlyphKind.REMOVE_ADS, {
+                    dismiss(); onRemoveAds()
+                })
+                // A guest's purchase would be stranded on this device, so the account comes
+                // first. Said here rather than after Play has already taken the money.
+                if (session.isGuest) {
+                    SheetVersion(stringResource(R.string.store_guest_warning))
+                }
+            }
+            SheetLink(stringResource(R.string.store_restore), onClick = { dismiss(); onRestorePurchases() })
+            SheetLink(stringResource(R.string.menu_statistics), onClick = { dismiss(); onStatistics() })
+            SheetDivider()
+            val privacyUrl = BuildConfig.PRIVACY_POLICY_URL
+            val termsUrl = BuildConfig.TERMS_URL
+            // A legal link with no URL configured is not shown at all rather than opening
+            // nothing — Play requires the policy link to work, not merely to exist.
+            if (privacyUrl.isNotBlank()) {
+                SheetLink(stringResource(R.string.account_privacy_policy), onClick = { onOpenUrl(privacyUrl) })
+            }
+            if (termsUrl.isNotBlank()) {
+                SheetLink(stringResource(R.string.account_terms_of_service), onClick = { onOpenUrl(termsUrl) })
+            }
+            // Not a link: the version is here to be read, not tapped.
+            SheetVersion(stringResource(R.string.more_about_version, BuildConfig.VERSION_NAME))
+        }
+    }
 
     Scaffold(
-        // The banner is a bottom bar, not an overlay: the menu is laid out above it instead
-        // of having its last row covered on short screens. Scaffold hands the content the
-        // bar's height but not the system bar behind it, so the inset is added here.
         bottomBar = { if (showAdBanner) AdBanner(Modifier.navigationBarsPadding()) },
     ) { padding ->
         ScreenBackground {
             Column(
                 Modifier
                     .fillMaxSize()
-                    // Keeping the Scaffold's top inset is what stops the dark well running
-                    // under the status bar, where light-theme status icons would vanish.
                     .padding(padding)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,18 +234,16 @@ fun MainMenuScreen(
                         language = language,
                         onProfile = onProfile,
                         onLanguage = { languagePickerOpen = true },
+                        onSettings = onSettings,
                     )
-                    Spacer(Modifier.height(20.dp))
-                    PlaySlab(stringResource(R.string.menu_quick_play), onQuickPlay)
-                    Spacer(Modifier.height(10.dp))
-                    RoomPair(
-                        createLabel = stringResource(R.string.menu_create_room),
-                        joinLabel = stringResource(R.string.menu_join_room),
-                        onCreate = onCreateRoom,
-                        onJoin = onJoinRoom,
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    DestinationChips(destinations)
+                    Spacer(Modifier.height(Dimens.SpaceXl))
+                    PlaySlab(stringResource(R.string.menu_play), onClick = { openSheet = HomeMenu.PLAY })
+                    Spacer(Modifier.height(Dimens.SpaceMd))
+                    HomeChoice(stringResource(R.string.menu_online), GlyphKind.ONLINE, onClick = { openSheet = HomeMenu.ONLINE })
+                    Spacer(Modifier.height(Dimens.SpaceMd))
+                    HomeChoice(stringResource(R.string.profile_title), GlyphKind.PROFILE, onClick = onProfile)
+                    Spacer(Modifier.height(Dimens.SpaceMd))
+                    HomeChoice(stringResource(R.string.menu_more), GlyphKind.MORE, onClick = { openSheet = HomeMenu.MORE })
                     Spacer(Modifier.height(Dimens.SpaceXl))
                 }
             }
@@ -184,38 +251,12 @@ fun MainMenuScreen(
     }
 }
 
-@Composable
-fun ModeSelectionScreen(onBack: () -> Unit, onAi: () -> Unit, onLocal: () -> Unit, onOnline: () -> Unit) {
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.mode_title), onBack) }) { padding ->
-        ScreenBackground {
-            CenteredContent(Modifier.padding(padding)) {
-                Column(
-                    Modifier.fillMaxWidth().widthIn(max = Dimens.MenuMaxWidth),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                ) {
-                    SelectionCard(stringResource(R.string.mode_vs_ai), stringResource(R.string.mode_vs_ai_description), Icons.Rounded.SmartToy, onAi)
-                    SelectionCard(stringResource(R.string.mode_two_players), stringResource(R.string.mode_two_players_description), Icons.Rounded.SportsEsports, onLocal)
-                    SelectionCard(stringResource(R.string.mode_online), stringResource(R.string.mode_online_description), Icons.Rounded.Wifi, onOnline)
-                }
-            }
-        }
-    }
-}
+/** Which sheet is showing. Saved, so a rotation does not close it. */
+private enum class HomeMenu { NONE, PLAY, ONLINE, MORE }
 
 @Composable
-fun DifficultySelectionScreen(onBack: () -> Unit, onSelected: (Difficulty) -> Unit) {
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.difficulty_title), onBack) }) { padding ->
-        ScreenBackground {
-            CenteredContent(Modifier.padding(padding)) {
-                Column(
-                    Modifier.fillMaxWidth().widthIn(max = Dimens.MenuMaxWidth),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                ) {
-                    SelectionCard(stringResource(R.string.difficulty_easy), stringResource(R.string.difficulty_easy_description), Icons.Rounded.Bolt, onClick = { onSelected(Difficulty.EASY) })
-                    SelectionCard(stringResource(R.string.difficulty_medium), stringResource(R.string.difficulty_medium_description), Icons.Rounded.SmartToy, onClick = { onSelected(Difficulty.MEDIUM) })
-                    SelectionCard(stringResource(R.string.difficulty_hard), stringResource(R.string.difficulty_hard_description), Icons.Rounded.Psychology, onClick = { onSelected(Difficulty.HARD) })
-                }
-            }
-        }
-    }
+private fun Difficulty.label(): String = when (this) {
+    Difficulty.EASY -> stringResource(R.string.difficulty_easy)
+    Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
+    Difficulty.HARD -> stringResource(R.string.difficulty_hard)
 }

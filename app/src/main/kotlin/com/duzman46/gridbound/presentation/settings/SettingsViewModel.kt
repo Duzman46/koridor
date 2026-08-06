@@ -9,7 +9,6 @@ import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
-import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -41,11 +40,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeMode(mode: ThemeMode) = launchUpdate { settingsManager.setThemeMode(mode) }
     fun setLanguage(language: AppLanguage) = launchUpdate { settingsManager.setLanguage(language) }
-    fun setDynamicColor(enabled: Boolean) = launchUpdate { settingsManager.setDynamicColor(enabled) }
     fun setSoundEnabled(enabled: Boolean) = launchUpdate { settingsManager.setSoundEnabled(enabled) }
     fun setHapticsEnabled(enabled: Boolean) = launchUpdate { settingsManager.setHapticsEnabled(enabled) }
     fun setDifficulty(difficulty: Difficulty) = launchUpdate { settingsManager.setDifficulty(difficulty) }
-    fun setBoardTheme(theme: BoardTheme) = launchUpdate { settingsManager.setBoardTheme(theme) }
 
     private fun launchUpdate(update: suspend () -> Unit) {
         viewModelScope.launch { update() }

@@ -109,7 +109,6 @@
     <string name="account_terms_of_service">Términos de servicio</string>
     <string name="account_legal_unavailable">Este documento aún no está publicado.</string>
 
-    <string name="tutorial_replay">Repetir el tutorial</string>
     <string name="tutorial_skip_confirm_title">¿Omitir el tutorial?</string>
     <string name="tutorial_skip_confirm_message">Puedes repetirlo cuando quieras desde el menú principal o Ajustes.</string>
     <string name="tutorial_progress">Paso %1$d de %2$d</string>
@@ -198,20 +197,10 @@
     <string name="cd_leaderboard_row">Puesto %1$d, %2$s, puntuación %3$d</string>
 
     <string name="menu_statistics">Estadísticas</string>
-    <string name="mode_title">Modo de juego</string>
-    <string name="mode_vs_ai">Contra la IA</string>
-    <string name="mode_vs_ai_description">Pon a prueba tu estrategia en tres niveles de dificultad.</string>
-    <string name="mode_two_players">Dos jugadores</string>
-    <string name="mode_two_players_description">Jugad por turnos en el mismo dispositivo.</string>
-    <string name="mode_online">En línea</string>
-    <string name="mode_online_description">Juega en línea con un amigo usando un código de sala.</string>
     <string name="difficulty_title">Dificultad</string>
     <string name="difficulty_easy">Fácil</string>
-    <string name="difficulty_easy_description">Movimientos tranquilos y variados.</string>
     <string name="difficulty_medium">Media</string>
-    <string name="difficulty_medium_description">Lee el camino más corto y te frena.</string>
     <string name="difficulty_hard">Difícil</string>
-    <string name="difficulty_hard_description">Calcula varios movimientos por delante con minimax y poda alfa-beta.</string>
 
     <string name="game_turn">Turno %1$d</string>
     <string name="game_home">Menú principal</string>
@@ -262,13 +251,11 @@
     <string name="winner_main_menu">Menú principal</string>
 
     <string name="settings_language">Idioma</string>
-    <string name="settings_language_system">Idioma del dispositivo</string>
+    <string name="settings_language_device">Usar idioma del dispositivo</string>
     <string name="settings_appearance">Apariencia</string>
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
-    <string name="settings_dynamic_color">Color dinámico</string>
-    <string name="settings_dynamic_color_description">Usa la paleta de colores de tu dispositivo.</string>
     <string name="settings_game_experience">Experiencia de juego</string>
     <string name="settings_sounds">Sonidos</string>
     <string name="settings_sounds_description">Sonidos de movimiento, muro y resultado.</string>
@@ -289,25 +276,14 @@
     <string name="stats_wins_losses">%1$d V · %2$d D</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">Tienda</string>
-    <string name="store_empty">Todavía no hay nada a la venta. Vuelve pronto.</string>
-    <string name="store_owned">En tu poder</string>
-    <string name="store_pending">Esperando el pago</string>
-    <string name="store_pending_explainer">Tu pago se está procesando. Se desbloqueará automáticamente cuando se complete.</string>
-    <string name="store_buy">Comprar</string>
     <string name="store_restore">Restaurar compras</string>
     <string name="store_guest_warning">Estás jugando como invitado. Vincula una cuenta para que tus compras te acompañen en otros dispositivos.</string>
-    <string name="store_no_pay_to_win">Todo lo que hay aquí es estético. Nada de lo que se vende cambia cómo se juega.</string>
 
     <string name="billing_error_unavailable">La tienda no está disponible ahora mismo. Inténtalo más tarde.</string>
     <string name="billing_error_unsupported">Las compras no son compatibles con este dispositivo.</string>
     <string name="billing_error_failed">No se pudo completar la compra.</string>
     <string name="billing_restore_complete">Compras restauradas.</string>
 
-    <string name="theme_board_label">Tema del tablero</string>
-    <string name="theme_board_default">Clásico</string>
-    <string name="theme_board_midnight">Medianoche</string>
-    <string name="theme_board_sunset">Atardecer</string>
 
     <string name="friends_title">Amigos</string>
     <string name="friends_search_label">Buscar por nombre de usuario</string>
@@ -340,14 +316,19 @@
 
     <string name="cd_board">Tablero de juego, 9 por 9 casillas</string>
     <string name="cd_avatar">Foto de perfil</string>
-    <string name="menu_quick_play">Partida rápida</string>
-    <string name="menu_create_room">Crear sala</string>
-    <string name="menu_join_room">Unirse a sala</string>
-    <string name="menu_modes">Modos</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Coloca un muro vertical</string>
     <string name="tutorial_step_wall_vertical_message">Los muros verticales van entre dos columnas. Toca la ranura resaltada para cortar el paso lateral de tu rival.</string>
     <string name="tutorial_step_wall_horizontal_title">Coloca un muro horizontal</string>
     <string name="tutorial_step_wall_horizontal_message">Los muros horizontales van entre dos filas. Toca la ranura resaltada para bloquear el avance de tu rival.</string>
     <string name="tutorial_step_correct">Correcto. Toca Siguiente para continuar.</string>
+    <string name="menu_play">Jugar</string>
+    <string name="menu_online">En línea</string>
+    <string name="menu_more">Más</string>
+    <string name="play_vs_bot">Contra el bot</string>
+    <string name="play_local">Dos jugadores en un dispositivo</string>
+    <string name="play_custom_start">Iniciar partida personalizada</string>
+    <string name="online_play_with_friend">Jugar con un amigo</string>
+    <string name="store_remove_ads">Quitar anuncios</string>
+    <string name="more_about_version">Versión %1$s</string>
 </resources>

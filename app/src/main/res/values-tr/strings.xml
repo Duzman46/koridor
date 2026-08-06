@@ -118,7 +118,6 @@
     <string name="account_legal_unavailable">Bu belge henüz yayımlanmadı.</string>
 
     <!-- Öğretici -->
-    <string name="tutorial_replay">Öğreticiyi tekrar oyna</string>
     <string name="tutorial_skip_confirm_title">Öğretici atlansın mı?</string>
     <string name="tutorial_skip_confirm_message">İstediğin zaman ana menüden veya Ayarlar\'dan tekrar oynatabilirsin.</string>
     <string name="tutorial_progress">Adım %1$d / %2$d</string>
@@ -211,20 +210,10 @@
 
     <!-- Ana menü ve mod seçimi -->
     <string name="menu_statistics">İstatistikler</string>
-    <string name="mode_title">Oyun Modu</string>
-    <string name="mode_vs_ai">Yapay Zekâya Karşı</string>
-    <string name="mode_vs_ai_description">Üç farklı zorluk seviyesinde stratejini dene.</string>
-    <string name="mode_two_players">İki Oyuncu</string>
-    <string name="mode_two_players_description">Aynı cihazda sırayla oynayın.</string>
-    <string name="mode_online">Çevrim İçi</string>
-    <string name="mode_online_description">Oda koduyla internet üzerinden arkadaşına karşı oyna.</string>
     <string name="difficulty_title">Zorluk</string>
     <string name="difficulty_easy">Kolay</string>
-    <string name="difficulty_easy_description">Rahat ve değişken hamleler.</string>
     <string name="difficulty_medium">Orta</string>
-    <string name="difficulty_medium_description">En kısa yolu okur ve seni yavaşlatır.</string>
     <string name="difficulty_hard">Zor</string>
-    <string name="difficulty_hard_description">Minimax ve alpha-beta ile birkaç hamle sonrasını hesaplar.</string>
 
     <!-- Oyun içi -->
     <string name="game_turn">Tur %1$d</string>
@@ -277,13 +266,11 @@
 
     <!-- Ayarlar ve istatistikler -->
     <string name="settings_language">Dil</string>
-    <string name="settings_language_system">Cihaz dili</string>
+    <string name="settings_language_device">Cihaz Dilini Kullan</string>
     <string name="settings_appearance">Görünüm</string>
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Açık</string>
     <string name="settings_theme_dark">Koyu</string>
-    <string name="settings_dynamic_color">Dinamik renk</string>
-    <string name="settings_dynamic_color_description">Cihazının renk paletini kullanır.</string>
     <string name="settings_game_experience">Oyun deneyimi</string>
     <string name="settings_sounds">Sesler</string>
     <string name="settings_sounds_description">Hamle, duvar ve sonuç sesleri.</string>
@@ -305,25 +292,14 @@
     <string name="stats_percentage">%%%1$d</string>
 
     <!-- Mağaza ve satın alımlar -->
-    <string name="store_title">Mağaza</string>
-    <string name="store_empty">Henüz satışta bir şey yok. Yakında tekrar bak.</string>
-    <string name="store_owned">Sahipsin</string>
-    <string name="store_pending">Ödeme bekleniyor</string>
-    <string name="store_pending_explainer">Ödemen işleniyor. Onaylandığında otomatik olarak açılacak.</string>
-    <string name="store_buy">Satın al</string>
     <string name="store_restore">Satın alımları geri yükle</string>
     <string name="store_guest_warning">Misafir olarak oynuyorsun. Satın alımlarının diğer cihazlarında da kalması için hesabını bağla.</string>
-    <string name="store_no_pay_to_win">Buradaki her şey kozmetiktir. Satıştaki hiçbir ürün oyunun oynanışını değiştirmez.</string>
 
     <string name="billing_error_unavailable">Mağaza şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.</string>
     <string name="billing_error_unsupported">Bu cihazda satın alma desteklenmiyor.</string>
     <string name="billing_error_failed">Satın alma tamamlanamadı.</string>
     <string name="billing_restore_complete">Satın alımlar geri yüklendi.</string>
 
-    <string name="theme_board_label">Tahta teması</string>
-    <string name="theme_board_default">Klasik</string>
-    <string name="theme_board_midnight">Gece Yarısı</string>
-    <string name="theme_board_sunset">Gün Batımı</string>
 
     <!-- Arkadaşlar -->
     <string name="friends_title">Arkadaşlar</string>
@@ -358,14 +334,19 @@
     <!-- Erişilebilirlik -->
     <string name="cd_board">Oyun tahtası, 9\'a 9 kare</string>
     <string name="cd_avatar">Profil resmi</string>
-    <string name="menu_quick_play">Hızlı Oyna</string>
-    <string name="menu_create_room">Oda Oluştur</string>
-    <string name="menu_join_room">Odaya Katıl</string>
-    <string name="menu_modes">Modlar</string>
     <string name="menu_tutorial">Öğretici</string>
     <string name="tutorial_step_wall_vertical_title">Dikey duvar koy</string>
     <string name="tutorial_step_wall_vertical_message">Dikey duvarlar iki sütunun arasına oturur. Rakibinin yana adımını kesmek için vurgulanan yuvaya dokun.</string>
     <string name="tutorial_step_wall_horizontal_title">Yatay duvar koy</string>
     <string name="tutorial_step_wall_horizontal_message">Yatay duvarlar iki satırın arasına oturur. Rakibinin ilerleyişini kesmek için vurgulanan yuvaya dokun.</string>
     <string name="tutorial_step_correct">Doğru. Devam etmek için İleri\'ye dokun.</string>
+    <string name="menu_play">Oyna</string>
+    <string name="menu_online">Çevrim İçi</string>
+    <string name="menu_more">Daha Fazla</string>
+    <string name="play_vs_bot">Bota Karşı</string>
+    <string name="play_local">Aynı Cihazda İki Oyuncu</string>
+    <string name="play_custom_start">Özel Oyunu Başlat</string>
+    <string name="online_play_with_friend">Arkadaşla Oyna</string>
+    <string name="store_remove_ads">Reklamları Kaldır</string>
+    <string name="more_about_version">Sürüm %1$s</string>
 </resources>

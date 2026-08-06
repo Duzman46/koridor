@@ -13,20 +13,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Brightness6
-import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.ManageAccounts
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PrivacyTip
-import androidx.compose.material.icons.rounded.Restore
-import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,10 +41,8 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
-import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.monetization.MonetizationState
-import com.duzman46.gridbound.monetization.domain.Entitlement
 import com.duzman46.gridbound.presentation.settings.SettingsUiState
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.ui.components.ScreenBackground
@@ -65,17 +56,11 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLanguage: (AppLanguage) -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
-    onDynamicColor: (Boolean) -> Unit,
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onDifficulty: (Difficulty) -> Unit,
-    onReplayTutorial: () -> Unit,
     onAccount: () -> Unit,
-    onStore: () -> Unit,
-    onBoardTheme: (BoardTheme) -> Unit,
-    ownedEntitlements: Set<Entitlement>,
     monetization: MonetizationState,
-    onRestorePurchases: () -> Unit,
     onPrivacyOptions: () -> Unit,
 ) {
     Scaffold(topBar = { ScreenTopBar(stringResource(R.string.game_settings), onBack) }) { padding ->
@@ -86,67 +71,6 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                item {
-                    SettingsCard(stringResource(R.string.store_title)) {
-                        OutlinedButton(onClick = onStore, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null)
-                            Text(stringResource(R.string.store_title), Modifier.padding(start = 8.dp))
-                        }
-                        OutlinedButton(onClick = onRestorePurchases, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Rounded.Restore, contentDescription = null)
-                            Text(stringResource(R.string.store_restore), Modifier.padding(start = 8.dp))
-                        }
-                        if (monetization.privacyOptionsRequired) {
-                            OutlinedButton(onClick = onPrivacyOptions, modifier = Modifier.fillMaxWidth()) {
-                                Icon(Icons.Rounded.PrivacyTip, contentDescription = null)
-                                Text(stringResource(R.string.settings_ad_privacy), Modifier.padding(start = 8.dp))
-                            }
-                        }
-                    }
-                }
-                item {
-                    SettingsCard(stringResource(R.string.theme_board_label)) {
-                        // FlowRow, not Row: three chips of translated text do not fit on a
-                        // 1080px screen, and a plain Row squeezes the last one until its
-                        // label breaks one character per line.
-                        FlowRow(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            BoardTheme.entries.forEach { boardTheme ->
-                                // A locked theme is shown but not selectable, so the option
-                                // is discoverable without pretending it is available.
-                                val unlocked = boardTheme.isFree ||
-                                    boardTheme.entitlement in ownedEntitlements
-                                FilterChip(
-                                    selected = state.settings.boardTheme == boardTheme,
-                                    onClick = { onBoardTheme(boardTheme) },
-                                    enabled = unlocked,
-                                    label = { Text(boardTheme.label()) },
-                                    leadingIcon = {
-                                        Icon(
-                                            if (unlocked) Icons.Rounded.ColorLens else Icons.Rounded.Lock,
-                                            contentDescription = null,
-                                        )
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-                item {
-                    SettingsCard(stringResource(R.string.account_title)) {
-                        OutlinedButton(onClick = onAccount, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Rounded.ManageAccounts, contentDescription = null)
-                            Text(stringResource(R.string.account_title), Modifier.padding(start = 8.dp))
-                        }
-                        OutlinedButton(onClick = onReplayTutorial, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Rounded.School, contentDescription = null)
-                            Text(stringResource(R.string.tutorial_replay), Modifier.padding(start = 8.dp))
-                        }
-                    }
-                }
                 item {
                     SettingsCard(stringResource(R.string.settings_language)) {
                         // Wraps rather than scrolls: eleven options do not fit on one line,
@@ -165,14 +89,11 @@ fun SettingsScreen(
                                             // Each language is labelled in itself, so it is
                                             // recognisable whatever the current language is.
                                             if (language.followsDevice) {
-                                                stringResource(R.string.settings_language_system)
+                                                stringResource(R.string.settings_language_device)
                                             } else {
                                                 language.endonym
                                             },
                                         )
-                                    },
-                                    leadingIcon = {
-                                        Icon(Icons.Rounded.Language, contentDescription = null)
                                     },
                                 )
                             }
@@ -180,10 +101,10 @@ fun SettingsScreen(
                     }
                 }
                 item {
+                    // Light, dark, follow the system. No accent picker: the app has one
+                    // colour scheme on purpose, and letting the wallpaper repaint it was
+                    // what made it look like a different app on every phone.
                     SettingsCard(stringResource(R.string.settings_appearance)) {
-                        // FlowRow, not Row: three chips of translated text do not fit on a
-                        // 1080px screen, and a plain Row squeezes the last one until its
-                        // label breaks one character per line.
                         FlowRow(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -203,7 +124,6 @@ fun SettingsScreen(
                                 )
                             }
                         }
-                        SettingSwitch(stringResource(R.string.settings_dynamic_color), stringResource(R.string.settings_dynamic_color_description), Icons.Rounded.ColorLens, state.settings.dynamicColor, onDynamicColor)
                     }
                 }
                 item {
@@ -214,9 +134,6 @@ fun SettingsScreen(
                 }
                 item {
                     SettingsCard(stringResource(R.string.settings_default_ai)) {
-                        // FlowRow, not Row: three chips of translated text do not fit on a
-                        // 1080px screen, and a plain Row squeezes the last one until its
-                        // label breaks one character per line.
                         FlowRow(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -227,8 +144,23 @@ fun SettingsScreen(
                                     selected = state.settings.difficulty == difficulty,
                                     onClick = { onDifficulty(difficulty) },
                                     label = { Text(difficulty.label()) },
-                                    leadingIcon = { Icon(Icons.Rounded.SmartToy, contentDescription = null) },
                                 )
+                            }
+                        }
+                    }
+                }
+                item {
+                    SettingsCard(stringResource(R.string.account_title)) {
+                        OutlinedButton(onClick = onAccount, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.ManageAccounts, contentDescription = null)
+                            Text(stringResource(R.string.account_title), Modifier.padding(start = 8.dp))
+                        }
+                        // Only offered where the consent framework says it is required;
+                        // elsewhere it would be a button that opens nothing.
+                        if (monetization.privacyOptionsRequired) {
+                            OutlinedButton(onClick = onPrivacyOptions, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Rounded.PrivacyTip, contentDescription = null)
+                                Text(stringResource(R.string.settings_ad_privacy), Modifier.padding(start = 8.dp))
                             }
                         }
                     }
@@ -336,12 +268,3 @@ private fun Difficulty.label(): String = when (this) {
     Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
     Difficulty.HARD -> stringResource(R.string.difficulty_hard)
 }
-
-@Composable
-private fun BoardTheme.label(): String = stringResource(
-    when (this) {
-        BoardTheme.CLASSIC -> R.string.theme_board_default
-        BoardTheme.MIDNIGHT -> R.string.theme_board_midnight
-        BoardTheme.SUNSET -> R.string.theme_board_sunset
-    },
-)

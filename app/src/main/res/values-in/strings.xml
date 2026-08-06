@@ -108,7 +108,6 @@
     <string name="account_terms_of_service">Ketentuan Layanan</string>
     <string name="account_legal_unavailable">Dokumen ini belum dipublikasikan.</string>
 
-    <string name="tutorial_replay">Ulangi tutorial</string>
     <string name="tutorial_skip_confirm_title">Lewati tutorial?</string>
     <string name="tutorial_skip_confirm_message">Anda bisa mengulanginya kapan saja dari menu utama atau Pengaturan.</string>
     <string name="tutorial_progress">Langkah %1$d dari %2$d</string>
@@ -197,20 +196,10 @@
     <string name="cd_leaderboard_row">Peringkat %1$d, %2$s, poin %3$d</string>
 
     <string name="menu_statistics">Statistik</string>
-    <string name="mode_title">Mode permainan</string>
-    <string name="mode_vs_ai">Lawan AI</string>
-    <string name="mode_vs_ai_description">Uji strategimu di tiga tingkat kesulitan.</string>
-    <string name="mode_two_players">Dua pemain</string>
-    <string name="mode_two_players_description">Bermain bergantian di perangkat yang sama.</string>
-    <string name="mode_online">Online</string>
-    <string name="mode_online_description">Main online melawan teman dengan kode ruang.</string>
     <string name="difficulty_title">Kesulitan</string>
     <string name="difficulty_easy">Mudah</string>
-    <string name="difficulty_easy_description">Langkah santai dan bervariasi.</string>
     <string name="difficulty_medium">Sedang</string>
-    <string name="difficulty_medium_description">Membaca jalur terpendek dan memperlambatmu.</string>
     <string name="difficulty_hard">Sulit</string>
-    <string name="difficulty_hard_description">Menghitung beberapa langkah ke depan dengan minimax dan pemangkasan alfa-beta.</string>
 
     <string name="game_turn">Giliran %1$d</string>
     <string name="game_home">Menu utama</string>
@@ -259,13 +248,11 @@
     <string name="winner_main_menu">Menu utama</string>
 
     <string name="settings_language">Bahasa</string>
-    <string name="settings_language_system">Bahasa perangkat</string>
+    <string name="settings_language_device">Gunakan bahasa perangkat</string>
     <string name="settings_appearance">Tampilan</string>
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Terang</string>
     <string name="settings_theme_dark">Gelap</string>
-    <string name="settings_dynamic_color">Warna dinamis</string>
-    <string name="settings_dynamic_color_description">Menggunakan palet warna perangkatmu.</string>
     <string name="settings_game_experience">Pengalaman bermain</string>
     <string name="settings_sounds">Suara</string>
     <string name="settings_sounds_description">Suara langkah, dinding, dan hasil.</string>
@@ -286,25 +273,14 @@
     <string name="stats_wins_losses">%1$d M · %2$d K</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">Toko</string>
-    <string name="store_empty">Belum ada yang dijual. Cek lagi nanti.</string>
-    <string name="store_owned">Dimiliki</string>
-    <string name="store_pending">Menunggu pembayaran</string>
-    <string name="store_pending_explainer">Pembayaranmu sedang diproses. Item akan terbuka otomatis setelah selesai.</string>
-    <string name="store_buy">Beli</string>
     <string name="store_restore">Pulihkan pembelian</string>
     <string name="store_guest_warning">Kamu bermain sebagai tamu. Tautkan akun agar pembelianmu ikut ke perangkat lain.</string>
-    <string name="store_no_pay_to_win">Semua di sini bersifat kosmetik. Tidak ada yang dijual mengubah cara bermain.</string>
 
     <string name="billing_error_unavailable">Toko sedang tidak tersedia. Coba lagi nanti.</string>
     <string name="billing_error_unsupported">Pembelian tidak didukung di perangkat ini.</string>
     <string name="billing_error_failed">Pembelian tidak dapat diselesaikan.</string>
     <string name="billing_restore_complete">Pembelian dipulihkan.</string>
 
-    <string name="theme_board_label">Tema papan</string>
-    <string name="theme_board_default">Klasik</string>
-    <string name="theme_board_midnight">Tengah Malam</string>
-    <string name="theme_board_sunset">Senja</string>
 
     <string name="friends_title">Teman</string>
     <string name="friends_search_label">Cari berdasarkan nama pengguna</string>
@@ -337,14 +313,19 @@
 
     <string name="cd_board">Papan permainan, 9 kali 9 kotak</string>
     <string name="cd_avatar">Foto profil</string>
-    <string name="menu_quick_play">Main Cepat</string>
-    <string name="menu_create_room">Buat Ruang</string>
-    <string name="menu_join_room">Gabung Ruang</string>
-    <string name="menu_modes">Mode</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Pasang tembok vertikal</string>
     <string name="tutorial_step_wall_vertical_message">Tembok vertikal berada di antara dua kolom. Ketuk slot yang disorot untuk memutus langkah menyamping lawan.</string>
     <string name="tutorial_step_wall_horizontal_title">Pasang tembok horizontal</string>
     <string name="tutorial_step_wall_horizontal_message">Tembok horizontal berada di antara dua baris. Ketuk slot yang disorot untuk menghalangi jalan maju lawan.</string>
     <string name="tutorial_step_correct">Benar. Ketuk Berikutnya untuk lanjut.</string>
+    <string name="menu_play">Main</string>
+    <string name="menu_online">Daring</string>
+    <string name="menu_more">Lainnya</string>
+    <string name="play_vs_bot">Lawan bot</string>
+    <string name="play_local">Dua pemain, satu perangkat</string>
+    <string name="play_custom_start">Mulai permainan khusus</string>
+    <string name="online_play_with_friend">Main dengan teman</string>
+    <string name="store_remove_ads">Hapus iklan</string>
+    <string name="more_about_version">Versi %1$s</string>
 </resources>

@@ -7,6 +7,18 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Crashlytics and Analytics need the default FirebaseApp that the Google Services plugin
+// generates from app/google-services.json — and that file is git-ignored, because it carries
+// the project's API key. The plugin hard-fails when it is missing, so applying it
+// unconditionally would mean a fresh clone could not build at all. Applied only when the
+// file is actually there: with it you get crash and usage reporting, without it you get a
+// working app that simply does not report. Everything else reads from firebase.properties.
+val googleServicesConfig = project.file("google-services.json")
+if (googleServicesConfig.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 val firebaseProperties = Properties().apply {
     val configuration = rootProject.file("firebase.properties")
     if (configuration.exists()) configuration.inputStream().use(::load)
@@ -60,10 +72,6 @@ val configuredBannerAdUnitId = monetizationValue("KORIDOR_ADMOB_BANNER_ID")
 val configuredInterstitialAdUnitId = monetizationValue("KORIDOR_ADMOB_INTERSTITIAL_ID")
 val premiumProductId = monetizationValue("KORIDOR_PREMIUM_PRODUCT_ID", "remove_ads")
 
-// Cosmetic products. An id left empty means the product is not set up in the Play Console
-// yet, and the app then hides it rather than offering a purchase Play would reject.
-val themeMidnightProductId = monetizationValue("KORIDOR_THEME_MIDNIGHT_PRODUCT_ID")
-val themeSunsetProductId = monetizationValue("KORIDOR_THEME_SUNSET_PRODUCT_ID")
 val monetizationConfigured = configuredAdMobAppId.isNotBlank() &&
     configuredBannerAdUnitId.isNotBlank() &&
     configuredInterstitialAdUnitId.isNotBlank()
@@ -76,8 +84,9 @@ android {
         applicationId = "com.duzman46.gridbound"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "0.4.0"
+        // First Play Store release.
+        versionCode = 5
+        versionName = "1.0.0"
 
         buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseValue("GRIDBOUND_FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseValue("GRIDBOUND_FIREBASE_APP_ID")}\"")
@@ -88,8 +97,6 @@ android {
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"${appValue("KORIDOR_PRIVACY_POLICY_URL")}\"")
         buildConfigField("String", "TERMS_URL", "\"${appValue("KORIDOR_TERMS_URL")}\"")
         buildConfigField("String", "PREMIUM_PRODUCT_ID", "\"$premiumProductId\"")
-        buildConfigField("String", "THEME_MIDNIGHT_PRODUCT_ID", "\"$themeMidnightProductId\"")
-        buildConfigField("String", "THEME_SUNSET_PRODUCT_ID", "\"$themeSunsetProductId\"")
         buildConfigField("boolean", "MONETIZATION_CONFIGURED", monetizationConfigured.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -196,6 +203,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     // Debug-only: lets a development build register a token with the console instead of
     // being rejected. Never reaches a release APK.
     debugImplementation(libs.firebase.appcheck.debug)

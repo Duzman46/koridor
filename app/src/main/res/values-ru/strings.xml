@@ -111,7 +111,6 @@
     <string name="account_terms_of_service">Условия использования</string>
     <string name="account_legal_unavailable">Этот документ ещё не опубликован.</string>
 
-    <string name="tutorial_replay">Пройти обучение снова</string>
     <string name="tutorial_skip_confirm_title">Пропустить обучение?</string>
     <string name="tutorial_skip_confirm_message">Его можно пройти снова в любой момент из главного меню или настроек.</string>
     <string name="tutorial_progress">Шаг %1$d из %2$d</string>
@@ -200,20 +199,10 @@
     <string name="cd_leaderboard_row">Место %1$d, %2$s, рейтинг %3$d</string>
 
     <string name="menu_statistics">Статистика</string>
-    <string name="mode_title">Режим игры</string>
-    <string name="mode_vs_ai">Против ИИ</string>
-    <string name="mode_vs_ai_description">Проверьте стратегию на трёх уровнях сложности.</string>
-    <string name="mode_two_players">Два игрока</string>
-    <string name="mode_two_players_description">Играйте по очереди на одном устройстве.</string>
-    <string name="mode_online">Онлайн</string>
-    <string name="mode_online_description">Играйте с другом по сети, используя код комнаты.</string>
     <string name="difficulty_title">Сложность</string>
     <string name="difficulty_easy">Лёгкий</string>
-    <string name="difficulty_easy_description">Спокойные и разнообразные ходы.</string>
     <string name="difficulty_medium">Средний</string>
-    <string name="difficulty_medium_description">Находит кратчайший путь и мешает вам.</string>
     <string name="difficulty_hard">Сложный</string>
-    <string name="difficulty_hard_description">Просчитывает несколько ходов вперёд с минимаксом и альфа-бета отсечением.</string>
 
     <string name="game_turn">Ход %1$d</string>
     <string name="game_home">Главное меню</string>
@@ -265,13 +254,11 @@
     <string name="winner_main_menu">Главное меню</string>
 
     <string name="settings_language">Язык</string>
-    <string name="settings_language_system">Язык устройства</string>
+    <string name="settings_language_device">Язык устройства</string>
     <string name="settings_appearance">Оформление</string>
     <string name="settings_theme_system">Системная</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
-    <string name="settings_dynamic_color">Динамические цвета</string>
-    <string name="settings_dynamic_color_description">Использует цветовую палитру вашего устройства.</string>
     <string name="settings_game_experience">Игровой процесс</string>
     <string name="settings_sounds">Звуки</string>
     <string name="settings_sounds_description">Звуки ходов, стен и результата.</string>
@@ -292,25 +279,14 @@
     <string name="stats_wins_losses">%1$d П · %2$d Пор.</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_title">Магазин</string>
-    <string name="store_empty">Пока ничего не продаётся. Загляните позже.</string>
-    <string name="store_owned">Куплено</string>
-    <string name="store_pending">Ожидание оплаты</string>
-    <string name="store_pending_explainer">Платёж обрабатывается. Товар откроется автоматически, как только он пройдёт.</string>
-    <string name="store_buy">Купить</string>
     <string name="store_restore">Восстановить покупки</string>
     <string name="store_guest_warning">Вы играете как гость. Привяжите аккаунт, чтобы покупки перешли на другие устройства.</string>
-    <string name="store_no_pay_to_win">Здесь всё только внешнее. Ничто из продаваемого не меняет ход игры.</string>
 
     <string name="billing_error_unavailable">Магазин сейчас недоступен. Попробуйте позже.</string>
     <string name="billing_error_unsupported">Покупки не поддерживаются на этом устройстве.</string>
     <string name="billing_error_failed">Не удалось завершить покупку.</string>
     <string name="billing_restore_complete">Покупки восстановлены.</string>
 
-    <string name="theme_board_label">Оформление доски</string>
-    <string name="theme_board_default">Классика</string>
-    <string name="theme_board_midnight">Полночь</string>
-    <string name="theme_board_sunset">Закат</string>
 
     <string name="friends_title">Друзья</string>
     <string name="friends_search_label">Поиск по имени пользователя</string>
@@ -343,14 +319,19 @@
 
     <string name="cd_board">Игровая доска, 9 на 9 клеток</string>
     <string name="cd_avatar">Фото профиля</string>
-    <string name="menu_quick_play">Быстрая игра</string>
-    <string name="menu_create_room">Создать комнату</string>
-    <string name="menu_join_room">Войти в комнату</string>
-    <string name="menu_modes">Режимы</string>
     <string name="menu_tutorial">Обучение</string>
     <string name="tutorial_step_wall_vertical_title">Поставьте вертикальную стену</string>
     <string name="tutorial_step_wall_vertical_message">Вертикальные стены встают между двумя столбцами. Нажмите на подсвеченный паз, чтобы перекрыть сопернику шаг в сторону.</string>
     <string name="tutorial_step_wall_horizontal_title">Поставьте горизонтальную стену</string>
     <string name="tutorial_step_wall_horizontal_message">Горизонтальные стены встают между двумя рядами. Нажмите на подсвеченный паз, чтобы перекрыть сопернику путь вперёд.</string>
     <string name="tutorial_step_correct">Верно. Нажмите «Далее», чтобы продолжить.</string>
+    <string name="menu_play">Играть</string>
+    <string name="menu_online">Онлайн</string>
+    <string name="menu_more">Ещё</string>
+    <string name="play_vs_bot">Против бота</string>
+    <string name="play_local">Двое на одном устройстве</string>
+    <string name="play_custom_start">Начать свою игру</string>
+    <string name="online_play_with_friend">Играть с другом</string>
+    <string name="store_remove_ads">Убрать рекламу</string>
+    <string name="more_about_version">Версия %1$s</string>
 </resources>

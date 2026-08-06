@@ -79,6 +79,7 @@ fun BoardShowcase(
     language: AppLanguage,
     onProfile: () -> Unit,
     onLanguage: () -> Unit,
+    onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val renderer = remember { CanvasRenderer() }
@@ -105,7 +106,7 @@ fun BoardShowcase(
     ) {
         StaticLayer(renderer, rtl)
         RouteLayer(rtl)
-        Overlay(session, language, onProfile, onLanguage)
+        Overlay(session, language, onProfile, onLanguage, onSettings)
     }
 }
 
@@ -133,8 +134,11 @@ private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
             size = Size(w, h * 0.16f),
         )
 
-        val side = h * 1.20f
-        val top = h * 0.06f
+        // Pushed down and shrunk a little from the original framing: the three controls in
+        // the top corner were landing on the goal row and the orange pawn, and a settings
+        // icon sitting on a piece reads as a mistake rather than as a layer.
+        val side = h * 1.06f
+        val top = h * 0.20f
         val startX = if (rtl) w - w * 0.055f - side else w * 0.055f
         translate(startX, top) {
             renderer.draw(
@@ -293,7 +297,11 @@ private fun BoxScope.Overlay(
     language: AppLanguage,
     onProfile: () -> Unit,
     onLanguage: () -> Unit,
+    onSettings: () -> Unit,
 ) {
+    // Settings, language and identity live here as small marks on the panel rather than as
+    // entries in the menu below — three things nobody opens often should not take three of
+    // the four choices on the home screen.
     Row(
         Modifier
             .align(Alignment.TopEnd)
@@ -301,6 +309,7 @@ private fun BoxScope.Overlay(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        WellIconButton(GlyphKind.SETTINGS, stringResource(R.string.game_settings), onSettings)
         LanguageChip(language, onLanguage)
         ProfileCrest(session, onProfile)
     }

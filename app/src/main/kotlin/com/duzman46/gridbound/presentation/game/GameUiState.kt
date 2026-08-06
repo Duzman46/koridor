@@ -2,7 +2,6 @@ package com.duzman46.gridbound.presentation.game
 
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.game.audio.SoundEffect
-import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
@@ -34,7 +33,6 @@ data class GameUiState(
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
-    val boardTheme: BoardTheme = BoardTheme.CLASSIC,
 ) {
     val isOnline: Boolean get() = mode == GameMode.ONLINE
 

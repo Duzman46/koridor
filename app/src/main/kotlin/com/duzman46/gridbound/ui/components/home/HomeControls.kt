@@ -67,6 +67,51 @@ fun PlaySlab(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 /**
+ * One of the three quieter home choices, under the play slab.
+ *
+ * Same shape and glyph treatment as the slab, one step down in weight — so the four choices
+ * read as one set with an obvious first among them.
+ */
+@Composable
+fun HomeChoice(
+    label: String,
+    glyph: GlyphKind,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SlabHeight),
+        shape = RoundedCornerShape(Dimens.RadiusXs),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shadowElevation = 0.dp,
+    ) {
+        Row(
+            Modifier
+                .fillMaxSize()
+                .pieceDepth()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            KoridorGlyph(
+                glyph,
+                Modifier.size(Dimens.GlyphLg),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
  * The two room actions, side by side.
  *
  * [IntrinsicSize.Min] on the row is what keeps them honest in German and Russian: when one

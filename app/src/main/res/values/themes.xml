@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pre-Compose window theme. It only needs to paint the window background so that the
+  hand-off from the system splash screen to the Compose UI has no colour flash.
+  All in-app colours come from GridboundTheme.
+-->
+<resources>
+    <style name="Theme.Koridor" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+</resources>

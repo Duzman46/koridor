@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -15,40 +17,40 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
-import com.duzman46.gridbound.ui.localization.localized
+import com.duzman46.gridbound.theme.Dimens
 
+/**
+ * The background every screen sits on.
+ *
+ * Deliberately flat. The board is the only thing in this app that should pull the eye, and a
+ * tinted gradient behind every list and form was competing with it while making the ten
+ * screens look like ten different apps.
+ */
 @Composable
-fun GradientBackground(content: @Composable () -> Unit) {
-    val colors = MaterialTheme.colorScheme
+fun ScreenBackground(content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        colors.background,
-                        colors.primaryContainer.copy(alpha = 0.24f),
-                        colors.background,
-                    ),
-                ),
-            ),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         content()
     }
@@ -71,31 +73,35 @@ fun CenteredContent(
     }
 }
 
+/**
+ * A titled group of related controls.
+ *
+ * Settings and the online lobby each had their own near-identical card — same idea, different
+ * radius and title size, which is exactly how a set of screens stops looking like one app.
+ * This is the only card shape in the project.
+ */
 @Composable
-fun MenuButton(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
+fun SectionCard(
+    title: String,
     modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    Button(
-        onClick = onClick,
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 17.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = RoundedCornerShape(Dimens.RadiusLg),
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
-        Text(
-            text = text,
-            modifier = Modifier.padding(start = 12.dp),
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
+        Column(
+            Modifier.padding(Dimens.SpaceLg),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            content()
+        }
     }
 }
 
+/** A choice with an explanation — used where the difference between options is not obvious. */
 @Composable
 fun SelectionCard(
     title: String,
@@ -104,29 +110,30 @@ fun SelectionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    Surface(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        shape = RoundedCornerShape(Dimens.RadiusMd),
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(
-            Modifier.padding(20.dp),
+            Modifier.padding(Dimens.SpaceLg),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
         ) {
-            Box(
-                Modifier
-                    .size(56.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(18.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(Dimens.IconMd),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -139,7 +146,10 @@ fun ScreenTopBar(title: String, onBack: () -> Unit) {
         title = { Text(title, fontWeight = FontWeight.Bold) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = localized("Geri", "Back"))
+                Icon(
+                    Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(R.string.action_back),
+                )
             }
         },
     )

@@ -6,13 +6,13 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
+import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
@@ -25,8 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
-private val Context.gridboundDataStore by preferencesDataStore(Constants.Data.SETTINGS_FILE_NAME)
-
 @Singleton
 class DefaultGameRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -38,6 +36,9 @@ class DefaultGameRepository @Inject constructor(
         val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
         val hapticsEnabled = booleanPreferencesKey(Constants.Data.KEY_HAPTICS_ENABLED)
         val difficulty = stringPreferencesKey(Constants.Data.KEY_DIFFICULTY)
+        val tutorialCompleted = booleanPreferencesKey(Constants.Tutorial.KEY_COMPLETED)
+        val guestModeAccepted = booleanPreferencesKey(Constants.Session.KEY_GUEST_MODE_ACCEPTED)
+        val boardTheme = stringPreferencesKey(Constants.Data.KEY_BOARD_THEME)
         val totalGames = intPreferencesKey(Constants.Data.KEY_TOTAL_GAMES)
         val totalWins = intPreferencesKey(Constants.Data.KEY_TOTAL_WINS)
         val totalLosses = intPreferencesKey(Constants.Data.KEY_TOTAL_LOSSES)
@@ -57,12 +58,20 @@ class DefaultGameRepository @Inject constructor(
 
     override val settings: Flow<AppSettings> = preferences.map { values ->
         AppSettings(
-            language = enumValueOrDefault(values[Keys.language], AppLanguage.TURKISH),
+            // SYSTEM, not a specific language: an install with no stored choice must follow
+            // the device, falling back to the base (English) resources when the device
+            // language is not one of the ten shipped. Defaulting to Turkish here forced every
+            // player in the world into Turkish on first launch, and disagreed with both
+            // AppSettings() and SettingsBootstrap, which have always defaulted to SYSTEM.
+            language = enumValueOrDefault(values[Keys.language], AppLanguage.SYSTEM),
             themeMode = enumValueOrDefault(values[Keys.themeMode], ThemeMode.SYSTEM),
-            dynamicColor = values[Keys.dynamicColor] ?: true,
+            // Matches AppSettings: the game's own palette wins unless the player asks for
+            // Material You. Anyone who already toggled it keeps their stored choice.
+            dynamicColor = values[Keys.dynamicColor] ?: false,
             soundEnabled = values[Keys.soundEnabled] ?: true,
             hapticsEnabled = values[Keys.hapticsEnabled] ?: true,
             difficulty = enumValueOrDefault(values[Keys.difficulty], Difficulty.MEDIUM),
+            boardTheme = enumValueOrDefault(values[Keys.boardTheme], BoardTheme.CLASSIC),
         )
     }
 
@@ -86,12 +95,25 @@ class DefaultGameRepository @Inject constructor(
         )
     }
 
+    override val tutorialCompleted: Flow<Boolean> =
+        preferences.map { values -> values[Keys.tutorialCompleted] ?: false }
+
+    override suspend fun setTutorialCompleted(completed: Boolean) =
+        update(Keys.tutorialCompleted, completed)
+
+    override val guestModeAccepted: Flow<Boolean> =
+        preferences.map { values -> values[Keys.guestModeAccepted] ?: false }
+
+    override suspend fun setGuestModeAccepted(accepted: Boolean) =
+        update(Keys.guestModeAccepted, accepted)
+
     override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
     override suspend fun setDynamicColor(enabled: Boolean) = update(Keys.dynamicColor, enabled)
     override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)
     override suspend fun setHapticsEnabled(enabled: Boolean) = update(Keys.hapticsEnabled, enabled)
     override suspend fun setDifficulty(difficulty: Difficulty) = update(Keys.difficulty, difficulty.name)
+    override suspend fun setBoardTheme(theme: BoardTheme) = update(Keys.boardTheme, theme.name)
 
     override suspend fun recordCompletedGame(
         mode: GameMode,

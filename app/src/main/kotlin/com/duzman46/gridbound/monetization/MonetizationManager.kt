@@ -3,72 +3,72 @@ package com.duzman46.gridbound.monetization
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import com.android.billingclient.api.AcknowledgePurchaseParams
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.ProductDetails
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
 import com.duzman46.gridbound.BuildConfig
-import com.google.android.gms.ads.MobileAds
+import com.duzman46.gridbound.core.AppLog
+import com.duzman46.gridbound.di.ApplicationScope
+import com.duzman46.gridbound.monetization.domain.Entitlement
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class MonetizationState(
     val isPremium: Boolean = false,
-    val billingReady: Boolean = false,
-    val premiumPrice: String? = null,
     val adsAllowed: Boolean = false,
     val privacyOptionsRequired: Boolean = false,
 )
 
+/**
+ * Advertising and consent.
+ *
+ * Purchases live in [BillingManager]; this reads one entitlement from it — whether ads have
+ * been removed — and otherwise stays out of the store's way.
+ */
 @Singleton
 class MonetizationManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-) : PurchasesUpdatedListener {
-    private val preferences = context.getSharedPreferences("monetization", Context.MODE_PRIVATE)
+    @param:ApplicationContext private val context: Context,
+    private val billingManager: BillingManager,
+    @param:ApplicationScope private val scope: CoroutineScope,
+) {
     private val consentInformation = UserMessagingPlatform.getConsentInformation(context)
-    private val _state = MutableStateFlow(
-        MonetizationState(isPremium = preferences.getBoolean(PREMIUM_CACHE_KEY, false)),
-    )
+    private val preferences = context.getSharedPreferences("monetization", Context.MODE_PRIVATE)
+
+    private val _state = MutableStateFlow(MonetizationState())
     val state: StateFlow<MonetizationState> = _state.asStateFlow()
 
-    private var productDetails: ProductDetails? = null
-    private var billingConnectionStarted = false
     private var adsInitialized = false
     private var interstitialAd: InterstitialAd? = null
     private var interstitialLoading = false
     private var interstitialShowing = false
-    private val billingClient = BillingClient.newBuilder(context)
-        .setListener(this)
-        .enablePendingPurchases(
-            PendingPurchasesParams.newBuilder()
-                .enableOneTimeProducts()
-                .build(),
-        )
-        .enableAutoServiceReconnection()
-        .build()
+
+    init {
+        scope.launch {
+            billingManager.state.collect { billing ->
+                val isPremium = billing.owns(Entitlement.REMOVE_ADS)
+                if (_state.value.isPremium != isPremium) {
+                    _state.update { it.copy(isPremium = isPremium) }
+                    updateConsentState()
+                }
+            }
+        }
+    }
 
     fun initialize(activity: Activity) {
-        connectBilling()
+        billingManager.connect()
         val request = ConsentRequestParameters.Builder()
             .setTagForUnderAgeOfConsent(false)
             .build()
@@ -80,29 +80,29 @@ class MonetizationManager @Inject constructor(
                     updateConsentState()
                 }
             },
-            { updateConsentState() },
+            { error ->
+                AppLog.warn("consent-info-update")
+                updateConsentState()
+            },
         )
-    }
-
-    fun buyPremium(activity: Activity) {
-        val details = productDetails ?: return
-        val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            .build()
-        val flowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productParams))
-            .build()
-        billingClient.launchBillingFlow(activity, flowParams)
-    }
-
-    fun restorePurchases() {
-        if (billingClient.isReady) queryPurchases() else connectBilling()
     }
 
     fun showPrivacyOptions(activity: Activity) {
         UserMessagingPlatform.showPrivacyOptionsForm(activity) { updateConsentState() }
     }
 
+    /**
+     * Shows a full-screen ad on the way out of a finished match, if one is due.
+     *
+     * Called only from the victory screen's "play again" and "home" buttons — the two points
+     * where the player is already changing screens. Never during a turn, and never while the
+     * board is on screen.
+     *
+     * Two gates have to open: enough matches since the last one, and enough elapsed time.
+     * The counter alone let a player who lost three quick games in a row meet an ad on every
+     * exit; the clock stops that without making the ad depend on how fast anyone plays.
+     * [onFinished] runs in every path, so a missing or failed ad never strands the player.
+     */
     @SuppressLint("UseKtx")
     fun showInterstitialAfterCompletedMatch(activity: Activity, onFinished: () -> Unit) {
         if (interstitialShowing || _state.value.isPremium || !_state.value.adsAllowed) {
@@ -110,14 +110,19 @@ class MonetizationManager @Inject constructor(
             return
         }
         val completedSinceAd = preferences.getInt(COMPLETED_MATCHES_KEY, 0) + 1
+        val sinceLastAd = System.currentTimeMillis() - preferences.getLong(LAST_INTERSTITIAL_AT_KEY, 0L)
         val ad = interstitialAd
-        if (completedSinceAd < MATCHES_PER_INTERSTITIAL || ad == null) {
+        val due = completedSinceAd >= MATCHES_PER_INTERSTITIAL && sinceLastAd >= MIN_INTERSTITIAL_GAP_MILLIS
+        if (!due || ad == null) {
             preferences.edit().putInt(COMPLETED_MATCHES_KEY, completedSinceAd).apply()
             if (ad == null) loadInterstitial()
             onFinished()
             return
         }
-        preferences.edit().putInt(COMPLETED_MATCHES_KEY, 0).apply()
+        preferences.edit()
+            .putInt(COMPLETED_MATCHES_KEY, 0)
+            .putLong(LAST_INTERSTITIAL_AT_KEY, System.currentTimeMillis())
+            .apply()
         interstitialShowing = true
         interstitialAd = null
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -136,99 +141,9 @@ class MonetizationManager @Inject constructor(
         ad.show(activity)
     }
 
-    override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            updateEntitlement(purchases, definitiveResult = false)
-        }
-    }
-
-    private fun connectBilling() {
-        if (billingClient.isReady) {
-            queryProduct()
-            queryPurchases()
-            return
-        }
-        if (billingConnectionStarted) return
-        billingConnectionStarted = true
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                billingConnectionStarted = false
-                val ready = billingResult.responseCode == BillingClient.BillingResponseCode.OK
-                _state.update { it.copy(billingReady = ready) }
-                if (ready) {
-                    queryProduct()
-                    queryPurchases()
-                }
-            }
-
-            override fun onBillingServiceDisconnected() {
-                billingConnectionStarted = false
-                _state.update { it.copy(billingReady = false) }
-            }
-        })
-    }
-
-    private fun queryProduct() {
-        val product = QueryProductDetailsParams.Product.newBuilder()
-            .setProductId(BuildConfig.PREMIUM_PRODUCT_ID)
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(listOf(product))
-            .build()
-        billingClient.queryProductDetailsAsync(params) { billingResult, result ->
-            productDetails = result.productDetailsList.firstOrNull()
-            val price = productDetails?.oneTimePurchaseOfferDetails?.formattedPrice
-            _state.update {
-                it.copy(
-                    billingReady = billingResult.responseCode == BillingClient.BillingResponseCode.OK,
-                    premiumPrice = price,
-                )
-            }
-        }
-    }
-
-    private fun queryPurchases() {
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                updateEntitlement(purchases, definitiveResult = true)
-            }
-        }
-    }
-
-    private fun updateEntitlement(purchases: List<Purchase>, definitiveResult: Boolean) {
-        val purchased = purchases.filter {
-            BuildConfig.PREMIUM_PRODUCT_ID in it.products &&
-                it.purchaseState == Purchase.PurchaseState.PURCHASED
-        }
-        if (purchased.isNotEmpty()) {
-            setPremium(true)
-            purchased.filterNot(Purchase::isAcknowledged).forEach { purchase ->
-                val params = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-                billingClient.acknowledgePurchase(params) { result ->
-                    if (result.responseCode == BillingClient.BillingResponseCode.OK) setPremium(true)
-                }
-            }
-        } else if (definitiveResult) {
-            setPremium(false)
-        }
-    }
-
-    @SuppressLint("UseKtx")
-    private fun setPremium(isPremium: Boolean) {
-        preferences.edit().putBoolean(PREMIUM_CACHE_KEY, isPremium).apply()
-        _state.update { it.copy(isPremium = isPremium) }
-        updateConsentState()
-    }
-
     private fun updateConsentState() {
-        val canRequestAds = consentInformation.canRequestAds()
-        val adsAllowed = canRequestAds && !_state.value.isPremium &&
+        val adsAllowed = consentInformation.canRequestAds() &&
+            !_state.value.isPremium &&
             (BuildConfig.DEBUG || BuildConfig.MONETIZATION_CONFIGURED)
         _state.update {
             it.copy(
@@ -261,14 +176,23 @@ class MonetizationManager @Inject constructor(
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     interstitialLoading = false
                     interstitialAd = null
+                    AppLog.warn("interstitial-load")
                 }
             },
         )
     }
 
     private companion object {
-        const val PREMIUM_CACHE_KEY = "premium_owned"
         const val COMPLETED_MATCHES_KEY = "completed_matches_since_interstitial"
-        const val MATCHES_PER_INTERSTITIAL = 1
+        const val LAST_INTERSTITIAL_AT_KEY = "last_interstitial_at"
+
+        /**
+         * A full-screen ad every third finished match, and never twice inside three minutes.
+         * A game of Koridor runs a few minutes, so in practice this is roughly one ad per
+         * ten to fifteen minutes of play — enough to earn from, well short of the point
+         * where players uninstall or AdMob flags the placement.
+         */
+        const val MATCHES_PER_INTERSTITIAL = 3
+        const val MIN_INTERSTITIAL_GAP_MILLIS = 180_000L
     }
 }

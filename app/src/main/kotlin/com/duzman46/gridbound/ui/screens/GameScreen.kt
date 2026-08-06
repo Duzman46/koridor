@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
@@ -49,6 +50,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,14 +60,19 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.core.asString
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameAction
 import com.duzman46.gridbound.game.models.GameMode
+import com.duzman46.gridbound.game.models.GameStatus
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.TurnRecord
 import com.duzman46.gridbound.game.models.WallOrientation
@@ -73,8 +80,7 @@ import com.duzman46.gridbound.presentation.game.GameEvent
 import com.duzman46.gridbound.presentation.game.GameUiState
 import com.duzman46.gridbound.presentation.game.GameViewModel
 import com.duzman46.gridbound.ui.game.GameBoard
-import com.duzman46.gridbound.ui.localization.localized
-import com.duzman46.gridbound.ui.localization.localized as localizedMessage
+import kotlinx.coroutines.delay
 
 @Composable
 fun GameRoute(
@@ -108,7 +114,25 @@ fun GameRoute(
         onOrientation = viewModel::setWallOrientation,
         onConfirmWall = viewModel::confirmPendingWall,
         onCancelWall = viewModel::cancelPendingWall,
+        onResign = viewModel::resign,
+        onClaimTimeout = viewModel::claimTurnTimeout,
     )
+}
+
+/**
+ * Ticks once a second while an online match has a move clock, so the countdown and the
+ * "claim the win" affordance stay live without redrawing the board on every frame.
+ */
+@Composable
+private fun rememberClockTick(enabled: Boolean): Long {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(enabled) {
+        while (enabled) {
+            now = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
+    return now
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,32 +149,53 @@ private fun GameScreen(
     onOrientation: (WallOrientation) -> Unit,
     onConfirmWall: () -> Unit,
     onCancelWall: () -> Unit,
+    onResign: () -> Unit,
+    onClaimTimeout: () -> Unit,
 ) {
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
+    var showResignConfirmation by remember { mutableStateOf(false) }
     BackHandler(enabled = !showExitConfirmation) { showExitConfirmation = true }
+
+    val clockRunning = state.isOnline && state.turnDeadlineAt != null &&
+        state.boardState.status == GameStatus.IN_PROGRESS
+    val now = rememberClockTick(clockRunning)
+
+    if (showResignConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showResignConfirmation = false },
+            title = { Text(stringResource(R.string.game_resign_confirm_title)) },
+            text = { Text(stringResource(R.string.game_resign_confirm_message)) },
+            dismissButton = {
+                TextButton(onClick = { showResignConfirmation = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showResignConfirmation = false
+                    onResign()
+                }) { Text(stringResource(R.string.game_resign)) }
+            },
+        )
+    }
     if (showHistory) {
         HistoryDialog(state.boardState.history, onDismiss = { showHistory = false })
     }
     if (showExitConfirmation) {
         AlertDialog(
             onDismissRequest = { showExitConfirmation = false },
-            title = { Text(localized("Oyundan çıkılsın mı?", "Leave the game?")) },
+            title = { Text(stringResource(R.string.game_exit_title)) },
             text = {
-                Text(
-                    localized(
-                        "Mevcut oyun sona erecek. Oyundan çıkmak istediğine emin misin?",
-                        "The current game will end. Are you sure you want to leave?",
-                    ),
-                )
+                Text(stringResource(R.string.game_exit_message))
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmation = false }) {
-                    Text(localized("Oyuna Devam", "Keep Playing"))
+                    Text(stringResource(R.string.game_exit_keep_playing))
                 }
             },
             confirmButton = {
-                Button(onClick = onExit) { Text(localized("Oyundan Çık", "Leave Game")) }
+                Button(onClick = onExit) { Text(stringResource(R.string.game_exit_confirm)) }
             },
         )
     }
@@ -161,27 +206,34 @@ private fun GameScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Koridor", fontWeight = FontWeight.Black)
                         Text(
-                            localized("Tur ${state.boardState.turnNumber}", "Turn ${state.boardState.turnNumber}"),
+                            stringResource(R.string.game_turn, state.boardState.turnNumber),
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { showExitConfirmation = true }) {
-                        Icon(Icons.Rounded.Home, contentDescription = localized("Ana menü", "Home"))
+                        Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.game_home))
                     }
                 },
                 actions = {
                     if (state.mode != GameMode.ONLINE) {
                         IconButton(onClick = onUndo, enabled = state.canUndo && !state.isAiThinking) {
-                            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = localized("Geri al", "Undo"))
+                            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.game_undo))
                         }
                         IconButton(onClick = onRestart) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = localized("Yeniden başlat", "Restart"))
+                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.game_restart))
+                        }
+                    } else if (state.boardState.status == GameStatus.IN_PROGRESS) {
+                        IconButton(onClick = { showResignConfirmation = true }) {
+                            Icon(
+                                Icons.Rounded.Flag,
+                                contentDescription = stringResource(R.string.game_resign),
+                            )
                         }
                     }
                     IconButton(onClick = onSettings) {
-                        Icon(Icons.Rounded.Settings, contentDescription = localized("Ayarlar", "Settings"))
+                        Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.game_settings))
                     }
                 },
             )
@@ -198,6 +250,7 @@ private fun GameScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TurnSummary(state, onHistory = { showHistory = true })
+                OnlineClockBar(state, now, onClaimTimeout)
                 if (wide) {
                     Row(
                         Modifier.fillMaxWidth().weight(1f),
@@ -209,6 +262,7 @@ private fun GameScreen(
                             onTileTap,
                             onWallTap,
                             Modifier.weight(1.25f).fillMaxHeight().widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp),
+                            theme = state.boardTheme,
                         )
                         CompactGameControls(
                             state,
@@ -229,6 +283,7 @@ private fun GameScreen(
                             onTileTap,
                             onWallTap,
                             Modifier.fillMaxHeight().widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp),
+                            theme = state.boardTheme,
                         )
                     }
                     CompactGameControls(
@@ -239,6 +294,61 @@ private fun GameScreen(
                         onCancelWall,
                         Modifier.fillMaxWidth(),
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Move clock for online matches, plus the button that ends a match whose rival has stopped
+ * playing. The claim is re-checked against the server clock, so this is an affordance rather
+ * than the decision.
+ */
+@Composable
+private fun OnlineClockBar(state: GameUiState, now: Long, onClaimTimeout: () -> Unit) {
+    val deadline = state.turnDeadlineAt
+    if (!state.isOnline || deadline == null) return
+    if (state.boardState.status != GameStatus.IN_PROGRESS) return
+
+    val remaining = (deadline - now).coerceAtLeast(0L)
+    val expired = state.canClaimTimeout(now)
+    val yourTurn = state.boardState.currentPlayer == state.localPlayer
+
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = if (expired) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                stringResource(
+                    if (yourTurn) R.string.game_your_turn else R.string.game_rival_turn,
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(
+                    R.string.game_turn_timer,
+                    remaining / 60_000L,
+                    (remaining / 1_000L) % 60L,
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+            )
+            if (expired) {
+                Button(onClick = onClaimTimeout) {
+                    Text(stringResource(R.string.game_claim_win))
                 }
             }
         }
@@ -257,7 +367,7 @@ private fun CompactGameControls(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         state.onlineMessage?.let { message ->
             Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(12.dp)) {
-                Text(message.localizedMessage(), Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.bodySmall)
+                Text(message.asString(), Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.bodySmall)
             }
         }
         Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 3.dp) {
@@ -265,25 +375,25 @@ private fun CompactGameControls(
                 when {
                     state.pendingWall != null -> {
                         Text(
-                            localized("Duvar konumunu kontrol edip onayla.", "Check the wall position and confirm."),
+                            stringResource(R.string.game_wall_confirm_hint),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = onCancelWall, modifier = Modifier.weight(1f)) {
                                 Icon(Icons.Rounded.Close, contentDescription = null)
-                                Text(localized("İptal", "Cancel"))
+                                Text(stringResource(R.string.game_wall_cancel))
                             }
                             Button(onClick = onConfirmWall, modifier = Modifier.weight(1f)) {
                                 Icon(Icons.Rounded.Check, contentDescription = null)
-                                Text(localized("Onayla", "Confirm"))
+                                Text(stringResource(R.string.game_wall_confirm))
                             }
                         }
                     }
 
                     state.wallMode -> {
                         Text(
-                            localized("Tahtaya dokunarak en yakın duvar yuvasını seç.", "Tap the board to select the nearest wall slot."),
+                            stringResource(R.string.game_wall_pick_hint),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Row(
@@ -298,9 +408,9 @@ private fun CompactGameControls(
                                     label = {
                                         Text(
                                             if (orientation == WallOrientation.HORIZONTAL) {
-                                                localized("Yatay", "Horizontal")
+                                                stringResource(R.string.game_wall_horizontal)
                                             } else {
-                                                localized("Dikey", "Vertical")
+                                                stringResource(R.string.game_wall_vertical)
                                             },
                                         )
                                     },
@@ -308,7 +418,7 @@ private fun CompactGameControls(
                                 )
                             }
                             OutlinedButton(onClick = onToggleWall, modifier = Modifier.weight(1f)) {
-                                Text(localized("Piyon", "Pawn"))
+                                Text(stringResource(R.string.game_history_pawn_label))
                             }
                         }
                     }
@@ -320,13 +430,13 @@ private fun CompactGameControls(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                localized("Piyonu seçip yeşil kareye dokun.", "Select the pawn, then tap a green tile."),
+                                stringResource(R.string.game_move_hint),
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             OutlinedButton(onClick = onToggleWall, enabled = state.acceptsHumanInput) {
-                                Text(localized("Duvar Yerleştir", "Place Wall"))
+                                Text(stringResource(R.string.game_place_wall))
                             }
                         }
                     }
@@ -340,16 +450,14 @@ private fun CompactGameControls(
 private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
     val current = state.boardState.currentPlayer
     val turnTitle = when {
-        state.mode == GameMode.ONLINE && state.isOnlineSyncing -> localized("Hamle gönderiliyor…", "Sending move…")
-        state.mode == GameMode.ONLINE && !state.isOnlineConnected -> localized("Odaya bağlanılıyor…", "Connecting to room…")
-        state.mode == GameMode.ONLINE && current == state.localPlayer -> localized(
-            "Senin sıran · ${playerName(current)}",
-            "Your turn · ${playerName(current)}",
-        )
-        state.mode == GameMode.ONLINE -> localized("Rakibin sırası", "Opponent's turn")
-        state.isAiThinking -> localized("Yapay zekâ düşünüyor…", "AI is thinking…")
-        current == PlayerId.PLAYER_ONE -> localized("Mavi oyuncunun sırası", "Blue player's turn")
-        else -> localized("Turuncu oyuncunun sırası", "Orange player's turn")
+        state.mode == GameMode.ONLINE && state.isOnlineSyncing -> stringResource(R.string.game_sending_move)
+        state.mode == GameMode.ONLINE && !state.isOnlineConnected -> stringResource(R.string.game_connecting)
+        state.mode == GameMode.ONLINE && current == state.localPlayer ->
+            stringResource(R.string.game_turn_yours, playerName(current))
+        state.mode == GameMode.ONLINE -> stringResource(R.string.game_turn_opponent)
+        state.isAiThinking -> stringResource(R.string.game_ai_thinking)
+        current == PlayerId.PLAYER_ONE -> stringResource(R.string.game_turn_blue)
+        else -> stringResource(R.string.game_turn_orange)
     }
     val activeColor = if (current == PlayerId.PLAYER_ONE) Color(0xFF3F82FF) else Color(0xFFFF8A34)
     val shouldPulse = state.acceptsHumanInput || state.mode == GameMode.LOCAL_TWO_PLAYER
@@ -379,9 +487,10 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
                     }
                     Text(
                         when (state.mode) {
-                            GameMode.VS_AI -> localized("${state.difficulty.label()} yapay zekâ", "${state.difficulty.label()} AI")
-                            GameMode.LOCAL_TWO_PLAYER -> localized("Aynı cihazda iki oyuncu", "Two players on one device")
-                            GameMode.ONLINE -> localized("Çevrimiçi oyun", "Online game")
+                            GameMode.VS_AI ->
+                                stringResource(R.string.game_vs_ai, state.difficulty.label())
+                            GameMode.LOCAL_TWO_PLAYER -> stringResource(R.string.game_local_two_player)
+                            GameMode.ONLINE -> stringResource(R.string.game_online_match)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -391,7 +500,7 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
                     CircularProgressIndicator()
                 }
                 IconButton(onClick = onHistory) {
-                    Icon(Icons.Rounded.Info, contentDescription = localized("Hamle geçmişi", "Move history"))
+                    Icon(Icons.Rounded.Info, contentDescription = stringResource(R.string.game_history))
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -404,14 +513,14 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
 
 @Composable
 private fun playerName(player: PlayerId): String = when (player) {
-    PlayerId.PLAYER_ONE -> localized("Mavi", "Blue")
-    PlayerId.PLAYER_TWO -> localized("Turuncu", "Orange")
+    PlayerId.PLAYER_ONE -> stringResource(R.string.game_player_blue)
+    PlayerId.PLAYER_TWO -> stringResource(R.string.game_player_orange)
 }
 
 @Composable
 private fun PlayerWalls(name: String, count: Int) {
     Text(
-        localized("$name · $count duvar", "$name · $count walls"),
+        pluralStringResource(R.plurals.game_player_walls, count, name, count),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
     )
@@ -422,10 +531,10 @@ private fun HistoryDialog(history: List<TurnRecord>, onDismiss: () -> Unit) {
     val recent = history.takeLast(12).reversed()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(localized("Hamle geçmişi", "Move history")) },
+        title = { Text(stringResource(R.string.game_history)) },
         text = {
             if (recent.isEmpty()) {
-                Text(localized("Henüz hamle yok.", "No moves yet."))
+                Text(stringResource(R.string.game_history_empty))
             } else {
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(recent) { record ->
@@ -438,24 +547,25 @@ private fun HistoryDialog(history: List<TurnRecord>, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(localized("Kapat", "Close")) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
         },
     )
 }
 
 @Composable
 private fun GameAction.label(): String = when (this) {
-    is GameAction.MovePawn -> localized("Piyon ${target.row + 1},${target.column + 1}", "Pawn ${target.row + 1},${target.column + 1}")
+    is GameAction.MovePawn ->
+        stringResource(R.string.game_history_pawn, target.row + 1, target.column + 1)
     is GameAction.PlaceWall -> if (wall.orientation == WallOrientation.HORIZONTAL) {
-        localized("Yatay duvar", "Horizontal wall")
+        stringResource(R.string.game_wall_horizontal_full)
     } else {
-        localized("Dikey duvar", "Vertical wall")
+        stringResource(R.string.game_wall_vertical_full)
     }
 }
 
 @Composable
 private fun Difficulty.label(): String = when (this) {
-    Difficulty.EASY -> localized("Kolay", "Easy")
-    Difficulty.MEDIUM -> localized("Orta", "Medium")
-    Difficulty.HARD -> localized("Zor", "Hard")
+    Difficulty.EASY -> stringResource(R.string.difficulty_easy)
+    Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
+    Difficulty.HARD -> stringResource(R.string.difficulty_hard)
 }

@@ -32,14 +32,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
-import com.duzman46.gridbound.ui.components.GradientBackground
-import com.duzman46.gridbound.ui.localization.localized
+import com.duzman46.gridbound.ui.components.ScreenBackground
 
 @Composable
 fun WinnerScreen(
@@ -62,7 +63,7 @@ fun WinnerScreen(
         label = "confetti",
     )
     val humanLost = mode == GameMode.VS_AI && winner == PlayerId.PLAYER_TWO
-    GradientBackground {
+    ScreenBackground {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Confetti(progress)
             Card(
@@ -83,27 +84,36 @@ fun WinnerScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        if (humanLost) localized("Bu kez yapay zekâ kazandı", "AI won this time") else localized("Zafer!", "Victory!"),
+                        if (humanLost) stringResource(R.string.winner_ai_won) else stringResource(R.string.winner_victory),
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        if (humanLost) localized("Yeni bir stratejiyle tekrar dene.", "Try again with a new strategy.") else
-                            localized(
-                                "${if (winner == PlayerId.PLAYER_ONE) "Mavi" else "Turuncu"} oyuncu hedef kenara ulaştı.",
-                                "${if (winner == PlayerId.PLAYER_ONE) "Blue" else "Orange"} player reached the goal edge.",
-                            ),
+                        if (humanLost) {
+                            stringResource(R.string.winner_retry_hint)
+                        } else {
+                            stringResource(
+                                R.string.winner_reached_goal,
+                                stringResource(
+                                    if (winner == PlayerId.PLAYER_ONE) {
+                                        R.string.game_player_blue
+                                    } else {
+                                        R.string.game_player_orange
+                                    },
+                                ),
+                            )
+                        },
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Replay, contentDescription = null)
-                        Text(localized("Tekrar Oyna", "Play Again"), Modifier.padding(start = 8.dp))
+                        Text(stringResource(R.string.winner_play_again), Modifier.padding(start = 8.dp))
                     }
                     OutlinedButton(onClick = onHome, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Home, contentDescription = null)
-                        Text(localized("Ana Menü", "Main Menu"), Modifier.padding(start = 8.dp))
+                        Text(stringResource(R.string.winner_main_menu), Modifier.padding(start = 8.dp))
                     }
                 }
             }

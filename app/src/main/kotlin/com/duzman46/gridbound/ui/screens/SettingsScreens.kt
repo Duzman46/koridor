@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -17,9 +18,12 @@ import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.ManageAccounts
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.WorkspacePremium
@@ -37,17 +41,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
+import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.monetization.MonetizationState
+import com.duzman46.gridbound.monetization.domain.Entitlement
 import com.duzman46.gridbound.presentation.settings.SettingsUiState
-import com.duzman46.gridbound.ui.components.GradientBackground
+import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.ui.components.ScreenBackground
+import com.duzman46.gridbound.ui.components.SectionCard
 import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.localization.localized
 import kotlin.math.roundToInt
 
 @Composable
@@ -60,13 +69,17 @@ fun SettingsScreen(
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onDifficulty: (Difficulty) -> Unit,
+    onReplayTutorial: () -> Unit,
+    onAccount: () -> Unit,
+    onStore: () -> Unit,
+    onBoardTheme: (BoardTheme) -> Unit,
+    ownedEntitlements: Set<Entitlement>,
     monetization: MonetizationState,
-    onBuyPremium: () -> Unit,
     onRestorePurchases: () -> Unit,
     onPrivacyOptions: () -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(localized("Ayarlar", "Settings"), onBack) }) { padding ->
-        GradientBackground {
+    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.game_settings), onBack) }) { padding ->
+        ScreenBackground {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -74,78 +87,113 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 item {
-                    SettingsCard(localized("Premium ve reklamlar", "Premium and ads")) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    if (monetization.isPremium) localized("Premium etkin", "Premium active")
-                                    else localized("Reklamları kaldır", "Remove ads"),
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    when {
-                                        monetization.isPremium -> localized(
-                                            "Bu hesapta reklamlar kalıcı olarak kapalı.",
-                                            "Ads are permanently disabled for this account.",
-                                        )
-                                        monetization.premiumPrice != null -> localized(
-                                            "${monetization.premiumPrice} · Tek seferlik satın alma",
-                                            "${monetization.premiumPrice} · One-time purchase",
-                                        )
-                                        else -> localized(
-                                            "Fiyat bilgisi Play Store bağlantısı kurulunca görünür.",
-                                            "The price appears after connecting to the Play Store.",
-                                        )
-                                    },
-                                )
-                            },
-                            leadingContent = { Icon(Icons.Rounded.WorkspacePremium, contentDescription = null) },
-                        )
-                        if (!monetization.isPremium) {
-                            Button(
-                                onClick = onBuyPremium,
-                                enabled = monetization.billingReady && monetization.premiumPrice != null,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(localized("Premium Satın Al", "Buy Premium"))
-                            }
+                    SettingsCard(stringResource(R.string.store_title)) {
+                        OutlinedButton(onClick = onStore, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null)
+                            Text(stringResource(R.string.store_title), Modifier.padding(start = 8.dp))
                         }
                         OutlinedButton(onClick = onRestorePurchases, modifier = Modifier.fillMaxWidth()) {
                             Icon(Icons.Rounded.Restore, contentDescription = null)
-                            Text(localized("Satın Almayı Geri Yükle", "Restore Purchase"), Modifier.padding(start = 8.dp))
+                            Text(stringResource(R.string.store_restore), Modifier.padding(start = 8.dp))
                         }
                         if (monetization.privacyOptionsRequired) {
                             OutlinedButton(onClick = onPrivacyOptions, modifier = Modifier.fillMaxWidth()) {
                                 Icon(Icons.Rounded.PrivacyTip, contentDescription = null)
-                                Text(localized("Reklam Gizlilik Seçenekleri", "Ad Privacy Options"), Modifier.padding(start = 8.dp))
+                                Text(stringResource(R.string.settings_ad_privacy), Modifier.padding(start = 8.dp))
                             }
                         }
                     }
                 }
                 item {
-                    SettingsCard(localized("Dil", "Language")) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AppLanguage.entries.forEach { language ->
+                    SettingsCard(stringResource(R.string.theme_board_label)) {
+                        // FlowRow, not Row: three chips of translated text do not fit on a
+                        // 1080px screen, and a plain Row squeezes the last one until its
+                        // label breaks one character per line.
+                        FlowRow(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            BoardTheme.entries.forEach { boardTheme ->
+                                // A locked theme is shown but not selectable, so the option
+                                // is discoverable without pretending it is available.
+                                val unlocked = boardTheme.isFree ||
+                                    boardTheme.entitlement in ownedEntitlements
                                 FilterChip(
-                                    selected = state.settings.language == language,
-                                    onClick = { onLanguage(language) },
-                                    label = { Text(if (language == AppLanguage.TURKISH) "Türkçe" else "English") },
-                                    leadingIcon = { Icon(Icons.Rounded.Language, contentDescription = null) },
+                                    selected = state.settings.boardTheme == boardTheme,
+                                    onClick = { onBoardTheme(boardTheme) },
+                                    enabled = unlocked,
+                                    label = { Text(boardTheme.label()) },
+                                    leadingIcon = {
+                                        Icon(
+                                            if (unlocked) Icons.Rounded.ColorLens else Icons.Rounded.Lock,
+                                            contentDescription = null,
+                                        )
+                                    },
                                 )
                             }
                         }
                     }
                 }
                 item {
-                    SettingsCard(localized("Görünüm", "Appearance")) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SettingsCard(stringResource(R.string.account_title)) {
+                        OutlinedButton(onClick = onAccount, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.ManageAccounts, contentDescription = null)
+                            Text(stringResource(R.string.account_title), Modifier.padding(start = 8.dp))
+                        }
+                        OutlinedButton(onClick = onReplayTutorial, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.School, contentDescription = null)
+                            Text(stringResource(R.string.tutorial_replay), Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+                item {
+                    SettingsCard(stringResource(R.string.settings_language)) {
+                        // Wraps rather than scrolls: eleven options do not fit on one line,
+                        // and a hidden language is a language nobody finds.
+                        FlowRow(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            AppLanguage.selectable.forEach { language ->
+                                FilterChip(
+                                    selected = state.settings.language == language,
+                                    onClick = { onLanguage(language) },
+                                    label = {
+                                        Text(
+                                            // Each language is labelled in itself, so it is
+                                            // recognisable whatever the current language is.
+                                            if (language.followsDevice) {
+                                                stringResource(R.string.settings_language_system)
+                                            } else {
+                                                language.endonym
+                                            },
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Rounded.Language, contentDescription = null)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+                item {
+                    SettingsCard(stringResource(R.string.settings_appearance)) {
+                        // FlowRow, not Row: three chips of translated text do not fit on a
+                        // 1080px screen, and a plain Row squeezes the last one until its
+                        // label breaks one character per line.
+                        FlowRow(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             ThemeMode.entries.forEach { mode ->
                                 val (label, icon) = when (mode) {
-                                    ThemeMode.SYSTEM -> localized("Sistem", "System") to Icons.Rounded.PhoneAndroid
-                                    ThemeMode.LIGHT -> localized("Açık", "Light") to Icons.Rounded.LightMode
-                                    ThemeMode.DARK -> localized("Koyu", "Dark") to Icons.Rounded.DarkMode
+                                    ThemeMode.SYSTEM -> stringResource(R.string.settings_theme_system) to Icons.Rounded.PhoneAndroid
+                                    ThemeMode.LIGHT -> stringResource(R.string.settings_theme_light) to Icons.Rounded.LightMode
+                                    ThemeMode.DARK -> stringResource(R.string.settings_theme_dark) to Icons.Rounded.DarkMode
                                 }
                                 FilterChip(
                                     selected = state.settings.themeMode == mode,
@@ -155,18 +203,25 @@ fun SettingsScreen(
                                 )
                             }
                         }
-                        SettingSwitch(localized("Dinamik renk", "Dynamic color"), localized("Cihazının renk paletini kullanır.", "Uses your device color palette."), Icons.Rounded.ColorLens, state.settings.dynamicColor, onDynamicColor)
+                        SettingSwitch(stringResource(R.string.settings_dynamic_color), stringResource(R.string.settings_dynamic_color_description), Icons.Rounded.ColorLens, state.settings.dynamicColor, onDynamicColor)
                     }
                 }
                 item {
-                    SettingsCard(localized("Oyun deneyimi", "Game experience")) {
-                        SettingSwitch(localized("Sesler", "Sounds"), localized("Hamle, duvar ve sonuç sesleri.", "Move, wall, and result sounds."), Icons.AutoMirrored.Rounded.VolumeUp, state.settings.soundEnabled, onSound)
-                        SettingSwitch(localized("Dokunsal geri bildirim", "Haptic feedback"), localized("Hamlelerde ve hatalarda titreşim.", "Vibration for moves and errors."), Icons.Rounded.TouchApp, state.settings.hapticsEnabled, onHaptics)
+                    SettingsCard(stringResource(R.string.settings_game_experience)) {
+                        SettingSwitch(stringResource(R.string.settings_sounds), stringResource(R.string.settings_sounds_description), Icons.AutoMirrored.Rounded.VolumeUp, state.settings.soundEnabled, onSound)
+                        SettingSwitch(stringResource(R.string.settings_haptics), stringResource(R.string.settings_haptics_description), Icons.Rounded.TouchApp, state.settings.hapticsEnabled, onHaptics)
                     }
                 }
                 item {
-                    SettingsCard(localized("Varsayılan yapay zekâ", "Default AI")) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SettingsCard(stringResource(R.string.settings_default_ai)) {
+                        // FlowRow, not Row: three chips of translated text do not fit on a
+                        // 1080px screen, and a plain Row squeezes the last one until its
+                        // label breaks one character per line.
+                        FlowRow(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             Difficulty.entries.forEach { difficulty ->
                                 FilterChip(
                                     selected = state.settings.difficulty == difficulty,
@@ -185,8 +240,8 @@ fun SettingsScreen(
 
 @Composable
 fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
-    Scaffold(topBar = { ScreenTopBar(localized("İstatistikler", "Statistics"), onBack) }) { padding ->
-        GradientBackground {
+    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.menu_statistics), onBack) }) { padding ->
+        ScreenBackground {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -198,24 +253,33 @@ fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
                         Modifier.fillMaxWidth().widthIn(max = 760.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text(localized("Kariyer özeti", "Career summary"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.stats_career), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            StatCard(localized("Oyun", "Games"), statistics.totalGames.toString(), Modifier.weight(1f))
-                            StatCard(localized("Galibiyet", "Wins"), statistics.totalWins.toString(), Modifier.weight(1f))
-                            StatCard(localized("Oran", "Rate"), "%${(statistics.winRate * 100).roundToInt()}", Modifier.weight(1f))
+                            StatCard(stringResource(R.string.stats_games), statistics.totalGames.toString(), Modifier.weight(1f))
+                            StatCard(stringResource(R.string.stats_wins), statistics.totalWins.toString(), Modifier.weight(1f))
+                            StatCard(
+                                stringResource(R.string.stats_rate),
+                                stringResource(
+                                    R.string.stats_percentage,
+                                    (statistics.winRate * 100).roundToInt(),
+                                ),
+                                Modifier.weight(1f),
+                            )
                         }
-                        SettingsCard(localized("Detaylar", "Details")) {
-                            StatLine(localized("Mağlubiyet", "Losses"), statistics.totalLosses)
-                            StatLine(localized("Yerel oyun", "Local games"), statistics.localGames)
-                            StatLine(localized("Toplam tur", "Total turns"), statistics.totalTurns)
+                        SettingsCard(stringResource(R.string.stats_details)) {
+                            StatLine(stringResource(R.string.stats_losses), statistics.totalLosses)
+                            StatLine(stringResource(R.string.stats_local_games), statistics.localGames)
+                            StatLine(stringResource(R.string.stats_total_turns), statistics.totalTurns)
                         }
-                        SettingsCard(localized("Zorluklara göre", "By difficulty")) {
+                        SettingsCard(stringResource(R.string.stats_by_difficulty)) {
                             Difficulty.entries.forEach { difficulty ->
                                 val wins = statistics.winsByDifficulty[difficulty] ?: 0
                                 val losses = statistics.lossesByDifficulty[difficulty] ?: 0
                                 ListItem(
                                     headlineContent = { Text(difficulty.label(), fontWeight = FontWeight.SemiBold) },
-                                    supportingContent = { Text(localized("$wins galibiyet · $losses mağlubiyet", "$wins wins · $losses losses")) },
+                                    supportingContent = {
+                                        Text(stringResource(R.string.stats_wins_losses, wins, losses))
+                                    },
                                     leadingContent = { Icon(Icons.Rounded.SmartToy, contentDescription = null) },
                                 )
                             }
@@ -229,16 +293,7 @@ fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
 
 @Composable
 private fun SettingsCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().widthIn(max = 760.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)),
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            content()
-        }
-    }
+    SectionCard(title, Modifier.widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp), content)
 }
 
 @Composable
@@ -277,7 +332,16 @@ private fun StatLine(label: String, value: Int) {
 
 @Composable
 private fun Difficulty.label(): String = when (this) {
-    Difficulty.EASY -> localized("Kolay", "Easy")
-    Difficulty.MEDIUM -> localized("Orta", "Medium")
-    Difficulty.HARD -> localized("Zor", "Hard")
+    Difficulty.EASY -> stringResource(R.string.difficulty_easy)
+    Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
+    Difficulty.HARD -> stringResource(R.string.difficulty_hard)
 }
+
+@Composable
+private fun BoardTheme.label(): String = stringResource(
+    when (this) {
+        BoardTheme.CLASSIC -> R.string.theme_board_default
+        BoardTheme.MIDNIGHT -> R.string.theme_board_midnight
+        BoardTheme.SUNSET -> R.string.theme_board_sunset
+    },
+)

@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Base (English) resources. Every unsupported device language falls back to this file,
+  so it must always be the complete set of keys. Locale overrides live in values-<code>/.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">Koridor</string>
+
+    <!-- Shared actions -->
+    <string name="action_back">Back</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_close">Close</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_next">Next</string>
+    <string name="action_previous">Back</string>
+    <string name="action_skip">Skip</string>
+
+    <!-- Shared states -->
+    <string name="state_loading">Loading…</string>
+    <string name="state_offline_title">No internet connection</string>
+    <string name="state_offline_message">Online features need a connection. Local games keep working.</string>
+    <string name="state_empty_title">Nothing here yet</string>
+    <string name="state_error_title">Something went wrong</string>
+
+    <!-- Generic, user-safe error messages. Backend error codes are never shown. -->
+    <string name="error_network">Could not connect. Check your internet connection.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_service_unavailable">The online service is not available right now.</string>
+    <string name="error_not_signed_in">You need to sign in to use this feature.</string>
+
+    <!-- Account entry -->
+    <string name="auth_welcome_title">Welcome to Koridor</string>
+    <string name="auth_welcome_subtitle">Open your path. Change your rival\'s path.</string>
+    <string name="auth_continue_with_google">Continue with Google</string>
+    <string name="auth_sign_in_with_email">Sign in with email</string>
+    <string name="auth_create_account">Create account</string>
+    <string name="auth_play_as_guest">Play as guest</string>
+    <string name="auth_guest_explainer">As a guest you can play locally and finish the tutorial. Link an account to add friends and compete online.</string>
+
+    <!-- Sign in / sign up -->
+    <string name="auth_sign_in_title">Sign in</string>
+    <string name="auth_sign_up_title">Create account</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_confirm_label">Confirm password</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_reset_title">Reset password</string>
+    <string name="auth_reset_explainer">Enter your email address and we will send you a reset link.</string>
+    <string name="auth_reset_send">Send reset link</string>
+    <string name="auth_reset_sent">If an account exists for that address, a reset link is on its way.</string>
+    <string name="auth_sign_out">Sign out</string>
+    <string name="auth_sign_out_confirm_title">Sign out?</string>
+    <string name="auth_sign_out_confirm_message">You can sign back in at any time.</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
+
+    <!-- Auth errors -->
+    <string name="auth_error_email_invalid">Enter a valid email address.</string>
+    <string name="auth_error_email_in_use">An account already exists for this email address.</string>
+    <string name="auth_error_password_weak">Your password must be at least 8 characters.</string>
+    <string name="auth_error_password_mismatch">The passwords do not match.</string>
+    <string name="auth_error_invalid_credentials">The email or password is incorrect.</string>
+    <string name="auth_error_too_many_requests">Too many attempts. Please wait a moment and try again.</string>
+    <string name="auth_error_google_cancelled">Google sign-in was cancelled.</string>
+    <string name="auth_error_google_unavailable">Google sign-in is not available on this device.</string>
+    <string name="auth_error_account_exists_with_other_method">This email is already linked to a different sign-in method.</string>
+    <string name="auth_error_requires_recent_login">For your security, please sign in again before continuing.</string>
+    <string name="auth_error_credential_in_use">This account is already linked to another player.</string>
+
+    <!-- Guest linking -->
+    <string name="auth_link_title">Keep your progress</string>
+    <string name="auth_link_explainer">Link an account so your progress, purchases and friends stay with you on every device.</string>
+    <string name="auth_link_with_google">Link with Google</string>
+    <string name="auth_link_with_email">Link with email</string>
+    <string name="auth_link_success">Your account is linked. Your progress has been kept.</string>
+    <string name="auth_guest_badge">Guest</string>
+
+    <!-- Username -->
+    <string name="username_title">Choose a username</string>
+    <string name="username_explainer">This is how other players will see you. You can change it later.</string>
+    <string name="username_label">Username</string>
+    <string name="username_available">This username is available.</string>
+    <plurals name="username_error_too_short">
+        <item quantity="one">Your username must be at least %1$d character.</item>
+        <item quantity="other">Your username must be at least %1$d characters.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="one">Your username can be at most %1$d character.</item>
+        <item quantity="other">Your username can be at most %1$d characters.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">Use only letters, numbers and underscores.</string>
+    <string name="username_error_taken">This username is already taken.</string>
+    <string name="username_error_not_allowed">This username is not allowed.</string>
+    <string name="username_error_blank">Enter a username.</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_display_name_label">Display name</string>
+    <string name="profile_avatar_label">Avatar</string>
+    <string name="profile_rating">Rating</string>
+    <string name="profile_highest_rating">Best rating</string>
+    <string name="profile_games">Games</string>
+    <string name="profile_wins">Wins</string>
+    <string name="profile_losses">Losses</string>
+    <string name="profile_draws">Draws</string>
+    <string name="profile_win_streak">Win streak</string>
+    <string name="profile_best_streak">Best streak</string>
+    <string name="profile_member_since">Member since %1$s</string>
+
+    <!-- Account management -->
+    <string name="account_title">Account</string>
+    <string name="account_delete_title">Delete account</string>
+    <string name="account_delete_warning">This permanently deletes your profile, stats, friends and rating. Purchases cannot be restored afterwards. This cannot be undone.</string>
+    <string name="account_delete_confirm_label">Type %1$s to confirm</string>
+    <string name="account_delete_action">Delete my account permanently</string>
+    <string name="account_delete_success">Your account has been deleted.</string>
+    <string name="account_privacy_policy">Privacy Policy</string>
+    <string name="account_terms_of_service">Terms of Service</string>
+    <string name="account_legal_unavailable">This document is not published yet.</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_replay">Replay tutorial</string>
+    <string name="tutorial_skip_confirm_title">Skip the tutorial?</string>
+    <string name="tutorial_skip_confirm_message">You can replay it any time from the main menu or Settings.</string>
+    <string name="tutorial_progress">Step %1$d of %2$d</string>
+    <string name="tutorial_finish">Start playing</string>
+
+    <string name="tutorial_step_select_title">Select your pawn</string>
+    <string name="tutorial_step_select_message">Tap your blue pawn to see where it can go.</string>
+    <string name="tutorial_step_move_title">Make a move</string>
+    <string name="tutorial_step_move_message">Tap a highlighted square to move one step.</string>
+    <string name="tutorial_step_jump_title">Jump your rival</string>
+    <string name="tutorial_step_jump_message">When you stand face to face, you can jump straight over your rival.</string>
+    <string name="tutorial_step_blocked_title">A wall can never trap</string>
+    <string name="tutorial_step_blocked_message">Try this wall. It is rejected because it would close the last path.</string>
+    <string name="tutorial_step_win_title">Win the game</string>
+    <string name="tutorial_step_win_message">Reach the far side to win. Move onto the last row.</string>
+    <string name="tutorial_hint_wrong_move">Not that one. Follow the highlighted hint.</string>
+
+    <!-- Online rooms -->
+    <string name="room_error_not_found">The room was not found or has been closed.</string>
+    <string name="room_error_full">This room is already full.</string>
+    <string name="room_error_code_invalid">Enter the %1$d-character room code.</string>
+    <string name="room_error_code_unavailable">Could not create a room right now. Please try again.</string>
+    <string name="room_error_password_wrong">That room password is incorrect.</string>
+    <!--
+      Not a plural: the count is the compile-time constant ROOM_PASSWORD_MIN_LENGTH, so it
+      is always 4 and no other grammatical form can ever be produced.
+    -->
+    <string name="room_error_password_too_short" tools:ignore="PluralsCandidate">The room password must be at least %1$d characters.</string>
+    <string name="room_error_name_too_long">That room name is too long.</string>
+    <string name="room_error_no_opponent">No opponent was found. Try creating a room instead.</string>
+    <string name="room_error_ranked_requires_account">Ranked matches need an account. Link yours to play ranked.</string>
+
+    <string name="online_title">Play Online</string>
+    <string name="online_create_room">Create room</string>
+    <string name="online_join_by_code">Join with a code</string>
+    <string name="online_browse_rooms">Open rooms</string>
+    <string name="online_quick_match">Quick match</string>
+    <string name="online_quick_match_searching">Looking for an opponent…</string>
+    <string name="online_rejoin_match">Return to your match</string>
+    <string name="online_rejoin_explainer">You have a match in progress.</string>
+
+    <string name="room_name_label">Room name</string>
+    <string name="room_name_placeholder">Optional</string>
+    <string name="room_visibility_label">Who can join</string>
+    <string name="room_visibility_public">Anyone</string>
+    <string name="room_visibility_private">Code only</string>
+    <string name="room_visibility_friends">Friends</string>
+    <string name="room_ranked_label">Ranked match</string>
+    <string name="room_ranked_description">Ranked matches change your rating.</string>
+    <string name="room_turn_duration_label">Time per move</string>
+    <string name="room_total_duration_label">Time per player</string>
+    <string name="room_duration_unlimited">Unlimited</string>
+    <string name="room_duration_minutes">%1$d min</string>
+    <string name="room_duration_seconds">%1$d s</string>
+    <string name="room_password_label">Room password</string>
+    <string name="room_password_optional">Optional</string>
+    <string name="room_code_label">Room code</string>
+    <string name="room_code_hint">Touch and hold the code to copy it.</string>
+    <string name="room_waiting_for_opponent">Waiting for an opponent</string>
+    <string name="room_close">Close room</string>
+
+    <string name="room_browser_empty">No open rooms right now. Create one and wait for a rival.</string>
+    <string name="room_browser_filter_all">All</string>
+    <string name="room_browser_filter_ranked">Ranked</string>
+    <string name="room_browser_filter_casual">Casual</string>
+    <string name="room_browser_filter_fast">Fast</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">Password protected</string>
+
+    <string name="game_resign">Resign</string>
+    <string name="game_resign_confirm_title">Resign the match?</string>
+    <string name="game_resign_confirm_message">Your rival wins and, in a ranked match, your rating drops.</string>
+    <string name="game_opponent_left">Your rival has disconnected. They have a moment to return.</string>
+    <string name="game_claim_win">Claim the win</string>
+    <string name="game_reconnecting">Reconnecting…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">Your turn</string>
+    <string name="game_rival_turn">Rival\'s turn</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_title">Leaderboard</string>
+    <string name="leaderboard_tab_global">Global</string>
+    <string name="leaderboard_tab_weekly">Weekly</string>
+    <string name="leaderboard_tab_friends">Friends</string>
+    <string name="leaderboard_empty">No ranked matches have been played yet.</string>
+    <string name="leaderboard_empty_weekly">No ranked matches this week yet.</string>
+    <string name="leaderboard_empty_friends">Add friends to see how you compare.</string>
+    <string name="leaderboard_your_rank">Your position</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">Sign in to appear on the leaderboard.</string>
+    <!-- A terse two-number badge in a table row, not a sentence; plurals would not fit. -->
+    <string name="leaderboard_record" tools:ignore="PluralsCandidate">%1$d W · %2$d played</string>
+    <string name="cd_leaderboard_row">Rank %1$d, %2$s, rating %3$d</string>
+
+    <!-- Main menu and mode selection -->
+    <string name="menu_statistics">Statistics</string>
+    <string name="mode_title">Game Mode</string>
+    <string name="mode_vs_ai">Against AI</string>
+    <string name="mode_vs_ai_description">Test your strategy at three difficulty levels.</string>
+    <string name="mode_two_players">Two Players</string>
+    <string name="mode_two_players_description">Take turns on the same device.</string>
+    <string name="mode_online">Online</string>
+    <string name="mode_online_description">Play a friend online with a room code.</string>
+    <string name="difficulty_title">Difficulty</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_easy_description">Relaxed and varied moves.</string>
+    <string name="difficulty_medium">Medium</string>
+    <string name="difficulty_medium_description">Reads the shortest path and slows you down.</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="difficulty_hard_description">Calculates several moves ahead with minimax and alpha-beta.</string>
+
+    <!-- In game -->
+    <string name="game_turn">Turn %1$d</string>
+    <string name="game_home">Home</string>
+    <string name="game_undo">Undo</string>
+    <string name="game_restart">Restart</string>
+    <string name="game_settings">Settings</string>
+    <string name="game_history">Move history</string>
+    <string name="game_history_empty">No moves yet.</string>
+    <string name="game_history_pawn">Pawn %1$d,%2$d</string>
+    <string name="game_history_pawn_label">Pawn</string>
+    <string name="game_exit_title">Leave the game?</string>
+    <string name="game_exit_message">The current game will end. Are you sure you want to leave?</string>
+    <string name="game_exit_keep_playing">Keep Playing</string>
+    <string name="game_exit_confirm">Leave Game</string>
+    <string name="game_place_wall">Place Wall</string>
+    <string name="game_wall_horizontal">Horizontal</string>
+    <string name="game_wall_vertical">Vertical</string>
+    <string name="game_wall_horizontal_full">Horizontal wall</string>
+    <string name="game_wall_vertical_full">Vertical wall</string>
+    <string name="game_wall_confirm">Confirm</string>
+    <string name="game_wall_cancel">Cancel</string>
+    <string name="game_wall_confirm_hint">Check the wall position and confirm.</string>
+    <string name="game_wall_pick_hint">Tap the board to select the nearest wall slot.</string>
+    <string name="game_move_hint">Select the pawn, then tap a green tile.</string>
+    <string name="game_ai_thinking">AI is thinking…</string>
+    <string name="game_sending_move">Sending move…</string>
+    <string name="game_connecting">Connecting to room…</string>
+    <string name="game_local_two_player">Two players on one device</string>
+    <string name="game_online_match">Online game</string>
+    <string name="game_vs_ai">%1$s AI</string>
+    <string name="game_player_blue">Blue</string>
+    <string name="game_player_orange">Orange</string>
+    <string name="game_turn_blue">Blue player\'s turn</string>
+    <string name="game_turn_orange">Orange player\'s turn</string>
+    <string name="game_turn_opponent">Opponent\'s turn</string>
+    <string name="game_turn_yours">Your turn · %1$s</string>
+    <string name="winner_reached_goal">%1$s player reached the goal edge.</string>
+    <plurals name="game_player_walls">
+        <item quantity="one">%1$s · %2$d wall</item>
+        <item quantity="other">%1$s · %2$d walls</item>
+    </plurals>
+
+    <!-- Winner -->
+    <string name="winner_victory">Victory!</string>
+    <string name="winner_ai_won">AI won this time</string>
+    <string name="winner_retry_hint">Try again with a new strategy.</string>
+    <string name="winner_play_again">Play Again</string>
+    <string name="winner_main_menu">Main Menu</string>
+
+    <!-- Settings and statistics -->
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">Device language</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_description">Uses your device colour palette.</string>
+    <string name="settings_game_experience">Game experience</string>
+    <string name="settings_sounds">Sounds</string>
+    <string name="settings_sounds_description">Move, wall, and result sounds.</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_description">Vibration for moves and errors.</string>
+    <string name="settings_default_ai">Default AI</string>
+    <string name="settings_ad_privacy">Ad Privacy Options</string>
+
+    <string name="stats_career">Career summary</string>
+    <string name="stats_games">Games</string>
+    <string name="stats_wins">Wins</string>
+    <string name="stats_rate">Rate</string>
+    <string name="stats_details">Details</string>
+    <string name="stats_losses">Losses</string>
+    <string name="stats_local_games">Local games</string>
+    <string name="stats_total_turns">Total turns</string>
+    <string name="stats_by_difficulty">By difficulty</string>
+    <string name="stats_wins_losses">%1$d W · %2$d L</string>
+    <string name="stats_percentage">%1$d%%</string>
+
+    <!-- Store and purchases -->
+    <string name="store_title">Store</string>
+    <string name="store_empty">There is nothing on sale yet. Check back soon.</string>
+    <string name="store_owned">Owned</string>
+    <string name="store_pending">Waiting for payment</string>
+    <string name="store_pending_explainer">Your payment is being processed. This unlocks automatically once it clears.</string>
+    <string name="store_buy">Buy</string>
+    <string name="store_restore">Restore purchases</string>
+    <string name="store_guest_warning">You are playing as a guest. Link an account so purchases follow you to other devices.</string>
+    <string name="store_no_pay_to_win">Everything here is cosmetic. Nothing on sale changes how the game is played.</string>
+
+    <string name="billing_error_unavailable">The store is unavailable right now. Please try again later.</string>
+    <string name="billing_error_unsupported">Purchases are not supported on this device.</string>
+    <string name="billing_error_failed">The purchase could not be completed.</string>
+    <string name="billing_restore_complete">Purchases restored.</string>
+
+    <string name="theme_board_label">Board theme</string>
+    <string name="theme_board_default">Classic</string>
+    <string name="theme_board_midnight">Midnight</string>
+    <string name="theme_board_sunset">Sunset</string>
+
+    <!-- Friends -->
+    <string name="friends_title">Friends</string>
+    <string name="friends_search_label">Search by username</string>
+    <string name="friends_search_empty">No player found with that username.</string>
+    <string name="friends_section_online">Online</string>
+    <string name="friends_section_offline">Offline</string>
+    <string name="friends_section_incoming">Incoming requests</string>
+    <string name="friends_section_outgoing">Sent requests</string>
+    <string name="friends_section_blocked">Blocked</string>
+    <string name="friends_empty">You have not added anyone yet. Search for a username to start.</string>
+    <string name="friends_add">Add friend</string>
+    <string name="friends_accept">Accept</string>
+    <string name="friends_decline">Decline</string>
+    <string name="friends_cancel_request">Cancel request</string>
+    <string name="friends_remove">Remove friend</string>
+    <string name="friends_remove_confirm">Remove %1$s from your friends?</string>
+    <string name="friends_block">Block</string>
+    <string name="friends_block_confirm">Block %1$s? They will not be able to invite you or send requests.</string>
+    <string name="friends_unblock">Unblock</string>
+    <string name="friends_invite">Invite to a game</string>
+    <string name="friends_invite_sent">Invitation sent.</string>
+    <string name="friends_online">Online</string>
+    <string name="friends_offline">Offline</string>
+    <string name="friends_requires_account">Friends need an account. Link yours to add players.</string>
+
+    <string name="invites_title">Game invitations</string>
+    <string name="invites_from">%1$s invited you to a match.</string>
+    <string name="invites_join">Join</string>
+    <string name="invites_dismiss">Dismiss</string>
+
+    <!-- Accessibility -->
+    <string name="cd_board">Game board, 9 by 9 squares</string>
+    <string name="cd_avatar">Profile picture</string>
+    <string name="menu_quick_play">Quick Play</string>
+    <string name="menu_create_room">Create Room</string>
+    <string name="menu_join_room">Join Room</string>
+    <string name="menu_modes">Modes</string>
+    <string name="menu_tutorial">Tutorial</string>
+    <string name="tutorial_step_wall_vertical_title">Place a vertical wall</string>
+    <string name="tutorial_step_wall_vertical_message">Vertical walls sit between two columns. Tap the highlighted slot to cut off your rival\'s sideways step.</string>
+    <string name="tutorial_step_wall_horizontal_title">Place a horizontal wall</string>
+    <string name="tutorial_step_wall_horizontal_message">Horizontal walls sit between two rows. Tap the highlighted slot to block your rival\'s way forward.</string>
+    <string name="tutorial_step_correct">Correct. Tap Next to continue.</string>
+</resources>

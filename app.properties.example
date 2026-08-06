@@ -1,0 +1,8 @@
+# Copy to app.properties and fill in. app.properties is git-ignored.
+#
+# Public URLs of the legal documents shown in Settings -> Account.
+# Google Play requires a reachable privacy policy URL before the app can be published.
+# Leave a value empty to hide the corresponding entry in the app; do NOT invent a URL.
+# Markdown sources for both documents live in docs/.
+KORIDOR_PRIVACY_POLICY_URL=
+KORIDOR_TERMS_URL=

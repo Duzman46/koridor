@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  مصطلحات اللعبة: جدار، نقلة، دور، الخصم، غرفة، مباراة تصنيفية، الانسحاب.
+  اللغة العربية تُكتب من اليمين إلى اليسار؛ التخطيط يعكس نفسه تلقائيًا لأن التطبيق
+  يستخدم start/end بدل left/right ويضبط supportsRtl.
+-->
+<resources>
+    <string name="action_back">رجوع</string>
+    <string name="action_continue">متابعة</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_retry">إعادة المحاولة</string>
+    <string name="action_close">إغلاق</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_next">التالي</string>
+    <string name="action_previous">رجوع</string>
+    <string name="action_skip">تخطٍّ</string>
+
+    <string name="state_loading">جارٍ التحميل…</string>
+    <string name="state_offline_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="state_offline_message">تحتاج الميزات عبر الإنترنت إلى اتصال. أما المباريات المحلية فتستمر في العمل.</string>
+    <string name="state_empty_title">لا يوجد شيء هنا بعد</string>
+    <string name="state_error_title">حدث خطأ ما</string>
+
+    <string name="error_network">تعذّر الاتصال. تحقّق من اتصالك بالإنترنت.</string>
+    <string name="error_unknown">حدث خطأ ما. حاول مرة أخرى.</string>
+    <string name="error_service_unavailable">الخدمة عبر الإنترنت غير متاحة حاليًا.</string>
+    <string name="error_not_signed_in">عليك تسجيل الدخول لاستخدام هذه الميزة.</string>
+
+    <string name="auth_welcome_title">مرحبًا بك في Koridor</string>
+    <string name="auth_welcome_subtitle">افتح طريقك. وغيّر طريق خصمك.</string>
+    <string name="auth_continue_with_google">المتابعة باستخدام Google</string>
+    <string name="auth_sign_in_with_email">تسجيل الدخول بالبريد الإلكتروني</string>
+    <string name="auth_create_account">إنشاء حساب</string>
+    <string name="auth_play_as_guest">اللعب كضيف</string>
+    <string name="auth_guest_explainer">كضيف يمكنك اللعب محليًا وإكمال الدليل التعليمي. اربط حسابًا لإضافة الأصدقاء والمنافسة عبر الإنترنت.</string>
+
+    <string name="auth_sign_in_title">تسجيل الدخول</string>
+    <string name="auth_sign_up_title">إنشاء حساب</string>
+    <string name="auth_email_label">البريد الإلكتروني</string>
+    <string name="auth_password_label">كلمة المرور</string>
+    <string name="auth_password_confirm_label">تأكيد كلمة المرور</string>
+    <string name="auth_forgot_password">هل نسيت كلمة المرور؟</string>
+    <string name="auth_reset_title">إعادة تعيين كلمة المرور</string>
+    <string name="auth_reset_explainer">أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.</string>
+    <string name="auth_reset_send">إرسال الرابط</string>
+    <string name="auth_reset_sent">إذا كان هناك حساب بهذا العنوان، فقد أُرسل الرابط بالفعل.</string>
+    <string name="auth_sign_out">تسجيل الخروج</string>
+    <string name="auth_sign_out_confirm_title">تسجيل الخروج؟</string>
+    <string name="auth_sign_out_confirm_message">يمكنك تسجيل الدخول مرة أخرى في أي وقت.</string>
+    <string name="auth_show_password">إظهار كلمة المرور</string>
+    <string name="auth_hide_password">إخفاء كلمة المرور</string>
+
+    <string name="auth_error_email_invalid">أدخل عنوان بريد إلكتروني صالحًا.</string>
+    <string name="auth_error_email_in_use">يوجد حساب بهذا البريد الإلكتروني بالفعل.</string>
+    <string name="auth_error_password_weak">يجب ألا تقل كلمة المرور عن 8 أحرف.</string>
+    <string name="auth_error_password_mismatch">كلمتا المرور غير متطابقتين.</string>
+    <string name="auth_error_invalid_credentials">البريد الإلكتروني أو كلمة المرور غير صحيحة.</string>
+    <string name="auth_error_too_many_requests">محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.</string>
+    <string name="auth_error_google_cancelled">أُلغي تسجيل الدخول عبر Google.</string>
+    <string name="auth_error_google_unavailable">تسجيل الدخول عبر Google غير متاح على هذا الجهاز.</string>
+    <string name="auth_error_account_exists_with_other_method">هذا البريد مرتبط بالفعل بطريقة تسجيل دخول أخرى.</string>
+    <string name="auth_error_requires_recent_login">من أجل أمانك، سجّل الدخول مرة أخرى قبل المتابعة.</string>
+    <string name="auth_error_credential_in_use">هذا الحساب مرتبط بلاعب آخر.</string>
+
+    <string name="auth_link_title">احتفظ بتقدّمك</string>
+    <string name="auth_link_explainer">اربط حسابًا ليبقى تقدّمك ومشترياتك وأصدقاؤك معك على كل جهاز.</string>
+    <string name="auth_link_with_google">الربط عبر Google</string>
+    <string name="auth_link_with_email">الربط بالبريد الإلكتروني</string>
+    <string name="auth_link_success">تم ربط حسابك، وحُفظ تقدّمك.</string>
+    <string name="auth_guest_badge">ضيف</string>
+
+    <string name="username_title">اختر اسم مستخدم</string>
+    <string name="username_explainer">هكذا سيراك اللاعبون الآخرون. يمكنك تغييره لاحقًا.</string>
+    <string name="username_label">اسم المستخدم</string>
+    <string name="username_available">اسم المستخدم هذا متاح.</string>
+    <plurals name="username_error_too_short">
+        <item quantity="zero">يجب ألا يقل اسم المستخدم عن %1$d حرف.</item>
+        <item quantity="one">يجب ألا يقل اسم المستخدم عن حرف واحد.</item>
+        <item quantity="two">يجب ألا يقل اسم المستخدم عن حرفين.</item>
+        <item quantity="few">يجب ألا يقل اسم المستخدم عن %1$d أحرف.</item>
+        <item quantity="many">يجب ألا يقل اسم المستخدم عن %1$d حرفًا.</item>
+        <item quantity="other">يجب ألا يقل اسم المستخدم عن %1$d حرف.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="zero">يجب ألا يزيد اسم المستخدم عن %1$d حرف.</item>
+        <item quantity="one">يجب ألا يزيد اسم المستخدم عن حرف واحد.</item>
+        <item quantity="two">يجب ألا يزيد اسم المستخدم عن حرفين.</item>
+        <item quantity="few">يجب ألا يزيد اسم المستخدم عن %1$d أحرف.</item>
+        <item quantity="many">يجب ألا يزيد اسم المستخدم عن %1$d حرفًا.</item>
+        <item quantity="other">يجب ألا يزيد اسم المستخدم عن %1$d حرف.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">استخدم الأحرف اللاتينية والأرقام والشرطة السفلية فقط.</string>
+    <string name="username_error_taken">اسم المستخدم هذا مستخدَم بالفعل.</string>
+    <string name="username_error_not_allowed">اسم المستخدم هذا غير مسموح به.</string>
+    <string name="username_error_blank">أدخل اسم مستخدم.</string>
+
+    <string name="profile_title">الملف الشخصي</string>
+    <string name="profile_edit_title">تعديل الملف الشخصي</string>
+    <string name="profile_display_name_label">الاسم الظاهر</string>
+    <string name="profile_avatar_label">الصورة الرمزية</string>
+    <string name="profile_rating">التصنيف</string>
+    <string name="profile_highest_rating">أفضل تصنيف</string>
+    <string name="profile_games">المباريات</string>
+    <string name="profile_wins">الانتصارات</string>
+    <string name="profile_losses">الخسائر</string>
+    <string name="profile_draws">التعادلات</string>
+    <string name="profile_win_streak">سلسلة الانتصارات</string>
+    <string name="profile_best_streak">أفضل سلسلة</string>
+    <string name="profile_member_since">عضو منذ %1$s</string>
+
+    <string name="account_title">الحساب</string>
+    <string name="account_delete_title">حذف الحساب</string>
+    <string name="account_delete_warning">سيؤدي هذا إلى حذف ملفك الشخصي وإحصاءاتك وأصدقائك وتصنيفك نهائيًا. ولن يمكن استرجاع المشتريات بعد ذلك. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="account_delete_confirm_label">اكتب %1$s للتأكيد</string>
+    <string name="account_delete_action">حذف حسابي نهائيًا</string>
+    <string name="account_delete_success">تم حذف حسابك.</string>
+    <string name="account_privacy_policy">سياسة الخصوصية</string>
+    <string name="account_terms_of_service">شروط الاستخدام</string>
+    <string name="account_legal_unavailable">لم يُنشر هذا المستند بعد.</string>
+
+    <string name="tutorial_replay">إعادة الدليل التعليمي</string>
+    <string name="tutorial_skip_confirm_title">تخطّي الدليل التعليمي؟</string>
+    <string name="tutorial_skip_confirm_message">يمكنك إعادته في أي وقت من القائمة الرئيسية أو الإعدادات.</string>
+    <string name="tutorial_progress">الخطوة %1$d من %2$d</string>
+    <string name="tutorial_finish">ابدأ اللعب</string>
+    <string name="tutorial_step_select_title">اختر قطعتك</string>
+    <string name="tutorial_step_select_message">المس بيدقك الأزرق لترى إلى أين يمكنه الذهاب.</string>
+    <string name="tutorial_step_move_title">قم بنقلة</string>
+    <string name="tutorial_step_move_message">اضغط على مربع مُميَّز للتقدّم خطوة واحدة.</string>
+    <string name="tutorial_step_jump_title">اقفز فوق خصمك</string>
+    <string name="tutorial_step_jump_message">عندما تقفان وجهًا لوجه، يمكنك القفز فوق خصمك في خط مستقيم.</string>
+    <string name="tutorial_step_blocked_title">لا يمكن للجدار أن يحبس اللاعب</string>
+    <string name="tutorial_step_blocked_message">جرّب هذا الجدار. سيُرفض لأنه يغلق الطريق الأخير.</string>
+    <string name="tutorial_step_win_title">اربح المباراة</string>
+    <string name="tutorial_step_win_message">صِل إلى الجانب المقابل لتفوز. تقدّم إلى الصف الأخير.</string>
+    <string name="tutorial_hint_wrong_move">ليس هذا. اتبع التلميح المُميَّز.</string>
+
+    <string name="room_error_not_found">لم يتم العثور على الغرفة أو أنها أُغلقت.</string>
+    <string name="room_error_full">هذه الغرفة ممتلئة بالفعل.</string>
+    <string name="room_error_code_invalid">أدخل رمز الغرفة المكوّن من %1$d أحرف.</string>
+    <string name="room_error_code_unavailable">تعذّر إنشاء غرفة الآن. حاول مرة أخرى.</string>
+    <string name="room_error_password_wrong">كلمة مرور الغرفة غير صحيحة.</string>
+    <string name="room_error_password_too_short">يجب ألا تقل كلمة مرور الغرفة عن %1$d أحرف.</string>
+    <string name="room_error_name_too_long">اسم الغرفة طويل جدًا.</string>
+    <string name="room_error_no_opponent">لم يُعثر على خصم. جرّب إنشاء غرفة بدلًا من ذلك.</string>
+    <string name="room_error_ranked_requires_account">تتطلب المباريات التصنيفية حسابًا. اربط حسابك للعب التصنيفي.</string>
+
+    <string name="online_title">اللعب عبر الإنترنت</string>
+    <string name="online_create_room">إنشاء غرفة</string>
+    <string name="online_join_by_code">الانضمام برمز</string>
+    <string name="online_browse_rooms">الغرف المفتوحة</string>
+    <string name="online_quick_match">مباراة سريعة</string>
+    <string name="online_quick_match_searching">جارٍ البحث عن خصم…</string>
+    <string name="online_rejoin_match">العودة إلى مباراتك</string>
+    <string name="online_rejoin_explainer">لديك مباراة قيد التقدّم.</string>
+
+    <string name="room_name_label">اسم الغرفة</string>
+    <string name="room_name_placeholder">اختياري</string>
+    <string name="room_visibility_label">من يمكنه الانضمام</string>
+    <string name="room_visibility_public">الجميع</string>
+    <string name="room_visibility_private">بالرمز فقط</string>
+    <string name="room_visibility_friends">الأصدقاء</string>
+    <string name="room_ranked_label">مباراة تصنيفية</string>
+    <string name="room_ranked_description">تغيّر المباريات التصنيفية تصنيفك.</string>
+    <string name="room_turn_duration_label">الوقت لكل نقلة</string>
+    <string name="room_total_duration_label">الوقت لكل لاعب</string>
+    <string name="room_duration_unlimited">بلا حدود</string>
+    <string name="room_duration_minutes">%1$d د</string>
+    <string name="room_duration_seconds">%1$d ث</string>
+    <string name="room_password_label">كلمة مرور الغرفة</string>
+    <string name="room_password_optional">اختياري</string>
+    <string name="room_code_label">رمز الغرفة</string>
+    <string name="room_code_hint">اضغط مطوّلًا على الرمز لنسخه.</string>
+    <string name="room_waiting_for_opponent">في انتظار خصم</string>
+    <string name="room_close">إغلاق الغرفة</string>
+
+    <string name="room_browser_empty">لا توجد غرف مفتوحة الآن. أنشئ غرفة وانتظر خصمًا.</string>
+    <string name="room_browser_filter_all">الكل</string>
+    <string name="room_browser_filter_ranked">تصنيفية</string>
+    <string name="room_browser_filter_casual">ودّية</string>
+    <string name="room_browser_filter_fast">سريعة</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">محمية بكلمة مرور</string>
+
+    <string name="game_resign">الانسحاب</string>
+    <string name="game_resign_confirm_title">الانسحاب من المباراة؟</string>
+    <string name="game_resign_confirm_message">سيفوز خصمك، وفي المباراة التصنيفية سينخفض تصنيفك.</string>
+    <string name="game_opponent_left">انقطع اتصال خصمك. أمامه لحظات للعودة.</string>
+    <string name="game_claim_win">المطالبة بالفوز</string>
+    <string name="game_reconnecting">جارٍ إعادة الاتصال…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">دورك</string>
+    <string name="game_rival_turn">دور الخصم</string>
+
+    <string name="leaderboard_title">لوحة الصدارة</string>
+    <string name="leaderboard_tab_global">عام</string>
+    <string name="leaderboard_tab_weekly">أسبوعي</string>
+    <string name="leaderboard_tab_friends">الأصدقاء</string>
+    <string name="leaderboard_empty">لم تُلعب أي مباراة تصنيفية بعد.</string>
+    <string name="leaderboard_empty_weekly">لا توجد مباريات تصنيفية هذا الأسبوع بعد.</string>
+    <string name="leaderboard_empty_friends">أضِف أصدقاء لتقارن نتائجك بنتائجهم.</string>
+    <string name="leaderboard_your_rank">ترتيبك</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">سجّل الدخول لتظهر في لوحة الصدارة.</string>
+    <string name="leaderboard_record">%1$d فوز · %2$d مباراة</string>
+    <string name="cd_leaderboard_row">المركز %1$d، %2$s، التصنيف %3$d</string>
+
+    <string name="menu_statistics">الإحصاءات</string>
+    <string name="mode_title">وضع اللعب</string>
+    <string name="mode_vs_ai">ضد الذكاء الاصطناعي</string>
+    <string name="mode_vs_ai_description">اختبر استراتيجيتك على ثلاثة مستويات صعوبة.</string>
+    <string name="mode_two_players">لاعبان</string>
+    <string name="mode_two_players_description">العبا بالتناوب على الجهاز نفسه.</string>
+    <string name="mode_online">عبر الإنترنت</string>
+    <string name="mode_online_description">العب مع صديق عبر الإنترنت باستخدام رمز غرفة.</string>
+    <string name="difficulty_title">الصعوبة</string>
+    <string name="difficulty_easy">سهل</string>
+    <string name="difficulty_easy_description">نقلات هادئة ومتنوعة.</string>
+    <string name="difficulty_medium">متوسط</string>
+    <string name="difficulty_medium_description">يقرأ أقصر طريق ويعرقل تقدّمك.</string>
+    <string name="difficulty_hard">صعب</string>
+    <string name="difficulty_hard_description">يحسب عدة نقلات مسبقًا باستخدام minimax وتقليم ألفا-بيتا.</string>
+
+    <string name="game_turn">الدور %1$d</string>
+    <string name="game_home">القائمة الرئيسية</string>
+    <string name="game_undo">تراجع</string>
+    <string name="game_restart">إعادة البدء</string>
+    <string name="game_settings">الإعدادات</string>
+    <string name="game_history">سجل النقلات</string>
+    <string name="game_history_empty">لا توجد نقلات بعد.</string>
+    <string name="game_history_pawn">قطعة %1$d,%2$d</string>
+    <string name="game_history_pawn_label">قطعة</string>
+    <string name="game_exit_title">مغادرة المباراة؟</string>
+    <string name="game_exit_message">ستنتهي المباراة الحالية. هل تريد المغادرة فعلًا؟</string>
+    <string name="game_exit_keep_playing">متابعة اللعب</string>
+    <string name="game_exit_confirm">مغادرة المباراة</string>
+    <string name="game_place_wall">وضع جدار</string>
+    <string name="game_wall_horizontal">أفقي</string>
+    <string name="game_wall_vertical">عمودي</string>
+    <string name="game_wall_horizontal_full">جدار أفقي</string>
+    <string name="game_wall_vertical_full">جدار عمودي</string>
+    <string name="game_wall_confirm">تأكيد</string>
+    <string name="game_wall_cancel">إلغاء</string>
+    <string name="game_wall_confirm_hint">تحقّق من موضع الجدار ثم أكّد.</string>
+    <string name="game_wall_pick_hint">اضغط على الرقعة لاختيار أقرب موضع للجدار.</string>
+    <string name="game_move_hint">اختر القطعة ثم اضغط على مربع أخضر.</string>
+    <string name="game_ai_thinking">الذكاء الاصطناعي يفكّر…</string>
+    <string name="game_sending_move">جارٍ إرسال النقلة…</string>
+    <string name="game_connecting">جارٍ الاتصال بالغرفة…</string>
+    <string name="game_local_two_player">لاعبان على جهاز واحد</string>
+    <string name="game_online_match">مباراة عبر الإنترنت</string>
+    <string name="game_vs_ai">ذكاء اصطناعي %1$s</string>
+    <string name="game_player_blue">الأزرق</string>
+    <string name="game_player_orange">البرتقالي</string>
+    <string name="game_turn_blue">دور اللاعب الأزرق</string>
+    <string name="game_turn_orange">دور اللاعب البرتقالي</string>
+    <string name="game_turn_opponent">دور الخصم</string>
+    <string name="game_turn_yours">دورك · %1$s</string>
+    <string name="winner_reached_goal">وصل اللاعب %1$s إلى الحافة المستهدفة.</string>
+    <plurals name="game_player_walls">
+        <item quantity="zero">%1$s · %2$d جدار</item>
+        <item quantity="one">%1$s · جدار واحد</item>
+        <item quantity="two">%1$s · جداران</item>
+        <item quantity="few">%1$s · %2$d جدران</item>
+        <item quantity="many">%1$s · %2$d جدارًا</item>
+        <item quantity="other">%1$s · %2$d جدار</item>
+    </plurals>
+
+    <string name="winner_victory">فوز!</string>
+    <string name="winner_ai_won">فاز الذكاء الاصطناعي هذه المرة</string>
+    <string name="winner_retry_hint">حاول مرة أخرى باستراتيجية جديدة.</string>
+    <string name="winner_play_again">العب مرة أخرى</string>
+    <string name="winner_main_menu">القائمة الرئيسية</string>
+
+    <string name="settings_language">اللغة</string>
+    <string name="settings_language_system">لغة الجهاز</string>
+    <string name="settings_appearance">المظهر</string>
+    <string name="settings_theme_system">النظام</string>
+    <string name="settings_theme_light">فاتح</string>
+    <string name="settings_theme_dark">داكن</string>
+    <string name="settings_dynamic_color">الألوان الديناميكية</string>
+    <string name="settings_dynamic_color_description">يستخدم لوحة ألوان جهازك.</string>
+    <string name="settings_game_experience">تجربة اللعب</string>
+    <string name="settings_sounds">الأصوات</string>
+    <string name="settings_sounds_description">أصوات النقلات والجدران والنتيجة.</string>
+    <string name="settings_haptics">الاستجابة اللمسية</string>
+    <string name="settings_haptics_description">اهتزاز عند النقلات والأخطاء.</string>
+    <string name="settings_default_ai">الذكاء الاصطناعي الافتراضي</string>
+    <string name="settings_ad_privacy">خيارات خصوصية الإعلانات</string>
+
+    <string name="stats_career">ملخّص المسيرة</string>
+    <string name="stats_games">المباريات</string>
+    <string name="stats_wins">الانتصارات</string>
+    <string name="stats_rate">النسبة</string>
+    <string name="stats_details">التفاصيل</string>
+    <string name="stats_losses">الخسائر</string>
+    <string name="stats_local_games">المباريات المحلية</string>
+    <string name="stats_total_turns">إجمالي الأدوار</string>
+    <string name="stats_by_difficulty">حسب الصعوبة</string>
+    <string name="stats_wins_losses">%1$d فوز · %2$d خسارة</string>
+    <string name="stats_percentage">%1$d%%</string>
+
+    <string name="store_title">المتجر</string>
+    <string name="store_empty">لا شيء معروض للبيع بعد. عُد قريبًا.</string>
+    <string name="store_owned">مملوك</string>
+    <string name="store_pending">في انتظار الدفع</string>
+    <string name="store_pending_explainer">تجري معالجة دفعتك. سيُفتح المحتوى تلقائيًا بمجرد اكتمالها.</string>
+    <string name="store_buy">شراء</string>
+    <string name="store_restore">استعادة المشتريات</string>
+    <string name="store_guest_warning">أنت تلعب كضيف. اربط حسابًا لتنتقل مشترياتك معك إلى أجهزة أخرى.</string>
+    <string name="store_no_pay_to_win">كل ما هنا تجميلي. لا شيء معروض للبيع يغيّر طريقة اللعب.</string>
+
+    <string name="billing_error_unavailable">المتجر غير متاح حاليًا. حاول لاحقًا.</string>
+    <string name="billing_error_unsupported">الشراء غير مدعوم على هذا الجهاز.</string>
+    <string name="billing_error_failed">تعذّر إتمام عملية الشراء.</string>
+    <string name="billing_restore_complete">تمت استعادة المشتريات.</string>
+
+    <string name="theme_board_label">مظهر الرقعة</string>
+    <string name="theme_board_default">كلاسيكي</string>
+    <string name="theme_board_midnight">منتصف الليل</string>
+    <string name="theme_board_sunset">الغروب</string>
+
+    <string name="friends_title">الأصدقاء</string>
+    <string name="friends_search_label">البحث باسم المستخدم</string>
+    <string name="friends_search_empty">لم يُعثر على لاعب بهذا الاسم.</string>
+    <string name="friends_section_online">متصل</string>
+    <string name="friends_section_offline">غير متصل</string>
+    <string name="friends_section_incoming">الطلبات الواردة</string>
+    <string name="friends_section_outgoing">الطلبات المُرسلة</string>
+    <string name="friends_section_blocked">المحظورون</string>
+    <string name="friends_empty">لم تُضِف أحدًا بعد. ابحث عن اسم مستخدم للبدء.</string>
+    <string name="friends_add">إضافة صديق</string>
+    <string name="friends_accept">قبول</string>
+    <string name="friends_decline">رفض</string>
+    <string name="friends_cancel_request">إلغاء الطلب</string>
+    <string name="friends_remove">إزالة من الأصدقاء</string>
+    <string name="friends_remove_confirm">إزالة %1$s من أصدقائك؟</string>
+    <string name="friends_block">حظر</string>
+    <string name="friends_block_confirm">حظر %1$s؟ لن يتمكن من دعوتك أو إرسال طلبات إليك.</string>
+    <string name="friends_unblock">إلغاء الحظر</string>
+    <string name="friends_invite">الدعوة إلى مباراة</string>
+    <string name="friends_invite_sent">أُرسلت الدعوة.</string>
+    <string name="friends_online">متصل</string>
+    <string name="friends_offline">غير متصل</string>
+    <string name="friends_requires_account">تتطلب قائمة الأصدقاء حسابًا. اربط حسابك لإضافة لاعبين.</string>
+
+    <string name="invites_title">دعوات اللعب</string>
+    <string name="invites_from">دعاك %1$s إلى مباراة.</string>
+    <string name="invites_join">انضمام</string>
+    <string name="invites_dismiss">تجاهل</string>
+
+    <string name="cd_board">رقعة اللعب، 9 في 9 مربعات</string>
+    <string name="cd_avatar">صورة الملف الشخصي</string>
+    <string name="menu_quick_play">لعب سريع</string>
+    <string name="menu_create_room">إنشاء غرفة</string>
+    <string name="menu_join_room">انضم إلى غرفة</string>
+    <string name="menu_modes">الأنماط</string>
+    <string name="menu_tutorial">الدليل</string>
+    <string name="tutorial_step_wall_vertical_title">ضع جدارًا رأسيًا</string>
+    <string name="tutorial_step_wall_vertical_message">تقع الجدران الرأسية بين عمودين. المس الفتحة المميزة لقطع خطوة خصمك الجانبية.</string>
+    <string name="tutorial_step_wall_horizontal_title">ضع جدارًا أفقيًا</string>
+    <string name="tutorial_step_wall_horizontal_message">تقع الجدران الأفقية بين صفين. المس الفتحة المميزة لسد طريق خصمك إلى الأمام.</string>
+    <string name="tutorial_step_correct">صحيح. المس التالي للمتابعة.</string>
+</resources>

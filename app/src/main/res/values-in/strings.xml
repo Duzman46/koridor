@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Istilah permainan: dinding, langkah, giliran, lawan, ruang, pertandingan berperingkat, menyerah.
+  Folder memakai kode warisan "in" untuk bahasa Indonesia, sesuai kualifikasi sumber daya Android.
+-->
+<resources>
+    <string name="action_back">Kembali</string>
+    <string name="action_continue">Lanjutkan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_retry">Coba lagi</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_next">Berikutnya</string>
+    <string name="action_previous">Kembali</string>
+    <string name="action_skip">Lewati</string>
+
+    <string name="state_loading">Memuat…</string>
+    <string name="state_offline_title">Tidak ada koneksi internet</string>
+    <string name="state_offline_message">Fitur online memerlukan koneksi. Permainan lokal tetap berjalan.</string>
+    <string name="state_empty_title">Belum ada apa pun di sini</string>
+    <string name="state_error_title">Terjadi kesalahan</string>
+
+    <string name="error_network">Tidak dapat terhubung. Periksa koneksi internetmu.</string>
+    <string name="error_unknown">Terjadi kesalahan. Silakan coba lagi.</string>
+    <string name="error_service_unavailable">Layanan online sedang tidak tersedia.</string>
+    <string name="error_not_signed_in">Kamu perlu masuk untuk menggunakan fitur ini.</string>
+
+    <string name="auth_welcome_title">Selamat datang di Koridor</string>
+    <string name="auth_welcome_subtitle">Buka jalanmu. Ubah jalan lawanmu.</string>
+    <string name="auth_continue_with_google">Lanjutkan dengan Google</string>
+    <string name="auth_sign_in_with_email">Masuk dengan email</string>
+    <string name="auth_create_account">Buat akun</string>
+    <string name="auth_play_as_guest">Main sebagai tamu</string>
+    <string name="auth_guest_explainer">Sebagai tamu kamu bisa bermain secara lokal dan menyelesaikan tutorial. Tautkan akun untuk menambah teman dan bertanding online.</string>
+
+    <string name="auth_sign_in_title">Masuk</string>
+    <string name="auth_sign_up_title">Buat akun</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Kata sandi</string>
+    <string name="auth_password_confirm_label">Konfirmasi kata sandi</string>
+    <string name="auth_forgot_password">Lupa kata sandi?</string>
+    <string name="auth_reset_title">Atur ulang kata sandi</string>
+    <string name="auth_reset_explainer">Masukkan alamat emailmu dan kami akan mengirimkan tautan untuk mengatur ulang.</string>
+    <string name="auth_reset_send">Kirim tautan</string>
+    <string name="auth_reset_sent">Jika ada akun dengan alamat tersebut, tautannya sedang dikirim.</string>
+    <string name="auth_sign_out">Keluar</string>
+    <string name="auth_sign_out_confirm_title">Keluar dari akun?</string>
+    <string name="auth_sign_out_confirm_message">Kamu bisa masuk lagi kapan saja.</string>
+    <string name="auth_show_password">Tampilkan kata sandi</string>
+    <string name="auth_hide_password">Sembunyikan kata sandi</string>
+
+    <string name="auth_error_email_invalid">Masukkan alamat email yang valid.</string>
+    <string name="auth_error_email_in_use">Akun dengan email ini sudah ada.</string>
+    <string name="auth_error_password_weak">Kata sandimu harus minimal 8 karakter.</string>
+    <string name="auth_error_password_mismatch">Kata sandi tidak cocok.</string>
+    <string name="auth_error_invalid_credentials">Email atau kata sandi salah.</string>
+    <string name="auth_error_too_many_requests">Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.</string>
+    <string name="auth_error_google_cancelled">Masuk dengan Google dibatalkan.</string>
+    <string name="auth_error_google_unavailable">Masuk dengan Google tidak tersedia di perangkat ini.</string>
+    <string name="auth_error_account_exists_with_other_method">Email ini sudah tertaut ke metode masuk lain.</string>
+    <string name="auth_error_requires_recent_login">Demi keamanan, masuk kembali sebelum melanjutkan.</string>
+    <string name="auth_error_credential_in_use">Akun ini sudah tertaut ke pemain lain.</string>
+
+    <string name="auth_link_title">Simpan progresmu</string>
+    <string name="auth_link_explainer">Tautkan akun agar progres, pembelian, dan temanmu ikut di setiap perangkat.</string>
+    <string name="auth_link_with_google">Tautkan dengan Google</string>
+    <string name="auth_link_with_email">Tautkan dengan email</string>
+    <string name="auth_link_success">Akunmu sudah tertaut. Progresmu tersimpan.</string>
+    <string name="auth_guest_badge">Tamu</string>
+
+    <string name="username_title">Pilih nama pengguna</string>
+    <string name="username_explainer">Beginilah pemain lain akan melihatmu. Kamu bisa mengubahnya nanti.</string>
+    <string name="username_label">Nama pengguna</string>
+    <string name="username_available">Nama pengguna ini tersedia.</string>
+    <plurals name="username_error_too_short">
+        <item quantity="other">Nama penggunamu harus minimal %1$d karakter.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="other">Nama penggunamu maksimal %1$d karakter.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">Gunakan hanya huruf, angka, dan garis bawah.</string>
+    <string name="username_error_taken">Nama pengguna ini sudah dipakai.</string>
+    <string name="username_error_not_allowed">Nama pengguna ini tidak diizinkan.</string>
+    <string name="username_error_blank">Masukkan nama pengguna.</string>
+
+    <string name="profile_title">Profil</string>
+    <string name="profile_edit_title">Edit profil</string>
+    <string name="profile_display_name_label">Nama tampilan</string>
+    <string name="profile_avatar_label">Avatar</string>
+    <string name="profile_rating">Peringkat</string>
+    <string name="profile_highest_rating">Peringkat terbaik</string>
+    <string name="profile_games">Pertandingan</string>
+    <string name="profile_wins">Menang</string>
+    <string name="profile_losses">Kalah</string>
+    <string name="profile_draws">Seri</string>
+    <string name="profile_win_streak">Rentetan kemenangan</string>
+    <string name="profile_best_streak">Rentetan terbaik</string>
+    <string name="profile_member_since">Anggota sejak %1$s</string>
+
+    <string name="account_title">Akun</string>
+    <string name="account_delete_title">Hapus akun</string>
+    <string name="account_delete_warning">Tindakan ini menghapus profil, statistik, teman, dan peringkatmu secara permanen. Setelah itu pembelian tidak dapat dipulihkan. Tindakan ini tidak bisa dibatalkan.</string>
+    <string name="account_delete_confirm_label">Ketik %1$s untuk mengonfirmasi</string>
+    <string name="account_delete_action">Hapus akun saya secara permanen</string>
+    <string name="account_delete_success">Akunmu telah dihapus.</string>
+    <string name="account_privacy_policy">Kebijakan Privasi</string>
+    <string name="account_terms_of_service">Ketentuan Layanan</string>
+    <string name="account_legal_unavailable">Dokumen ini belum dipublikasikan.</string>
+
+    <string name="tutorial_replay">Ulangi tutorial</string>
+    <string name="tutorial_skip_confirm_title">Lewati tutorial?</string>
+    <string name="tutorial_skip_confirm_message">Anda bisa mengulanginya kapan saja dari menu utama atau Pengaturan.</string>
+    <string name="tutorial_progress">Langkah %1$d dari %2$d</string>
+    <string name="tutorial_finish">Mulai bermain</string>
+    <string name="tutorial_step_select_title">Pilih bidakmu</string>
+    <string name="tutorial_step_select_message">Ketuk bidak biru Anda untuk melihat ke mana ia bisa pergi.</string>
+    <string name="tutorial_step_move_title">Lakukan satu langkah</string>
+    <string name="tutorial_step_move_message">Ketuk kotak yang disorot untuk maju satu petak.</string>
+    <string name="tutorial_step_jump_title">Lompati lawanmu</string>
+    <string name="tutorial_step_jump_message">Saat kalian berhadapan, kamu bisa melompati lawan secara lurus.</string>
+    <string name="tutorial_step_blocked_title">Dinding tidak boleh mengurung</string>
+    <string name="tutorial_step_blocked_message">Coba dinding ini. Dinding ini ditolak karena akan menutup jalan terakhir.</string>
+    <string name="tutorial_step_win_title">Menangkan pertandingan</string>
+    <string name="tutorial_step_win_message">Capai sisi seberang untuk menang. Melangkahlah ke baris terakhir.</string>
+    <string name="tutorial_hint_wrong_move">Bukan yang itu. Ikuti petunjuk yang disorot.</string>
+
+    <string name="room_error_not_found">Ruang tidak ditemukan atau sudah ditutup.</string>
+    <string name="room_error_full">Ruang ini sudah penuh.</string>
+    <string name="room_error_code_invalid">Masukkan kode ruang %1$d karakter.</string>
+    <string name="room_error_code_unavailable">Ruang tidak dapat dibuat sekarang. Silakan coba lagi.</string>
+    <string name="room_error_password_wrong">Kata sandi ruang salah.</string>
+    <string name="room_error_password_too_short">Kata sandi ruang harus minimal %1$d karakter.</string>
+    <string name="room_error_name_too_long">Nama ruang terlalu panjang.</string>
+    <string name="room_error_no_opponent">Tidak ada lawan yang ditemukan. Coba buat ruang saja.</string>
+    <string name="room_error_ranked_requires_account">Pertandingan berperingkat memerlukan akun. Tautkan akunmu untuk bermain berperingkat.</string>
+
+    <string name="online_title">Main Online</string>
+    <string name="online_create_room">Buat ruang</string>
+    <string name="online_join_by_code">Gabung dengan kode</string>
+    <string name="online_browse_rooms">Ruang terbuka</string>
+    <string name="online_quick_match">Pertandingan cepat</string>
+    <string name="online_quick_match_searching">Mencari lawan…</string>
+    <string name="online_rejoin_match">Kembali ke pertandinganmu</string>
+    <string name="online_rejoin_explainer">Kamu punya pertandingan yang sedang berlangsung.</string>
+
+    <string name="room_name_label">Nama ruang</string>
+    <string name="room_name_placeholder">Opsional</string>
+    <string name="room_visibility_label">Siapa yang boleh gabung</string>
+    <string name="room_visibility_public">Siapa saja</string>
+    <string name="room_visibility_private">Hanya dengan kode</string>
+    <string name="room_visibility_friends">Teman</string>
+    <string name="room_ranked_label">Pertandingan berperingkat</string>
+    <string name="room_ranked_description">Pertandingan berperingkat mengubah peringkatmu.</string>
+    <string name="room_turn_duration_label">Waktu per langkah</string>
+    <string name="room_total_duration_label">Waktu per pemain</string>
+    <string name="room_duration_unlimited">Tanpa batas</string>
+    <string name="room_duration_minutes">%1$d mnt</string>
+    <string name="room_duration_seconds">%1$d dtk</string>
+    <string name="room_password_label">Kata sandi ruang</string>
+    <string name="room_password_optional">Opsional</string>
+    <string name="room_code_label">Kode ruang</string>
+    <string name="room_code_hint">Tekan dan tahan kode untuk menyalinnya.</string>
+    <string name="room_waiting_for_opponent">Menunggu lawan</string>
+    <string name="room_close">Tutup ruang</string>
+
+    <string name="room_browser_empty">Belum ada ruang terbuka. Buat satu dan tunggu lawan.</string>
+    <string name="room_browser_filter_all">Semua</string>
+    <string name="room_browser_filter_ranked">Berperingkat</string>
+    <string name="room_browser_filter_casual">Santai</string>
+    <string name="room_browser_filter_fast">Cepat</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">Dilindungi kata sandi</string>
+
+    <string name="game_resign">Menyerah</string>
+    <string name="game_resign_confirm_title">Menyerah dari pertandingan?</string>
+    <string name="game_resign_confirm_message">Lawanmu menang, dan dalam pertandingan berperingkat peringkatmu turun.</string>
+    <string name="game_opponent_left">Koneksi lawanmu terputus. Ia punya waktu sebentar untuk kembali.</string>
+    <string name="game_claim_win">Klaim kemenangan</string>
+    <string name="game_reconnecting">Menghubungkan kembali…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">Giliranmu</string>
+    <string name="game_rival_turn">Giliran lawan</string>
+
+    <string name="leaderboard_title">Papan Peringkat</string>
+    <string name="leaderboard_tab_global">Global</string>
+    <string name="leaderboard_tab_weekly">Mingguan</string>
+    <string name="leaderboard_tab_friends">Teman</string>
+    <string name="leaderboard_empty">Belum ada pertandingan berperingkat yang dimainkan.</string>
+    <string name="leaderboard_empty_weekly">Belum ada pertandingan berperingkat minggu ini.</string>
+    <string name="leaderboard_empty_friends">Tambahkan teman untuk membandingkan hasilmu.</string>
+    <string name="leaderboard_your_rank">Posisimu</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">Masuk agar kamu muncul di papan peringkat.</string>
+    <string name="leaderboard_record">%1$d M · %2$d main</string>
+    <string name="cd_leaderboard_row">Peringkat %1$d, %2$s, poin %3$d</string>
+
+    <string name="menu_statistics">Statistik</string>
+    <string name="mode_title">Mode permainan</string>
+    <string name="mode_vs_ai">Lawan AI</string>
+    <string name="mode_vs_ai_description">Uji strategimu di tiga tingkat kesulitan.</string>
+    <string name="mode_two_players">Dua pemain</string>
+    <string name="mode_two_players_description">Bermain bergantian di perangkat yang sama.</string>
+    <string name="mode_online">Online</string>
+    <string name="mode_online_description">Main online melawan teman dengan kode ruang.</string>
+    <string name="difficulty_title">Kesulitan</string>
+    <string name="difficulty_easy">Mudah</string>
+    <string name="difficulty_easy_description">Langkah santai dan bervariasi.</string>
+    <string name="difficulty_medium">Sedang</string>
+    <string name="difficulty_medium_description">Membaca jalur terpendek dan memperlambatmu.</string>
+    <string name="difficulty_hard">Sulit</string>
+    <string name="difficulty_hard_description">Menghitung beberapa langkah ke depan dengan minimax dan pemangkasan alfa-beta.</string>
+
+    <string name="game_turn">Giliran %1$d</string>
+    <string name="game_home">Menu utama</string>
+    <string name="game_undo">Urungkan</string>
+    <string name="game_restart">Mulai ulang</string>
+    <string name="game_settings">Setelan</string>
+    <string name="game_history">Riwayat langkah</string>
+    <string name="game_history_empty">Belum ada langkah.</string>
+    <string name="game_history_pawn">Bidak %1$d,%2$d</string>
+    <string name="game_history_pawn_label">Bidak</string>
+    <string name="game_exit_title">Keluar dari permainan?</string>
+    <string name="game_exit_message">Permainan saat ini akan berakhir. Yakin ingin keluar?</string>
+    <string name="game_exit_keep_playing">Lanjut bermain</string>
+    <string name="game_exit_confirm">Keluar</string>
+    <string name="game_place_wall">Pasang dinding</string>
+    <string name="game_wall_horizontal">Mendatar</string>
+    <string name="game_wall_vertical">Tegak</string>
+    <string name="game_wall_horizontal_full">Dinding mendatar</string>
+    <string name="game_wall_vertical_full">Dinding tegak</string>
+    <string name="game_wall_confirm">Konfirmasi</string>
+    <string name="game_wall_cancel">Batal</string>
+    <string name="game_wall_confirm_hint">Periksa posisi dinding lalu konfirmasi.</string>
+    <string name="game_wall_pick_hint">Ketuk papan untuk memilih celah dinding terdekat.</string>
+    <string name="game_move_hint">Pilih bidak, lalu ketuk kotak hijau.</string>
+    <string name="game_ai_thinking">AI sedang berpikir…</string>
+    <string name="game_sending_move">Mengirim langkah…</string>
+    <string name="game_connecting">Menghubungkan ke ruang…</string>
+    <string name="game_local_two_player">Dua pemain di satu perangkat</string>
+    <string name="game_online_match">Pertandingan online</string>
+    <string name="game_vs_ai">AI %1$s</string>
+    <string name="game_player_blue">Biru</string>
+    <string name="game_player_orange">Oranye</string>
+    <string name="game_turn_blue">Giliran pemain biru</string>
+    <string name="game_turn_orange">Giliran pemain oranye</string>
+    <string name="game_turn_opponent">Giliran lawan</string>
+    <string name="game_turn_yours">Giliranmu · %1$s</string>
+    <string name="winner_reached_goal">Pemain %1$s mencapai sisi tujuan.</string>
+    <plurals name="game_player_walls">
+        <item quantity="other">%1$s · %2$d dinding</item>
+    </plurals>
+
+    <string name="winner_victory">Menang!</string>
+    <string name="winner_ai_won">Kali ini AI yang menang</string>
+    <string name="winner_retry_hint">Coba lagi dengan strategi baru.</string>
+    <string name="winner_play_again">Main lagi</string>
+    <string name="winner_main_menu">Menu utama</string>
+
+    <string name="settings_language">Bahasa</string>
+    <string name="settings_language_system">Bahasa perangkat</string>
+    <string name="settings_appearance">Tampilan</string>
+    <string name="settings_theme_system">Sistem</string>
+    <string name="settings_theme_light">Terang</string>
+    <string name="settings_theme_dark">Gelap</string>
+    <string name="settings_dynamic_color">Warna dinamis</string>
+    <string name="settings_dynamic_color_description">Menggunakan palet warna perangkatmu.</string>
+    <string name="settings_game_experience">Pengalaman bermain</string>
+    <string name="settings_sounds">Suara</string>
+    <string name="settings_sounds_description">Suara langkah, dinding, dan hasil.</string>
+    <string name="settings_haptics">Umpan balik getaran</string>
+    <string name="settings_haptics_description">Getaran saat melangkah dan saat terjadi kesalahan.</string>
+    <string name="settings_default_ai">AI bawaan</string>
+    <string name="settings_ad_privacy">Opsi privasi iklan</string>
+
+    <string name="stats_career">Ringkasan karier</string>
+    <string name="stats_games">Pertandingan</string>
+    <string name="stats_wins">Menang</string>
+    <string name="stats_rate">Rasio</string>
+    <string name="stats_details">Detail</string>
+    <string name="stats_losses">Kalah</string>
+    <string name="stats_local_games">Permainan lokal</string>
+    <string name="stats_total_turns">Total giliran</string>
+    <string name="stats_by_difficulty">Menurut kesulitan</string>
+    <string name="stats_wins_losses">%1$d M · %2$d K</string>
+    <string name="stats_percentage">%1$d%%</string>
+
+    <string name="store_title">Toko</string>
+    <string name="store_empty">Belum ada yang dijual. Cek lagi nanti.</string>
+    <string name="store_owned">Dimiliki</string>
+    <string name="store_pending">Menunggu pembayaran</string>
+    <string name="store_pending_explainer">Pembayaranmu sedang diproses. Item akan terbuka otomatis setelah selesai.</string>
+    <string name="store_buy">Beli</string>
+    <string name="store_restore">Pulihkan pembelian</string>
+    <string name="store_guest_warning">Kamu bermain sebagai tamu. Tautkan akun agar pembelianmu ikut ke perangkat lain.</string>
+    <string name="store_no_pay_to_win">Semua di sini bersifat kosmetik. Tidak ada yang dijual mengubah cara bermain.</string>
+
+    <string name="billing_error_unavailable">Toko sedang tidak tersedia. Coba lagi nanti.</string>
+    <string name="billing_error_unsupported">Pembelian tidak didukung di perangkat ini.</string>
+    <string name="billing_error_failed">Pembelian tidak dapat diselesaikan.</string>
+    <string name="billing_restore_complete">Pembelian dipulihkan.</string>
+
+    <string name="theme_board_label">Tema papan</string>
+    <string name="theme_board_default">Klasik</string>
+    <string name="theme_board_midnight">Tengah Malam</string>
+    <string name="theme_board_sunset">Senja</string>
+
+    <string name="friends_title">Teman</string>
+    <string name="friends_search_label">Cari berdasarkan nama pengguna</string>
+    <string name="friends_search_empty">Tidak ada pemain dengan nama pengguna itu.</string>
+    <string name="friends_section_online">Online</string>
+    <string name="friends_section_offline">Offline</string>
+    <string name="friends_section_incoming">Permintaan masuk</string>
+    <string name="friends_section_outgoing">Permintaan terkirim</string>
+    <string name="friends_section_blocked">Diblokir</string>
+    <string name="friends_empty">Kamu belum menambahkan siapa pun. Cari nama pengguna untuk mulai.</string>
+    <string name="friends_add">Tambah teman</string>
+    <string name="friends_accept">Terima</string>
+    <string name="friends_decline">Tolak</string>
+    <string name="friends_cancel_request">Batalkan permintaan</string>
+    <string name="friends_remove">Hapus teman</string>
+    <string name="friends_remove_confirm">Hapus %1$s dari daftar temanmu?</string>
+    <string name="friends_block">Blokir</string>
+    <string name="friends_block_confirm">Blokir %1$s? Dia tidak akan bisa mengundangmu atau mengirim permintaan.</string>
+    <string name="friends_unblock">Buka blokir</string>
+    <string name="friends_invite">Undang ke pertandingan</string>
+    <string name="friends_invite_sent">Undangan terkirim.</string>
+    <string name="friends_online">Online</string>
+    <string name="friends_offline">Offline</string>
+    <string name="friends_requires_account">Daftar teman memerlukan akun. Tautkan akunmu untuk menambah pemain.</string>
+
+    <string name="invites_title">Undangan bermain</string>
+    <string name="invites_from">%1$s mengundangmu bertanding.</string>
+    <string name="invites_join">Gabung</string>
+    <string name="invites_dismiss">Abaikan</string>
+
+    <string name="cd_board">Papan permainan, 9 kali 9 kotak</string>
+    <string name="cd_avatar">Foto profil</string>
+    <string name="menu_quick_play">Main Cepat</string>
+    <string name="menu_create_room">Buat Ruang</string>
+    <string name="menu_join_room">Gabung Ruang</string>
+    <string name="menu_modes">Mode</string>
+    <string name="menu_tutorial">Tutorial</string>
+    <string name="tutorial_step_wall_vertical_title">Pasang tembok vertikal</string>
+    <string name="tutorial_step_wall_vertical_message">Tembok vertikal berada di antara dua kolom. Ketuk slot yang disorot untuk memutus langkah menyamping lawan.</string>
+    <string name="tutorial_step_wall_horizontal_title">Pasang tembok horizontal</string>
+    <string name="tutorial_step_wall_horizontal_message">Tembok horizontal berada di antara dua baris. Ketuk slot yang disorot untuk menghalangi jalan maju lawan.</string>
+    <string name="tutorial_step_correct">Benar. Ketuk Berikutnya untuk lanjut.</string>
+</resources>

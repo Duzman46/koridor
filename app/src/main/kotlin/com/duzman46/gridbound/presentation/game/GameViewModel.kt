@@ -3,9 +3,11 @@ package com.duzman46.gridbound.presentation.game
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.duzman46.gridbound.R
+import com.duzman46.gridbound.core.AppLog
+import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.data.SettingsManager
 import com.duzman46.gridbound.data.StatisticsManager
-import com.duzman46.gridbound.domain.models.LocalizedText
 import com.duzman46.gridbound.game.ai.AIEngineFactory
 import com.duzman46.gridbound.game.animation.AnimationManager
 import com.duzman46.gridbound.game.audio.SoundEffect
@@ -21,9 +23,14 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.Position
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.WallOrientation
+import com.duzman46.gridbound.match.domain.MatchEndReason
+import com.duzman46.gridbound.match.domain.MatchReport
+import com.duzman46.gridbound.match.domain.MatchRepository
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
 import com.duzman46.gridbound.online.model.OnlineSession
+import com.duzman46.gridbound.online.model.RoomEndReason
 import com.duzman46.gridbound.util.enumValueOrDefault
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -52,6 +59,7 @@ class GameViewModel @Inject constructor(
     private val soundManager: SoundManager,
     private val animationManager: AnimationManager,
     private val onlineRepository: OnlineGameRepository,
+    private val matchRepository: MatchRepository,
 ) : ViewModel() {
     private val mode = enumValueOrDefault(savedStateHandle.get<String>("mode"), GameMode.VS_AI)
     private val difficulty = enumValueOrDefault(savedStateHandle.get<String>("difficulty"), Difficulty.MEDIUM)
@@ -81,13 +89,20 @@ class GameViewModel @Inject constructor(
     val events: SharedFlow<GameEvent> = _events.asSharedFlow()
     private var aiJob: Job? = null
     private var recordedWinner: PlayerId? = null
-    private var onlineRevision = -1L
+    private var onlineVersion = -1L
+
+    /** Guards against filing the same online match twice from this device. */
+    private var reportedMatchId: String? = null
 
     init {
         viewModelScope.launch {
             settingsManager.settings.collectLatest { settings ->
                 _uiState.update {
-                    it.copy(soundEnabled = settings.soundEnabled, hapticsEnabled = settings.hapticsEnabled)
+                    it.copy(
+                        soundEnabled = settings.soundEnabled,
+                        hapticsEnabled = settings.hapticsEnabled,
+                        boardTheme = settings.boardTheme,
+                    )
                 }
             }
         }
@@ -335,15 +350,13 @@ class GameViewModel @Inject constructor(
                     pendingWall = null,
                 )
             }
-            val accepted = onlineRepository.submitAction(session, onlineRevision, action)
+            val accepted = onlineRepository.submitAction(session, onlineVersion, action)
             if (!accepted) {
+                // The room moved on underneath us; the listener will deliver the truth.
                 _uiState.update {
                     it.copy(
                         isOnlineSyncing = false,
-                        onlineMessage = LocalizedText(
-                            "Hamle gönderilemedi; oyun yeniden eşitleniyor.",
-                            "The move could not be sent; the game is resynchronizing.",
-                        ),
+                        onlineMessage = UiText.Res(R.string.game_reconnecting),
                     )
                 }
                 feedback(SoundEffect.ERROR)
@@ -354,64 +367,127 @@ class GameViewModel @Inject constructor(
     private fun observeOnlineRoom() {
         val session = onlineSession
         if (session == null) {
-            _uiState.update {
-                it.copy(onlineMessage = LocalizedText("Çevrimiçi oturum bilgisi eksik.", "Online session information is missing."))
-            }
+            _uiState.update { it.copy(onlineMessage = UiText.Res(R.string.error_service_unavailable)) }
             return
         }
         viewModelScope.launch {
             onlineRepository.observeRoom(session.roomCode)
                 .catch { error ->
+                    AppLog.warn("observe-room", error)
                     _uiState.update {
                         it.copy(
                             isOnlineConnected = false,
                             isOnlineSyncing = false,
-                            onlineMessage = error.localizedMessage?.let { LocalizedText(it, it) }
-                                ?: LocalizedText("Oda bağlantısı kesildi.", "The room connection was lost."),
+                            onlineMessage = UiText.Res(R.string.error_network),
                         )
                     }
                 }
-                .collect { room ->
-                    if (room.playerFor(session.userId) != session.playerId) {
-                        _uiState.update {
-                            it.copy(
-                                isOnlineConnected = false,
-                                onlineMessage = LocalizedText("Oda üyeliği doğrulanamadı.", "Room membership could not be verified."),
-                            )
-                        }
-                        return@collect
-                    }
-                    val previous = _uiState.value.boardState
-                    val recentWall = (room.boardState.walls - previous.walls).singleOrNull()
-                    val revisionChanged = onlineRevision >= 0L && room.revision > onlineRevision
-                    onlineRevision = room.revision
-                    gameManager.synchronize(room.boardState)
-                    _uiState.update {
-                        it.copy(
-                            boardState = room.boardState,
-                            pawnSelected = false,
-                            validMoves = emptySet(),
-                            wallMode = false,
-                            validWalls = emptySet(),
-                            pendingWall = null,
-                            invalidWallPreview = null,
-                            recentlyPlacedWall = recentWall,
-                            isOnlineConnected = room.status == OnlineRoomStatus.ACTIVE || room.status == OnlineRoomStatus.FINISHED,
-                            isOnlineSyncing = false,
-                            onlineMessage = when (room.status) {
-                                OnlineRoomStatus.ABANDONED -> LocalizedText("Rakip odadan ayrıldı.", "Your opponent left the room.")
-                                OnlineRoomStatus.WAITING -> LocalizedText("Rakip yeniden bağlanıyor…", "Your opponent is reconnecting…")
-                                else -> null
-                            },
-                            canUndo = false,
-                        )
-                    }
-                    if (revisionChanged) {
-                        feedback(if (recentWall != null) SoundEffect.WALL else SoundEffect.MOVE)
-                    }
-                    finishOrRunAi(room.boardState)
-                }
+                .collect { room -> onRoomUpdate(session, room) }
         }
+    }
+
+    private fun onRoomUpdate(session: OnlineSession, room: OnlineRoom) {
+        if (room.playerFor(session.userId) != session.playerId) {
+            _uiState.update {
+                it.copy(
+                    isOnlineConnected = false,
+                    onlineMessage = UiText.Res(R.string.room_error_not_found),
+                )
+            }
+            return
+        }
+        val previous = _uiState.value.boardState
+        val recentWall = (room.boardState.walls - previous.walls).singleOrNull()
+        val versionChanged = onlineVersion >= 0L && room.version > onlineVersion
+        onlineVersion = room.version
+        gameManager.synchronize(room.boardState)
+        _uiState.update {
+            it.copy(
+                boardState = room.boardState,
+                pawnSelected = false,
+                validMoves = emptySet(),
+                wallMode = false,
+                validWalls = emptySet(),
+                pendingWall = null,
+                invalidWallPreview = null,
+                recentlyPlacedWall = recentWall,
+                isOnlineConnected = room.status.isPlayable || room.status == OnlineRoomStatus.FINISHED,
+                isOnlineSyncing = false,
+                isRanked = room.ranked,
+                turnDeadlineAt = if (room.timing.hasTurnLimit && room.status.isPlayable) {
+                    room.lastMoveAt + room.timing.turnDurationSeconds * 1_000L
+                } else {
+                    null
+                },
+                onlineMessage = when (room.status) {
+                    // The guest seat empties when an opponent backs out before the first
+                    // move; the room stays open so they can come back.
+                    OnlineRoomStatus.WAITING -> UiText.Res(R.string.game_opponent_left)
+                    OnlineRoomStatus.CANCELLED, OnlineRoomStatus.EXPIRED ->
+                        UiText.Res(R.string.room_error_not_found)
+
+                    else -> null
+                },
+                canUndo = false,
+            )
+        }
+        if (versionChanged) {
+            feedback(if (recentWall != null) SoundEffect.WALL else SoundEffect.MOVE)
+        }
+        reportFinishedMatch(room)
+        finishOrRunAi(room.boardState)
+    }
+
+    /**
+     * Files the result of a finished online match so the server can rate it.
+     *
+     * Both devices report; the id is derived from the room and its creation time, so the
+     * second write collides with the first and is refused. Rating is never applied here.
+     */
+    private fun reportFinishedMatch(room: OnlineRoom) {
+        if (room.status != OnlineRoomStatus.FINISHED) return
+        val guestUid = room.guestUserId
+        if (guestUid.isNullOrBlank()) return
+        val matchId = MatchReport.matchId(room.roomCode, room.createdAt)
+        if (reportedMatchId == matchId) return
+        reportedMatchId = matchId
+
+        // Mirror the room exactly. Its write rules already proved the outcome legitimate,
+        // and the report is rejected server side if a single field disagrees.
+        val report = MatchReport(
+            matchId = matchId,
+            roomCode = room.roomCode,
+            hostUid = room.hostUserId,
+            guestUid = guestUid,
+            winnerUid = room.winnerUserId?.takeIf(String::isNotBlank),
+            endReason = when (room.endReason) {
+                RoomEndReason.TIMEOUT -> MatchEndReason.TIMEOUT
+                RoomEndReason.RESIGNATION -> MatchEndReason.RESIGNATION
+                RoomEndReason.DISCONNECT -> MatchEndReason.DISCONNECT
+                else -> MatchEndReason.NORMAL
+            },
+            ranked = room.ranked,
+            turnCount = room.boardState.turnNumber,
+            reportedAt = System.currentTimeMillis(),
+            reportedBy = onlineSession?.userId.orEmpty(),
+        )
+        viewModelScope.launch { matchRepository.reportMatch(report) }
+    }
+
+    /** Concedes the match. The rules only allow handing the win to the opponent. */
+    fun resign() {
+        val session = onlineSession ?: return
+        if (_uiState.value.boardState.status != GameStatus.IN_PROGRESS) return
+        viewModelScope.launch { onlineRepository.resign(session) }
+    }
+
+    /**
+     * Ends a match whose opponent let the clock run out. The database re-checks the deadline
+     * against the server clock, so a tampered device clock cannot claim a win early.
+     */
+    fun claimTurnTimeout() {
+        val session = onlineSession ?: return
+        viewModelScope.launch { onlineRepository.claimTurnTimeout(session) }
     }
 
     private fun feedback(effect: SoundEffect) {

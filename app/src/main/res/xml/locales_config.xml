@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Locales offered by the Android 13+ per-app language picker, and what Play uses to list the
+  app's languages. Each entry must have a matching values-<qualifier>/strings.xml.
+  English is first because it is the base resource every unsupported device language falls
+  back to. Indonesian uses the legacy "in" code, matching the values-in/ folder.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="tr" />
+    <locale android:name="es" />
+    <locale android:name="pt-BR" />
+    <locale android:name="de" />
+    <locale android:name="fr" />
+    <locale android:name="ru" />
+    <locale android:name="ar" />
+    <locale android:name="in" />
+    <locale android:name="hi" />
+</locale-config>

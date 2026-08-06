@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.domain.models
 
+import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.Difficulty
 
 enum class ThemeMode {
@@ -8,28 +9,19 @@ enum class ThemeMode {
     DARK,
 }
 
-enum class AppLanguage {
-    TURKISH,
-    ENGLISH,
-}
-
-data class LocalizedText(
-    val turkish: String,
-    val english: String,
-) {
-    fun value(language: AppLanguage): String = when (language) {
-        AppLanguage.TURKISH -> turkish
-        AppLanguage.ENGLISH -> english
-    }
-}
-
 data class AppSettings(
-    val language: AppLanguage = AppLanguage.TURKISH,
+    val language: AppLanguage = AppLanguage.SYSTEM,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColor: Boolean = true,
+    /**
+     * Off by default. Material You repaints the app in the wallpaper's palette, which on most
+     * phones left Koridor looking like a system settings screen with no identity of its own.
+     * The option stays in Settings for players who want it; the default is the game's colours.
+     */
+    val dynamicColor: Boolean = false,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val difficulty: Difficulty = Difficulty.MEDIUM,
+    val boardTheme: BoardTheme = BoardTheme.CLASSIC,
 )
 
 data class GameStatistics(

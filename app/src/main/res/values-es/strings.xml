@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Terminología del juego: muro, movimiento, turno, rival, sala, partida clasificatoria, rendirse. -->
+<resources>
+    <string name="action_back">Atrás</string>
+    <string name="action_continue">Continuar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_next">Siguiente</string>
+    <string name="action_previous">Atrás</string>
+    <string name="action_skip">Omitir</string>
+
+    <string name="state_loading">Cargando…</string>
+    <string name="state_offline_title">Sin conexión a internet</string>
+    <string name="state_offline_message">Las funciones en línea necesitan conexión. Las partidas locales siguen funcionando.</string>
+    <string name="state_empty_title">Aquí no hay nada todavía</string>
+    <string name="state_error_title">Algo salió mal</string>
+
+    <string name="error_network">No se pudo conectar. Comprueba tu conexión a internet.</string>
+    <string name="error_unknown">Algo salió mal. Inténtalo de nuevo.</string>
+    <string name="error_service_unavailable">El servicio en línea no está disponible ahora mismo.</string>
+    <string name="error_not_signed_in">Necesitas iniciar sesión para usar esta función.</string>
+
+    <string name="auth_welcome_title">Te damos la bienvenida a Koridor</string>
+    <string name="auth_welcome_subtitle">Abre tu camino. Cambia el de tu rival.</string>
+    <string name="auth_continue_with_google">Continuar con Google</string>
+    <string name="auth_sign_in_with_email">Iniciar sesión con correo</string>
+    <string name="auth_create_account">Crear cuenta</string>
+    <string name="auth_play_as_guest">Jugar como invitado</string>
+    <string name="auth_guest_explainer">Como invitado puedes jugar en local y completar el tutorial. Vincula una cuenta para añadir amigos y competir en línea.</string>
+
+    <string name="auth_sign_in_title">Iniciar sesión</string>
+    <string name="auth_sign_up_title">Crear cuenta</string>
+    <string name="auth_email_label">Correo electrónico</string>
+    <string name="auth_password_label">Contraseña</string>
+    <string name="auth_password_confirm_label">Confirmar contraseña</string>
+    <string name="auth_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="auth_reset_title">Restablecer contraseña</string>
+    <string name="auth_reset_explainer">Introduce tu correo y te enviaremos un enlace para restablecerla.</string>
+    <string name="auth_reset_send">Enviar enlace</string>
+    <string name="auth_reset_sent">Si existe una cuenta con esa dirección, el enlace ya está en camino.</string>
+    <string name="auth_sign_out">Cerrar sesión</string>
+    <string name="auth_sign_out_confirm_title">¿Cerrar sesión?</string>
+    <string name="auth_sign_out_confirm_message">Puedes volver a entrar cuando quieras.</string>
+    <string name="auth_show_password">Mostrar contraseña</string>
+    <string name="auth_hide_password">Ocultar contraseña</string>
+
+    <string name="auth_error_email_invalid">Introduce una dirección de correo válida.</string>
+    <string name="auth_error_email_in_use">Ya existe una cuenta con este correo.</string>
+    <string name="auth_error_password_weak">Tu contraseña debe tener al menos 8 caracteres.</string>
+    <string name="auth_error_password_mismatch">Las contraseñas no coinciden.</string>
+    <string name="auth_error_invalid_credentials">El correo o la contraseña son incorrectos.</string>
+    <string name="auth_error_too_many_requests">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
+    <string name="auth_error_google_cancelled">Se canceló el inicio de sesión con Google.</string>
+    <string name="auth_error_google_unavailable">El inicio de sesión con Google no está disponible en este dispositivo.</string>
+    <string name="auth_error_account_exists_with_other_method">Este correo ya está vinculado a otro método de inicio de sesión.</string>
+    <string name="auth_error_requires_recent_login">Por seguridad, vuelve a iniciar sesión antes de continuar.</string>
+    <string name="auth_error_credential_in_use">Esta cuenta ya está vinculada a otro jugador.</string>
+
+    <string name="auth_link_title">Conserva tu progreso</string>
+    <string name="auth_link_explainer">Vincula una cuenta para que tu progreso, tus compras y tus amigos te acompañen en todos tus dispositivos.</string>
+    <string name="auth_link_with_google">Vincular con Google</string>
+    <string name="auth_link_with_email">Vincular con correo</string>
+    <string name="auth_link_success">Tu cuenta está vinculada. Se ha conservado tu progreso.</string>
+    <string name="auth_guest_badge">Invitado</string>
+
+    <string name="username_title">Elige un nombre de usuario</string>
+    <string name="username_explainer">Así te verán los demás jugadores. Podrás cambiarlo más adelante.</string>
+    <string name="username_label">Nombre de usuario</string>
+    <string name="username_available">Este nombre está disponible.</string>
+    <plurals name="username_error_too_short">
+        <item quantity="one">Tu nombre debe tener al menos %1$d carácter.</item>
+        <item quantity="many">Tu nombre debe tener al menos %1$d caracteres.</item>
+        <item quantity="other">Tu nombre debe tener al menos %1$d caracteres.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="one">Tu nombre puede tener como máximo %1$d carácter.</item>
+        <item quantity="many">Tu nombre puede tener como máximo %1$d caracteres.</item>
+        <item quantity="other">Tu nombre puede tener como máximo %1$d caracteres.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">Usa solo letras, números y guiones bajos.</string>
+    <string name="username_error_taken">Este nombre ya está en uso.</string>
+    <string name="username_error_not_allowed">Este nombre no está permitido.</string>
+    <string name="username_error_blank">Introduce un nombre de usuario.</string>
+
+    <string name="profile_title">Perfil</string>
+    <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_display_name_label">Nombre visible</string>
+    <string name="profile_avatar_label">Avatar</string>
+    <string name="profile_rating">Puntuación</string>
+    <string name="profile_highest_rating">Mejor puntuación</string>
+    <string name="profile_games">Partidas</string>
+    <string name="profile_wins">Victorias</string>
+    <string name="profile_losses">Derrotas</string>
+    <string name="profile_draws">Empates</string>
+    <string name="profile_win_streak">Racha actual</string>
+    <string name="profile_best_streak">Mejor racha</string>
+    <string name="profile_member_since">Miembro desde %1$s</string>
+
+    <string name="account_title">Cuenta</string>
+    <string name="account_delete_title">Eliminar cuenta</string>
+    <string name="account_delete_warning">Esto elimina de forma permanente tu perfil, tus estadísticas, tus amigos y tu puntuación. Después no se podrán restaurar las compras. Esta acción no se puede deshacer.</string>
+    <string name="account_delete_confirm_label">Escribe %1$s para confirmar</string>
+    <string name="account_delete_action">Eliminar mi cuenta permanentemente</string>
+    <string name="account_delete_success">Tu cuenta se ha eliminado.</string>
+    <string name="account_privacy_policy">Política de privacidad</string>
+    <string name="account_terms_of_service">Términos de servicio</string>
+    <string name="account_legal_unavailable">Este documento aún no está publicado.</string>
+
+    <string name="tutorial_replay">Repetir el tutorial</string>
+    <string name="tutorial_skip_confirm_title">¿Omitir el tutorial?</string>
+    <string name="tutorial_skip_confirm_message">Puedes repetirlo cuando quieras desde el menú principal o Ajustes.</string>
+    <string name="tutorial_progress">Paso %1$d de %2$d</string>
+    <string name="tutorial_finish">Empezar a jugar</string>
+    <string name="tutorial_step_select_title">Selecciona tu peón</string>
+    <string name="tutorial_step_select_message">Toca tu peón azul para ver adónde puede ir.</string>
+    <string name="tutorial_step_move_title">Haz un movimiento</string>
+    <string name="tutorial_step_move_message">Toca una casilla resaltada para avanzar un paso.</string>
+    <string name="tutorial_step_jump_title">Salta sobre tu rival</string>
+    <string name="tutorial_step_jump_message">Cuando estéis cara a cara, puedes saltar en línea recta sobre tu rival.</string>
+    <string name="tutorial_step_blocked_title">Un muro nunca puede encerrar</string>
+    <string name="tutorial_step_blocked_message">Prueba este muro. Se rechaza porque cerraría el último camino.</string>
+    <string name="tutorial_step_win_title">Gana la partida</string>
+    <string name="tutorial_step_win_message">Llega al lado opuesto para ganar. Avanza a la última fila.</string>
+    <string name="tutorial_hint_wrong_move">Ese no. Sigue la pista resaltada.</string>
+
+    <string name="room_error_not_found">No se encontró la sala o ya se ha cerrado.</string>
+    <string name="room_error_full">Esta sala ya está llena.</string>
+    <string name="room_error_code_invalid">Introduce el código de sala de %1$d caracteres.</string>
+    <string name="room_error_code_unavailable">Ahora mismo no se pudo crear la sala. Inténtalo de nuevo.</string>
+    <string name="room_error_password_wrong">La contraseña de la sala no es correcta.</string>
+    <string name="room_error_password_too_short">La contraseña de la sala debe tener al menos %1$d caracteres.</string>
+    <string name="room_error_name_too_long">El nombre de la sala es demasiado largo.</string>
+    <string name="room_error_no_opponent">No se encontró ningún rival. Prueba a crear una sala.</string>
+    <string name="room_error_ranked_requires_account">Las partidas clasificatorias requieren una cuenta. Vincula la tuya para jugarlas.</string>
+
+    <string name="online_title">Jugar en línea</string>
+    <string name="online_create_room">Crear sala</string>
+    <string name="online_join_by_code">Unirse con un código</string>
+    <string name="online_browse_rooms">Salas abiertas</string>
+    <string name="online_quick_match">Partida rápida</string>
+    <string name="online_quick_match_searching">Buscando rival…</string>
+    <string name="online_rejoin_match">Volver a tu partida</string>
+    <string name="online_rejoin_explainer">Tienes una partida en curso.</string>
+
+    <string name="room_name_label">Nombre de la sala</string>
+    <string name="room_name_placeholder">Opcional</string>
+    <string name="room_visibility_label">Quién puede unirse</string>
+    <string name="room_visibility_public">Cualquiera</string>
+    <string name="room_visibility_private">Solo con código</string>
+    <string name="room_visibility_friends">Amigos</string>
+    <string name="room_ranked_label">Partida clasificatoria</string>
+    <string name="room_ranked_description">Las partidas clasificatorias cambian tu puntuación.</string>
+    <string name="room_turn_duration_label">Tiempo por movimiento</string>
+    <string name="room_total_duration_label">Tiempo por jugador</string>
+    <string name="room_duration_unlimited">Sin límite</string>
+    <string name="room_duration_minutes">%1$d min</string>
+    <string name="room_duration_seconds">%1$d s</string>
+    <string name="room_password_label">Contraseña de la sala</string>
+    <string name="room_password_optional">Opcional</string>
+    <string name="room_code_label">Código de sala</string>
+    <string name="room_code_hint">Mantén pulsado el código para copiarlo.</string>
+    <string name="room_waiting_for_opponent">Esperando a un rival</string>
+    <string name="room_close">Cerrar sala</string>
+
+    <string name="room_browser_empty">Ahora mismo no hay salas abiertas. Crea una y espera a un rival.</string>
+    <string name="room_browser_filter_all">Todas</string>
+    <string name="room_browser_filter_ranked">Clasificatorias</string>
+    <string name="room_browser_filter_casual">Amistosas</string>
+    <string name="room_browser_filter_fast">Rápidas</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">Protegida con contraseña</string>
+
+    <string name="game_resign">Rendirse</string>
+    <string name="game_resign_confirm_title">¿Rendirte en esta partida?</string>
+    <string name="game_resign_confirm_message">Tu rival gana y, en una partida clasificatoria, tu puntuación baja.</string>
+    <string name="game_opponent_left">Tu rival se ha desconectado. Tiene un momento para volver.</string>
+    <string name="game_claim_win">Reclamar la victoria</string>
+    <string name="game_reconnecting">Reconectando…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">Tu turno</string>
+    <string name="game_rival_turn">Turno del rival</string>
+
+    <string name="leaderboard_title">Clasificación</string>
+    <string name="leaderboard_tab_global">Global</string>
+    <string name="leaderboard_tab_weekly">Semanal</string>
+    <string name="leaderboard_tab_friends">Amigos</string>
+    <string name="leaderboard_empty">Todavía no se ha jugado ninguna partida clasificatoria.</string>
+    <string name="leaderboard_empty_weekly">Esta semana todavía no hay partidas clasificatorias.</string>
+    <string name="leaderboard_empty_friends">Añade amigos para compararte con ellos.</string>
+    <string name="leaderboard_your_rank">Tu posición</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">Inicia sesión para aparecer en la clasificación.</string>
+    <string name="leaderboard_record">%1$d V · %2$d jugadas</string>
+    <string name="cd_leaderboard_row">Puesto %1$d, %2$s, puntuación %3$d</string>
+
+    <string name="menu_statistics">Estadísticas</string>
+    <string name="mode_title">Modo de juego</string>
+    <string name="mode_vs_ai">Contra la IA</string>
+    <string name="mode_vs_ai_description">Pon a prueba tu estrategia en tres niveles de dificultad.</string>
+    <string name="mode_two_players">Dos jugadores</string>
+    <string name="mode_two_players_description">Jugad por turnos en el mismo dispositivo.</string>
+    <string name="mode_online">En línea</string>
+    <string name="mode_online_description">Juega en línea con un amigo usando un código de sala.</string>
+    <string name="difficulty_title">Dificultad</string>
+    <string name="difficulty_easy">Fácil</string>
+    <string name="difficulty_easy_description">Movimientos tranquilos y variados.</string>
+    <string name="difficulty_medium">Media</string>
+    <string name="difficulty_medium_description">Lee el camino más corto y te frena.</string>
+    <string name="difficulty_hard">Difícil</string>
+    <string name="difficulty_hard_description">Calcula varios movimientos por delante con minimax y poda alfa-beta.</string>
+
+    <string name="game_turn">Turno %1$d</string>
+    <string name="game_home">Menú principal</string>
+    <string name="game_undo">Deshacer</string>
+    <string name="game_restart">Reiniciar</string>
+    <string name="game_settings">Ajustes</string>
+    <string name="game_history">Historial de movimientos</string>
+    <string name="game_history_empty">Todavía no hay movimientos.</string>
+    <string name="game_history_pawn">Peón %1$d,%2$d</string>
+    <string name="game_history_pawn_label">Peón</string>
+    <string name="game_exit_title">¿Salir de la partida?</string>
+    <string name="game_exit_message">La partida actual terminará. ¿Seguro que quieres salir?</string>
+    <string name="game_exit_keep_playing">Seguir jugando</string>
+    <string name="game_exit_confirm">Salir</string>
+    <string name="game_place_wall">Colocar muro</string>
+    <string name="game_wall_horizontal">Horizontal</string>
+    <string name="game_wall_vertical">Vertical</string>
+    <string name="game_wall_horizontal_full">Muro horizontal</string>
+    <string name="game_wall_vertical_full">Muro vertical</string>
+    <string name="game_wall_confirm">Confirmar</string>
+    <string name="game_wall_cancel">Cancelar</string>
+    <string name="game_wall_confirm_hint">Comprueba la posición del muro y confirma.</string>
+    <string name="game_wall_pick_hint">Toca el tablero para elegir el hueco de muro más cercano.</string>
+    <string name="game_move_hint">Selecciona el peón y luego toca una casilla verde.</string>
+    <string name="game_ai_thinking">La IA está pensando…</string>
+    <string name="game_sending_move">Enviando movimiento…</string>
+    <string name="game_connecting">Conectando con la sala…</string>
+    <string name="game_local_two_player">Dos jugadores en un dispositivo</string>
+    <string name="game_online_match">Partida en línea</string>
+    <string name="game_vs_ai">IA %1$s</string>
+    <string name="game_player_blue">Azul</string>
+    <string name="game_player_orange">Naranja</string>
+    <string name="game_turn_blue">Turno del jugador azul</string>
+    <string name="game_turn_orange">Turno del jugador naranja</string>
+    <string name="game_turn_opponent">Turno del rival</string>
+    <string name="game_turn_yours">Tu turno · %1$s</string>
+    <string name="winner_reached_goal">El jugador %1$s llegó al borde objetivo.</string>
+    <plurals name="game_player_walls">
+        <item quantity="one">%1$s · %2$d muro</item>
+        <item quantity="many">%1$s · %2$d muros</item>
+        <item quantity="other">%1$s · %2$d muros</item>
+    </plurals>
+
+    <string name="winner_victory">¡Victoria!</string>
+    <string name="winner_ai_won">Esta vez ganó la IA</string>
+    <string name="winner_retry_hint">Inténtalo de nuevo con otra estrategia.</string>
+    <string name="winner_play_again">Jugar otra vez</string>
+    <string name="winner_main_menu">Menú principal</string>
+
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_system">Idioma del dispositivo</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_dynamic_color">Color dinámico</string>
+    <string name="settings_dynamic_color_description">Usa la paleta de colores de tu dispositivo.</string>
+    <string name="settings_game_experience">Experiencia de juego</string>
+    <string name="settings_sounds">Sonidos</string>
+    <string name="settings_sounds_description">Sonidos de movimiento, muro y resultado.</string>
+    <string name="settings_haptics">Respuesta háptica</string>
+    <string name="settings_haptics_description">Vibración en movimientos y errores.</string>
+    <string name="settings_default_ai">IA predeterminada</string>
+    <string name="settings_ad_privacy">Opciones de privacidad de anuncios</string>
+
+    <string name="stats_career">Resumen de tu trayectoria</string>
+    <string name="stats_games">Partidas</string>
+    <string name="stats_wins">Victorias</string>
+    <string name="stats_rate">Ratio</string>
+    <string name="stats_details">Detalles</string>
+    <string name="stats_losses">Derrotas</string>
+    <string name="stats_local_games">Partidas locales</string>
+    <string name="stats_total_turns">Turnos totales</string>
+    <string name="stats_by_difficulty">Por dificultad</string>
+    <string name="stats_wins_losses">%1$d V · %2$d D</string>
+    <string name="stats_percentage">%1$d%%</string>
+
+    <string name="store_title">Tienda</string>
+    <string name="store_empty">Todavía no hay nada a la venta. Vuelve pronto.</string>
+    <string name="store_owned">En tu poder</string>
+    <string name="store_pending">Esperando el pago</string>
+    <string name="store_pending_explainer">Tu pago se está procesando. Se desbloqueará automáticamente cuando se complete.</string>
+    <string name="store_buy">Comprar</string>
+    <string name="store_restore">Restaurar compras</string>
+    <string name="store_guest_warning">Estás jugando como invitado. Vincula una cuenta para que tus compras te acompañen en otros dispositivos.</string>
+    <string name="store_no_pay_to_win">Todo lo que hay aquí es estético. Nada de lo que se vende cambia cómo se juega.</string>
+
+    <string name="billing_error_unavailable">La tienda no está disponible ahora mismo. Inténtalo más tarde.</string>
+    <string name="billing_error_unsupported">Las compras no son compatibles con este dispositivo.</string>
+    <string name="billing_error_failed">No se pudo completar la compra.</string>
+    <string name="billing_restore_complete">Compras restauradas.</string>
+
+    <string name="theme_board_label">Tema del tablero</string>
+    <string name="theme_board_default">Clásico</string>
+    <string name="theme_board_midnight">Medianoche</string>
+    <string name="theme_board_sunset">Atardecer</string>
+
+    <string name="friends_title">Amigos</string>
+    <string name="friends_search_label">Buscar por nombre de usuario</string>
+    <string name="friends_search_empty">No se encontró ningún jugador con ese nombre.</string>
+    <string name="friends_section_online">En línea</string>
+    <string name="friends_section_offline">Desconectados</string>
+    <string name="friends_section_incoming">Solicitudes recibidas</string>
+    <string name="friends_section_outgoing">Solicitudes enviadas</string>
+    <string name="friends_section_blocked">Bloqueados</string>
+    <string name="friends_empty">Aún no has añadido a nadie. Busca un nombre de usuario para empezar.</string>
+    <string name="friends_add">Añadir amigo</string>
+    <string name="friends_accept">Aceptar</string>
+    <string name="friends_decline">Rechazar</string>
+    <string name="friends_cancel_request">Cancelar solicitud</string>
+    <string name="friends_remove">Eliminar amigo</string>
+    <string name="friends_remove_confirm">¿Eliminar a %1$s de tus amigos?</string>
+    <string name="friends_block">Bloquear</string>
+    <string name="friends_block_confirm">¿Bloquear a %1$s? No podrá invitarte ni enviarte solicitudes.</string>
+    <string name="friends_unblock">Desbloquear</string>
+    <string name="friends_invite">Invitar a una partida</string>
+    <string name="friends_invite_sent">Invitación enviada.</string>
+    <string name="friends_online">En línea</string>
+    <string name="friends_offline">Desconectado</string>
+    <string name="friends_requires_account">Los amigos requieren una cuenta. Vincula la tuya para añadir jugadores.</string>
+
+    <string name="invites_title">Invitaciones a partidas</string>
+    <string name="invites_from">%1$s te ha invitado a una partida.</string>
+    <string name="invites_join">Unirse</string>
+    <string name="invites_dismiss">Descartar</string>
+
+    <string name="cd_board">Tablero de juego, 9 por 9 casillas</string>
+    <string name="cd_avatar">Foto de perfil</string>
+    <string name="menu_quick_play">Partida rápida</string>
+    <string name="menu_create_room">Crear sala</string>
+    <string name="menu_join_room">Unirse a sala</string>
+    <string name="menu_modes">Modos</string>
+    <string name="menu_tutorial">Tutorial</string>
+    <string name="tutorial_step_wall_vertical_title">Coloca un muro vertical</string>
+    <string name="tutorial_step_wall_vertical_message">Los muros verticales van entre dos columnas. Toca la ranura resaltada para cortar el paso lateral de tu rival.</string>
+    <string name="tutorial_step_wall_horizontal_title">Coloca un muro horizontal</string>
+    <string name="tutorial_step_wall_horizontal_message">Los muros horizontales van entre dos filas. Toca la ranura resaltada para bloquear el avance de tu rival.</string>
+    <string name="tutorial_step_correct">Correcto. Toca Siguiente para continuar.</string>
+</resources>

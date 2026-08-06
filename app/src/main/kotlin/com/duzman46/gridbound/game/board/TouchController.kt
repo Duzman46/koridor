@@ -11,8 +11,10 @@ import kotlin.math.floor
 class TouchController @Inject constructor() {
     fun tileAt(offset: Offset, geometry: BoardGeometry): Position? {
         if (offset.x !in 0f..geometry.boardSize || offset.y !in 0f..geometry.boardSize) return null
-        val column = floor(offset.x / geometry.step).toInt()
-        val row = floor(offset.y / geometry.step).toInt()
+        // The grid starts inside the frame, so a tap on the frame itself floors to -1 and is
+        // rejected by the range check below rather than snapping to the nearest tile.
+        val column = floor((offset.x - geometry.padding) / geometry.step).toInt()
+        val row = floor((offset.y - geometry.padding) / geometry.step).toInt()
         if (row !in 0 until Constants.Board.SIZE || column !in 0 until Constants.Board.SIZE) return null
         val position = Position(row, column)
         return position.takeIf { geometry.tileRect(it).contains(offset) }

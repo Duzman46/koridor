@@ -13,3 +13,12 @@ captures/
 keystore.properties
 monetization.properties
 firebase.properties
+app.properties
+google-services.json
+functions/node_modules/
+functions/lib/
+rules-tests/node_modules/
+rules-tests/package-lock.json
+firebase-debug.log
+database-debug.log
+ui-debug.log

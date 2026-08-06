@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ortak eylemler -->
+    <string name="action_back">Geri</string>
+    <string name="action_continue">Devam et</string>
+    <string name="action_cancel">Vazgeç</string>
+    <string name="action_retry">Tekrar dene</string>
+    <string name="action_close">Kapat</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_delete">Sil</string>
+    <string name="action_next">İleri</string>
+    <string name="action_previous">Geri</string>
+    <string name="action_skip">Atla</string>
+
+    <!-- Ortak durumlar -->
+    <string name="state_loading">Yükleniyor…</string>
+    <string name="state_offline_title">İnternet bağlantısı yok</string>
+    <string name="state_offline_message">Çevrim içi özellikler bağlantı ister. Yerel oyunlar çalışmaya devam eder.</string>
+    <string name="state_empty_title">Burada henüz bir şey yok</string>
+    <string name="state_error_title">Bir sorun oluştu</string>
+
+    <!-- Kullanıcıya gösterilen genel hata mesajları -->
+    <string name="error_network">Bağlantı kurulamadı. İnternetini kontrol et.</string>
+    <string name="error_unknown">Bir sorun oluştu. Lütfen tekrar dene.</string>
+    <string name="error_service_unavailable">Çevrim içi servis şu anda kullanılamıyor.</string>
+    <string name="error_not_signed_in">Bu özelliği kullanmak için giriş yapmalısın.</string>
+
+    <!-- Hesap girişi -->
+    <string name="auth_welcome_title">Koridor\'a hoş geldin</string>
+    <string name="auth_welcome_subtitle">Yolunu aç. Rakibinin yolunu değiştir.</string>
+    <string name="auth_continue_with_google">Google ile devam et</string>
+    <string name="auth_sign_in_with_email">E-posta ile giriş yap</string>
+    <string name="auth_create_account">Hesap oluştur</string>
+    <string name="auth_play_as_guest">Misafir olarak oyna</string>
+    <string name="auth_guest_explainer">Misafir olarak yerel oyunları oynayabilir ve öğreticiyi bitirebilirsin. Arkadaş eklemek ve çevrim içi yarışmak için hesabını bağla.</string>
+
+    <!-- Giriş / kayıt -->
+    <string name="auth_sign_in_title">Giriş yap</string>
+    <string name="auth_sign_up_title">Hesap oluştur</string>
+    <string name="auth_email_label">E-posta</string>
+    <string name="auth_password_label">Şifre</string>
+    <string name="auth_password_confirm_label">Şifreyi doğrula</string>
+    <string name="auth_forgot_password">Şifremi unuttum</string>
+    <string name="auth_reset_title">Şifre sıfırlama</string>
+    <string name="auth_reset_explainer">E-posta adresini gir, sana sıfırlama bağlantısı gönderelim.</string>
+    <string name="auth_reset_send">Sıfırlama bağlantısı gönder</string>
+    <string name="auth_reset_sent">Bu adrese ait bir hesap varsa sıfırlama bağlantısı yola çıktı.</string>
+    <string name="auth_sign_out">Çıkış yap</string>
+    <string name="auth_sign_out_confirm_title">Çıkış yapılsın mı?</string>
+    <string name="auth_sign_out_confirm_message">İstediğin zaman tekrar giriş yapabilirsin.</string>
+    <string name="auth_show_password">Şifreyi göster</string>
+    <string name="auth_hide_password">Şifreyi gizle</string>
+
+    <!-- Kimlik doğrulama hataları -->
+    <string name="auth_error_email_invalid">Geçerli bir e-posta adresi gir.</string>
+    <string name="auth_error_email_in_use">Bu e-posta adresiyle zaten bir hesap var.</string>
+    <string name="auth_error_password_weak">Şifren en az 8 karakter olmalı.</string>
+    <string name="auth_error_password_mismatch">Şifreler eşleşmiyor.</string>
+    <string name="auth_error_invalid_credentials">E-posta veya şifre hatalı.</string>
+    <string name="auth_error_too_many_requests">Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.</string>
+    <string name="auth_error_google_cancelled">Google girişi iptal edildi.</string>
+    <string name="auth_error_google_unavailable">Google girişi bu cihazda kullanılamıyor.</string>
+    <string name="auth_error_account_exists_with_other_method">Bu e-posta farklı bir giriş yöntemine bağlı.</string>
+    <string name="auth_error_requires_recent_login">Güvenliğin için devam etmeden önce tekrar giriş yap.</string>
+    <string name="auth_error_credential_in_use">Bu hesap başka bir oyuncuya bağlı.</string>
+
+    <!-- Misafir hesabı bağlama -->
+    <string name="auth_link_title">İlerlemeni koru</string>
+    <string name="auth_link_explainer">Hesabını bağla; ilerlemen, satın alımların ve arkadaşların her cihazda seninle kalsın.</string>
+    <string name="auth_link_with_google">Google ile bağla</string>
+    <string name="auth_link_with_email">E-posta ile bağla</string>
+    <string name="auth_link_success">Hesabın bağlandı. İlerlemen korundu.</string>
+    <string name="auth_guest_badge">Misafir</string>
+
+    <!-- Kullanıcı adı -->
+    <string name="username_title">Kullanıcı adı seç</string>
+    <string name="username_explainer">Diğer oyuncular seni bu adla görecek. Sonradan değiştirebilirsin.</string>
+    <string name="username_label">Kullanıcı adı</string>
+    <string name="username_available">Bu kullanıcı adı uygun.</string>
+    <!-- Turkish does not inflect a noun after a numeral, so both forms read the same. -->
+    <plurals name="username_error_too_short">
+        <item quantity="one">Kullanıcı adın en az %1$d karakter olmalı.</item>
+        <item quantity="other">Kullanıcı adın en az %1$d karakter olmalı.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="one">Kullanıcı adın en fazla %1$d karakter olabilir.</item>
+        <item quantity="other">Kullanıcı adın en fazla %1$d karakter olabilir.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">Yalnızca harf, rakam ve alt çizgi kullan.</string>
+    <string name="username_error_taken">Bu kullanıcı adı alınmış.</string>
+    <string name="username_error_not_allowed">Bu kullanıcı adı kullanılamaz.</string>
+    <string name="username_error_blank">Bir kullanıcı adı gir.</string>
+
+    <!-- Profil -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_edit_title">Profili düzenle</string>
+    <string name="profile_display_name_label">Görünen ad</string>
+    <string name="profile_avatar_label">Avatar</string>
+    <string name="profile_rating">Puan</string>
+    <string name="profile_highest_rating">En yüksek puan</string>
+    <string name="profile_games">Maç</string>
+    <string name="profile_wins">Galibiyet</string>
+    <string name="profile_losses">Mağlubiyet</string>
+    <string name="profile_draws">Beraberlik</string>
+    <string name="profile_win_streak">Galibiyet serisi</string>
+    <string name="profile_best_streak">En iyi seri</string>
+    <string name="profile_member_since">%1$s tarihinden beri üye</string>
+
+    <!-- Hesap yönetimi -->
+    <string name="account_title">Hesap</string>
+    <string name="account_delete_title">Hesabı sil</string>
+    <string name="account_delete_warning">Bu işlem profilini, istatistiklerini, arkadaşlarını ve puanını kalıcı olarak siler. Sonrasında satın alımlar geri yüklenemez. Bu işlem geri alınamaz.</string>
+    <string name="account_delete_confirm_label">Onaylamak için %1$s yaz</string>
+    <string name="account_delete_action">Hesabımı kalıcı olarak sil</string>
+    <string name="account_delete_success">Hesabın silindi.</string>
+    <string name="account_privacy_policy">Gizlilik Politikası</string>
+    <string name="account_terms_of_service">Kullanım Koşulları</string>
+    <string name="account_legal_unavailable">Bu belge henüz yayımlanmadı.</string>
+
+    <!-- Öğretici -->
+    <string name="tutorial_replay">Öğreticiyi tekrar oyna</string>
+    <string name="tutorial_skip_confirm_title">Öğretici atlansın mı?</string>
+    <string name="tutorial_skip_confirm_message">İstediğin zaman ana menüden veya Ayarlar\'dan tekrar oynatabilirsin.</string>
+    <string name="tutorial_progress">Adım %1$d / %2$d</string>
+    <string name="tutorial_finish">Oynamaya başla</string>
+
+    <string name="tutorial_step_select_title">Taşını seç</string>
+    <string name="tutorial_step_select_message">Nereye gidebileceğini görmek için mavi piyonuna dokun.</string>
+    <string name="tutorial_step_move_title">Bir hamle yap</string>
+    <string name="tutorial_step_move_message">Bir adım ilerlemek için vurgulanan kareye dokun.</string>
+    <string name="tutorial_step_jump_title">Rakibinin üzerinden atla</string>
+    <string name="tutorial_step_jump_message">Karşı karşıya geldiğinizde rakibinin üzerinden düz atlayabilirsin.</string>
+    <string name="tutorial_step_blocked_title">Duvar yolu tamamen kapatamaz</string>
+    <string name="tutorial_step_blocked_message">Bu duvarı dene. Son yolu kapatacağı için reddediliyor.</string>
+    <string name="tutorial_step_win_title">Oyunu kazan</string>
+    <string name="tutorial_step_win_message">Kazanmak için karşı kenara ulaş. Son sıraya ilerle.</string>
+    <string name="tutorial_hint_wrong_move">O değil. Vurgulanan ipucunu izle.</string>
+
+    <!-- Çevrim içi odalar -->
+    <string name="room_error_not_found">Oda bulunamadı veya kapatıldı.</string>
+    <string name="room_error_full">Bu oda dolu.</string>
+    <string name="room_error_code_invalid">%1$d karakterli oda kodunu gir.</string>
+    <string name="room_error_code_unavailable">Şu anda oda oluşturulamadı. Lütfen tekrar dene.</string>
+    <string name="room_error_password_wrong">Oda şifresi hatalı.</string>
+    <string name="room_error_password_too_short">Oda şifresi en az %1$d karakter olmalı.</string>
+    <string name="room_error_name_too_long">Oda adı çok uzun.</string>
+    <string name="room_error_no_opponent">Rakip bulunamadı. Bunun yerine bir oda oluşturmayı dene.</string>
+    <string name="room_error_ranked_requires_account">Dereceli maç için hesap gerekir. Dereceli oynamak için hesabını bağla.</string>
+
+    <string name="online_title">Çevrim İçi Oyna</string>
+    <string name="online_create_room">Oda oluştur</string>
+    <string name="online_join_by_code">Kodla katıl</string>
+    <string name="online_browse_rooms">Açık odalar</string>
+    <string name="online_quick_match">Hızlı eşleşme</string>
+    <string name="online_quick_match_searching">Rakip aranıyor…</string>
+    <string name="online_rejoin_match">Maçına dön</string>
+    <string name="online_rejoin_explainer">Devam eden bir maçın var.</string>
+
+    <string name="room_name_label">Oda adı</string>
+    <string name="room_name_placeholder">İsteğe bağlı</string>
+    <string name="room_visibility_label">Kimler katılabilir</string>
+    <string name="room_visibility_public">Herkes</string>
+    <string name="room_visibility_private">Sadece kodla</string>
+    <string name="room_visibility_friends">Arkadaşlar</string>
+    <string name="room_ranked_label">Dereceli maç</string>
+    <string name="room_ranked_description">Dereceli maçlar puanını değiştirir.</string>
+    <string name="room_turn_duration_label">Hamle süresi</string>
+    <string name="room_total_duration_label">Oyuncu süresi</string>
+    <string name="room_duration_unlimited">Sınırsız</string>
+    <string name="room_duration_minutes">%1$d dk</string>
+    <string name="room_duration_seconds">%1$d sn</string>
+    <string name="room_password_label">Oda şifresi</string>
+    <string name="room_password_optional">İsteğe bağlı</string>
+    <string name="room_code_label">Oda kodu</string>
+    <string name="room_code_hint">Kodun üzerine basılı tutarak kopyalayabilirsin.</string>
+    <string name="room_waiting_for_opponent">Rakip bekleniyor</string>
+    <string name="room_close">Odayı kapat</string>
+
+    <string name="room_browser_empty">Şu anda açık oda yok. Bir oda oluştur ve rakip bekle.</string>
+    <string name="room_browser_filter_all">Tümü</string>
+    <string name="room_browser_filter_ranked">Dereceli</string>
+    <string name="room_browser_filter_casual">Derecesiz</string>
+    <string name="room_browser_filter_fast">Hızlı</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">Şifre korumalı</string>
+
+    <string name="game_resign">Pes et</string>
+    <string name="game_resign_confirm_title">Maçtan çekilesin mi?</string>
+    <string name="game_resign_confirm_message">Rakibin kazanır ve dereceli maçta puanın düşer.</string>
+    <string name="game_opponent_left">Rakibinin bağlantısı koptu. Dönmesi için biraz süresi var.</string>
+    <string name="game_claim_win">Galibiyeti al</string>
+    <string name="game_reconnecting">Yeniden bağlanılıyor…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">Senin sıran</string>
+    <string name="game_rival_turn">Rakibin sırası</string>
+
+    <!-- Liderlik tablosu -->
+    <string name="leaderboard_title">Liderlik Tablosu</string>
+    <string name="leaderboard_tab_global">Genel</string>
+    <string name="leaderboard_tab_weekly">Haftalık</string>
+    <string name="leaderboard_tab_friends">Arkadaşlar</string>
+    <string name="leaderboard_empty">Henüz dereceli maç oynanmadı.</string>
+    <string name="leaderboard_empty_weekly">Bu hafta henüz dereceli maç oynanmadı.</string>
+    <string name="leaderboard_empty_friends">Karşılaştırmak için arkadaş ekle.</string>
+    <string name="leaderboard_your_rank">Senin sıran</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">Liderlik tablosunda yer almak için giriş yap.</string>
+    <string name="leaderboard_record">%1$d galibiyet · %2$d maç</string>
+    <string name="cd_leaderboard_row">Sıra %1$d, %2$s, puan %3$d</string>
+
+    <!-- Ana menü ve mod seçimi -->
+    <string name="menu_statistics">İstatistikler</string>
+    <string name="mode_title">Oyun Modu</string>
+    <string name="mode_vs_ai">Yapay Zekâya Karşı</string>
+    <string name="mode_vs_ai_description">Üç farklı zorluk seviyesinde stratejini dene.</string>
+    <string name="mode_two_players">İki Oyuncu</string>
+    <string name="mode_two_players_description">Aynı cihazda sırayla oynayın.</string>
+    <string name="mode_online">Çevrim İçi</string>
+    <string name="mode_online_description">Oda koduyla internet üzerinden arkadaşına karşı oyna.</string>
+    <string name="difficulty_title">Zorluk</string>
+    <string name="difficulty_easy">Kolay</string>
+    <string name="difficulty_easy_description">Rahat ve değişken hamleler.</string>
+    <string name="difficulty_medium">Orta</string>
+    <string name="difficulty_medium_description">En kısa yolu okur ve seni yavaşlatır.</string>
+    <string name="difficulty_hard">Zor</string>
+    <string name="difficulty_hard_description">Minimax ve alpha-beta ile birkaç hamle sonrasını hesaplar.</string>
+
+    <!-- Oyun içi -->
+    <string name="game_turn">Tur %1$d</string>
+    <string name="game_home">Ana menü</string>
+    <string name="game_undo">Geri al</string>
+    <string name="game_restart">Yeniden başlat</string>
+    <string name="game_settings">Ayarlar</string>
+    <string name="game_history">Hamle geçmişi</string>
+    <string name="game_history_empty">Henüz hamle yok.</string>
+    <string name="game_history_pawn">Piyon %1$d,%2$d</string>
+    <string name="game_history_pawn_label">Piyon</string>
+    <string name="game_exit_title">Oyundan çıkılsın mı?</string>
+    <string name="game_exit_message">Mevcut oyun sona erecek. Oyundan çıkmak istediğine emin misin?</string>
+    <string name="game_exit_keep_playing">Oyuna Devam</string>
+    <string name="game_exit_confirm">Oyundan Çık</string>
+    <string name="game_place_wall">Duvar Yerleştir</string>
+    <string name="game_wall_horizontal">Yatay</string>
+    <string name="game_wall_vertical">Dikey</string>
+    <string name="game_wall_horizontal_full">Yatay duvar</string>
+    <string name="game_wall_vertical_full">Dikey duvar</string>
+    <string name="game_wall_confirm">Onayla</string>
+    <string name="game_wall_cancel">İptal</string>
+    <string name="game_wall_confirm_hint">Duvar konumunu kontrol edip onayla.</string>
+    <string name="game_wall_pick_hint">Tahtaya dokunarak en yakın duvar yuvasını seç.</string>
+    <string name="game_move_hint">Piyonu seçip yeşil kareye dokun.</string>
+    <string name="game_ai_thinking">Yapay zekâ düşünüyor…</string>
+    <string name="game_sending_move">Hamle gönderiliyor…</string>
+    <string name="game_connecting">Odaya bağlanılıyor…</string>
+    <string name="game_local_two_player">Aynı cihazda iki oyuncu</string>
+    <string name="game_online_match">Çevrim içi oyun</string>
+    <string name="game_vs_ai">%1$s yapay zekâ</string>
+    <string name="game_player_blue">Mavi</string>
+    <string name="game_player_orange">Turuncu</string>
+    <string name="game_turn_blue">Mavi oyuncunun sırası</string>
+    <string name="game_turn_orange">Turuncu oyuncunun sırası</string>
+    <string name="game_turn_opponent">Rakibin sırası</string>
+    <string name="game_turn_yours">Senin sıran · %1$s</string>
+    <string name="winner_reached_goal">%1$s oyuncu hedef kenara ulaştı.</string>
+    <plurals name="game_player_walls">
+        <item quantity="one">%1$s · %2$d duvar</item>
+        <item quantity="other">%1$s · %2$d duvar</item>
+    </plurals>
+
+    <!-- Kazanan -->
+    <string name="winner_victory">Zafer!</string>
+    <string name="winner_ai_won">Bu kez yapay zekâ kazandı</string>
+    <string name="winner_retry_hint">Yeni bir stratejiyle tekrar dene.</string>
+    <string name="winner_play_again">Tekrar Oyna</string>
+    <string name="winner_main_menu">Ana Menü</string>
+
+    <!-- Ayarlar ve istatistikler -->
+    <string name="settings_language">Dil</string>
+    <string name="settings_language_system">Cihaz dili</string>
+    <string name="settings_appearance">Görünüm</string>
+    <string name="settings_theme_system">Sistem</string>
+    <string name="settings_theme_light">Açık</string>
+    <string name="settings_theme_dark">Koyu</string>
+    <string name="settings_dynamic_color">Dinamik renk</string>
+    <string name="settings_dynamic_color_description">Cihazının renk paletini kullanır.</string>
+    <string name="settings_game_experience">Oyun deneyimi</string>
+    <string name="settings_sounds">Sesler</string>
+    <string name="settings_sounds_description">Hamle, duvar ve sonuç sesleri.</string>
+    <string name="settings_haptics">Dokunsal geri bildirim</string>
+    <string name="settings_haptics_description">Hamlelerde ve hatalarda titreşim.</string>
+    <string name="settings_default_ai">Varsayılan yapay zekâ</string>
+    <string name="settings_ad_privacy">Reklam Gizlilik Seçenekleri</string>
+
+    <string name="stats_career">Kariyer özeti</string>
+    <string name="stats_games">Oyun</string>
+    <string name="stats_wins">Galibiyet</string>
+    <string name="stats_rate">Oran</string>
+    <string name="stats_details">Detaylar</string>
+    <string name="stats_losses">Mağlubiyet</string>
+    <string name="stats_local_games">Yerel oyun</string>
+    <string name="stats_total_turns">Toplam tur</string>
+    <string name="stats_by_difficulty">Zorluklara göre</string>
+    <string name="stats_wins_losses">%1$d galibiyet · %2$d mağlubiyet</string>
+    <string name="stats_percentage">%%%1$d</string>
+
+    <!-- Mağaza ve satın alımlar -->
+    <string name="store_title">Mağaza</string>
+    <string name="store_empty">Henüz satışta bir şey yok. Yakında tekrar bak.</string>
+    <string name="store_owned">Sahipsin</string>
+    <string name="store_pending">Ödeme bekleniyor</string>
+    <string name="store_pending_explainer">Ödemen işleniyor. Onaylandığında otomatik olarak açılacak.</string>
+    <string name="store_buy">Satın al</string>
+    <string name="store_restore">Satın alımları geri yükle</string>
+    <string name="store_guest_warning">Misafir olarak oynuyorsun. Satın alımlarının diğer cihazlarında da kalması için hesabını bağla.</string>
+    <string name="store_no_pay_to_win">Buradaki her şey kozmetiktir. Satıştaki hiçbir ürün oyunun oynanışını değiştirmez.</string>
+
+    <string name="billing_error_unavailable">Mağaza şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.</string>
+    <string name="billing_error_unsupported">Bu cihazda satın alma desteklenmiyor.</string>
+    <string name="billing_error_failed">Satın alma tamamlanamadı.</string>
+    <string name="billing_restore_complete">Satın alımlar geri yüklendi.</string>
+
+    <string name="theme_board_label">Tahta teması</string>
+    <string name="theme_board_default">Klasik</string>
+    <string name="theme_board_midnight">Gece Yarısı</string>
+    <string name="theme_board_sunset">Gün Batımı</string>
+
+    <!-- Arkadaşlar -->
+    <string name="friends_title">Arkadaşlar</string>
+    <string name="friends_search_label">Kullanıcı adıyla ara</string>
+    <string name="friends_search_empty">Bu kullanıcı adıyla oyuncu bulunamadı.</string>
+    <string name="friends_section_online">Çevrim içi</string>
+    <string name="friends_section_offline">Çevrim dışı</string>
+    <string name="friends_section_incoming">Gelen istekler</string>
+    <string name="friends_section_outgoing">Gönderilen istekler</string>
+    <string name="friends_section_blocked">Engellenenler</string>
+    <string name="friends_empty">Henüz kimseyi eklemedin. Başlamak için bir kullanıcı adı ara.</string>
+    <string name="friends_add">Arkadaş ekle</string>
+    <string name="friends_accept">Kabul et</string>
+    <string name="friends_decline">Reddet</string>
+    <string name="friends_cancel_request">İsteği iptal et</string>
+    <string name="friends_remove">Arkadaşlıktan çıkar</string>
+    <string name="friends_remove_confirm">%1$s arkadaşlarından çıkarılsın mı?</string>
+    <string name="friends_block">Engelle</string>
+    <string name="friends_block_confirm">%1$s engellensin mi? Sana davet ve arkadaşlık isteği gönderemeyecek.</string>
+    <string name="friends_unblock">Engeli kaldır</string>
+    <string name="friends_invite">Oyuna davet et</string>
+    <string name="friends_invite_sent">Davet gönderildi.</string>
+    <string name="friends_online">Çevrim içi</string>
+    <string name="friends_offline">Çevrim dışı</string>
+    <string name="friends_requires_account">Arkadaşlık için hesap gerekir. Oyuncu eklemek için hesabını bağla.</string>
+
+    <string name="invites_title">Oyun davetleri</string>
+    <string name="invites_from">%1$s seni maça davet etti.</string>
+    <string name="invites_join">Katıl</string>
+    <string name="invites_dismiss">Yoksay</string>
+
+    <!-- Erişilebilirlik -->
+    <string name="cd_board">Oyun tahtası, 9\'a 9 kare</string>
+    <string name="cd_avatar">Profil resmi</string>
+    <string name="menu_quick_play">Hızlı Oyna</string>
+    <string name="menu_create_room">Oda Oluştur</string>
+    <string name="menu_join_room">Odaya Katıl</string>
+    <string name="menu_modes">Modlar</string>
+    <string name="menu_tutorial">Öğretici</string>
+    <string name="tutorial_step_wall_vertical_title">Dikey duvar koy</string>
+    <string name="tutorial_step_wall_vertical_message">Dikey duvarlar iki sütunun arasına oturur. Rakibinin yana adımını kesmek için vurgulanan yuvaya dokun.</string>
+    <string name="tutorial_step_wall_horizontal_title">Yatay duvar koy</string>
+    <string name="tutorial_step_wall_horizontal_message">Yatay duvarlar iki satırın arasına oturur. Rakibinin ilerleyişini kesmek için vurgulanan yuvaya dokun.</string>
+    <string name="tutorial_step_correct">Doğru. Devam etmek için İleri\'ye dokun.</string>
+</resources>

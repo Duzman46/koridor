@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Игровые термины: стена, ход, очередь, соперник, комната, рейтинговый матч, сдаться. -->
+<resources>
+    <string name="action_back">Назад</string>
+    <string name="action_continue">Продолжить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_retry">Повторить</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_next">Далее</string>
+    <string name="action_previous">Назад</string>
+    <string name="action_skip">Пропустить</string>
+
+    <string name="state_loading">Загрузка…</string>
+    <string name="state_offline_title">Нет подключения к интернету</string>
+    <string name="state_offline_message">Сетевым функциям нужно подключение. Локальные партии продолжают работать.</string>
+    <string name="state_empty_title">Здесь пока пусто</string>
+    <string name="state_error_title">Что-то пошло не так</string>
+
+    <string name="error_network">Не удалось подключиться. Проверьте интернет-соединение.</string>
+    <string name="error_unknown">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="error_service_unavailable">Сетевой сервис сейчас недоступен.</string>
+    <string name="error_not_signed_in">Чтобы пользоваться этой функцией, войдите в аккаунт.</string>
+
+    <string name="auth_welcome_title">Добро пожаловать в Koridor</string>
+    <string name="auth_welcome_subtitle">Открой свой путь. Измени путь соперника.</string>
+    <string name="auth_continue_with_google">Продолжить с Google</string>
+    <string name="auth_sign_in_with_email">Войти по эл. почте</string>
+    <string name="auth_create_account">Создать аккаунт</string>
+    <string name="auth_play_as_guest">Играть как гость</string>
+    <string name="auth_guest_explainer">Как гость вы можете играть локально и пройти обучение. Привяжите аккаунт, чтобы добавлять друзей и играть онлайн.</string>
+
+    <string name="auth_sign_in_title">Вход</string>
+    <string name="auth_sign_up_title">Создать аккаунт</string>
+    <string name="auth_email_label">Эл. почта</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_password_confirm_label">Подтвердите пароль</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_reset_title">Сброс пароля</string>
+    <string name="auth_reset_explainer">Введите адрес электронной почты, и мы отправим ссылку для сброса.</string>
+    <string name="auth_reset_send">Отправить ссылку</string>
+    <string name="auth_reset_sent">Если аккаунт с таким адресом существует, ссылка уже отправлена.</string>
+    <string name="auth_sign_out">Выйти</string>
+    <string name="auth_sign_out_confirm_title">Выйти из аккаунта?</string>
+    <string name="auth_sign_out_confirm_message">Вы сможете войти снова в любой момент.</string>
+    <string name="auth_show_password">Показать пароль</string>
+    <string name="auth_hide_password">Скрыть пароль</string>
+
+    <string name="auth_error_email_invalid">Введите корректный адрес электронной почты.</string>
+    <string name="auth_error_email_in_use">Аккаунт с таким адресом уже существует.</string>
+    <string name="auth_error_password_weak">Пароль должен быть не короче 8 символов.</string>
+    <string name="auth_error_password_mismatch">Пароли не совпадают.</string>
+    <string name="auth_error_invalid_credentials">Неверный адрес электронной почты или пароль.</string>
+    <string name="auth_error_too_many_requests">Слишком много попыток. Подождите немного и попробуйте снова.</string>
+    <string name="auth_error_google_cancelled">Вход через Google отменён.</string>
+    <string name="auth_error_google_unavailable">Вход через Google недоступен на этом устройстве.</string>
+    <string name="auth_error_account_exists_with_other_method">Этот адрес уже привязан к другому способу входа.</string>
+    <string name="auth_error_requires_recent_login">В целях безопасности войдите ещё раз, прежде чем продолжить.</string>
+    <string name="auth_error_credential_in_use">Этот аккаунт уже привязан к другому игроку.</string>
+
+    <string name="auth_link_title">Сохраните свой прогресс</string>
+    <string name="auth_link_explainer">Привяжите аккаунт, чтобы прогресс, покупки и друзья оставались с вами на любом устройстве.</string>
+    <string name="auth_link_with_google">Привязать через Google</string>
+    <string name="auth_link_with_email">Привязать по эл. почте</string>
+    <string name="auth_link_success">Аккаунт привязан. Ваш прогресс сохранён.</string>
+    <string name="auth_guest_badge">Гость</string>
+
+    <string name="username_title">Выберите имя пользователя</string>
+    <string name="username_explainer">Так вас будут видеть другие игроки. Позже это можно изменить.</string>
+    <string name="username_label">Имя пользователя</string>
+    <string name="username_available">Это имя свободно.</string>
+    <plurals name="username_error_too_short">
+        <item quantity="one">Имя должно содержать не менее %1$d символа.</item>
+        <item quantity="few">Имя должно содержать не менее %1$d символов.</item>
+        <item quantity="many">Имя должно содержать не менее %1$d символов.</item>
+        <item quantity="other">Имя должно содержать не менее %1$d символа.</item>
+    </plurals>
+    <plurals name="username_error_too_long">
+        <item quantity="one">Имя может содержать не более %1$d символа.</item>
+        <item quantity="few">Имя может содержать не более %1$d символов.</item>
+        <item quantity="many">Имя может содержать не более %1$d символов.</item>
+        <item quantity="other">Имя может содержать не более %1$d символа.</item>
+    </plurals>
+    <string name="username_error_invalid_characters">Используйте только латинские буквы, цифры и подчёркивания.</string>
+    <string name="username_error_taken">Это имя уже занято.</string>
+    <string name="username_error_not_allowed">Это имя использовать нельзя.</string>
+    <string name="username_error_blank">Введите имя пользователя.</string>
+
+    <string name="profile_title">Профиль</string>
+    <string name="profile_edit_title">Изменить профиль</string>
+    <string name="profile_display_name_label">Отображаемое имя</string>
+    <string name="profile_avatar_label">Аватар</string>
+    <string name="profile_rating">Рейтинг</string>
+    <string name="profile_highest_rating">Лучший рейтинг</string>
+    <string name="profile_games">Матчи</string>
+    <string name="profile_wins">Победы</string>
+    <string name="profile_losses">Поражения</string>
+    <string name="profile_draws">Ничьи</string>
+    <string name="profile_win_streak">Текущая серия</string>
+    <string name="profile_best_streak">Лучшая серия</string>
+    <string name="profile_member_since">В игре с %1$s</string>
+
+    <string name="account_title">Аккаунт</string>
+    <string name="account_delete_title">Удалить аккаунт</string>
+    <string name="account_delete_warning">Профиль, статистика, друзья и рейтинг будут удалены безвозвратно. После этого покупки восстановить не получится. Отменить это действие нельзя.</string>
+    <string name="account_delete_confirm_label">Введите %1$s для подтверждения</string>
+    <string name="account_delete_action">Удалить мой аккаунт навсегда</string>
+    <string name="account_delete_success">Ваш аккаунт удалён.</string>
+    <string name="account_privacy_policy">Политика конфиденциальности</string>
+    <string name="account_terms_of_service">Условия использования</string>
+    <string name="account_legal_unavailable">Этот документ ещё не опубликован.</string>
+
+    <string name="tutorial_replay">Пройти обучение снова</string>
+    <string name="tutorial_skip_confirm_title">Пропустить обучение?</string>
+    <string name="tutorial_skip_confirm_message">Его можно пройти снова в любой момент из главного меню или настроек.</string>
+    <string name="tutorial_progress">Шаг %1$d из %2$d</string>
+    <string name="tutorial_finish">Начать игру</string>
+    <string name="tutorial_step_select_title">Выберите свою фишку</string>
+    <string name="tutorial_step_select_message">Нажмите на свою синюю фишку, чтобы увидеть её ходы.</string>
+    <string name="tutorial_step_move_title">Сделайте ход</string>
+    <string name="tutorial_step_move_message">Коснитесь подсвеченной клетки, чтобы шагнуть на одну клетку.</string>
+    <string name="tutorial_step_jump_title">Перепрыгните соперника</string>
+    <string name="tutorial_step_jump_message">Когда вы стоите лицом к лицу, можно перепрыгнуть соперника по прямой.</string>
+    <string name="tutorial_step_blocked_title">Стена не может запереть</string>
+    <string name="tutorial_step_blocked_message">Попробуйте поставить эту стену. Она отклоняется, потому что закрыла бы последний путь.</string>
+    <string name="tutorial_step_win_title">Выиграйте партию</string>
+    <string name="tutorial_step_win_message">Дойдите до противоположного края, чтобы победить. Шагните на последний ряд.</string>
+    <string name="tutorial_hint_wrong_move">Не сюда. Следуйте подсвеченной подсказке.</string>
+
+    <string name="room_error_not_found">Комната не найдена или уже закрыта.</string>
+    <string name="room_error_full">Эта комната уже заполнена.</string>
+    <string name="room_error_code_invalid">Введите код комнаты из %1$d символов.</string>
+    <string name="room_error_code_unavailable">Сейчас не удалось создать комнату. Попробуйте ещё раз.</string>
+    <string name="room_error_password_wrong">Неверный пароль комнаты.</string>
+    <string name="room_error_password_too_short">Пароль комнаты должен быть не короче %1$d символов.</string>
+    <string name="room_error_name_too_long">Название комнаты слишком длинное.</string>
+    <string name="room_error_no_opponent">Соперник не найден. Попробуйте создать комнату.</string>
+    <string name="room_error_ranked_requires_account">Для рейтинговых матчей нужен аккаунт. Привяжите свой, чтобы играть в рейтинге.</string>
+
+    <string name="online_title">Игра онлайн</string>
+    <string name="online_create_room">Создать комнату</string>
+    <string name="online_join_by_code">Войти по коду</string>
+    <string name="online_browse_rooms">Открытые комнаты</string>
+    <string name="online_quick_match">Быстрый матч</string>
+    <string name="online_quick_match_searching">Поиск соперника…</string>
+    <string name="online_rejoin_match">Вернуться в матч</string>
+    <string name="online_rejoin_explainer">У вас есть незавершённый матч.</string>
+
+    <string name="room_name_label">Название комнаты</string>
+    <string name="room_name_placeholder">Необязательно</string>
+    <string name="room_visibility_label">Кто может войти</string>
+    <string name="room_visibility_public">Все</string>
+    <string name="room_visibility_private">Только по коду</string>
+    <string name="room_visibility_friends">Друзья</string>
+    <string name="room_ranked_label">Рейтинговый матч</string>
+    <string name="room_ranked_description">Рейтинговые матчи меняют ваш рейтинг.</string>
+    <string name="room_turn_duration_label">Время на ход</string>
+    <string name="room_total_duration_label">Время на игрока</string>
+    <string name="room_duration_unlimited">Без ограничения</string>
+    <string name="room_duration_minutes">%1$d мин</string>
+    <string name="room_duration_seconds">%1$d с</string>
+    <string name="room_password_label">Пароль комнаты</string>
+    <string name="room_password_optional">Необязательно</string>
+    <string name="room_code_label">Код комнаты</string>
+    <string name="room_code_hint">Нажмите и удерживайте код, чтобы скопировать его.</string>
+    <string name="room_waiting_for_opponent">Ожидание соперника</string>
+    <string name="room_close">Закрыть комнату</string>
+
+    <string name="room_browser_empty">Сейчас открытых комнат нет. Создайте свою и дождитесь соперника.</string>
+    <string name="room_browser_filter_all">Все</string>
+    <string name="room_browser_filter_ranked">Рейтинговые</string>
+    <string name="room_browser_filter_casual">Обычные</string>
+    <string name="room_browser_filter_fast">Быстрые</string>
+    <string name="room_browser_host">%1$s · %2$d</string>
+    <string name="room_browser_players">%1$d/2</string>
+    <string name="room_locked">Защищена паролем</string>
+
+    <string name="game_resign">Сдаться</string>
+    <string name="game_resign_confirm_title">Сдать партию?</string>
+    <string name="game_resign_confirm_message">Соперник победит, а в рейтинговом матче ваш рейтинг снизится.</string>
+    <string name="game_opponent_left">Соперник отключился. У него есть немного времени, чтобы вернуться.</string>
+    <string name="game_claim_win">Забрать победу</string>
+    <string name="game_reconnecting">Переподключение…</string>
+    <string name="game_turn_timer">%1$d:%2$02d</string>
+    <string name="game_your_turn">Ваш ход</string>
+    <string name="game_rival_turn">Ход соперника</string>
+
+    <string name="leaderboard_title">Таблица лидеров</string>
+    <string name="leaderboard_tab_global">Общая</string>
+    <string name="leaderboard_tab_weekly">За неделю</string>
+    <string name="leaderboard_tab_friends">Друзья</string>
+    <string name="leaderboard_empty">Рейтинговых матчей пока не было.</string>
+    <string name="leaderboard_empty_weekly">На этой неделе рейтинговых матчей пока нет.</string>
+    <string name="leaderboard_empty_friends">Добавьте друзей, чтобы сравнить результаты.</string>
+    <string name="leaderboard_your_rank">Ваше место</string>
+    <string name="leaderboard_rank_capped">%1$d+</string>
+    <string name="leaderboard_sign_in_required">Войдите, чтобы попасть в таблицу лидеров.</string>
+    <string name="leaderboard_record">%1$d П · %2$d матчей</string>
+    <string name="cd_leaderboard_row">Место %1$d, %2$s, рейтинг %3$d</string>
+
+    <string name="menu_statistics">Статистика</string>
+    <string name="mode_title">Режим игры</string>
+    <string name="mode_vs_ai">Против ИИ</string>
+    <string name="mode_vs_ai_description">Проверьте стратегию на трёх уровнях сложности.</string>
+    <string name="mode_two_players">Два игрока</string>
+    <string name="mode_two_players_description">Играйте по очереди на одном устройстве.</string>
+    <string name="mode_online">Онлайн</string>
+    <string name="mode_online_description">Играйте с другом по сети, используя код комнаты.</string>
+    <string name="difficulty_title">Сложность</string>
+    <string name="difficulty_easy">Лёгкий</string>
+    <string name="difficulty_easy_description">Спокойные и разнообразные ходы.</string>
+    <string name="difficulty_medium">Средний</string>
+    <string name="difficulty_medium_description">Находит кратчайший путь и мешает вам.</string>
+    <string name="difficulty_hard">Сложный</string>
+    <string name="difficulty_hard_description">Просчитывает несколько ходов вперёд с минимаксом и альфа-бета отсечением.</string>
+
+    <string name="game_turn">Ход %1$d</string>
+    <string name="game_home">Главное меню</string>
+    <string name="game_undo">Отменить ход</string>
+    <string name="game_restart">Начать заново</string>
+    <string name="game_settings">Настройки</string>
+    <string name="game_history">История ходов</string>
+    <string name="game_history_empty">Ходов пока нет.</string>
+    <string name="game_history_pawn">Фишка %1$d,%2$d</string>
+    <string name="game_history_pawn_label">Фишка</string>
+    <string name="game_exit_title">Выйти из партии?</string>
+    <string name="game_exit_message">Текущая партия завершится. Точно хотите выйти?</string>
+    <string name="game_exit_keep_playing">Продолжить игру</string>
+    <string name="game_exit_confirm">Выйти</string>
+    <string name="game_place_wall">Поставить стену</string>
+    <string name="game_wall_horizontal">Горизонтально</string>
+    <string name="game_wall_vertical">Вертикально</string>
+    <string name="game_wall_horizontal_full">Горизонтальная стена</string>
+    <string name="game_wall_vertical_full">Вертикальная стена</string>
+    <string name="game_wall_confirm">Подтвердить</string>
+    <string name="game_wall_cancel">Отмена</string>
+    <string name="game_wall_confirm_hint">Проверьте положение стены и подтвердите.</string>
+    <string name="game_wall_pick_hint">Коснитесь доски, чтобы выбрать ближайшее место для стены.</string>
+    <string name="game_move_hint">Выберите фишку, затем коснитесь зелёной клетки.</string>
+    <string name="game_ai_thinking">ИИ думает…</string>
+    <string name="game_sending_move">Отправка хода…</string>
+    <string name="game_connecting">Подключение к комнате…</string>
+    <string name="game_local_two_player">Два игрока на одном устройстве</string>
+    <string name="game_online_match">Матч онлайн</string>
+    <string name="game_vs_ai">ИИ · %1$s</string>
+    <string name="game_player_blue">Синий</string>
+    <string name="game_player_orange">Оранжевый</string>
+    <string name="game_turn_blue">Ход синего игрока</string>
+    <string name="game_turn_orange">Ход оранжевого игрока</string>
+    <string name="game_turn_opponent">Ход соперника</string>
+    <string name="game_turn_yours">Ваш ход · %1$s</string>
+    <string name="winner_reached_goal">Игрок %1$s достиг противоположного края.</string>
+    <plurals name="game_player_walls">
+        <item quantity="one">%1$s · %2$d стена</item>
+        <item quantity="few">%1$s · %2$d стены</item>
+        <item quantity="many">%1$s · %2$d стен</item>
+        <item quantity="other">%1$s · %2$d стены</item>
+    </plurals>
+
+    <string name="winner_victory">Победа!</string>
+    <string name="winner_ai_won">На этот раз выиграл ИИ</string>
+    <string name="winner_retry_hint">Попробуйте снова с новой стратегией.</string>
+    <string name="winner_play_again">Играть снова</string>
+    <string name="winner_main_menu">Главное меню</string>
+
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_system">Язык устройства</string>
+    <string name="settings_appearance">Оформление</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Тёмная</string>
+    <string name="settings_dynamic_color">Динамические цвета</string>
+    <string name="settings_dynamic_color_description">Использует цветовую палитру вашего устройства.</string>
+    <string name="settings_game_experience">Игровой процесс</string>
+    <string name="settings_sounds">Звуки</string>
+    <string name="settings_sounds_description">Звуки ходов, стен и результата.</string>
+    <string name="settings_haptics">Тактильный отклик</string>
+    <string name="settings_haptics_description">Вибрация при ходах и ошибках.</string>
+    <string name="settings_default_ai">ИИ по умолчанию</string>
+    <string name="settings_ad_privacy">Настройки приватности рекламы</string>
+
+    <string name="stats_career">Общий итог</string>
+    <string name="stats_games">Матчи</string>
+    <string name="stats_wins">Победы</string>
+    <string name="stats_rate">Процент</string>
+    <string name="stats_details">Подробности</string>
+    <string name="stats_losses">Поражения</string>
+    <string name="stats_local_games">Локальные партии</string>
+    <string name="stats_total_turns">Всего ходов</string>
+    <string name="stats_by_difficulty">По сложности</string>
+    <string name="stats_wins_losses">%1$d П · %2$d Пор.</string>
+    <string name="stats_percentage">%1$d%%</string>
+
+    <string name="store_title">Магазин</string>
+    <string name="store_empty">Пока ничего не продаётся. Загляните позже.</string>
+    <string name="store_owned">Куплено</string>
+    <string name="store_pending">Ожидание оплаты</string>
+    <string name="store_pending_explainer">Платёж обрабатывается. Товар откроется автоматически, как только он пройдёт.</string>
+    <string name="store_buy">Купить</string>
+    <string name="store_restore">Восстановить покупки</string>
+    <string name="store_guest_warning">Вы играете как гость. Привяжите аккаунт, чтобы покупки перешли на другие устройства.</string>
+    <string name="store_no_pay_to_win">Здесь всё только внешнее. Ничто из продаваемого не меняет ход игры.</string>
+
+    <string name="billing_error_unavailable">Магазин сейчас недоступен. Попробуйте позже.</string>
+    <string name="billing_error_unsupported">Покупки не поддерживаются на этом устройстве.</string>
+    <string name="billing_error_failed">Не удалось завершить покупку.</string>
+    <string name="billing_restore_complete">Покупки восстановлены.</string>
+
+    <string name="theme_board_label">Оформление доски</string>
+    <string name="theme_board_default">Классика</string>
+    <string name="theme_board_midnight">Полночь</string>
+    <string name="theme_board_sunset">Закат</string>
+
+    <string name="friends_title">Друзья</string>
+    <string name="friends_search_label">Поиск по имени пользователя</string>
+    <string name="friends_search_empty">Игрок с таким именем не найден.</string>
+    <string name="friends_section_online">В сети</string>
+    <string name="friends_section_offline">Не в сети</string>
+    <string name="friends_section_incoming">Входящие заявки</string>
+    <string name="friends_section_outgoing">Отправленные заявки</string>
+    <string name="friends_section_blocked">Заблокированные</string>
+    <string name="friends_empty">Вы ещё никого не добавили. Найдите игрока по имени, чтобы начать.</string>
+    <string name="friends_add">Добавить в друзья</string>
+    <string name="friends_accept">Принять</string>
+    <string name="friends_decline">Отклонить</string>
+    <string name="friends_cancel_request">Отменить заявку</string>
+    <string name="friends_remove">Удалить из друзей</string>
+    <string name="friends_remove_confirm">Удалить %1$s из друзей?</string>
+    <string name="friends_block">Заблокировать</string>
+    <string name="friends_block_confirm">Заблокировать %1$s? Этот игрок не сможет приглашать вас и отправлять заявки.</string>
+    <string name="friends_unblock">Разблокировать</string>
+    <string name="friends_invite">Пригласить в игру</string>
+    <string name="friends_invite_sent">Приглашение отправлено.</string>
+    <string name="friends_online">В сети</string>
+    <string name="friends_offline">Не в сети</string>
+    <string name="friends_requires_account">Для друзей нужен аккаунт. Привяжите свой, чтобы добавлять игроков.</string>
+
+    <string name="invites_title">Приглашения в игру</string>
+    <string name="invites_from">%1$s приглашает вас на матч.</string>
+    <string name="invites_join">Присоединиться</string>
+    <string name="invites_dismiss">Скрыть</string>
+
+    <string name="cd_board">Игровая доска, 9 на 9 клеток</string>
+    <string name="cd_avatar">Фото профиля</string>
+    <string name="menu_quick_play">Быстрая игра</string>
+    <string name="menu_create_room">Создать комнату</string>
+    <string name="menu_join_room">Войти в комнату</string>
+    <string name="menu_modes">Режимы</string>
+    <string name="menu_tutorial">Обучение</string>
+    <string name="tutorial_step_wall_vertical_title">Поставьте вертикальную стену</string>
+    <string name="tutorial_step_wall_vertical_message">Вертикальные стены встают между двумя столбцами. Нажмите на подсвеченный паз, чтобы перекрыть сопернику шаг в сторону.</string>
+    <string name="tutorial_step_wall_horizontal_title">Поставьте горизонтальную стену</string>
+    <string name="tutorial_step_wall_horizontal_message">Горизонтальные стены встают между двумя рядами. Нажмите на подсвеченный паз, чтобы перекрыть сопернику путь вперёд.</string>
+    <string name="tutorial_step_correct">Верно. Нажмите «Далее», чтобы продолжить.</string>
+</resources>

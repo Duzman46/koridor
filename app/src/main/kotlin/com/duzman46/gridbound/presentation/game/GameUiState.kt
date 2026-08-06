@@ -1,7 +1,8 @@
 package com.duzman46.gridbound.presentation.game
 
+import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.game.audio.SoundEffect
-import com.duzman46.gridbound.domain.models.LocalizedText
+import com.duzman46.gridbound.game.board.BoardTheme
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
@@ -26,11 +27,25 @@ data class GameUiState(
     val isAiThinking: Boolean = false,
     val isOnlineConnected: Boolean = false,
     val isOnlineSyncing: Boolean = false,
-    val onlineMessage: LocalizedText? = null,
+    val onlineMessage: UiText? = null,
+    val isRanked: Boolean = false,
+    /** Wall-clock instant the current player's move clock runs out; null when untimed. */
+    val turnDeadlineAt: Long? = null,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
+    val boardTheme: BoardTheme = BoardTheme.CLASSIC,
 ) {
+    val isOnline: Boolean get() = mode == GameMode.ONLINE
+
+    /** True once the rival's clock has run out and the win can be claimed. */
+    fun canClaimTimeout(now: Long): Boolean =
+        isOnline &&
+            turnDeadlineAt != null &&
+            now > turnDeadlineAt &&
+            boardState.status == com.duzman46.gridbound.game.models.GameStatus.IN_PROGRESS &&
+            boardState.currentPlayer != localPlayer
+
     val acceptsHumanInput: Boolean
         get() = !isAiThinking && !isOnlineSyncing && when (mode) {
             GameMode.LOCAL_TWO_PLAYER -> true

@@ -3,3 +3,12 @@ GRIDBOUND_FIREBASE_API_KEY=YOUR_FIREBASE_WEB_API_KEY
 GRIDBOUND_FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
 GRIDBOUND_FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
 GRIDBOUND_FIREBASE_DATABASE_URL=https://YOUR_PROJECT_ID-default-rtdb.REGION.firebasedatabase.app
+# OAuth 2.0 "Web application" client ID from the Firebase console
+# (Authentication -> Sign-in method -> Google -> Web SDK configuration).
+# Required for Google sign-in through Credential Manager. Leave empty to hide the Google button.
+GRIDBOUND_GOOGLE_WEB_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+
+# App Check (Play Integrity). Leave false until Play Integrity is registered in the Firebase
+# console AND a build carrying it has reached users — turning it on any earlier locks every
+# device out of the backend. Full order of operations in docs/FIREBASE_SETUP.md.
+GRIDBOUND_APP_CHECK_ENABLED=false

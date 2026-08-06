@@ -11,6 +11,8 @@ hilt = "2.60.1"
 hilt-androidx = "1.4.0"
 coroutines = "1.11.0"
 firebase-bom = "34.17.0"
+credentials = "1.6.0"
+googleid = "1.2.0"
 play-billing = "9.1.0"
 play-services-ads = "25.4.0"
 ump = "4.0.0"
@@ -46,6 +48,11 @@ coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", ve
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-database = { module = "com.google.firebase:firebase-database" }
+firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
+credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 play-billing = { module = "com.android.billingclient:billing", version.ref = "play-billing" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "play-services-ads" }
 ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }

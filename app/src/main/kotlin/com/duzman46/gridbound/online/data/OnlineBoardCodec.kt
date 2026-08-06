@@ -9,10 +9,9 @@ import com.duzman46.gridbound.game.models.Position
 import com.duzman46.gridbound.game.models.TurnRecord
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.WallOrientation
-import com.duzman46.gridbound.online.model.OnlineRoom
-import com.duzman46.gridbound.online.model.OnlineRoomStatus
 import javax.inject.Inject
 
+/** Serialises the board itself. Room metadata is handled by [RoomCodec]. */
 class OnlineBoardCodec @Inject constructor() {
     fun encodeBoard(state: BoardState): Map<String, Any?> = mapOf(
         "currentPlayer" to state.currentPlayer.name,
@@ -49,20 +48,6 @@ class OnlineBoardCodec @Inject constructor() {
             status = GameStatus.valueOf(map.string("status")),
             turnNumber = map.int("turnNumber"),
             history = map["history"].asList().mapNotNull(::decodeTurn),
-        )
-    }.getOrNull()
-
-    fun decodeRoom(code: String, value: Any?): OnlineRoom? = runCatching {
-        val map = value.asStringMap()
-        OnlineRoom(
-            code = code,
-            hostUid = map.string("hostUid"),
-            guestUid = map.optionalString("guestUid"),
-            status = OnlineRoomStatus.valueOf(map.string("status")),
-            revision = map.long("revision"),
-            boardState = checkNotNull(decodeBoard(map["board"])),
-            createdAt = map.long("createdAt"),
-            updatedAt = map.long("updatedAt"),
         )
     }.getOrNull()
 

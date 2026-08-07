@@ -2,39 +2,152 @@
 <!--
   The mark: a pawn standing in a corridor.
 
-  The old icon was a 3x3 board with two pawns and two walls — five ideas at 48 pixels, which
-  is four too many. At launcher size that collapsed into speckle. This is the game's name
-  drawn literally: two wall bars, and the piece that has to get past them.
+  Two wall bars and the piece that has to get past them, which is the game's name drawn
+  literally and the whole vocabulary the icon is allowed. Five ideas at 48 pixels collapse into
+  speckle, so there is no board, no second pawn and nothing else here.
 
-  Everything sits inside the 66dp safe circle of the 108dp adaptive canvas, so no launcher
-  mask — circle, squircle or teardrop — can clip a bar or clip the pawn's base.
+  What makes it an object rather than a diagram is the same shading the live board uses on the
+  same two pieces, and nothing more: a wall is a jade bar with the light catching its top edge,
+  a pawn is lit from the upper left with its foot in shade, and one soft ellipse under all
+  three feet stops the set floating over the plate. Every one of those is a gradient or an
+  alpha, so the whole thing is still a few hundred bytes and stays sharp at any density.
+
+  The shadow lives here rather than on the plate so that a launcher which parallaxes the two
+  layers moves the shadow with the piece that casts it.
+
+  Everything but the outer corner of the two wall caps sits inside the 66dp safe circle of the
+  108dp canvas — no mask can take a bar, the pawn's head or its base, and the fraction of a
+  unit a full circle shaves off a cap is smaller than one pixel at launcher size.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- The corridor walls, in the brand mint. -->
-    <path
-        android:fillColor="#FF16E9A0"
-        android:pathData="M27,30 A4,4 0 0 1 35,30 L35,78 A4,4 0 0 1 27,78 Z" />
-    <path
-        android:fillColor="#FF16E9A0"
-        android:pathData="M73,30 A4,4 0 0 1 81,30 L81,78 A4,4 0 0 1 73,78 Z" />
+    <!-- The contact shadow: a circle squashed by its group, because a vector has no blur and
+         a radial gradient run to transparent is the only soft edge available. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="83"
+        android:scaleY="0.27">
+        <path android:pathData="M26,83 A28,28 0 1 1 82,83 A28,28 0 1 1 26,83 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:centerX="54"
+                    android:centerY="83"
+                    android:gradientRadius="28"
+                    android:type="radial">
+                    <item android:offset="0" android:color="#A6000B08" />
+                    <item android:offset="0.45" android:color="#70000B08" />
+                    <item android:offset="1" android:color="#00000B08" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
 
-    <!-- The pawn: head, collar, narrow neck, flared base. The neck is visibly thinner than
-         the head, or at 48 pixels the three shapes merge into one blob. -->
+    <!-- The corridor walls. -->
+    <path android:pathData="M27,30 A4,4 0 0 1 35,30 L35,78 A4,4 0 0 1 27,78 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="27"
+                android:startY="26"
+                android:endX="35"
+                android:endY="82"
+                android:type="linear">
+                <item android:offset="0" android:color="#FF5CF3C4" />
+                <item android:offset="0.42" android:color="#FF16E9A0" />
+                <item android:offset="1" android:color="#FF0C9E71" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M73,30 A4,4 0 0 1 81,30 L81,78 A4,4 0 0 1 73,78 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="73"
+                android:startY="26"
+                android:endX="81"
+                android:endY="82"
+                android:type="linear">
+                <item android:offset="0" android:color="#FF5CF3C4" />
+                <item android:offset="0.42" android:color="#FF16E9A0" />
+                <item android:offset="1" android:color="#FF0C9E71" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- The lit top edge of each bar, which is what gives a flat capsule a thickness. -->
+    <path android:pathData="M27,30 A4,4 0 0 1 35,30 L35,34 A4,4 0 0 1 27,34 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="31"
+                android:startY="26"
+                android:endX="31"
+                android:endY="38"
+                android:type="linear">
+                <item android:offset="0" android:color="#59FFFFFF" />
+                <item android:offset="1" android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M73,30 A4,4 0 0 1 81,30 L81,34 A4,4 0 0 1 73,34 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="77"
+                android:startY="26"
+                android:endX="77"
+                android:endY="38"
+                android:type="linear">
+                <item android:offset="0" android:color="#59FFFFFF" />
+                <item android:offset="1" android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- The pawn, drawn foot first so each piece overlaps the one below it: flared base,
+         narrow neck, collar, domed head. The neck is visibly thinner than the head, or at 48
+         pixels the three shapes merge into one blob. -->
+    <path android:pathData="M43,67 L65,67 A7,7 0 0 1 65,81 L43,81 A7,7 0 0 1 43,67 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="67"
+                android:endX="54"
+                android:endY="81"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFEAFFF6" />
+                <item android:offset="1" android:color="#FFB6D2C5" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M49.5,61.5 A4.5,4.5 0 0 1 58.5,61.5 L58.5,67.5 A4.5,4.5 0 0 1 49.5,67.5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="57"
+                android:endX="54"
+                android:endY="72"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFF3FFFA" />
+                <item android:offset="1" android:color="#FFD2E9DE" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#FFEAFFF6"
-        android:pathData="M43,42 A11,11 0 1 1 65,42 A11,11 0 1 1 43,42 Z" />
-    <path
-        android:fillColor="#FFEAFFF6"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M48,54 L60,54 A3,3 0 0 1 60,60 L48,60 A3,3 0 0 1 48,54 Z" />
-    <path
-        android:fillColor="#FFEAFFF6"
-        android:pathData="M49.5,61.5 A4.5,4.5 0 0 1 58.5,61.5 L58.5,67.5 A4.5,4.5 0 0 1 49.5,67.5 Z" />
-    <path
-        android:fillColor="#FFEAFFF6"
-        android:pathData="M43,67 L65,67 A7,7 0 0 1 65,81 L43,81 A7,7 0 0 1 43,67 Z" />
+    <path android:pathData="M43,42 A11,11 0 1 1 65,42 A11,11 0 1 1 43,42 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="50"
+                android:centerY="38"
+                android:gradientRadius="17"
+                android:type="radial">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="0.5" android:color="#FFEAFFF6" />
+                <item android:offset="1" android:color="#FFC3DDD1" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

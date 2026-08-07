@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.leaderboard.data
 
+import com.duzman46.gridbound.auth.domain.AccountType
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Constants
@@ -7,6 +8,7 @@ import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.int
 import com.duzman46.gridbound.data.firebase.string
+import com.duzman46.gridbound.data.firebase.stringOrNull
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardCursor
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardEntry
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardPage
@@ -16,6 +18,7 @@ import com.duzman46.gridbound.leaderboard.domain.LeaderboardWeek
 import com.duzman46.gridbound.leaderboard.domain.OwnStanding
 import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.duzman46.gridbound.profile.data.ProfileCodec
+import com.duzman46.gridbound.util.enumValueOrDefault
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.Query
@@ -53,9 +56,19 @@ import kotlinx.coroutines.coroutineScope
  *   refuse it to a `GUEST` profile, and they admit no query over `/users` that orders by
  *   anything else — so there is no reading of the table that puts a guest on it.
  *
- * A guest who links an account is not stranded by this: `RtdbUserProfileRepository` writes the
- * key on the next sign-in with whatever rating they had already earned, and the worker keeps
- * it level with the rating from then on.
+ * ## Why nothing here asks whether the copy exists
+ *
+ * Being absent from that index is not the same fact as being a guest, and only one of the two
+ * is what a board is asking. A linked account can be absent from it for a while — the copy is
+ * written by the server after a rated match and by `RtdbUserProfileRepository` when a
+ * credential is linked, and everything written before the copy existed waits on the backfill
+ * in `worker/src/sweep.ts` to be taken on. Answering "are they a guest?" with "are they in the
+ * index?" therefore reads every such account as anonymous, which emptied the friends board and
+ * told signed-in players they were not signed in.
+ *
+ * So the ordered query uses the index, because that is what an index is for, and every read of
+ * a single profile by id — the friends board, a player's own standing — asks the profile what
+ * kind of account it is. That question every profile has answered since the first one.
  */
 @Singleton
 class RtdbLeaderboardRepository @Inject constructor(
@@ -76,11 +89,19 @@ class RtdbLeaderboardRepository @Inject constructor(
     override suspend fun loadOwnStanding(userId: String): Outcome<OwnStanding> =
         dbCall("leaderboard-own") {
             val profile = usersRef().child(userId).awaitSnapshot()
+            // Not NOT_SIGNED_IN: whoever this is, they are signed in — the caller had their
+            // user id to ask with. A profile that will not yield a row is a fault, and saying
+            // so is the difference between a message and the wrong message.
             val entry = profile.toBoardEntry()
-                ?: return@dbCall Outcome.Failure(AppError.NOT_SIGNED_IN)
+                ?: return@dbCall Outcome.Failure(AppError.UNKNOWN)
 
             // Rank is the number of players rated above this one, plus one. The scan is
             // capped so a single lookup stays bounded no matter how large the board grows.
+            //
+            // Counting from the rating rather than from the copy the board is sorted by is
+            // deliberate, and the rules allow exactly that: an account the backfill has not
+            // reached yet is not on the table but its rating still says where it will land,
+            // and a position it can be told now beats one that waits for a server sweep.
             val above = usersRef()
                 .orderByChild(ProfileCodec.Keys.LEADERBOARD_RATING)
                 .startAfter(entry.rating.toDouble())
@@ -183,7 +204,17 @@ private const val BOARD_RATING_FLOOR = 0.0
  * guest could otherwise reach the table: their own standing, and the friends board.
  */
 private fun DataSnapshot.toBoardEntry(): LeaderboardEntry? =
-    if (hasChild(ProfileCodec.Keys.LEADERBOARD_RATING)) toEntry() else null
+    if (holdsBoardPlace(stringOrNull(ProfileCodec.Keys.ACCOUNT_TYPE))) toEntry() else null
+
+/**
+ * Whether the account a profile describes is one a board is meant to list.
+ *
+ * @param accountType the profile's `accountType` field exactly as stored, or null when the
+ *   profile carries none. Unreadable is read as anonymous: the one question that decides who
+ *   is ranked is not one to answer generously on a profile too damaged to say what it is.
+ */
+internal fun holdsBoardPlace(accountType: String?): Boolean =
+    !enumValueOrDefault(accountType, AccountType.GUEST).isGuest
 
 /** Shared by the profile node and the weekly aggregate, which use the same field names. */
 private fun DataSnapshot.toEntry(): LeaderboardEntry? {

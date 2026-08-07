@@ -91,6 +91,11 @@ fun HomeWordmark(modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Black,
         letterSpacing = 2.sp,
         color = MaterialTheme.colorScheme.onBackground,
+        // Set with the size rather than inherited: body text's 24 sp line box is shorter than
+        // these glyphs are tall, which leaves the wordmark painting outside the space it was
+        // measured for. The home screen divides its height up to the dp, and a row that lies
+        // about how tall it is spends the panel's room.
+        lineHeight = wordmarkSize * 1.2f,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )

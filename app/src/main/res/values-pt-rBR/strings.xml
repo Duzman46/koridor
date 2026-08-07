@@ -62,6 +62,12 @@
     <string name="auth_link_with_google">Vincular com o Google</string>
     <string name="auth_link_with_email">Vincular com e-mail</string>
     <string name="auth_link_success">Sua conta foi vinculada. Seu progresso foi mantido.</string>
+    <string name="auth_link_account">Vincular uma conta</string>
+    <string name="auth_existing_account_title">Esta conta já existe</string>
+    <string name="auth_existing_account_message">Esta conta do Google já tem um perfil próprio no Koridor, e os dois não podem ser combinados. Se você entrar nela, tudo o que jogou como convidado — seu rating e seu histórico de partidas — é apagado para sempre. Aquela conta mantém o rating, as estatísticas e os amigos dela, e é isso que você vai ver. Nada é mesclado.</string>
+    <string name="auth_existing_account_confirm">Entrar mesmo assim</string>
+    <string name="auth_existing_account_cancel">Continuar como convidado</string>
+    <string name="auth_existing_account_success">Login feito. O rating, as estatísticas e os amigos desta conta voltaram.</string>
     <string name="auth_guest_badge">Convidado</string>
 
     <string name="username_title">Escolha um nome de usuário</string>
@@ -85,6 +91,7 @@
 
     <string name="profile_title">Perfil</string>
     <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_username_guest_explainer">Nomes de convidado são dados automaticamente e não podem ser alterados. Vincule uma conta para escolher o nome que os outros jogadores vão ver.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Pontuação</string>
     <string name="profile_highest_rating">Melhor pontuação</string>

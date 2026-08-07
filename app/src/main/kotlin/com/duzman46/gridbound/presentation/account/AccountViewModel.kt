@@ -10,6 +10,8 @@ import com.duzman46.gridbound.core.EmailRules
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.PasswordRules
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.core.UsernameRules
+import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.session.SessionManager
 import com.duzman46.gridbound.session.SessionState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +31,13 @@ data class AccountUiState(
     val isSubmitting: Boolean = false,
     val error: UiText? = null,
     val info: UiText? = null,
+    /**
+     * True while the player is being asked whether to give up everything they did as a
+     * guest in order to sign in as the account the credential they offered already belongs
+     * to. Nothing has happened yet at this point, and declining leaves them exactly as they
+     * were.
+     */
+    val existingAccountWarning: Boolean = false,
     val privacyPolicyUrl: String = BuildConfig.PRIVACY_POLICY_URL,
     val termsUrl: String = BuildConfig.TERMS_URL,
 ) {
@@ -39,7 +48,18 @@ data class AccountUiState(
 sealed interface AccountEvent {
     data object SignedOut : AccountEvent
     data object AccountDeleted : AccountEvent
-    data object Linked : AccountEvent
+
+    /**
+     * The player has a real account now, either by linking their guest identity or by
+     * handing it over to one that already existed.
+     *
+     * @param needsUsername true when the name the account carries is one the app handed out
+     *   rather than one its owner chose, and the entry gate has to be reached before
+     *   anybody else sees it. The answer travels on the event because the session flow has
+     *   not necessarily caught up with an identity that changed a fraction of a second ago,
+     *   and a gate reading a stale session waves the player straight past.
+     */
+    data class Linked(val needsUsername: Boolean) : AccountEvent
 }
 
 /** Account management: linking a guest, signing out and permanent deletion. */
@@ -64,9 +84,20 @@ class AccountViewModel @Inject constructor(
 
     fun linkWithGoogle(activityContext: Context) = submit {
         when (val result = sessionManager.linkGuestWithGoogle(activityContext)) {
-            is Outcome.Success -> succeed(R.string.auth_link_success, AccountEvent.Linked)
-            is Outcome.Failure ->
-                if (result.error == AppError.GOOGLE_CANCELLED) idle() else fail(result.error)
+            is Outcome.Success -> announceAccount(R.string.auth_link_success, result.value)
+            is Outcome.Failure -> when {
+                // Backing out of the account picker is a decision, not a failure.
+                result.error == AppError.GOOGLE_CANCELLED -> idle()
+
+                // The credential belongs to an account that already exists, and Firebase
+                // cannot fold one identity into another. Signing in as that account is the
+                // only thing left, and it costs the guest everything — so it is put to the
+                // player as a question rather than reported to them as an error.
+                result.error == AppError.CREDENTIAL_IN_USE &&
+                    sessionManager.canSignInToExistingAccount -> warnAboutExistingAccount()
+
+                else -> fail(result.error)
+            }
         }
     }
 
@@ -76,10 +107,30 @@ class AccountViewModel @Inject constructor(
         val password = PasswordRules.validate(state.password)
         if (password is Outcome.Failure) return@submit fail(password.error)
         when (val result = sessionManager.linkGuestWithEmail(state.email, state.password)) {
-            is Outcome.Success -> succeed(R.string.auth_link_success, AccountEvent.Linked)
+            is Outcome.Success -> announceAccount(R.string.auth_link_success, result.value)
             is Outcome.Failure -> fail(result.error)
         }
     }
+
+    /**
+     * Accepts the loss the warning described and signs in as the other account.
+     *
+     * Only reachable from that warning, which is what makes losing the guest's progress a
+     * decision the player made rather than a consequence they discovered.
+     */
+    fun signInToExistingAccount() = submit {
+        _uiState.update { it.copy(existingAccountWarning = false) }
+        when (val result = sessionManager.signInToExistingAccount()) {
+            is Outcome.Success ->
+                announceAccount(R.string.auth_existing_account_success, result.value)
+
+            is Outcome.Failure -> fail(result.error)
+        }
+    }
+
+    /** Declining costs nothing: they are still a guest, with everything they had. */
+    fun dismissExistingAccountWarning() =
+        _uiState.update { it.copy(existingAccountWarning = false) }
 
     fun signOut() = submit {
         sessionManager.signOut()
@@ -111,6 +162,18 @@ class AccountViewModel @Inject constructor(
         }
         _events.emit(event)
     }
+
+    /**
+     * @param profile the account as it now stands. Whether its name is one the app handed
+     *   out is the only trustworthy answer here to "has this player ever named themselves?"
+     *   — it comes from the write that just landed, not from a session flow still catching
+     *   up with an identity that changed a moment ago.
+     */
+    private suspend fun announceAccount(messageRes: Int, profile: UserProfile) =
+        succeed(messageRes, AccountEvent.Linked(UsernameRules.isGenerated(profile.username)))
+
+    private fun warnAboutExistingAccount() =
+        _uiState.update { it.copy(isSubmitting = false, existingAccountWarning = true) }
 
     private fun fail(error: AppError) =
         _uiState.update { it.copy(isSubmitting = false, error = error.message) }

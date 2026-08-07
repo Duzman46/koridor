@@ -27,8 +27,8 @@ When `keystore.properties` is missing, `bundleRelease` intentionally creates an 
 
 1. Confirm version code/name and upload the signed AAB.
 2. Test through Play internal testing so Billing uses a licensed tester account.
-3. Finish a complete online game from both player perspectives, including orange-side rotation, wall placement, disconnect, and winning move.
-4. Test back and Home-icon exit confirmation in AI, local two-player, and online modes.
+3. Finish a complete online game from both player perspectives, including red-side rotation, wall placement, disconnect, and winning move.
+4. Test leaving a game every way there is: back and the Home icon in AI and local two-player, where back returns to the previous screen and only the Home icon asks; back and the Home icon in an online match under way, where both must warn that leaving loses it; and back in an online room nobody has joined, which leaves at once because the seat still has to be released.
 5. Publish both privacy policies at a public HTTPS URL and add the developer contact email.
 6. Complete Data safety declarations for Firebase anonymous IDs/game state, AdMob advertising/diagnostics, and Play Billing purchase data.
 7. Complete target audience, ads, content rating, app access, and advertising ID declarations truthfully.

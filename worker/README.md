@@ -17,7 +17,16 @@ Once a minute the worker:
 2. deletes rooms that expired without ever being played, and closes matches that ran past
    their window rather than deleting them mid-game;
 3. pairs whoever is still in the matchmaking list, closest ratings first, and clears entries
-   nothing is behind any more.
+   nothing is behind any more;
+4. on a run that had no match to rate, walks a page of the profile tree and takes any linked
+   account that is not yet in the all-time board's index onto it.
+
+The board's index is a copy of the rating written under `leaderboardRating`, and only a linked
+account ever gets one — that is what keeps guests off the table. A profile carrying no copy is
+not last in that ordering, it is absent from it, so before step 4 existed every account
+written before the copy did was invisible on a board that reported no fault. Step 4 is the
+only hand that can reach those profiles: their owners are signed in already and will not be
+signing in again, and the rules let a phone write nobody's profile but its own.
 
 Quick match is a waiting list, and the phones pair each other out of it — two devices reading
 the same list reach the same answer, and the room a pairing lands in is named after the player
@@ -43,7 +52,7 @@ allows fifty outbound requests per invocation and one report costs about eight.
 | file | what it is |
 | --- | --- |
 | `src/index.ts` | the `scheduled` entry point, and the only place secrets are read |
-| `src/sweep.ts` | the actual work: rate reports, expire rooms, pair the waiting list |
+| `src/sweep.ts` | the actual work: rate reports, expire rooms, pair the waiting list, index the board |
 | `src/db.ts` | the Realtime Database REST client, including compare-and-set via ETags |
 | `src/auth.ts` | service-account key → access token, signed with WebCrypto |
 | `src/elo.ts` | the rating maths |

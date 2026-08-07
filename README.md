@@ -35,8 +35,8 @@ Koridor, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android s
 
 **Diğer**
 - 10 dil, tam RTL desteği, TalkBack açıklamaları
-- Google Play Billing ile reklamsız kullanım ve kozmetik tahta temaları
-- Açık, koyu ve Android 12+ dinamik renk temaları
+- Google Play Billing ile reklamsız kullanım
+- Açık, koyu ve sistemi izleyen tema seçenekleri
 
 ## Teknik temel
 
@@ -46,7 +46,8 @@ Koridor, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android s
 - Hilt, Coroutines, StateFlow, Preferences DataStore
 - Firebase BoM 34.17.0 — Authentication + **Realtime Database**
 - Credential Manager 1.6.0, Play Billing 9.1.0, Mobile Ads 25.4.0, UMP 4.0.0
-- Cloud Functions (Node 22, TypeScript)
+- Sunucu tarafı: zamanlanmış Cloudflare Worker (TypeScript); aynı işin Cloud Functions
+  (Node 22) karşılığı da depoda duruyor
 
 ### Neden Firestore değil, Realtime Database?
 
@@ -149,25 +150,33 @@ GRIDBOUND_GOOGLE_WEB_CLIENT_ID=....apps.googleusercontent.com
 7. **Authentication → Sign-in method → Google → Web SDK configuration** altındaki
    **Web client ID**'yi `GRIDBOUND_GOOGLE_WEB_CLIENT_ID` olarak yaz.
 
-**Kuralları ve fonksiyonları yayınla:**
+**Kuralları yayınla:**
 
 ```powershell
 firebase login
 firebase use PROJE_KIMLIGI
 firebase deploy --only database
-cd functions
-npm install
-npm run build
-cd ..
-firebase deploy --only functions
 ```
 
 > **Önemli:** `firebase deploy --only database` **zorunludur**. Kurallar yayınlanmadan profil
 > oluşturma, oda açma ve arkadaşlık çalışmaz.
->
-> Cloud Functions **Blaze (kullandıkça öde) planı** gerektirir. Fonksiyonlar yayınlanmadan
-> uygulama çalışır ancak **puanlar hiç değişmez** — bu güvenli varsayılan davranıştır, çünkü
-> istemci puan yazamaz. Yayınlanmadan önce biriken maç raporları geriye dönük işlenmez.
+
+**Sunucuyu yayınla.** Puanı, haftalık tabloyu, oda temizliğini, eşleştirme yedeğini ve tüm
+zamanlar tablosunun dizinini hiçbir oyuncunun elinde olmayan bir taraf yazar. Depoda bunun iki
+uygulaması var ve **yalnızca biri yayınlanır**:
+
+- [`worker/`](worker/README.md) — dakikada bir çalışan, zamanlanmış bir Cloudflare Worker.
+  Yayınlanan sürüm budur: ücretsiz planda çalışır, kart istemez ve dışarıya açık bir adresi
+  yoktur. Kurulum adımları kendi README'sinde.
+- `functions/` — aynı işin Cloud Functions karşılığı, her şeyi Firebase içinde tutmak
+  isteyenler için. **Blaze (kullandıkça öde) planı** gerektirir.
+
+İkisi de aynı maç raporlarını okur; ikisini birden yayınlama.
+
+> Hiçbiri yayınlanmazsa uygulama çalışır ancak **puanlar hiç değişmez** — bu güvenli varsayılan
+> davranıştır, çünkü istemci puan yazamaz. Worker bekleyen raporları yoklayarak bulduğu için
+> ilk çalıştığında biriken raporları da işler; Cloud Functions sürümü yazma tetikleyicisiyle
+> çalıştığından kendinden önce birikenleri geriye dönük işlemez.
 
 ### 2. Uygulama içi ürünler ve reklamlar
 
@@ -239,11 +248,13 @@ ikinci bir kimlik sistemine bağımlılık yaratmamasıdır.
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest      # JVM birim testleri
-cd functions; npm test                    # Cloud Functions testleri
 npm --prefix rules-tests test             # Realtime Database kural testleri (emülatör)
+cd worker; npm test; npm run test:e2e     # sunucu: birim + emülatöre karşı uçtan uca
+cd functions; npm test                    # Cloud Functions karşılığının testleri
 ```
 
-Kural testleri Firebase CLI ve bir JDK gerektirir; emülatörü kendileri başlatıp durdurur.
+Kural testleri ve worker'ın uçtan uca testi Firebase CLI ile bir JDK gerektirir; emülatörü
+kendileri başlatıp durdurur.
 Ayrıntı: [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md).
 
 JVM testleri; kullanıcı adı kuralları ve Türkçe locale normalizasyonu, ELO hesaplama,
@@ -264,6 +275,10 @@ Cihazda doğrulanması gereken senaryolar: [`docs/MANUAL_TESTS.md`](docs/MANUAL_
   olmaya zorlar ve `GUEST` profiline yazdırmaz; `/users` üzerinde izin verilen tek sorgu da bu
   dizin üzerindendir. Haftalık tabloya ise sunucu misafir için hiç satır yazmaz. Misafir
   tablodan **süzülmez**, dizinde hiç bulunmaz; hesabını bağladığı gün kazandığı puanla girer.
+  Kopyayı üç el yazar: puanlı maçtan sonra sunucu, hesabını bağlayan istemcinin kendisi ve
+  profil ağacını sayfa sayfa gezen sunucu taraması. Sonuncusu şarttır: dizin eklenmeden önce
+  yazılmış hesaplara uzanabilen tek el odur — bir telefon yalnızca kendi profiline yazabilir —
+  ve dizinde değeri olmayan bir profil tablonun sonunda değil, tablonun tamamen dışındadır.
 - Maç raporu, odanın kendi `winnerUserId` ve `endReason` alanlarıyla **birebir eşleşmek
   zorundadır**; oda kuralları bu değerleri tahtaya (normal bitiş) veya sunucu saatine
   (süre aşımı) karşı doğrular.

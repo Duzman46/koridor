@@ -12,12 +12,12 @@ import {
 /**
  * Everything the server does, once a minute.
  *
- * Three jobs: rate the matches players have reported, clear away rooms nobody played out, and
- * pair whoever the phones left waiting in the matchmaking list. The first two used to be Cloud
- * Functions — one triggered by a database write, one by a schedule — and both are now polled
- * instead, because a worker cannot subscribe to database events. Polling is the lesser evil
- * here: it needs no endpoint open to the internet, and a report that arrives while a run is
- * already going is simply picked up by the next one.
+ * Four jobs: rate the matches players have reported, clear away rooms nobody played out, pair
+ * whoever the phones left waiting in the matchmaking list, and keep the all-time board's index
+ * complete. The first two used to be Cloud Functions — one triggered by a database write, one
+ * by a schedule — and both are now polled instead, because a worker cannot subscribe to
+ * database events. Polling is the lesser evil here: it needs no endpoint open to the internet,
+ * and a report that arrives while a run is already going is simply picked up by the next one.
  */
 
 /**
@@ -58,6 +58,22 @@ const MAX_QUEUE_PAIRS_PER_RUN = 4;
  */
 const QUEUE_STALE_MILLIS = 5 * 60 * 1000;
 
+/**
+ * Profiles examined per backfill lap. One query and one update however many come back.
+ *
+ * Exported so the end-to-end test can seed past it: a walk that fits in one page never runs
+ * the half of this job that moves the cursor.
+ */
+export const MAX_BACKFILL_PROFILES_PER_RUN = 40;
+
+/**
+ * How far through the profile tree the backfill walk has got.
+ *
+ * Nothing under `maintenance` is readable or writable by any client — database.rules.json
+ * denies the whole subtree — so this is the worker talking to itself between runs.
+ */
+const BACKFILL_CURSOR_PATH = "maintenance/boardIndexBackfill/cursor";
+
 const DEFAULT_AVATAR = "avatar_01";
 
 /**
@@ -65,8 +81,9 @@ const DEFAULT_AVATAR = "avatar_01";
  * that lives on one handset until it is uninstalled.
  *
  * Such a player is rated, because a match is rated without asking who played it, but they are
- * kept off both leaderboards — see [weeklyUpdates] and [playerUpdates]. A guest's match is
- * meant to be casual and so never reaches [applyRating] at all; the check is here because the
+ * kept off both leaderboards — see [weeklyUpdates] and [playerUpdates], and [backfillBoardIndex]
+ * for the profiles that were already here before either of those wrote anything. A guest's match
+ * is meant to be casual and so never reaches [applyRating] at all; the check is here because the
  * flag that makes it casual is set by a phone, and the boards are this worker's to protect.
  */
 const GUEST_ACCOUNT_TYPE = "GUEST";
@@ -128,6 +145,7 @@ export interface SweepResult {
   roomsExpired: number;
   queuePaired: number;
   queueDropped: number;
+  boardIndexed: number;
 }
 
 export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
@@ -140,10 +158,15 @@ export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
     roomsExpired: 0,
     queuePaired: 0,
     queueDropped: 0,
+    boardIndexed: 0,
   };
   await rateReportedMatches(db, now, result);
   await expireRooms(db, now, result);
   await pairWaitingPlayers(db, now, result);
+  // Last, and only on a run that rated nothing. Rating a match costs about eight of the fifty
+  // subrequests a run gets, so a full four of them leaves no room for anything else — and of
+  // everything here this is the one job with nobody waiting on it.
+  if (result.rated === 0) await backfillBoardIndex(db, result);
   return result;
 }
 
@@ -475,6 +498,65 @@ function pairedRoom(
     hostSeat,
     browseKey: "PRIVATE_IN_PROGRESS",
   };
+}
+
+/**
+ * Puts profiles into the index the all-time board is ordered by, a page of the tree at a time.
+ *
+ * The board reads `/users` ordered by `leaderboardRating` — see [playerUpdates] for why that
+ * is a second copy of the rating rather than the rating itself — and Realtime Database leaves
+ * a child with no value for the sort key out of the answer entirely, without erroring. So a
+ * profile that has never had the key written is not low on the table, it is absent from it,
+ * and a board of nothing but absent profiles is an empty board that reports no fault.
+ *
+ * Every profile written before the key existed is in exactly that state, and the two hands
+ * that write it cannot reach them: the client writes only its own profile and only when
+ * somebody signs in or links an account, which a player with a session already on their phone
+ * never does again, and [playerUpdates] writes it only for the two people in a rated match.
+ * This is the third hand, and the only one that can touch a profile whose owner is not there:
+ * it holds the admin credential, so it needs nothing from the player at all.
+ *
+ * The walk is by key with a stored cursor rather than by the sort key itself, because ordering
+ * by the very key that is missing would put the guests — who correctly have none, and never
+ * will — permanently at the front of every page, and the walk would never get past them.
+ *
+ * Reaching the end starts the walk again rather than stopping. It costs one query on a tree
+ * that is by then fully indexed, and it repairs the one gap that can still open: a client that
+ * creates a profile and dies before claiming its place on the board.
+ */
+async function backfillBoardIndex(db: Rtdb, result: SweepResult): Promise<void> {
+  const cursor = (await db.get<string>(BACKFILL_CURSOR_PATH)) ?? "";
+  const page = await db.get<Record<string, Record<string, unknown> | null>>("users", {
+    orderBy: '"$key"',
+    limitToFirst: String(MAX_BACKFILL_PROFILES_PER_RUN),
+    // No cursor is the start of the tree, and no key names that: the database rejects the
+    // empty string as a query bound, so the first lap of a walk is simply unbounded.
+    ...(cursor ? { startAt: JSON.stringify(cursor) } : {}),
+  });
+  const rows = Object.entries(page ?? {});
+
+  const updates: Record<string, unknown> = {};
+  for (const [uid, value] of rows) {
+    // `startAt` is inclusive, so the row the last lap finished on comes back again.
+    if (!value || uid === cursor) continue;
+    if (value.accountType === GUEST_ACCOUNT_TYPE) continue;
+    if (typeof value.leaderboardRating === "number") continue;
+    updates[`users/${uid}/leaderboardRating`] = numberOr(value.rating, STARTING_RATING);
+    result.boardIndexed += 1;
+  }
+
+  // A page short of the limit is the end of the tree.
+  const exhausted = rows.length < MAX_BACKFILL_PROFILES_PER_RUN;
+  // The highest key that came back, not the last one to arrive. The REST API answers a query
+  // with a JSON object and makes no promise that a parser hands the members back in the order
+  // it sorted them, whereas *which* keys are in the page is exact: the first page-full at or
+  // above the cursor. So the largest of them is where the next lap starts, and taking it that
+  // way cannot land short — a cursor that went backwards would fetch the same page for ever,
+  // indexing nothing and reporting nothing wrong.
+  updates[BACKFILL_CURSOR_PATH] = exhausted
+    ? ""
+    : rows.reduce((highest, [uid]) => (uid > highest ? uid : highest), "");
+  await db.update(updates);
 }
 
 function scoreFor(report: MatchReport, uid: string): MatchScore {

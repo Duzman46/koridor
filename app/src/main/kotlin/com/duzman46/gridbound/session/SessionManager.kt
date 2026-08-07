@@ -69,6 +69,18 @@ data class SessionState(
     val canUseSocialFeatures: Boolean get() = status == SessionStatus.SIGNED_IN && !isGuest
 
     /**
+     * A guest is never offered a new name; everybody else may change theirs at will.
+     *
+     * The name a guest carries was handed to them, and nobody else can read it: a guest is
+     * absent from the leaderboard, cannot be sent a friend request and never meets another
+     * player in a ranked match. Renaming would change nothing anyone will ever see, while
+     * permanently reserving that name against an identity that lasts only as long as this
+     * install. The name that counts is the one chosen when an account is linked, and being
+     * sent there is a better answer than a text field.
+     */
+    val canChangeUsername: Boolean get() = status == SessionStatus.SIGNED_IN && !isGuest
+
+    /**
      * A real account has to be named before it plays a single move: the name is what other
      * players see on the leaderboard, in a friend request and across the board from them,
      * and it is the one thing about an account nobody else can supply.
@@ -156,6 +168,14 @@ class SessionManager @Inject constructor(
     val isGoogleSignInAvailable: Boolean get() = authRepository.isGoogleSignInAvailable
 
     /**
+     * True when a link has just failed against an account that already exists, so the offer
+     * to sign in as it can be made. Reads the credential Firebase handed back rather than
+     * inferring anything from the error the player was shown.
+     */
+    val canSignInToExistingAccount: Boolean
+        get() = authRepository.hasCredentialForExistingAccount
+
+    /**
      * Enters guest play. An anonymous identity is created when the network allows it, but
      * the choice is recorded either way, so a first launch with no connection still reaches
      * the tutorial and local matches instead of stalling on the welcome screen.
@@ -216,6 +236,41 @@ class SessionManager @Inject constructor(
             authRepository.linkGuestWithEmail(email, password).thenEnsureProfile()
         }
 
+    /**
+     * Gives up the guest identity and signs in as the account the link collided with.
+     *
+     * Firebase has no merge between two identities that both exist, so nothing of the
+     * guest's crosses over — not the rating, not the record, not a friend. The player has
+     * to have been told that in words before this runs; all this does is carry it out, and
+     * what arrives is the other account's own history.
+     *
+     * The guest's profile row and the reservation holding its generated name go first,
+     * while the guest is still the one asking. The rules authorise a player to delete only
+     * their own rows, and the instant the other account signs in the guest's uid is
+     * unreachable from this device and from every other one — so anything left behind is
+     * left for good, with a name reserved against nobody. A guest has no friendships or
+     * presence to clear: both are refused to them, so the profile is the whole of it.
+     *
+     * That order means a sign-in that then fails on the network leaves the player as a
+     * local guest with nothing in the cloud, and the same button signs them in again. The
+     * reverse order litters the database on every attempt that succeeds, and nothing can
+     * ever tidy it.
+     */
+    suspend fun signInToExistingAccount(): Outcome<UserProfile> {
+        if (!authRepository.hasCredentialForExistingAccount) {
+            return Outcome.Failure(AppError.UNKNOWN)
+        }
+        val guestId = state.value.takeIf { it.isGuest }?.user?.userId
+        if (guestId != null) {
+            val erased = profileRepository.deleteAccountData(guestId)
+            // Stop rather than orphan. Nothing has been given up yet, so a player who tries
+            // again in better conditions still has everything they started with.
+            if (erased is Outcome.Failure) return erased
+            authRepository.discardGuestIdentity()
+        }
+        return authRepository.signInToExistingAccount().thenEnsureProfile()
+    }
+
     suspend fun sendPasswordReset(email: String): Outcome<Unit> =
         authRepository.sendPasswordReset(email)
 
@@ -224,14 +279,20 @@ class SessionManager @Inject constructor(
         currentUserId()?.let { socialRepository.clearPresence(it) }
         authRepository.signOut()
         gameRepository.setGuestModeAccepted(false)
+        // The flag records that *this* player answered "what should we call you?". Whoever
+        // signs in next has not, and a device that has been signed into once must not wave
+        // the next account past the gate under a name the app invented for it.
+        gameRepository.setUsernameChosen(false)
     }
 
     suspend fun changeUsername(username: String): Outcome<String> {
+        // Refused here and not only where the field is drawn: a name is the anchor of a
+        // public identity, and a guest has none to anchor.
+        if (!state.value.canChangeUsername) return Outcome.Failure(AppError.NOT_SIGNED_IN)
         val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
         return profileRepository.changeUsername(userId, username).also { result ->
             // Recorded locally, so the "what should we call you?" step is asked once and
-            // never again — including for a guest, whose generated name is otherwise
-            // indistinguishable from one they picked.
+            // never again for this player, whatever a later reinstall knows about them.
             if (result is Outcome.Success) gameRepository.setUsernameChosen(true)
         }
     }

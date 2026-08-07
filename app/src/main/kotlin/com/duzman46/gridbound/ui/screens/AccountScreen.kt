@@ -60,6 +60,8 @@ fun AccountScreen(
     onPassword: (String) -> Unit,
     onLinkGoogle: () -> Unit,
     onLinkEmail: () -> Unit,
+    onSignInToExistingAccount: () -> Unit,
+    onDismissExistingAccount: () -> Unit,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onOpenUrl: (String) -> Unit,
@@ -67,6 +69,12 @@ fun AccountScreen(
     var signOutRequested by remember { mutableStateOf(false) }
     var deleteRequested by remember { mutableStateOf(false) }
 
+    if (state.existingAccountWarning) {
+        ExistingAccountDialog(
+            onConfirm = onSignInToExistingAccount,
+            onDismiss = onDismissExistingAccount,
+        )
+    }
     if (signOutRequested) {
         ConfirmDialog(
             title = stringResource(R.string.auth_sign_out_confirm_title),
@@ -253,6 +261,38 @@ private fun LinkAccountCard(
             leadingIcon = Icons.Rounded.AlternateEmail,
         )
     }
+}
+
+/**
+ * The one outcome of linking that cannot be undone by pressing back, put in front of the
+ * player before it happens rather than reported once it has.
+ *
+ * Firebase offers no merge between two identities that both exist, so the account waiting on
+ * the other side cannot absorb the guest playing now. The dialog says what goes and what
+ * arrives in those words: a player who reads "linked" and then finds a different rating and
+ * an empty friend list has been told something untrue. Declining is worded as staying a
+ * guest, because that is exactly what it does — nothing has happened yet.
+ */
+@Composable
+private fun ExistingAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.auth_existing_account_title)) },
+        text = { Text(stringResource(R.string.auth_existing_account_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    stringResource(R.string.auth_existing_account_confirm),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.auth_existing_account_cancel))
+            }
+        },
+    )
 }
 
 /**

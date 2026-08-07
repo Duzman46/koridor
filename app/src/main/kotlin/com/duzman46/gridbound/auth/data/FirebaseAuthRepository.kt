@@ -45,6 +45,9 @@ class FirebaseAuthRepository @Inject constructor(
     override val isGoogleSignInAvailable: Boolean
         get() = firebase.isConfigured && googleCredentialClient.isAvailable
 
+    override val hasCredentialForExistingAccount: Boolean
+        get() = existingAccountCredential != null
+
     /**
      * Nudged after an operation that changes who the current user is without replacing them.
      *
@@ -54,6 +57,18 @@ class FirebaseAuthRepository @Inject constructor(
      * sees a link that appears to do nothing.
      */
     private val identityChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * The credential a link collided with, held until it is spent or a later attempt clears it.
+     *
+     * Firebase will not link a credential that already belongs to somebody, and there is no
+     * merge to fall back on: the only thing left to offer is signing in as that account.
+     * Keeping the credential is what lets the offer be answered on the spot. The player
+     * proved they own it seconds earlier, and sending them back through the account picker
+     * would both ask twice and leave room for a *different* account to come back the second
+     * time — after they had already been warned about the first.
+     */
+    private var existingAccountCredential: AuthCredential? = null
 
     override val authState: Flow<AuthState> =
         if (!firebase.isConfigured) {
@@ -120,16 +135,33 @@ class FirebaseAuthRepository @Inject constructor(
 
     override suspend fun linkGuestWithGoogle(activityContext: Context): Outcome<AuthUser> =
         withGoogleCredential(activityContext) { credential ->
-            linkCurrentUser("link-google") { it.linkWithCredential(credential).await().user }
+            linkCurrentUser("link-google", credential)
         }
 
-    override suspend fun linkGuestWithEmail(email: String, password: String): Outcome<AuthUser> {
-        val credential = EmailAuthProvider.getCredential(email.trim(), password)
-        return linkCurrentUser("link-email") { it.linkWithCredential(credential).await().user }
+    override suspend fun linkGuestWithEmail(email: String, password: String): Outcome<AuthUser> =
+        linkCurrentUser("link-email", EmailAuthProvider.getCredential(email.trim(), password))
+
+    override suspend fun signInToExistingAccount(): Outcome<AuthUser> {
+        val credential = existingAccountCredential ?: return Outcome.Failure(AppError.UNKNOWN)
+        // Spent on the attempt, win or lose. A retry belongs to the account picker, which
+        // asks again who the player means; a credential lying around after its question was
+        // answered is one that can be spent on a question nobody asked.
+        existingAccountCredential = null
+        return authCall("sign-in-existing-account") {
+            firebase.auth.signInWithCredential(credential).await().user
+        }
+    }
+
+    override suspend fun discardGuestIdentity() {
+        if (!firebase.isConfigured) return
+        val guest = firebase.auth.currentUser?.takeIf { it.isAnonymous } ?: return
+        runCatching { guest.delete().await() }
+            .onFailure { AppLog.warn("discard-guest-identity", it) }
     }
 
     override suspend fun signOut() {
         if (!firebase.isConfigured) return
+        existingAccountCredential = null
         firebase.auth.signOut()
         googleCredentialClient.clearSelection()
     }
@@ -186,18 +218,50 @@ class FirebaseAuthRepository @Inject constructor(
      */
     private suspend fun linkCurrentUser(
         operation: String,
-        block: suspend (FirebaseUser) -> FirebaseUser?,
+        credential: AuthCredential,
     ): Outcome<AuthUser> {
         if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
         val current = firebase.auth.currentUser ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
+        // Whatever the last attempt collided with is stale the moment a new one starts.
+        existingAccountCredential = null
         return try {
-            val linked = block(current) ?: return Outcome.Failure(AppError.UNKNOWN)
+            val linked = current.linkWithCredential(credential).await().user
+                ?: return Outcome.Failure(AppError.UNKNOWN)
             identityChanged.tryEmit(Unit)
             Outcome.Success(linked.toAuthUser())
         } catch (error: Exception) {
             AppLog.warn(operation, error)
+            existingAccountCredential = credentialForExistingAccount(credential, error)
             Outcome.Failure(error.toAppError())
         }
+    }
+
+    /**
+     * The credential to sign in with when a link failed because its account already exists,
+     * and null for every other failure.
+     *
+     * Google only, and that asymmetry is the whole point. A Google credential is proof in
+     * itself — the player authenticated with Google to produce it — so the sign-in it enables
+     * can only fail on the network. An email credential carries a password nobody has checked
+     * against that account, and the hand-over it would lead to erases the guest's data before
+     * it signs in: a mistyped password there would cost the player both identities. For that
+     * case the address being taken is all they are told, and nothing is destroyed.
+     *
+     * The code is checked rather than the exception type, and only the one code will do. A
+     * collision can also mean the address behind the credential belongs to an account that
+     * signs in some other way, and no credential held here would get anybody into that one.
+     *
+     * Firebase's own updated credential wins where it supplies one, because some providers
+     * treat the credential presented to a failed link as spent.
+     */
+    private fun credentialForExistingAccount(
+        attempted: AuthCredential,
+        error: Exception,
+    ): AuthCredential? {
+        if (attempted.provider != GoogleAuthProvider.PROVIDER_ID) return null
+        val collision = error as? FirebaseAuthUserCollisionException ?: return null
+        if (collision.errorCode != CREDENTIAL_ALREADY_IN_USE) return null
+        return collision.updatedCredential ?: attempted
     }
 
     private suspend fun withGoogleCredential(
@@ -226,6 +290,9 @@ class FirebaseAuthRepository @Inject constructor(
     }
 }
 
+/** Firebase's code for "this credential already signs into an account of its own". */
+private const val CREDENTIAL_ALREADY_IN_USE = "ERROR_CREDENTIAL_ALREADY_IN_USE"
+
 private fun FirebaseUser?.toAuthState(): AuthState =
     if (this == null) AuthState.SignedOut else AuthState.SignedIn(toAuthUser())
 
@@ -252,7 +319,7 @@ private fun Exception.toAppError(): AppError = when (this) {
     is FirebaseAuthWeakPasswordException -> AppError.PASSWORD_WEAK
     is FirebaseAuthRecentLoginRequiredException -> AppError.REQUIRES_RECENT_LOGIN
     is FirebaseAuthUserCollisionException -> when (errorCode) {
-        "ERROR_CREDENTIAL_ALREADY_IN_USE" -> AppError.CREDENTIAL_IN_USE
+        CREDENTIAL_ALREADY_IN_USE -> AppError.CREDENTIAL_IN_USE
         "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" -> AppError.ACCOUNT_EXISTS_WITH_OTHER_METHOD
         else -> AppError.EMAIL_IN_USE
     }
@@ -267,7 +334,7 @@ private fun Exception.toAppError(): AppError = when (this) {
             AppError.INVALID_CREDENTIALS
         "ERROR_TOO_MANY_REQUESTS" -> AppError.TOO_MANY_REQUESTS
         "ERROR_REQUIRES_RECENT_LOGIN" -> AppError.REQUIRES_RECENT_LOGIN
-        "ERROR_CREDENTIAL_ALREADY_IN_USE" -> AppError.CREDENTIAL_IN_USE
+        CREDENTIAL_ALREADY_IN_USE -> AppError.CREDENTIAL_IN_USE
         else -> AppError.UNKNOWN
     }
     else -> AppError.UNKNOWN

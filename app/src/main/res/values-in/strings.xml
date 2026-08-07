@@ -65,6 +65,12 @@
     <string name="auth_link_with_google">Tautkan dengan Google</string>
     <string name="auth_link_with_email">Tautkan dengan email</string>
     <string name="auth_link_success">Akunmu sudah tertaut. Progresmu tersimpan.</string>
+    <string name="auth_link_account">Tautkan akun</string>
+    <string name="auth_existing_account_title">Akun ini sudah ada</string>
+    <string name="auth_existing_account_message">Akun Google ini sudah punya profil Koridor sendiri, dan keduanya tidak bisa digabung. Kalau kamu masuk ke akun itu, semua yang kamu mainkan sebagai tamu — peringkat dan riwayat pertandinganmu — dihapus selamanya. Akun itu tetap membawa peringkat, statistik, dan temannya sendiri, dan itulah yang akan kamu lihat. Tidak ada yang digabungkan.</string>
+    <string name="auth_existing_account_confirm">Tetap masuk</string>
+    <string name="auth_existing_account_cancel">Tetap jadi tamu</string>
+    <string name="auth_existing_account_success">Berhasil masuk. Peringkat, statistik, dan teman akun ini sudah kembali.</string>
     <string name="auth_guest_badge">Tamu</string>
 
     <string name="username_title">Pilih nama pengguna</string>
@@ -84,6 +90,7 @@
 
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Edit profil</string>
+    <string name="profile_username_guest_explainer">Nama tamu diberikan otomatis dan tidak bisa diubah. Tautkan akun untuk memilih nama yang dilihat pemain lain.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Peringkat</string>
     <string name="profile_highest_rating">Peringkat terbaik</string>

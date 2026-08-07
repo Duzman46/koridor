@@ -62,6 +62,12 @@
     <string name="auth_link_with_google">Mit Google verknüpfen</string>
     <string name="auth_link_with_email">Mit E-Mail verknüpfen</string>
     <string name="auth_link_success">Dein Konto ist verknüpft. Dein Fortschritt wurde übernommen.</string>
+    <string name="auth_link_account">Konto verknüpfen</string>
+    <string name="auth_existing_account_title">Dieses Konto gibt es bereits</string>
+    <string name="auth_existing_account_message">Dieses Google-Konto hat bereits ein eigenes Koridor-Profil, und beide lassen sich nicht zusammenführen. Wenn du dich damit anmeldest, wird alles aus deiner Gastzeit — deine Wertung und deine Spielbilanz — endgültig gelöscht. Das Konto behält seine eigene Wertung, seine Statistiken und seine Freunde, und die siehst du ab dann. Es wird nichts zusammengeführt.</string>
+    <string name="auth_existing_account_confirm">Trotzdem anmelden</string>
+    <string name="auth_existing_account_cancel">Gast bleiben</string>
+    <string name="auth_existing_account_success">Angemeldet. Wertung, Statistiken und Freunde dieses Kontos sind wieder da.</string>
     <string name="auth_guest_badge">Gast</string>
 
     <string name="username_title">Benutzernamen wählen</string>
@@ -83,6 +89,7 @@
 
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Profil bearbeiten</string>
+    <string name="profile_username_guest_explainer">Gastnamen werden automatisch vergeben und lassen sich nicht ändern. Verknüpfe ein Konto, um den Namen zu wählen, den andere Spieler sehen.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Wertung</string>
     <string name="profile_highest_rating">Beste Wertung</string>

@@ -62,6 +62,12 @@
     <string name="auth_link_with_google">Associer avec Google</string>
     <string name="auth_link_with_email">Associer par e-mail</string>
     <string name="auth_link_success">Ton compte est associé. Ta progression a été conservée.</string>
+    <string name="auth_link_account">Associer un compte</string>
+    <string name="auth_existing_account_title">Ce compte existe déjà</string>
+    <string name="auth_existing_account_message">Ce compte Google possède déjà son propre profil Koridor, et les deux ne peuvent pas être fusionnés. Si tu t\'y connectes, tout ce que tu as joué en invité — ton classement et ton historique de parties — est supprimé définitivement. Ce compte garde son classement, ses statistiques et ses amis, et c\'est ce que tu verras. Rien n\'est fusionné.</string>
+    <string name="auth_existing_account_confirm">Se connecter quand même</string>
+    <string name="auth_existing_account_cancel">Rester invité</string>
+    <string name="auth_existing_account_success">Connexion réussie. Le classement, les statistiques et les amis de ce compte sont de retour.</string>
     <string name="auth_guest_badge">Invité</string>
 
     <string name="username_title">Choisis un pseudo</string>
@@ -85,6 +91,7 @@
 
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Modifier le profil</string>
+    <string name="profile_username_guest_explainer">Les noms d\'invité sont attribués automatiquement et ne peuvent pas être modifiés. Associe un compte pour choisir le nom que les autres joueurs verront.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Classement</string>
     <string name="profile_highest_rating">Meilleur classement</string>

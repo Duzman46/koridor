@@ -50,6 +50,19 @@ class FakeAuthRepository(
     /** Stands in for Firebase refusing a stale sign-in until the credential is presented. */
     var reauthenticationFailure: AppError? = null
 
+    /** The anonymous identities dropped on the way to somebody else's account. */
+    val discardedGuestIds = mutableListOf<String>()
+
+    /**
+     * Stands in for Firebase having kept the credential a link collided with.
+     *
+     * Armed directly by a test rather than by running the link that produces it: that link
+     * goes through the Google account picker and so demands an Activity, which a JVM test
+     * has none of. What the session does once the credential exists is the part these tests
+     * are about, and it is reached the same way either way.
+     */
+    override var hasCredentialForExistingAccount: Boolean = false
+
     /** Anonymous ids are handed out in order so a test can assert the id did not change. */
     private var nextGuestId = 1
 
@@ -78,8 +91,21 @@ class FakeAuthRepository(
     override suspend fun linkGuestWithEmail(email: String, password: String): Outcome<AuthUser> =
         link(AccountType.EMAIL, email)
 
+    override suspend fun signInToExistingAccount(): Outcome<AuthUser> {
+        if (!hasCredentialForExistingAccount) return Outcome.Failure(AppError.UNKNOWN)
+        hasCredentialForExistingAccount = false
+        return complete { AuthUser(EXISTING_USER_ID, EXISTING_EMAIL, AccountType.GOOGLE, true) }
+    }
+
+    override suspend fun discardGuestIdentity() {
+        val guest = currentUser()?.takeIf { it.accountType.isGuest } ?: return
+        discardedGuestIds += guest.userId
+        state.value = AuthState.SignedOut
+    }
+
     override suspend fun signOut() {
         signOutCount++
+        hasCredentialForExistingAccount = false
         state.value = AuthState.SignedOut
     }
 
@@ -110,6 +136,12 @@ class FakeAuthRepository(
         state.value = AuthState.SignedIn(user)
         return Outcome.Success(user)
     }
+
+    companion object {
+        /** The account a colliding credential turns out to belong to. */
+        const val EXISTING_USER_ID = "existing-user"
+        const val EXISTING_EMAIL = "owner@example.com"
+    }
 }
 
 class FakeUserProfileRepository : UserProfileRepository {
@@ -117,8 +149,27 @@ class FakeUserProfileRepository : UserProfileRepository {
     val deletedUserIds = mutableListOf<String>()
     var ensureCount = 0
 
+    /** The record already waiting under the account a colliding credential belongs to. */
+    fun seedExistingAccount(username: String, rating: Int) {
+        val userId = FakeAuthRepository.EXISTING_USER_ID
+        profiles.value = profiles.value + (
+            userId to UserProfile(
+                userId = userId,
+                username = username,
+                normalizedUsername = username.lowercase(),
+                avatarId = "avatar_03",
+                email = FakeAuthRepository.EXISTING_EMAIL,
+                accountType = AccountType.GOOGLE,
+                rating = rating,
+            )
+            )
+    }
+
     /** Simulates a database that refuses the profile write, e.g. rules not deployed. */
     var failEnsure = false
+
+    /** Simulates a database that is out of reach when the erase is attempted. */
+    var failDelete = false
 
     override fun observeProfile(userId: String): Flow<UserProfile?> =
         profiles.map { it[userId] }
@@ -170,6 +221,7 @@ class FakeUserProfileRepository : UserProfileRepository {
         mutate(userId) { it.copy(tutorialCompleted = completed) }
 
     override suspend fun deleteAccountData(userId: String): Outcome<Unit> {
+        if (failDelete) return Outcome.Failure(AppError.NETWORK)
         deletedUserIds += userId
         profiles.value = profiles.value - userId
         return Outcome.Success(Unit)

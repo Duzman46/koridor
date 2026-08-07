@@ -18,6 +18,13 @@ interface AuthRepository {
     /** True when a Google OAuth web client ID is configured for Credential Manager. */
     val isGoogleSignInAvailable: Boolean
 
+    /**
+     * True when the last link failed because the credential offered already belongs to an
+     * account, and that credential is still held — so [signInToExistingAccount] has
+     * something real to sign in with rather than a guess about what went wrong.
+     */
+    val hasCredentialForExistingAccount: Boolean
+
     val authState: Flow<AuthState>
 
     /** The current user without waiting for the state flow, or null when signed out. */
@@ -39,6 +46,27 @@ interface AuthRepository {
 
     /** Upgrades the current anonymous user in place, keeping the same user id and progress. */
     suspend fun linkGuestWithEmail(email: String, password: String): Outcome<AuthUser>
+
+    /**
+     * Signs in as the account the last failed link collided with.
+     *
+     * Not a link and not a merge — Firebase offers neither between two identities that both
+     * exist. Nothing of the current session survives it, so the caller owes the player a
+     * plain warning first and owes the database the removal of whatever the abandoned
+     * identity owns, while that identity is still the one asking.
+     */
+    suspend fun signInToExistingAccount(): Outcome<AuthUser>
+
+    /**
+     * Removes the anonymous identity a player is walking away from, best effort.
+     *
+     * Deliberately silent about failure. Firebase refuses to delete a credential whose
+     * sign-in it considers stale, and an anonymous session has nothing to present a second
+     * time — a guest who has been playing for weeks simply cannot prove anything. By this
+     * point their data is already gone and the sign-in that follows replaces the session
+     * either way, so a refusal costs no more than an auth record with nothing attached.
+     */
+    suspend fun discardGuestIdentity()
 
     suspend fun signOut()
 

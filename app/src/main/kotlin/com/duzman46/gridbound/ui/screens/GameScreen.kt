@@ -169,19 +169,24 @@ private fun GameScreen(
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showResignConfirmation by remember { mutableStateOf(false) }
-    // Back always asks before abandoning a match, in every mode — a game several minutes
-    // deep is not something to lose to one stray press, and the board cannot be recovered
-    // once the screen is gone.
+    // Only an online match stops back, and only because walking out of one cannot be undone:
+    // there is a person still sitting at the other side of it, and leaving files a resignation
+    // in their favour. A bot game and a shared handset are this player's own board and theirs
+    // to close, so back on them is simply back — asking first answered a question nobody had
+    // asked, and each of those refusals was a screen that appeared to leave and then did not.
     //
-    // The gesture is swallowed whole rather than previewed, and that is the point of using
-    // the predictive handler for a screen that intends to stay: the plain BackHandler let
-    // the system animate the screen peeling away while the app was about to refuse, which
-    // is the half-played animation that snapped back. Collecting the progress without
-    // drawing anything keeps the screen still; abandoning the gesture cancels this
-    // coroutine before the dialog is ever reached, so a half-swipe costs nothing.
-    PredictiveBackHandler(enabled = !showExitConfirmation) { progress ->
+    // Every online match is intercepted, though, not only the ones with something to lose: the
+    // seat has to be handed back rather than walked away from, and [onExit] is what frees it.
+    //
+    // The gesture is swallowed rather than previewed, which is the point of reaching for the
+    // predictive handler on a screen that means to stay. A plain BackHandler lets the system
+    // animate the board peeling away while the app is about to answer with a dialog — a
+    // departure drawn and then refused, which is the half-swipe that slides back. Collecting
+    // the progress and drawing nothing holds the board still, and abandoning the gesture
+    // cancels this coroutine before the dialog is ever reached, so a half-swipe costs nothing.
+    PredictiveBackHandler(enabled = state.isOnline && !showExitConfirmation) { progress ->
         progress.collect {}
-        showExitConfirmation = true
+        if (state.leavingForfeits) showExitConfirmation = true else onExit()
     }
 
     val clockRunning = state.isOnline && state.turnDeadlineAt != null &&

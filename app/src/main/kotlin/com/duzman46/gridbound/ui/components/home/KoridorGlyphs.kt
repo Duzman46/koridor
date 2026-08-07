@@ -39,8 +39,9 @@ enum class GlyphKind {
  * from the only three shapes this game has: a board tile, a wall bar, and a pawn. Nine icons
  * end up looking like one set because they are literally made of the same pieces.
  *
- * Monochrome by design: one [tint] per call, no accent parameter. That is what keeps the
- * amber inside the well where it means something.
+ * Monochrome by design: one [tint] per call, no accent parameter. The jade means "wall" on the
+ * board and "the way forward" on a control, and a glyph that could reach for it would be
+ * spending a colour that already says something somewhere the player is not looking.
  */
 @Composable
 fun KoridorGlyph(

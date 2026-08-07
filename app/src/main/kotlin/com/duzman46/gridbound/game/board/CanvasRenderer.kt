@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.PlayerId
@@ -55,6 +56,11 @@ class CanvasRenderer @Inject constructor() {
         playerTwoRow: Float,
         playerTwoColumn: Float,
         selected: Boolean,
+        /**
+         * Counter-turn applied to each piece about its own centre, so that a board drawn
+         * upside down still shows pawns standing on their bases. Zero for an unturned board.
+         */
+        pieceRotation: Float = 0f,
     ) = with(scope) {
         drawFrame(geometry, palette)
         drawTiles(geometry, palette, validMoves)
@@ -89,6 +95,7 @@ class CanvasRenderer @Inject constructor() {
             crowned = false,
             selected = selected && state.currentPlayer == PlayerId.PLAYER_ONE,
             selectionColor = palette.selection,
+            uprightBy = pieceRotation,
         )
         drawPawn(
             geometry = geometry,
@@ -98,6 +105,7 @@ class CanvasRenderer @Inject constructor() {
             crowned = true,
             selected = selected && state.currentPlayer == PlayerId.PLAYER_TWO,
             selectionColor = palette.selection,
+            uprightBy = pieceRotation,
         )
     }
 
@@ -240,7 +248,7 @@ class CanvasRenderer @Inject constructor() {
      *
      * [crowned] adds a ring to the head of the second pawn, so the two are told apart by
      * shape as well as colour — the board has to work for a player who cannot separate blue
-     * from orange.
+     * from red.
      */
     private fun DrawScope.drawPawn(
         geometry: BoardGeometry,
@@ -250,8 +258,22 @@ class CanvasRenderer @Inject constructor() {
         crowned: Boolean,
         selected: Boolean,
         selectionColor: Color,
+        uprightBy: Float,
     ) {
         val center = geometry.pawnCenter(row, column)
+        rotate(uprightBy, center) {
+            drawPawnBody(geometry, center, color, crowned, selected, selectionColor)
+        }
+    }
+
+    private fun DrawScope.drawPawnBody(
+        geometry: BoardGeometry,
+        center: Offset,
+        color: Color,
+        crowned: Boolean,
+        selected: Boolean,
+        selectionColor: Color,
+    ) {
         val unit = geometry.tileSize
         val radius = unit * Constants.Board.PAWN_RADIUS_RATIO
 

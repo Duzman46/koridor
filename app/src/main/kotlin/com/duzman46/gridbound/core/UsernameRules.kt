@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.core
 
 import java.util.Locale
+import kotlin.random.Random
 
 /**
  * Username policy. Pure logic with no Android or Firebase dependency so it can be unit
@@ -10,7 +11,19 @@ object UsernameRules {
     const val MIN_LENGTH = 3
     const val MAX_LENGTH = 16
 
+    /** Wide enough that two guests colliding is a curiosity rather than a design problem. */
+    private const val GENERATED_DIGITS = 6
+
+    private const val GUEST_PREFIX = "guest_"
+
     private val ALLOWED = Regex("^[A-Za-z0-9_]+$")
+
+    /**
+     * The shape of every name the app has ever handed out by itself: `guest_483920` today,
+     * `player_a1b2c3` from the uid before that, either with a digit appended after a
+     * collision. Matched against the normalized form.
+     */
+    private val GENERATED = Regex("^(?:guest|player)_[a-z0-9]{1,10}$")
 
     /**
      * Names that would let a player impersonate the game or its staff. Compared against the
@@ -40,16 +53,22 @@ object UsernameRules {
         }
     }
 
-    /** Builds a legal starting username for a brand new account. */
-    fun suggestFrom(seed: String?, fallbackSuffix: String): String {
-        val cleaned = seed.orEmpty()
-            .trim()
-            .replace(Regex("[^A-Za-z0-9_]"), "")
-            .take(MAX_LENGTH)
-        return if (validate(cleaned) is Outcome.Success) {
-            cleaned
-        } else {
-            "player_" + fallbackSuffix.filter(Char::isLetterOrDigit).takeLast(6).ifEmpty { "000000" }
-        }
-    }
+    /**
+     * The name a player is given when they never pick one, so that choosing to play as a
+     * guest asks them nothing at all.
+     *
+     * Digits rather than anything derived from the user id: a name is public and a uid is
+     * not, and two guests on the same handset should not read as the same person.
+     */
+    fun generatedName(random: Random = Random.Default): String =
+        GUEST_PREFIX + (1..GENERATED_DIGITS).joinToString("") { random.nextInt(10).toString() }
+
+    /**
+     * True for a name the app made up rather than one the player typed.
+     *
+     * This is a statement about the app's own naming scheme, not a guess about the player:
+     * the only way to be wrong is to type a name in exactly that shape, and the cost of
+     * being wrong is being invited to confirm your name once.
+     */
+    fun isGenerated(username: String): Boolean = GENERATED.matches(normalize(username))
 }

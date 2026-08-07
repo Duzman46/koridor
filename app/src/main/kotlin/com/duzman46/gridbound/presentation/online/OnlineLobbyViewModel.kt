@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.data.RoomCredentials
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
@@ -14,7 +16,6 @@ import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.online.model.RoomBrowserFilter
 import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomTiming
-import com.duzman46.gridbound.online.model.RoomVisibility
 import com.duzman46.gridbound.session.SessionManager
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipStatus
@@ -39,13 +40,14 @@ data class OnlineLobbyUiState(
     val joinPassword: String = "",
     val configuration: RoomConfiguration = RoomConfiguration(),
     val isBusy: Boolean = false,
-    val isSearching: Boolean = false,
+    /** True while this player is in the matchmaking list, which is not a room. */
+    val isQueued: Boolean = false,
     val waitingSession: OnlineSession? = null,
-    val resumableSession: OnlineSession? = null,
     val openRooms: List<OnlineRoom> = emptyList(),
     val isLoadingRooms: Boolean = false,
     val filter: RoomBrowserFilter = RoomBrowserFilter(),
-    val passwordPromptRoom: OnlineRoom? = null,
+    /** The room code we are asking a password for. Set from either join path. */
+    val passwordPromptCode: String? = null,
     /** Friends who can be invited into the room currently being hosted. */
     val invitableFriends: List<Friend> = emptyList(),
     val invitedUserIds: Set<String> = emptySet(),
@@ -63,10 +65,12 @@ sealed interface OnlineLobbyEvent {
 }
 
 /**
- * Drives room creation, the room browser, quick match and reconnection.
+ * Drives room creation, the room browser, matchmaking and reconnection.
  *
- * Every entry point funnels through [enterRoom], so the busy flag that stops a double tap
- * from opening two rooms is applied in exactly one place.
+ * Every path that opens or joins a room funnels through [enterRoom], so the busy flag that
+ * stops a double tap from opening two rooms is applied in exactly one place. Matchmaking is
+ * the one exception, and it is not one: it opens nothing, it takes a place in a list, so it
+ * has a flag of its own and can be given up without a room to tear down.
  */
 @HiltViewModel
 class OnlineLobbyViewModel @Inject constructor(
@@ -90,9 +94,10 @@ class OnlineLobbyViewModel @Inject constructor(
     val events: SharedFlow<OnlineLobbyEvent> = _events.asSharedFlow()
 
     private var waitingJob: Job? = null
+    private var queueJob: Job? = null
 
     init {
-        refreshResumableSession()
+        closeIdleMatches()
         refreshOpenRooms()
         observeFriends()
     }
@@ -102,12 +107,14 @@ class OnlineLobbyViewModel @Inject constructor(
      * that is the only moment there is a room worth joining.
      */
     fun inviteFriend(userId: String) {
-        val session = _uiState.value.waitingSession ?: return
-        val ownId = sessionManager.state.value.user?.userId ?: return
+        val waiting = _uiState.value.waitingSession ?: return
+        val account = sessionManager.state.value
+        val ownId = account.user?.userId ?: return
+        val ownName = account.profile?.username.orEmpty()
         if (userId in _uiState.value.invitedUserIds) return
         _uiState.update { it.copy(invitedUserIds = it.invitedUserIds + userId) }
         viewModelScope.launch {
-            val result = socialRepository.sendInvite(ownId, userId, session.roomCode)
+            val result = socialRepository.sendInvite(ownId, ownName, userId, waiting.roomCode)
             if (result is Outcome.Failure) {
                 _uiState.update {
                     it.copy(
@@ -143,24 +150,15 @@ class OnlineLobbyViewModel @Inject constructor(
 
     fun setRoomName(value: String) = updateConfiguration { it.copy(roomName = value) }
 
-    fun setVisibility(value: RoomVisibility) = updateConfiguration { it.copy(visibility = value) }
-
-    fun setRanked(value: Boolean) = updateConfiguration { it.copy(ranked = value) }
-
     fun setTurnDuration(seconds: Int) =
         updateConfiguration { it.copy(timing = it.timing.copy(turnDurationSeconds = seconds)) }
 
-    fun setTotalDuration(seconds: Int) =
-        updateConfiguration { it.copy(timing = it.timing.copy(totalDurationSeconds = seconds)) }
-
     fun setRoomPassword(value: String) = updateConfiguration { it.copy(password = value) }
 
-    fun setFilter(filter: RoomBrowserFilter) = _uiState.update { it.copy(filter = filter) }
-
-    fun dismissMessage() = _uiState.update { it.copy(message = null) }
+    fun setHostSeat(value: PlayerId) = updateConfiguration { it.copy(hostSeat = value) }
 
     fun dismissPasswordPrompt() =
-        _uiState.update { it.copy(passwordPromptRoom = null, joinPassword = "") }
+        _uiState.update { it.copy(passwordPromptCode = null, joinPassword = "") }
 
     fun refreshOpenRooms() {
         _uiState.update { it.copy(isLoadingRooms = true) }
@@ -189,39 +187,85 @@ class OnlineLobbyViewModel @Inject constructor(
 
     fun joinByCode() {
         val state = _uiState.value
-        if (!RoomCredentials.isValidCode(state.roomCodeInput)) {
+        val code = state.roomCodeInput
+        if (!RoomCredentials.isValidCode(code)) {
             _uiState.update { it.copy(message = AppError.ROOM_CODE_INVALID.message) }
             return
         }
-        enterRoom { repository.joinRoom(state.roomCodeInput, state.joinPassword) }
+        // Try without one first. A protected room answers ROOM_PASSWORD_WRONG, and that is
+        // when we ask — this path had no password field at all, so every protected room
+        // rejected the player with "wrong password" before they could type one.
+        enterRoom(
+            onFailure = { error ->
+                if (error == AppError.ROOM_PASSWORD_WRONG) {
+                    _uiState.update {
+                        it.copy(passwordPromptCode = code, joinPassword = "", message = null)
+                    }
+                    true
+                } else {
+                    false
+                }
+            },
+        ) { repository.joinRoom(code, state.joinPassword) }
     }
 
     /** A protected room asks for its password first rather than failing the tap. */
     fun joinListedRoom(room: OnlineRoom) {
         if (room.requiresPassword) {
-            _uiState.update { it.copy(passwordPromptRoom = room, joinPassword = "") }
+            _uiState.update { it.copy(passwordPromptCode = room.roomCode, joinPassword = "") }
             return
         }
         enterRoom { repository.joinRoom(room.roomCode) }
     }
 
     fun confirmPasswordPrompt() {
-        val room = _uiState.value.passwordPromptRoom ?: return
+        val code = _uiState.value.passwordPromptCode ?: return
         val password = _uiState.value.joinPassword
-        _uiState.update { it.copy(passwordPromptRoom = null) }
-        enterRoom { repository.joinRoom(room.roomCode, password) }
+        _uiState.update { it.copy(passwordPromptCode = null) }
+        enterRoom { repository.joinRoom(code, password) }
     }
 
+    /**
+     * Takes a place in the matchmaking list and holds it until a rival turns up.
+     *
+     * Nothing is created here. Pressing this used to open a room when no open one was found,
+     * so two players who pressed it seconds apart sat in a room each and never met; the list
+     * is what they now both land in. It carries no room configuration either — the pairing
+     * settles the colours by chance, and neither player is offered the choice.
+     */
     fun quickMatch() {
-        _uiState.update { it.copy(isSearching = true) }
-        enterRoom(
-            onFinally = { _uiState.update { it.copy(isSearching = false) } },
-        ) { repository.quickMatch(preferRanked = _uiState.value.canPlayRanked) }
+        if (_uiState.value.isBusy || _uiState.value.isQueued) return
+        val ranked = _uiState.value.canPlayRanked
+        _uiState.update { it.copy(isQueued = true, message = null) }
+        queueJob = viewModelScope.launch {
+            repository.matchmake(ranked).collect { state ->
+                when (state) {
+                    is MatchmakingState.Paired -> {
+                        _uiState.update { it.copy(isQueued = false) }
+                        _events.emit(OnlineLobbyEvent.OpenGame(state.session))
+                    }
+
+                    is MatchmakingState.Failed -> _uiState.update {
+                        it.copy(isQueued = false, message = state.error.message)
+                    }
+
+                    MatchmakingState.Searching -> Unit
+                }
+            }
+        }
     }
 
-    fun resumeMatch() {
-        val session = _uiState.value.resumableSession ?: return
-        viewModelScope.launch { _events.emit(OnlineLobbyEvent.OpenGame(session)) }
+    /**
+     * Gives up the place in the list.
+     *
+     * Also called when the lobby stops being looked at, because a place in the list is a
+     * promise to be there when a rival is found and a backgrounded app cannot keep it.
+     */
+    fun leaveQueue() {
+        if (!_uiState.value.isQueued) return
+        queueJob?.cancel()
+        queueJob = null
+        _uiState.update { it.copy(isQueued = false) }
     }
 
     fun cancelWaiting() {
@@ -231,19 +275,24 @@ class OnlineLobbyViewModel @Inject constructor(
         _uiState.update { it.copy(waitingSession = null, isBusy = false) }
     }
 
-    private fun refreshResumableSession() {
+    /**
+     * Settles anything the player walked out of before showing them a lobby.
+     *
+     * There is deliberately no "return to your match" here. Either the match is still live,
+     * in which case its room code gets the player back into it, or nobody has moved in ten
+     * minutes and it is already decided — offering a way back into a match the opponent gave
+     * up on hours ago helped no one.
+     */
+    private fun closeIdleMatches() {
         val userId = sessionManager.state.value.user?.userId ?: return
-        viewModelScope.launch {
-            val result = repository.findResumableSession(userId)
-            if (result is Outcome.Success) {
-                _uiState.update { it.copy(resumableSession = result.value) }
-            }
-        }
+        viewModelScope.launch { repository.closeIdleMatches(userId) }
     }
 
     private fun enterRoom(
         waitForOpponent: Boolean = false,
         onFinally: () -> Unit = {},
+        /** Returns true when it has handled the error itself and no message should show. */
+        onFailure: (AppError) -> Boolean = { false },
         action: suspend () -> OnlineLobbyResult,
     ) {
         if (_uiState.value.isBusy) return
@@ -251,7 +300,10 @@ class OnlineLobbyViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = action()) {
                 is OnlineLobbyResult.Failure -> {
-                    _uiState.update { it.copy(isBusy = false, message = result.error.message) }
+                    val handled = onFailure(result.error)
+                    _uiState.update {
+                        it.copy(isBusy = false, message = if (handled) null else result.error.message)
+                    }
                     onFinally()
                 }
 
@@ -302,6 +354,5 @@ class OnlineLobbyViewModel @Inject constructor(
 
     companion object {
         val TURN_OPTIONS = RoomTiming.TURN_OPTIONS
-        val TOTAL_OPTIONS = RoomTiming.TOTAL_OPTIONS
     }
 }

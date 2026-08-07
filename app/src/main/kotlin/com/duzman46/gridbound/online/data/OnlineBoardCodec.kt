@@ -108,10 +108,6 @@ class OnlineBoardCodec @Inject constructor() {
     private fun Map<String, Any?>.string(key: String): String = get(key)?.toString()?.takeIf(String::isNotBlank)
         ?: error("Missing $key")
 
-    private fun Map<String, Any?>.optionalString(key: String): String? = get(key)?.toString()?.takeIf(String::isNotBlank)
-
     private fun Map<String, Any?>.int(key: String): Int = (get(key) as? Number)?.toInt() ?: error("Missing $key")
-
-    private fun Map<String, Any?>.long(key: String): Long = (get(key) as? Number)?.toLong() ?: 0L
 }
 

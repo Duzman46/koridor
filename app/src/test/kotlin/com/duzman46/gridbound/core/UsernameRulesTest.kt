@@ -1,8 +1,10 @@
 package com.duzman46.gridbound.core
 
 import java.util.Locale
+import kotlin.random.Random
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -76,26 +78,58 @@ class UsernameRulesTest {
     }
 
     @Test
-    fun `suggestion keeps a usable seed`() {
-        assertEquals("Koray42", UsernameRules.suggestFrom("Koray42", "uid123456"))
+    fun `a generated name is guest_ and six digits`() {
+        assertTrue(GENERATED_SHAPE.matches(UsernameRules.generatedName(Random(1))))
+        assertTrue(GENERATED_SHAPE.matches(UsernameRules.generatedName(Random(99))))
+    }
+
+    /**
+     * The generated name has to survive both gates it will meet: the policy in this file,
+     * and the uniqueness index in database.rules.json, which only accepts a key of three to
+     * sixteen lower-case letters, digits and underscores.
+     */
+    @Test
+    fun `a generated name satisfies the policy and the database index`() {
+        repeat(200) { seed ->
+            val name = UsernameRules.generatedName(Random(seed))
+            assertTrue(name, UsernameRules.validate(name) is Outcome.Success)
+            assertTrue(name, INDEX_KEY.matches(UsernameRules.normalize(name)))
+        }
     }
 
     @Test
-    fun `suggestion falls back when the seed is unusable`() {
-        val suggested = UsernameRules.suggestFrom("!!", "abcUID987654")
-        assertTrue(UsernameRules.validate(suggested) is Outcome.Success)
-        assertTrue(suggested.startsWith("player_"))
+    fun `two guests do not get the same name`() {
+        val names = (1..500).map { UsernameRules.generatedName() }.toSet()
+        // Six digits: a handful of repeats in five hundred draws would still be normal, a
+        // generator that keeps handing out one name would not.
+        assertTrue(names.size > 400)
     }
 
     @Test
-    fun `suggestion strips characters the policy forbids`() {
-        val suggested = UsernameRules.suggestFrom("Ayşe Gül", "uid000001")
-        assertTrue(UsernameRules.validate(suggested) is Outcome.Success)
+    fun `the reserved word is guest, not every name built from it`() {
+        assertEquals(AppError.USERNAME_NOT_ALLOWED, UsernameRules.validate("guest").errorOrNull)
+        assertTrue(UsernameRules.validate("guest_483920") is Outcome.Success)
     }
 
     @Test
-    fun `suggestion never exceeds the maximum length`() {
-        val suggested = UsernameRules.suggestFrom("a".repeat(50), "uid000001")
-        assertTrue(suggested.length <= UsernameRules.MAX_LENGTH)
+    fun `a generated name is recognised as one, whoever generated it`() {
+        assertTrue(UsernameRules.isGenerated(UsernameRules.generatedName(Random(7))))
+        // The shape earlier versions handed out, still on live profiles.
+        assertTrue(UsernameRules.isGenerated("player_a1B2c3"))
+    }
+
+    @Test
+    fun `a name a player typed is not mistaken for a generated one`() {
+        assertFalse(UsernameRules.isGenerated("Koray"))
+        assertFalse(UsernameRules.isGenerated("guest"))
+        assertFalse(UsernameRules.isGenerated("guest_of_honour"))
+        assertFalse(UsernameRules.isGenerated("theguest_12"))
+    }
+
+    private companion object {
+        val GENERATED_SHAPE = Regex("^guest_[0-9]{6}$")
+
+        /** Mirrors the `usernames/$normalizedUsername` key rule in database.rules.json. */
+        val INDEX_KEY = Regex("^[a-z0-9_]{3,16}$")
     }
 }

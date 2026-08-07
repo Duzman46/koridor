@@ -52,6 +52,9 @@ object Constants {
         const val WALL_DURATION_MILLIS = 120
         const val ERROR_DURATION_MILLIS = 150
         const val VICTORY_DURATION_MILLIS = 420
+
+        /** Long enough to carry several pips, so it reads as a countdown and not as a blip. */
+        const val WARNING_DURATION_MILLIS = 700
     }
 
     object Ui {
@@ -112,13 +115,50 @@ object Constants {
         const val ROOM_BROWSER_PAGE_SIZE = 30
 
         /**
-         * A player who drops out has this long to come back before the opponent may claim
-         * the win. Short network blips must never cost a match.
+         * How often the room browser reloads itself while the player is looking at it.
+         *
+         * Rooms appear and are taken within a minute or two, so a list left alone is stale
+         * almost at once, and pulling to refresh is the player doing the app's job. Short
+         * enough that a room opened while you are reading the list turns up before you have
+         * lost interest, long enough that the whole cost is one indexed query of at most
+         * thirty rows every fifteen seconds.
          */
-        const val DISCONNECT_GRACE_MILLIS = 45_000L
+        const val ROOM_BROWSER_REFRESH_MILLIS = 15_000L
 
-        /** How long quick match looks for an opponent before offering to host instead. */
-        const val QUICK_MATCH_TIMEOUT_MILLIS = 20_000L
+        /** matchmaking/{uid} — who is waiting to be paired, and at what rating. */
+        const val MATCHMAKING_PATH = "matchmaking"
+
+        /**
+         * How old a waiting-list entry may be before it is treated as abandoned. The
+         * scheduled worker holds the same number and is what actually deletes them.
+         *
+         * A phone that closes cleanly takes its own entry with it, and one that dies has the
+         * removal run for it by the onDisconnect handler the server holds. This is the
+         * backstop for neither happening — a process killed while offline, say. Long enough
+         * to survive a lift ride, short enough that nobody is paired against an app that
+         * closed minutes ago and would never arrive. A player who is genuinely still waiting
+         * simply takes a new place when this one is cleared.
+         */
+        const val MATCHMAKING_STALE_MILLIS = 300_000L
+
+        /**
+         * The tail of a turn that is called out — the clock turns red and a warning sounds.
+         *
+         * Long enough to finish a move already half decided, short enough that it is not
+         * ringing for most of a thirty-second turn.
+         */
+        const val TURN_WARNING_MILLIS = 5_000L
+
+        /**
+         * A match nobody has moved in for this long is over: the room closes and the seat on
+         * the clock loses it.
+         *
+         * This is what replaced "return to your match". A match left open indefinitely means
+         * an opponent waiting for someone who is never coming back, and a lobby entry that
+         * offers a way back in only postpones that. Ten minutes is far longer than any turn
+         * anyone actually takes, so it can only catch a player who has genuinely walked away.
+         */
+        const val IDLE_FORFEIT_MILLIS = 600_000L
     }
 
     /** Realtime Database layout. Every path is mirrored by a rule in database.rules.json. */
@@ -152,7 +192,12 @@ object Constants {
         /** friendships/{ownerId}/{otherId} — stored under both players. */
         const val FRIENDSHIPS_PATH = "friendships"
 
-        /** invites/{recipientId}/{senderId} — keyed by sender so invites cannot pile up. */
+        /**
+         * invites/{recipientId}/{senderId} — the live request channel, keyed by sender so one
+         * person can never stack up more than one question. Each entry carries a kind, so an
+         * invitation, a rematch and its refusal all reach a player who is listening in exactly
+         * one place. The path keeps its original name because the data under it does.
+         */
         const val INVITES_PATH = "invites"
 
         /** presence/{userId} — maintained with onDisconnect. */
@@ -176,7 +221,6 @@ object Constants {
         const val DEFAULT_AVATAR_ID = "avatar_01"
         const val AVATAR_COUNT = 12
         const val MIN_PASSWORD_LENGTH = 8
-        const val DISPLAY_NAME_MAX_LENGTH = 24
     }
 
     object Tutorial {
@@ -190,5 +234,12 @@ object Constants {
          * start with no network at all, and survives a failed anonymous sign-in.
          */
         const val KEY_GUEST_MODE_ACCEPTED = "guest_mode_accepted"
+
+        /**
+         * Set once the player has picked their own name. A profile is created with a
+         * generated one like "player_jH7Go2" so play can start offline; this is what
+         * distinguishes "never asked" from "asked and answered".
+         */
+        const val KEY_USERNAME_CHOSEN = "username_chosen"
     }
 }

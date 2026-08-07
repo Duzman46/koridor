@@ -120,6 +120,25 @@ class RoomModelTest {
     }
 
     @Test
+    fun `a host who took seat two hands the opening seat to the guest`() {
+        // Choosing red is choosing to play second, so every mapping the room owns inverts.
+        val room = room(hostSeat = PlayerId.PLAYER_TWO)
+        assertEquals(PlayerId.PLAYER_TWO, room.playerFor(host))
+        assertEquals(PlayerId.PLAYER_ONE, room.playerFor(guest))
+        assertEquals(guest, room.userFor(PlayerId.PLAYER_ONE))
+        assertEquals(host, room.userFor(PlayerId.PLAYER_TWO))
+    }
+
+    @Test
+    fun `an empty seat one belongs to nobody`() {
+        // The host is waiting for the player who will open, so the seat maps to no account
+        // and there is no one for the room to put on the clock.
+        val room = room(guestUserId = null, hostSeat = PlayerId.PLAYER_TWO)
+        assertNull(room.userFor(PlayerId.PLAYER_ONE))
+        assertEquals(host, room.userFor(PlayerId.PLAYER_TWO))
+    }
+
+    @Test
     fun `membership excludes strangers`() {
         val room = room()
         assertTrue(room.isMember(host))
@@ -243,6 +262,7 @@ class RoomModelTest {
         ranked: Boolean = true,
         timing: RoomTiming = RoomTiming(),
         lastMoveAt: Long = 0L,
+        hostSeat: PlayerId = PlayerId.PLAYER_ONE,
     ) = OnlineRoom(
         roomId = "ABC234",
         roomCode = "ABC234",
@@ -264,6 +284,7 @@ class RoomModelTest {
         lastMoveAt = lastMoveAt,
         winnerUserId = null,
         endReason = null,
+        hostSeat = hostSeat,
         version = 0L,
     )
 }

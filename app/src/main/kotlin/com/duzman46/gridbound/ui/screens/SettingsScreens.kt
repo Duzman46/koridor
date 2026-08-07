@@ -20,9 +20,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -34,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -80,20 +79,19 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
+                            // The stored default is still "follow the device"; it is shown as
+                            // whichever language that actually produces here, so the ticked
+                            // chip always names the language currently on screen.
+                            val deviceTag = LocalResources.current.configuration.locales[0].language
+                            val effective = AppLanguage.resolve(state.settings.language, deviceTag)
                             AppLanguage.selectable.forEach { language ->
                                 FilterChip(
-                                    selected = state.settings.language == language,
+                                    selected = effective == language,
                                     onClick = { onLanguage(language) },
                                     label = {
-                                        Text(
-                                            // Each language is labelled in itself, so it is
-                                            // recognisable whatever the current language is.
-                                            if (language.followsDevice) {
-                                                stringResource(R.string.settings_language_device)
-                                            } else {
-                                                language.endonym
-                                            },
-                                        )
+                                        // Each language is labelled in itself, so it is
+                                        // recognisable whatever the current language is.
+                                        Text(language.endonym)
                                     },
                                 )
                             }

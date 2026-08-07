@@ -8,7 +8,11 @@ interface SocialRepository {
     /** Every relationship the player has, keyed by the other player's id. */
     fun observeFriendships(userId: String): Flow<List<Friend>>
 
-    fun observeInvites(userId: String): Flow<List<GameInvite>>
+    /**
+     * The live request channel: everything anyone is currently asking this player, in one
+     * stream, so a screen that wants to react to any of it subscribes once.
+     */
+    fun observeRequests(userId: String): Flow<List<PlayerRequest>>
 
     /** Online state of the given players. Kept to the friends actually on screen. */
     fun observePresence(userIds: Set<String>): Flow<Map<String, PresenceState>>
@@ -29,11 +33,45 @@ interface SocialRepository {
     /** Invites a friend into a room. Rejected server side unless they are a friend. */
     suspend fun sendInvite(
         fromUserId: String,
+        fromUsername: String,
         toUserId: String,
         roomCode: String,
     ): Outcome<Unit>
 
-    suspend fun dismissInvite(userId: String, inviteId: String): Outcome<Unit>
+    /**
+     * Asks the player from a finished match to play it again in a room that has already been
+     * opened for them.
+     *
+     * @param roomCode the new room, waiting for them to join.
+     * @param playedRoomCode the match the two of them just finished. The server accepts this
+     *   between strangers, so it insists on seeing that they really did play it.
+     */
+    suspend fun sendRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit>
+
+    /**
+     * Answers a rematch with no. Sent back down the channel because the asker cannot read the
+     * entry they sent, so this is the only thing they can be told.
+     */
+    suspend fun declineRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit>
+
+    /**
+     * Removes one entry from the channel. Either end may do it — the recipient once they have
+     * answered, the sender once they have stopped waiting for an answer — because it is the
+     * same node either way and nobody but those two can reach it.
+     */
+    suspend fun clearRequest(recipientId: String, senderId: String): Outcome<Unit>
 
     /**
      * Marks the player online and registers the disconnect handler that clears it, so a

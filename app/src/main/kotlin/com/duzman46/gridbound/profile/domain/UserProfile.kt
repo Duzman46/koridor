@@ -23,7 +23,6 @@ data class UserProfile(
     val userId: String,
     val username: String,
     val normalizedUsername: String,
-    val displayName: String,
     val avatarId: String,
     val email: String? = null,
     val accountType: AccountType = AccountType.GUEST,

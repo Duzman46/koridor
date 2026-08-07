@@ -17,8 +17,6 @@
     <string name="action_skip">تخطٍّ</string>
 
     <string name="state_loading">جارٍ التحميل…</string>
-    <string name="state_offline_title">لا يوجد اتصال بالإنترنت</string>
-    <string name="state_offline_message">تحتاج الميزات عبر الإنترنت إلى اتصال. أما المباريات المحلية فتستمر في العمل.</string>
     <string name="state_empty_title">لا يوجد شيء هنا بعد</string>
     <string name="state_error_title">حدث خطأ ما</string>
 
@@ -97,7 +95,6 @@
 
     <string name="profile_title">الملف الشخصي</string>
     <string name="profile_edit_title">تعديل الملف الشخصي</string>
-    <string name="profile_display_name_label">الاسم الظاهر</string>
     <string name="profile_avatar_label">الصورة الرمزية</string>
     <string name="profile_rating">التصنيف</string>
     <string name="profile_highest_rating">أفضل تصنيف</string>
@@ -108,10 +105,12 @@
     <string name="profile_win_streak">سلسلة الانتصارات</string>
     <string name="profile_best_streak">أفضل سلسلة</string>
     <string name="profile_member_since">عضو منذ %1$s</string>
+    <string name="profile_player_title">ملف اللاعب</string>
 
     <string name="account_title">الحساب</string>
     <string name="account_delete_title">حذف الحساب</string>
     <string name="account_delete_warning">سيؤدي هذا إلى حذف ملفك الشخصي وإحصاءاتك وأصدقائك وتصنيفك نهائيًا. ولن يمكن استرجاع المشتريات بعد ذلك. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="account_delete_reauth_explainer">قبل حذف حسابك سيُطلب منك تأكيد تسجيل دخولك.</string>
     <string name="account_delete_confirm_label">اكتب %1$s للتأكيد</string>
     <string name="account_delete_action">حذف حسابي نهائيًا</string>
     <string name="account_delete_success">تم حذف حسابك.</string>
@@ -142,7 +141,6 @@
     <string name="room_error_password_wrong">كلمة مرور الغرفة غير صحيحة.</string>
     <string name="room_error_password_too_short">يجب ألا تقل كلمة مرور الغرفة عن %1$d أحرف.</string>
     <string name="room_error_name_too_long">اسم الغرفة طويل جدًا.</string>
-    <string name="room_error_no_opponent">لم يُعثر على خصم. جرّب إنشاء غرفة بدلًا من ذلك.</string>
     <string name="room_error_ranked_requires_account">تتطلب المباريات التصنيفية حسابًا. اربط حسابك للعب التصنيفي.</string>
 
     <string name="online_title">اللعب عبر الإنترنت</string>
@@ -151,19 +149,10 @@
     <string name="online_browse_rooms">الغرف المفتوحة</string>
     <string name="online_quick_match">مباراة سريعة</string>
     <string name="online_quick_match_searching">جارٍ البحث عن خصم…</string>
-    <string name="online_rejoin_match">العودة إلى مباراتك</string>
-    <string name="online_rejoin_explainer">لديك مباراة قيد التقدّم.</string>
 
     <string name="room_name_label">اسم الغرفة</string>
     <string name="room_name_placeholder">اختياري</string>
-    <string name="room_visibility_label">من يمكنه الانضمام</string>
-    <string name="room_visibility_public">الجميع</string>
-    <string name="room_visibility_private">بالرمز فقط</string>
-    <string name="room_visibility_friends">الأصدقاء</string>
-    <string name="room_ranked_label">مباراة تصنيفية</string>
-    <string name="room_ranked_description">تغيّر المباريات التصنيفية تصنيفك.</string>
     <string name="room_turn_duration_label">الوقت لكل نقلة</string>
-    <string name="room_total_duration_label">الوقت لكل لاعب</string>
     <string name="room_duration_unlimited">بلا حدود</string>
     <string name="room_duration_minutes">%1$d د</string>
     <string name="room_duration_seconds">%1$d ث</string>
@@ -175,10 +164,6 @@
     <string name="room_close">إغلاق الغرفة</string>
 
     <string name="room_browser_empty">لا توجد غرف مفتوحة الآن. أنشئ غرفة وانتظر خصمًا.</string>
-    <string name="room_browser_filter_all">الكل</string>
-    <string name="room_browser_filter_ranked">تصنيفية</string>
-    <string name="room_browser_filter_casual">ودّية</string>
-    <string name="room_browser_filter_fast">سريعة</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">محمية بكلمة مرور</string>
@@ -187,7 +172,6 @@
     <string name="game_resign_confirm_title">الانسحاب من المباراة؟</string>
     <string name="game_resign_confirm_message">سيفوز خصمك، وفي المباراة التصنيفية سينخفض تصنيفك.</string>
     <string name="game_opponent_left">انقطع اتصال خصمك. أمامه لحظات للعودة.</string>
-    <string name="game_claim_win">المطالبة بالفوز</string>
     <string name="game_reconnecting">جارٍ إعادة الاتصال…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">دورك</string>
@@ -203,6 +187,7 @@
     <string name="leaderboard_your_rank">ترتيبك</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">سجّل الدخول لتظهر في لوحة الصدارة.</string>
+    <string name="leaderboard_guest_not_ranked">الضيوف لا يُصنّفون. اربط حسابًا لتأخذ مكانك في لوحة الصدارة.</string>
     <string name="leaderboard_record">%1$d فوز · %2$d مباراة</string>
     <string name="cd_leaderboard_row">المركز %1$d، %2$s، التصنيف %3$d</string>
 
@@ -223,6 +208,7 @@
     <string name="game_history_pawn_label">قطعة</string>
     <string name="game_exit_title">مغادرة المباراة؟</string>
     <string name="game_exit_message">ستنتهي المباراة الحالية. هل تريد المغادرة فعلًا؟</string>
+    <string name="game_exit_online_message">المغادرة تعني الانسحاب من المباراة. سيفوز خصمك، وفي المباراة التصنيفية سينخفض تصنيفك.</string>
     <string name="game_exit_keep_playing">متابعة اللعب</string>
     <string name="game_exit_confirm">مغادرة المباراة</string>
     <string name="game_place_wall">وضع جدار</string>
@@ -242,9 +228,9 @@
     <string name="game_online_match">مباراة عبر الإنترنت</string>
     <string name="game_vs_ai">ذكاء اصطناعي %1$s</string>
     <string name="game_player_blue">الأزرق</string>
-    <string name="game_player_orange">البرتقالي</string>
+    <string name="game_player_red">الأحمر</string>
     <string name="game_turn_blue">دور اللاعب الأزرق</string>
-    <string name="game_turn_orange">دور اللاعب البرتقالي</string>
+    <string name="game_turn_red">دور اللاعب الأحمر</string>
     <string name="game_turn_opponent">دور الخصم</string>
     <string name="game_turn_yours">دورك · %1$s</string>
     <string name="winner_reached_goal">وصل اللاعب %1$s إلى الحافة المستهدفة.</string>
@@ -259,12 +245,18 @@
 
     <string name="winner_victory">فوز!</string>
     <string name="winner_ai_won">فاز الذكاء الاصطناعي هذه المرة</string>
+    <string name="winner_rival_won">فاز خصمك</string>
     <string name="winner_retry_hint">حاول مرة أخرى باستراتيجية جديدة.</string>
+    <string name="winner_rival_left">غادر خصمك المباراة.</string>
+    <string name="winner_turn_clock_ran_out">انتهى وقت النقلة.</string>
     <string name="winner_play_again">العب مرة أخرى</string>
+    <string name="winner_rematch">إعادة المباراة</string>
+    <string name="winner_rematch_waiting">في انتظار رد خصمك…</string>
+    <string name="winner_rematch_declined">رفض خصمك إعادة المباراة.</string>
+    <string name="winner_another_game">مباراة أخرى</string>
     <string name="winner_main_menu">القائمة الرئيسية</string>
 
     <string name="settings_language">اللغة</string>
-    <string name="settings_language_device">استخدام لغة الجهاز</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_theme_system">النظام</string>
     <string name="settings_theme_light">فاتح</string>
@@ -321,14 +313,19 @@
     <string name="friends_online">متصل</string>
     <string name="friends_offline">غير متصل</string>
     <string name="friends_requires_account">تتطلب قائمة الأصدقاء حسابًا. اربط حسابك لإضافة لاعبين.</string>
+    <string name="friends_invite_waiting">بانتظار %1$s…</string>
+    <string name="friends_request_pending">تم إرسال طلب الصداقة</string>
+    <string name="friends_already_friends">أنتما صديقان</string>
 
     <string name="invites_title">دعوات اللعب</string>
     <string name="invites_from">دعاك %1$s إلى مباراة.</string>
+    <string name="requests_rematch_from">يريد %1$s إعادة المباراة.</string>
     <string name="invites_join">انضمام</string>
     <string name="invites_dismiss">تجاهل</string>
 
     <string name="cd_board">رقعة اللعب، 9 في 9 مربعات</string>
     <string name="cd_avatar">صورة الملف الشخصي</string>
+    <string name="cd_open_profile">فتح الملف الشخصي</string>
     <string name="menu_tutorial">الدليل</string>
     <string name="tutorial_step_wall_vertical_title">ضع جدارًا رأسيًا</string>
     <string name="tutorial_step_wall_vertical_message">تقع الجدران الرأسية بين عمودين. المس الفتحة المميزة لقطع خطوة خصمك الجانبية.</string>
@@ -340,8 +337,9 @@
     <string name="menu_more">المزيد</string>
     <string name="play_vs_bot">ضد الروبوت</string>
     <string name="play_local">لاعبان على جهاز واحد</string>
-    <string name="play_custom_start">ابدأ لعبة مخصصة</string>
-    <string name="online_play_with_friend">العب مع صديق</string>
     <string name="store_remove_ads">إزالة الإعلانات</string>
     <string name="more_about_version">الإصدار %1$s</string>
+    <string name="error_not_friends">يمكنك دعوة الأصدقاء فقط.</string>
+    <string name="paint_label">لونك</string>
+    <string name="online_quick_match_hint">اضغط وانتظر — ستُقابَل مع اللاعب المنتظر الأقرب إليك في التقييم.</string>
 </resources>

@@ -45,7 +45,7 @@ class RtdbUserProfileRepository @Inject constructor(
         Outcome.Success(profile)
     }
 
-    override suspend fun ensureProfile(user: AuthUser, suggestedName: String?): Outcome<UserProfile> =
+    override suspend fun ensureProfile(user: AuthUser): Outcome<UserProfile> =
         dbCall("ensure-profile") {
             val now = System.currentTimeMillis()
             val existing = codec.decode(userRef(user.userId).awaitSnapshot())
@@ -58,6 +58,7 @@ class RtdbUserProfileRepository @Inject constructor(
                     ),
                 ).await()
                 storePrivateEmail(user)
+                claimBoardRating(user)
                 return@dbCall Outcome.Success(
                     existing.copy(
                         lastLoginAt = now,
@@ -66,7 +67,7 @@ class RtdbUserProfileRepository @Inject constructor(
                     ),
                 )
             }
-            createProfile(user, suggestedName, now)
+            createProfile(user, now)
         }
 
     override suspend fun isUsernameAvailable(username: String): Outcome<Boolean> {
@@ -101,12 +102,6 @@ class RtdbUserProfileRepository @Inject constructor(
         }
     }
 
-    override suspend fun updateDisplayName(userId: String, displayName: String): Outcome<Unit> {
-        val cleaned = displayName.trim().take(Constants.Profile.DISPLAY_NAME_MAX_LENGTH)
-        if (cleaned.isEmpty()) return Outcome.Failure(AppError.USERNAME_BLANK)
-        return updateField(userId, ProfileCodec.Keys.DISPLAY_NAME, cleaned)
-    }
-
     override suspend fun updateAvatar(userId: String, avatarId: String): Outcome<Unit> =
         updateField(userId, ProfileCodec.Keys.AVATAR_ID, avatarId)
 
@@ -125,23 +120,21 @@ class RtdbUserProfileRepository @Inject constructor(
         Outcome.Success(Unit)
     }
 
-    private suspend fun createProfile(
-        user: AuthUser,
-        suggestedName: String?,
-        now: Long,
-    ): Outcome<UserProfile> {
-        val seed = UsernameRules.suggestFrom(suggestedName, user.userId)
-        // A generated name can still collide, so try a few numbered variants before failing.
-        repeat(Constants.Backend.MAX_USERNAME_ATTEMPTS) { attempt ->
-            val candidate = if (attempt == 0) seed else nextCandidate(seed, attempt)
-            if (UsernameRules.validate(candidate) !is Outcome.Success) return@repeat
+    /**
+     * Names the account so it can exist before anybody has been asked anything. A player
+     * with a real account is made to replace this the first time they reach the entry gate;
+     * a guest keeps it, which is the point of playing as one.
+     */
+    private suspend fun createProfile(user: AuthUser, now: Long): Outcome<UserProfile> {
+        // Six random digits collide about once in a million; each attempt draws again.
+        repeat(Constants.Backend.MAX_USERNAME_ATTEMPTS) {
+            val candidate = UsernameRules.generatedName()
             val normalized = UsernameRules.normalize(candidate)
             if (!claimUsername(user.userId, normalized)) return@repeat
             val profile = UserProfile(
                 userId = user.userId,
                 username = candidate,
                 normalizedUsername = normalized,
-                displayName = candidate,
                 avatarId = Constants.Profile.DEFAULT_AVATAR_ID,
                 email = user.email,
                 accountType = user.accountType,
@@ -150,6 +143,7 @@ class RtdbUserProfileRepository @Inject constructor(
             )
             userRef(user.userId).setValue(codec.encodeNewProfile(profile)).await()
             storePrivateEmail(user)
+            claimBoardRating(user)
             return Outcome.Success(profile)
         }
         AppLog.warn("create-profile-username-exhausted")
@@ -191,6 +185,31 @@ class RtdbUserProfileRepository @Inject constructor(
         ).await()
     }
 
+    /**
+     * Puts a linked account into the leaderboard index, with whatever rating it already holds.
+     *
+     * This is the whole of how a guest gets onto the board once they stop being one: the key
+     * the board is ordered by is written here and nowhere else on the device, so the day they
+     * link a credential is the day they appear — carrying the rating they played for, because
+     * the value is read back off the profile rather than assumed to be the starting one.
+     *
+     * Best-effort on purpose. The rules insist the copy equals the rating it mirrors, so a
+     * rated match landing in the moment between the read and the write is refused; that must
+     * cost a sign-in nothing, and it costs nothing, because the next sign-in writes it again
+     * and the server writes it after every rated match in between.
+     */
+    private suspend fun claimBoardRating(user: AuthUser) {
+        if (user.accountType.isGuest) return
+        runCatching {
+            val rating = userRef(user.userId).child(ProfileCodec.Keys.RATING)
+                .awaitSnapshot().getValue(Int::class.java)
+            if (rating != null) {
+                userRef(user.userId).child(ProfileCodec.Keys.LEADERBOARD_RATING)
+                    .setValue(rating).await()
+            }
+        }.onFailure { AppLog.warn("claim-board-rating", it) }
+    }
+
     private suspend fun storePrivateEmail(user: AuthUser) {
         val email = user.email
         runCatching {
@@ -207,12 +226,6 @@ class RtdbUserProfileRepository @Inject constructor(
             userRef(userId).child(key).setValue(value).await()
             Outcome.Success(Unit)
         }
-
-    private fun nextCandidate(seed: String, attempt: Int): String {
-        val suffix = attempt.toString()
-        val room = UsernameRules.MAX_LENGTH - suffix.length
-        return seed.take(room) + suffix
-    }
 
     private fun userRef(userId: String): DatabaseReference =
         firebase.database.getReference(Constants.Backend.USERS_PATH).child(userId)

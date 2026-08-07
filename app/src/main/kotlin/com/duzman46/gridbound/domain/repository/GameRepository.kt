@@ -26,6 +26,10 @@ interface GameRepository {
 
     suspend fun setGuestModeAccepted(accepted: Boolean)
 
+    val usernameChosen: Flow<Boolean>
+
+    suspend fun setUsernameChosen(chosen: Boolean)
+
     suspend fun setLanguage(language: AppLanguage)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setSoundEnabled(enabled: Boolean)

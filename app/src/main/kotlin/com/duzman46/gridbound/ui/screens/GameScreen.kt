@@ -1,6 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -57,18 +57,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.asString
+import com.duzman46.gridbound.game.board.SeatColors
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameAction
 import com.duzman46.gridbound.game.models.GameMode
@@ -79,6 +84,7 @@ import com.duzman46.gridbound.game.models.WallOrientation
 import com.duzman46.gridbound.presentation.game.GameEvent
 import com.duzman46.gridbound.presentation.game.GameUiState
 import com.duzman46.gridbound.presentation.game.GameViewModel
+import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.game.GameBoard
 import kotlinx.coroutines.delay
 
@@ -86,6 +92,7 @@ import kotlinx.coroutines.delay
 fun GameRoute(
     onHome: () -> Unit,
     onSettings: () -> Unit,
+    onOpenProfile: (String) -> Unit,
     onWinner: (PlayerId, GameUiState) -> Unit,
     viewModel: GameViewModel = hiltViewModel(),
 ) {
@@ -98,14 +105,22 @@ fun GameRoute(
             }
         }
     }
-    val winner = state.boardState.status.winner
+    // Leaving an online match forfeits it, so the result the player just caused arrives back
+    // through the room a moment later. They asked for the door, not for a scoreboard on the
+    // way to it, so once the exit is confirmed nothing else gets to route this screen.
+    var leaving by remember { mutableStateOf(false) }
+    val winner = state.winner?.takeIf { !leaving }
     LaunchedEffect(winner) {
         winner?.let { onWinner(it, state) }
     }
     GameScreen(
         state = state,
-        onExit = { viewModel.leaveGame(onHome) },
+        onExit = {
+            leaving = true
+            viewModel.leaveGame(onHome)
+        },
         onSettings = onSettings,
+        onOpenProfile = onOpenProfile,
         onRestart = viewModel::restart,
         onUndo = viewModel::undo,
         onTileTap = viewModel::onTileTapped,
@@ -115,13 +130,12 @@ fun GameRoute(
         onConfirmWall = viewModel::confirmPendingWall,
         onCancelWall = viewModel::cancelPendingWall,
         onResign = viewModel::resign,
-        onClaimTimeout = viewModel::claimTurnTimeout,
     )
 }
 
 /**
- * Ticks once a second while an online match has a move clock, so the countdown and the
- * "claim the win" affordance stay live without redrawing the board on every frame.
+ * Ticks once a second while an online match has a move clock, so the countdown stays live
+ * without redrawing the board on every frame.
  */
 @Composable
 private fun rememberClockTick(enabled: Boolean): Long {
@@ -141,6 +155,7 @@ private fun GameScreen(
     state: GameUiState,
     onExit: () -> Unit,
     onSettings: () -> Unit,
+    onOpenProfile: (String) -> Unit,
     onRestart: () -> Unit,
     onUndo: () -> Unit,
     onTileTap: (com.duzman46.gridbound.game.models.Position) -> Unit,
@@ -150,12 +165,24 @@ private fun GameScreen(
     onConfirmWall: () -> Unit,
     onCancelWall: () -> Unit,
     onResign: () -> Unit,
-    onClaimTimeout: () -> Unit,
 ) {
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showResignConfirmation by remember { mutableStateOf(false) }
-    BackHandler(enabled = !showExitConfirmation) { showExitConfirmation = true }
+    // Back always asks before abandoning a match, in every mode — a game several minutes
+    // deep is not something to lose to one stray press, and the board cannot be recovered
+    // once the screen is gone.
+    //
+    // The gesture is swallowed whole rather than previewed, and that is the point of using
+    // the predictive handler for a screen that intends to stay: the plain BackHandler let
+    // the system animate the screen peeling away while the app was about to refuse, which
+    // is the half-played animation that snapped back. Collecting the progress without
+    // drawing anything keeps the screen still; abandoning the gesture cancels this
+    // coroutine before the dialog is ever reached, so a half-swipe costs nothing.
+    PredictiveBackHandler(enabled = !showExitConfirmation) { progress ->
+        progress.collect {}
+        showExitConfirmation = true
+    }
 
     val clockRunning = state.isOnline && state.turnDeadlineAt != null &&
         state.boardState.status == GameStatus.IN_PROGRESS
@@ -187,7 +214,17 @@ private fun GameScreen(
             onDismissRequest = { showExitConfirmation = false },
             title = { Text(stringResource(R.string.game_exit_title)) },
             text = {
-                Text(stringResource(R.string.game_exit_message))
+                // Against a bot or on a shared handset the board is simply thrown away.
+                // Online there is someone on the other end of it, and the price is the match.
+                Text(
+                    stringResource(
+                        if (state.leavingForfeits) {
+                            R.string.game_exit_online_message
+                        } else {
+                            R.string.game_exit_message
+                        },
+                    ),
+                )
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmation = false }) {
@@ -204,7 +241,7 @@ private fun GameScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Koridor", fontWeight = FontWeight.Black)
+                        Text(stringResource(R.string.app_name), fontWeight = FontWeight.Black)
                         Text(
                             stringResource(R.string.game_turn, state.boardState.turnNumber),
                             style = MaterialTheme.typography.labelSmall,
@@ -244,14 +281,55 @@ private fun GameScreen(
             contentAlignment = Alignment.TopCenter,
         ) {
             val wide = maxWidth >= Constants.Ui.TABLET_BREAKPOINT_DP.dp
+            // Two people on one handset sit on opposite sides of it, so the screen is split
+            // rather than shared: each seat gets its own controls on its own edge, and the
+            // far one is turned through half a circle to face its player.
+            val shared = state.mode == GameMode.LOCAL_TWO_PLAYER
             Column(
                 modifier = Modifier.fillMaxSize().widthIn(max = Constants.Ui.CONTENT_MAX_WIDTH_DP.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                TurnSummary(state, onHistory = { showHistory = true })
-                OnlineClockBar(state, now, onClaimTimeout)
-                if (wide) {
+                if (!shared) {
+                    TurnSummary(
+                        state = state,
+                        onHistory = { showHistory = true },
+                        onOpenProfile = onOpenProfile,
+                    )
+                    OnlineClockBar(state, now)
+                }
+                if (shared) {
+                    SeatPanel(
+                        state = state,
+                        seat = PlayerId.PLAYER_TWO,
+                        onToggleWall = onToggleWall,
+                        onOrientation = onOrientation,
+                        onConfirmWall = onConfirmWall,
+                        onCancelWall = onCancelWall,
+                        onHistory = null,
+                        modifier = Modifier.rotate(180f),
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        GameBoard(
+                            state,
+                            onTileTap,
+                            onWallTap,
+                            Modifier.fillMaxHeight().widthIn(max = Constants.Ui.BOARD_MAX_SIZE_DP.dp),
+                        )
+                    }
+                    SeatPanel(
+                        state = state,
+                        seat = PlayerId.PLAYER_ONE,
+                        onToggleWall = onToggleWall,
+                        onOrientation = onOrientation,
+                        onConfirmWall = onConfirmWall,
+                        onCancelWall = onCancelWall,
+                        onHistory = { showHistory = true },
+                    )
+                } else if (wide) {
                     Row(
                         Modifier.fillMaxWidth().weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(18.dp),
@@ -299,23 +377,25 @@ private fun GameScreen(
 }
 
 /**
- * Move clock for online matches, plus the button that ends a match whose rival has stopped
- * playing. The claim is re-checked against the server clock, so this is an affordance rather
- * than the decision.
+ * Move clock for online matches.
+ *
+ * There is nothing to press: the clock reaching zero ends the match by itself, on both
+ * devices. All this has to do is make the last seconds impossible to miss, which is why the
+ * whole bar goes red rather than only the digits.
  */
 @Composable
-private fun OnlineClockBar(state: GameUiState, now: Long, onClaimTimeout: () -> Unit) {
+private fun OnlineClockBar(state: GameUiState, now: Long) {
     val deadline = state.turnDeadlineAt
     if (!state.isOnline || deadline == null) return
     if (state.boardState.status != GameStatus.IN_PROGRESS) return
 
     val remaining = (deadline - now).coerceAtLeast(0L)
-    val expired = state.canClaimTimeout(now)
+    val urgent = remaining <= Constants.Online.TURN_WARNING_MILLIS
     val yourTurn = state.boardState.currentPlayer == state.localPlayer
 
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = if (expired) {
+        color = if (urgent) {
             MaterialTheme.colorScheme.errorContainer
         } else {
             MaterialTheme.colorScheme.surfaceVariant
@@ -344,11 +424,6 @@ private fun OnlineClockBar(state: GameUiState, now: Long, onClaimTimeout: () -> 
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
             )
-            if (expired) {
-                Button(onClick = onClaimTimeout) {
-                    Text(stringResource(R.string.game_claim_win))
-                }
-            }
         }
     }
 }
@@ -370,73 +445,180 @@ private fun CompactGameControls(
         }
         Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 3.dp) {
             Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                when {
-                    state.pendingWall != null -> {
-                        Text(
-                            stringResource(R.string.game_wall_confirm_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onCancelWall, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Close, contentDescription = null)
-                                Text(stringResource(R.string.game_wall_cancel))
-                            }
-                            Button(onClick = onConfirmWall, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Check, contentDescription = null)
-                                Text(stringResource(R.string.game_wall_confirm))
-                            }
-                        }
-                    }
+                WallControls(
+                    state = state,
+                    enabled = state.acceptsHumanInput,
+                    onToggleWall = onToggleWall,
+                    onOrientation = onOrientation,
+                    onConfirmWall = onConfirmWall,
+                    onCancelWall = onCancelWall,
+                )
+            }
+        }
+    }
+}
 
-                    state.wallMode -> {
-                        Text(
-                            stringResource(R.string.game_wall_pick_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            WallOrientation.entries.forEach { orientation ->
-                                FilterChip(
-                                    selected = state.wallOrientation == orientation,
-                                    onClick = { onOrientation(orientation) },
-                                    label = {
-                                        Text(
-                                            if (orientation == WallOrientation.HORIZONTAL) {
-                                                stringResource(R.string.game_wall_horizontal)
-                                            } else {
-                                                stringResource(R.string.game_wall_vertical)
-                                            },
-                                        )
+/**
+ * One player's own side of a shared handset.
+ *
+ * Two of these frame the board, the far one turned through half a circle so it faces the
+ * player sitting opposite. Only the seat on the clock carries controls; the other keeps its
+ * name and wall count and nothing to press, which is what stops the wrong player moving.
+ */
+@Composable
+private fun SeatPanel(
+    state: GameUiState,
+    seat: PlayerId,
+    onToggleWall: () -> Unit,
+    onOrientation: (WallOrientation) -> Unit,
+    onConfirmWall: () -> Unit,
+    onCancelWall: () -> Unit,
+    onHistory: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val active = state.boardState.currentPlayer == seat &&
+        state.boardState.status == GameStatus.IN_PROGRESS
+    val seatColor = SeatColors.pawn(seat)
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 2.dp,
+                color = if (active) seatColor else Color.Transparent,
+                shape = RoundedCornerShape(16.dp),
+            ),
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = if (active) 3.dp else 0.dp,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .alpha(if (active) 1f else 0.35f)
+                        .background(seatColor, RoundedCornerShape(50)),
+                )
+                Text(
+                    pluralStringResource(
+                        R.plurals.game_player_walls,
+                        state.boardState.player(seat).wallsRemaining,
+                        playerName(seat),
+                        state.boardState.player(seat).wallsRemaining,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(
+                        if (active) R.string.game_your_turn else R.string.game_rival_turn,
+                    ),
+                    modifier = Modifier.weight(1f).alpha(if (active) 1f else 0.6f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (onHistory != null) {
+                    IconButton(onClick = onHistory) {
+                        Icon(Icons.Rounded.Info, contentDescription = stringResource(R.string.game_history))
+                    }
+                }
+            }
+            if (active) {
+                WallControls(
+                    state = state,
+                    enabled = state.acceptsHumanInput,
+                    onToggleWall = onToggleWall,
+                    onOrientation = onOrientation,
+                    onConfirmWall = onConfirmWall,
+                    onCancelWall = onCancelWall,
+                )
+            }
+        }
+    }
+}
+
+/** The pawn/wall action area, shared by the single control strip and by both seats. */
+@Composable
+private fun WallControls(
+    state: GameUiState,
+    enabled: Boolean,
+    onToggleWall: () -> Unit,
+    onOrientation: (WallOrientation) -> Unit,
+    onConfirmWall: () -> Unit,
+    onCancelWall: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        when {
+            state.pendingWall != null -> {
+                Text(
+                    stringResource(R.string.game_wall_confirm_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = onCancelWall, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Rounded.Close, contentDescription = null)
+                        Text(stringResource(R.string.game_wall_cancel))
+                    }
+                    Button(onClick = onConfirmWall, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Rounded.Check, contentDescription = null)
+                        Text(stringResource(R.string.game_wall_confirm))
+                    }
+                }
+            }
+
+            state.wallMode -> {
+                Text(
+                    stringResource(R.string.game_wall_pick_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    WallOrientation.entries.forEach { orientation ->
+                        FilterChip(
+                            selected = state.wallOrientation == orientation,
+                            onClick = { onOrientation(orientation) },
+                            label = {
+                                Text(
+                                    if (orientation == WallOrientation.HORIZONTAL) {
+                                        stringResource(R.string.game_wall_horizontal)
+                                    } else {
+                                        stringResource(R.string.game_wall_vertical)
                                     },
-                                    leadingIcon = { Icon(Icons.Rounded.SwapHoriz, contentDescription = null) },
                                 )
-                            }
-                            OutlinedButton(onClick = onToggleWall, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.game_history_pawn_label))
-                            }
-                        }
+                            },
+                            leadingIcon = { Icon(Icons.Rounded.SwapHoriz, contentDescription = null) },
+                        )
                     }
+                    OutlinedButton(onClick = onToggleWall, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.game_history_pawn_label))
+                    }
+                }
+            }
 
-                    else -> {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                stringResource(R.string.game_move_hint),
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            OutlinedButton(onClick = onToggleWall, enabled = state.acceptsHumanInput) {
-                                Text(stringResource(R.string.game_place_wall))
-                            }
-                        }
+            else -> {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.game_move_hint),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedButton(onClick = onToggleWall, enabled = enabled) {
+                        Text(stringResource(R.string.game_place_wall))
                     }
                 }
             }
@@ -445,7 +627,11 @@ private fun CompactGameControls(
 }
 
 @Composable
-private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
+private fun TurnSummary(
+    state: GameUiState,
+    onHistory: () -> Unit,
+    onOpenProfile: (String) -> Unit,
+) {
     val current = state.boardState.currentPlayer
     val turnTitle = when {
         state.mode == GameMode.ONLINE && state.isOnlineSyncing -> stringResource(R.string.game_sending_move)
@@ -455,9 +641,9 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
         state.mode == GameMode.ONLINE -> stringResource(R.string.game_turn_opponent)
         state.isAiThinking -> stringResource(R.string.game_ai_thinking)
         current == PlayerId.PLAYER_ONE -> stringResource(R.string.game_turn_blue)
-        else -> stringResource(R.string.game_turn_orange)
+        else -> stringResource(R.string.game_turn_red)
     }
-    val activeColor = if (current == PlayerId.PLAYER_ONE) Color(0xFF3F82FF) else Color(0xFFFF8A34)
+    val activeColor = SeatColors.pawn(current)
     val shouldPulse = state.acceptsHumanInput || state.mode == GameMode.LOCAL_TWO_PLAYER
     val transition = rememberInfiniteTransition(label = "turnBeacon")
     val beaconAlpha by transition.animateFloat(
@@ -501,26 +687,77 @@ private fun TurnSummary(state: GameUiState, onHistory: () -> Unit) {
                     Icon(Icons.Rounded.Info, contentDescription = stringResource(R.string.game_history))
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                PlayerWalls(playerName(PlayerId.PLAYER_ONE), state.boardState.player(PlayerId.PLAYER_ONE).wallsRemaining)
-                PlayerWalls(playerName(PlayerId.PLAYER_TWO), state.boardState.player(PlayerId.PLAYER_TWO).wallsRemaining)
+            // Half the row each at most, but only as much of it as they need: short labels
+            // still sit apart on the two edges, while a sixteen-character username next to
+            // "10 Mauern" is trimmed rather than shoving the other seat off the screen.
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SeatWalls(state, PlayerId.PLAYER_ONE, onOpenProfile, Modifier.weight(1f, false))
+                SeatWalls(state, PlayerId.PLAYER_TWO, onOpenProfile, Modifier.weight(1f, false))
             }
         }
     }
 }
 
+/**
+ * One seat's wall count under the turn banner.
+ *
+ * Online, the rival's half is a chip carrying their face and their username, and it is the way
+ * to their profile — this is the only line on the board screen that says who is actually on
+ * the other end of it, so it is the only honest place to put the tap. The other two modes keep
+ * plain text: a bot has no profile, and the person across the handset is already in the room.
+ */
 @Composable
-private fun playerName(player: PlayerId): String = when (player) {
-    PlayerId.PLAYER_ONE -> stringResource(R.string.game_player_blue)
-    PlayerId.PLAYER_TWO -> stringResource(R.string.game_player_orange)
+private fun SeatWalls(
+    state: GameUiState,
+    seat: PlayerId,
+    onOpenProfile: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val walls = state.boardState.player(seat).wallsRemaining
+    val opponent = state.onlineOpponent?.takeIf { state.isOnline && seat != state.localPlayer }
+    if (opponent == null) {
+        PlayerWalls(playerName(seat), walls, modifier)
+        return
+    }
+    val openLabel = stringResource(R.string.cd_open_profile)
+    Surface(
+        onClick = { onOpenProfile(opponent.userId) },
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = "${opponent.username}, $openLabel"
+        },
+    ) {
+        Row(
+            Modifier.padding(start = 4.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            PlayerAvatar(opponent.avatarId, opponent.username, size = 22.dp)
+            PlayerWalls(opponent.username, walls)
+        }
+    }
 }
 
+/** A seat's name is its colour, and the two are the same fact: seat one is blue. */
 @Composable
-private fun PlayerWalls(name: String, count: Int) {
+private fun playerName(player: PlayerId): String = stringResource(
+    if (player == PlayerId.PLAYER_ONE) R.string.game_player_blue else R.string.game_player_red,
+)
+
+@Composable
+private fun PlayerWalls(name: String, count: Int, modifier: Modifier = Modifier) {
     Text(
         pluralStringResource(R.plurals.game_player_walls, count, name, count),
+        modifier = modifier,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 

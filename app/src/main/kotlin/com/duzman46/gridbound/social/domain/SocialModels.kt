@@ -129,14 +129,53 @@ enum class PresenceState {
     OFFLINE,
 }
 
-/** An invitation into a specific room. */
-data class GameInvite(
-    val inviteId: String,
+/**
+ * What an entry on the live request channel is asking for.
+ *
+ * An invitation and a rematch both reach a player who is somewhere else in the app and are
+ * both answered with yes or no, so they travel together rather than on a channel each: one
+ * listener, one bar, and no way for a request to arrive somewhere nobody is watching.
+ */
+enum class RequestKind {
+    /** A friend has a room open and wants you in it. */
+    GAME_INVITE,
+
+    /** The player from the match that has just ended wants to play it again. */
+    REMATCH,
+
+    /**
+     * A rematch answered with no.
+     *
+     * It rides the same channel because it is the only way the asker hears anything at all:
+     * the entry they sent lives in the opponent's box, which they are not allowed to read.
+     */
+    REMATCH_DECLINED,
+    ;
+
+    /** True when the entry puts a question to the player, which is what the bar is for. */
+    val isAsk: Boolean get() = this != REMATCH_DECLINED
+}
+
+/**
+ * One entry on the channel a player listens to wherever they are in the app.
+ *
+ * Stored under the recipient and keyed by the sender, so asking twice refreshes a single entry
+ * instead of stacking up on someone's screen.
+ */
+data class PlayerRequest(
     val fromUserId: String,
     val fromUsername: String,
+    val kind: RequestKind,
+    /** Where to go on accept. On a decline, the room the asker opened and may now close. */
     val roomCode: String,
-    val createdAt: Long,
-    val expiresAt: Long,
+    /**
+     * The finished match the two of them just played. Empty on an invitation; on a rematch it
+     * is what the server checks in place of friendship, because having just played someone is
+     * the whole licence to ask them again.
+     */
+    val playedRoomCode: String = "",
+    val createdAt: Long = 0L,
+    val expiresAt: Long = 0L,
 ) {
     fun isExpired(now: Long): Boolean = expiresAt in 1..now
 }

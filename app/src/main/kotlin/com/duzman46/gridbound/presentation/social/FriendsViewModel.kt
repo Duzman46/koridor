@@ -3,23 +3,34 @@ package com.duzman46.gridbound.presentation.social
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.OnlineLobbyResult
+import com.duzman46.gridbound.online.model.OnlineSession
+import com.duzman46.gridbound.online.model.RoomConfiguration
+import com.duzman46.gridbound.online.model.RoomVisibility
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.session.SessionManager
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
 import com.duzman46.gridbound.social.domain.FriendshipStatus
-import com.duzman46.gridbound.social.domain.GameInvite
+import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.PresenceState
 import com.duzman46.gridbound.social.domain.SocialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -34,7 +45,9 @@ data class FriendsUiState(
     val searchMessage: UiText? = null,
     val friends: List<Friend> = emptyList(),
     val presence: Map<String, PresenceState> = emptyMap(),
-    val invites: List<GameInvite> = emptyList(),
+    val invites: List<PlayerRequest> = emptyList(),
+    /** Set while this player is holding a room open for a friend they have just invited. */
+    val hostedInvite: HostedInvite? = null,
     val isBusy: Boolean = false,
     val message: UiText? = null,
     val requiresAccount: Boolean = false,
@@ -60,6 +73,22 @@ data class FriendsUiState(
 }
 
 /**
+ * A room opened for one named friend, and the wait for them to walk into it.
+ *
+ * The name is carried rather than looked up again: the panel says who is being waited for, and
+ * that has to keep reading correctly even if the friend list underneath happens to change.
+ */
+data class HostedInvite(
+    val session: OnlineSession,
+    val friendName: String,
+)
+
+sealed interface FriendsEvent {
+    /** The invited friend has taken the other seat; both devices open the board now. */
+    data class OpenGame(val session: OnlineSession) : FriendsEvent
+}
+
+/**
  * Backs the friends screen: search, requests, blocking and invitations.
  *
  * Presence is observed only for the players already on screen, so opening this screen costs
@@ -69,6 +98,7 @@ data class FriendsUiState(
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
     private val repository: SocialRepository,
+    private val onlineRepository: OnlineGameRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
 
@@ -76,6 +106,11 @@ class FriendsViewModel @Inject constructor(
         FriendsUiState(requiresAccount = !sessionManager.state.value.canUseSocialFeatures),
     )
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<FriendsEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<FriendsEvent> = _events.asSharedFlow()
+
+    private var hostedInviteJob: Job? = null
 
     private val friendsFlow: StateFlow<List<Friend>> = sessionManager.state
         .flatMapLatest { session ->
@@ -104,10 +139,15 @@ class FriendsViewModel @Inject constructor(
                 .flatMapLatest { session ->
                     session.user?.userId
                         ?.takeIf { session.canUseSocialFeatures }
-                        ?.let(repository::observeInvites)
+                        ?.let(repository::observeRequests)
                         ?: flowOf(emptyList())
                 }
-                .collect { invites -> _uiState.update { it.copy(invites = invites) } }
+                // The bar over the app answers a request the moment it arrives; this list is
+                // the standing record of what is still open, so only the asks belong in it.
+                .collect { requests ->
+                    val open = requests.filter { it.kind.isAsk }
+                    _uiState.update { it.copy(invites = open) }
+                }
         }
         viewModelScope.launch {
             sessionManager.state.collect { session ->
@@ -167,30 +207,106 @@ class FriendsViewModel @Inject constructor(
 
     fun unblock(userId: String) = act(userId, FriendshipAction.UNBLOCK)
 
-    fun invite(userId: String, roomCode: String) {
-        val ownId = sessionManager.state.value.user?.userId ?: return
-        if (_uiState.value.isBusy) return
+    /**
+     * Opens a room for one friend and tells them about it, then holds the screen on that room
+     * until they arrive.
+     *
+     * The room comes first and the invitation second, because an invitation carries a code and
+     * there is no code until the room exists. If the invitation then fails to send there is
+     * nobody coming, so the room is closed again rather than left waiting for a message that
+     * was never delivered.
+     *
+     * Friends-only visibility: this room was opened for one person, and a stranger taking the
+     * seat out of the public browser would be exactly the wrong outcome.
+     */
+    fun inviteToGame(friend: Friend) {
+        val account = sessionManager.state.value
+        val ownId = account.user?.userId ?: return
+        val ownName = account.profile?.username.orEmpty()
+        if (_uiState.value.isBusy || _uiState.value.hostedInvite != null) return
         _uiState.update { it.copy(isBusy = true, message = null) }
         viewModelScope.launch {
-            val result = repository.sendInvite(ownId, userId, roomCode)
-            _uiState.update {
-                it.copy(
-                    isBusy = false,
-                    message = when (result) {
-                        is Outcome.Success -> UiText.Res(R.string.friends_invite_sent)
-                        is Outcome.Failure -> result.error.message
-                    },
-                )
+            val room = invitationRoom(ranked = account.canUseSocialFeatures)
+            when (val opened = onlineRepository.createRoom(room)) {
+                is OnlineLobbyResult.Failure -> _uiState.update {
+                    it.copy(isBusy = false, message = opened.error.message)
+                }
+
+                is OnlineLobbyResult.Success -> {
+                    val session = opened.session
+                    val sent =
+                        repository.sendInvite(ownId, ownName, friend.userId, session.roomCode)
+                    if (sent is Outcome.Failure) {
+                        onlineRepository.leaveRoom(session)
+                        _uiState.update { it.copy(isBusy = false, message = sent.error.message) }
+                        return@launch
+                    }
+                    // No "invitation sent" note: the panel that replaces this screen says who
+                    // is being waited for, which is the same news said better.
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            hostedInvite = HostedInvite(session, friend.username),
+                        )
+                    }
+                    awaitInvitedFriend(session)
+                }
             }
         }
     }
 
-    fun dismissInvite(inviteId: String) {
-        val ownId = sessionManager.state.value.user?.userId ?: return
-        viewModelScope.launch { repository.dismissInvite(ownId, inviteId) }
+    /** Gives up on the room, so the friend cannot walk into a seat nobody is holding. */
+    fun cancelHostedInvite() {
+        val hosted = _uiState.value.hostedInvite ?: return
+        hostedInviteJob?.cancel()
+        _uiState.update { it.copy(hostedInvite = null, message = null) }
+        viewModelScope.launch { onlineRepository.leaveRoom(hosted.session) }
     }
 
-    fun dismissMessage() = _uiState.update { it.copy(message = null, searchMessage = null) }
+    /**
+     * The same wait the lobby does after creating a room: watch it until the second seat fills,
+     * then hand the session to the screen so it can open the board.
+     */
+    private fun awaitInvitedFriend(session: OnlineSession) {
+        hostedInviteJob?.cancel()
+        hostedInviteJob = viewModelScope.launch {
+            onlineRepository.observeRoom(session.roomCode)
+                .catch { _uiState.update { state -> state.copy(hostedInvite = null) } }
+                .collect { room ->
+                    when {
+                        room.status.isPlayable && room.playerCount == 2 -> {
+                            _events.emit(FriendsEvent.OpenGame(session))
+                            hostedInviteJob?.cancel()
+                        }
+
+                        room.status.isOver -> _uiState.update {
+                            it.copy(hostedInvite = null, message = AppError.ROOM_NOT_FOUND.message)
+                        }
+
+                        else -> Unit
+                    }
+                }
+        }
+    }
+
+    /**
+     * A standard game, deliberately not whatever the player last set up in the lobby's create
+     * form: an invitation is "come and play", not a negotiation about the rules.
+     *
+     * A null seat leaves the colours to be drawn, so inviting somebody is not also a way to
+     * take the first move off them every time. Ranked only where a rating can follow the
+     * players, which on this screen is always — friends need an account — but stated rather
+     * than assumed.
+     */
+    private fun invitationRoom(ranked: Boolean) = RoomConfiguration(
+        visibility = RoomVisibility.FRIENDS,
+        ranked = ranked,
+    )
+
+    fun dismissInvite(fromUserId: String) {
+        val ownId = sessionManager.state.value.user?.userId ?: return
+        viewModelScope.launch { repository.clearRequest(ownId, fromUserId) }
+    }
 
     private fun act(otherUserId: String, action: FriendshipAction) {
         val ownId = sessionManager.state.value.user?.userId ?: return

@@ -1,8 +1,8 @@
 # Koridor — Manuel Test Senaryoları
 
-Otomatik testler saf mantığı kapsar (154 JVM testi). Bu belge, **yalnızca gerçek cihazda
-doğrulanabilecek** senaryoları listeler: ağ davranışı, iki cihaz arası eşzamanlılık, sistem
-diyalogları ve görsel yerleşim.
+Otomatik testler saf mantığı kapsar (202 JVM testi, 128 güvenlik kuralı testi). Bu belge,
+**yalnızca gerçek cihazda doğrulanabilecek** senaryoları listeler: ağ davranışı, iki cihaz
+arası eşzamanlılık, sistem diyalogları ve görsel yerleşim.
 
 Her senaryonun sonunda beklenen davranış yazılıdır. Bir madde geçmezse, hangi adımda
 başarısız olduğu not edilmelidir.
@@ -15,19 +15,20 @@ başarısız olduğu not edilmelidir.
 ## A. Çevrim içi maç — iki gerçek cihaz
 
 ### A1. Oda oluşturma ve kodla katılma
-1. Cihaz 1: Çevrim İçi Oyna → Oda oluştur → oda adı gir, "Sadece kodla", dereceli açık → Oda oluştur
+1. Cihaz 1: Çevrim İçi Oyna → Oda oluştur → oda adı gir, dereceli açık → Oda oluştur
 2. Cihaz 1: 6 karakterli kod görünmeli, bekleme ekranı açılmalı
 3. Cihaz 2: Çevrim İçi Oyna → Kodla katıl → kodu gir → Katıl
 4. **Beklenen:** İki cihazda da tahta açılır; Cihaz 1 (mavi) başlar, Cihaz 2 tahtayı ters çevrilmiş görür.
 
 ### A2. Açık odalar listesinden katılma
-1. Cihaz 1: Oda oluştur → görünürlük **Herkes**
-2. Cihaz 2: Açık odalar sekmesi → yenile
+1. Cihaz 1: Oda oluştur (her oda listelenir; artık seçilecek bir görünürlük yok)
+2. Cihaz 2: Açık odalar listesi kendiliğinden tazelenir — **on beş saniye içinde**, hiçbir
+   şeye dokunmadan
 3. **Beklenen:** Oda listede görünür; oda adı, sahibinin kullanıcı adı ve puanı, süre, dereceli/derecesiz ve 1/2 oyuncu sayısı doğru.
 4. Cihaz 2: Odaya dokun → maç başlar, oda listeden kaybolur.
 
 ### A3. Şifreli oda
-1. Cihaz 1: Oda oluştur → şifre `1234` (en az 4 karakter) → Herkes
+1. Cihaz 1: Oda oluştur → şifre `1234` (en az 4 karakter)
 2. Cihaz 2: Listeden odaya dokun → şifre sorulur → **yanlış** şifre gir
 3. **Beklenen:** "Oda şifresi hatalı" mesajı, maç başlamaz.
 4. Doğru şifreyi gir → maç başlar.
@@ -36,11 +37,23 @@ başarısız olduğu not edilmelidir.
 1. Maç sürerken iki cihazda da aynı anda hamle yapmayı deneyin (sırası olmayan taraf da dokunsun)
 2. **Beklenen:** Sırası olmayan oyuncunun dokunuşu hiçbir şey yapmaz. Tahta iki cihazda da aynı kalır, tur numarası tek artar. Hiçbir cihazda "hayalet" hamle görünmez.
 
-### A5. Hızlı eşleşme
-1. Cihaz 1: Oda oluştur → **Herkes** görünürlüğü, şifresiz
-2. Cihaz 2: Hızlı eşleşme
-3. **Beklenen:** Cihaz 2 doğrudan Cihaz 1'in odasına girer.
-4. Hiç açık oda yokken Hızlı eşleşme: **Beklenen:** "Rakip bulunamadı. Bunun yerine bir oda oluşturmayı dene."
+### A5. Hızlı eşleşme — sıraya girme
+Hızlı eşleşme artık oda açmaz; oyuncuyu bir bekleme listesine yazar. Asıl sınav 3. maddedir:
+eskiden iki oyuncu aynı anda bastığında ikisi de kendi odasında kalıp birbirini hiç bulmuyordu.
+
+1. Cihaz 1: Hızlı eşleşme → **Beklenen:** "Rakip aranıyor…" ekranı; **oda kodu gösterilmez**
+   (girilecek bir oda yok, arkadaş davet listesi de çıkmaz).
+2. Cihaz 2: Hızlı eşleşme → **Beklenen:** iki cihazda da maç birkaç saniye içinde başlar.
+3. Aynı anda: iki cihazda da Hızlı eşleşme'ye **aynı anda** basın → **Beklenen:** yine tek bir
+   maç açılır, iki cihaz da aynı tahtaya girer.
+4. Renkler çekilişle belirlenir: 3. maddeyi birkaç kez tekrarlayın → **Beklenen:** hangi cihazın
+   mavi olduğu değişir, hiçbir yerde renk seçtiren bir kontrol çıkmaz, mavi olan başlar.
+5. Cihaz 1: Hızlı eşleşme → İptal → Cihaz 2: Hızlı eşleşme → **Beklenen:** Cihaz 2 eşleşmez,
+   beklemede kalır (Cihaz 1 sıradan çıkmıştır).
+6. Cihaz 1: Hızlı eşleşme → uygulamayı arka plana al → Cihaz 2: Hızlı eşleşme →
+   **Beklenen:** Cihaz 2 eşleşmez. Cihaz 1 geri geldiğinde de maça düşmüş olmaz.
+7. Cihaz 1: Hızlı eşleşme → uygulamayı görev listesinden **tamamen kapat** → Cihaz 2: Hızlı
+   eşleşme → **Beklenen:** Cihaz 2 eşleşmez; kapanan cihazın adı listeden düşmüştür.
 
 ---
 
@@ -52,21 +65,30 @@ başarısız olduğu not edilmelidir.
 3. **Beklenen:** Hamle gitmez, "Yeniden bağlanılıyor…" görünür, uygulama **çökmez**.
 4. Uçak modunu kapat → **Beklenen:** Tahta otomatik olarak güncel duruma senkronize olur.
 
-### B2. Uygulamayı kapatıp maça geri dönme
-1. Maç sürerken Cihaz 2'de uygulamayı **görev listesinden tamamen kapat**
-2. Uygulamayı yeniden aç → Çevrim İçi Oyna
-3. **Beklenen:** "Maçına dön" kartı görünür. Dokununca aynı maça aynı tahtayla dönülür.
+### B2. Maçı terk etme
+Bir maçın açık kalıp kimseyi beklememesi gerekir; geri dönülecek bir maç artık yoktur.
+
+1. Maç sürerken Cihaz 2'de geri tuşuna bas → **Beklenen:** "çıkarsan maçı kaybedersin" uyarısı
+2. Onayla → **Beklenen:** Cihaz 2 doğrudan ana menüye çıkar — kapıyı isteyen oyuncuya giderken
+   skor tabelası gösterilmez. Cihaz 1'de kazanan ekranı açılır ve "Rakibin maçtan ayrıldı." der.
+3. Cihaz 2: Çevrim İçi Oyna → **Beklenen:** Lobide "maçına dön" gibi bir kart **yoktur**;
+   biten maç açık odalar listesinde de görünmez.
+4. Ayrı bir maçta Cihaz 2'de uygulamayı **görev listesinden tamamen kapat** ve on dakika bekle
+   → **Beklenen:** Cihaz 1'de maç kendiliğinden biter, sırası gelen taraf kaybeder.
 
 ### B3. Kısa kopma yenilgi sayılmamalı
 1. Maç sürerken Cihaz 2'yi 10 saniye uçak moduna al, sonra geri getir
 2. **Beklenen:** Maç devam eder, kimse kaybetmez.
 
 ### B4. Süre aşımı
-1. Oda oluştururken **hamle süresi 30 sn** seç
+Süresi biten tur maçı kendisi bitirir; kimsenin bir şeye basması gerekmez.
+
+1. Oda oluştururken **hamle süresi 30 sn** seç (toplam maç süresi diye bir ayar yoktur)
 2. Sırası gelen oyuncu hiçbir şey yapmasın
-3. **Beklenen:** Sayaç 0:00'a iner, karşı tarafta "Galibiyeti al" butonu belirir.
-4. Butona bas → **Beklenen:** Maç biter, kazanan doğru.
-5. **Ayrıca:** Sırası olan oyuncuda "Galibiyeti al" butonu **görünmemeli**.
+3. **Beklenen:** Son beş saniyede sayaç kırmızıya döner ve uyarı sesi **yalnızca sırası olan
+   oyuncuda** bir kez çalar.
+4. **Beklenen:** 0:00'da maç iki cihazda da kendiliğinden biter, kazanan doğru, kazanan
+   ekranında "süre doldu" yazar. Basılacak bir "galibiyeti al" butonu **yoktur**.
 
 ### B5. Pes etme
 1. Maç sürerken üst çubuktaki bayrak simgesine bas → onayla
@@ -87,6 +109,12 @@ başarısız olduğu not edilmelidir.
 2. Öğreticiyi tamamla, birkaç yerel maç oyna, profilden kullanıcı adını değiştir
 3. Ayarlar → Hesap → **E-posta ile bağla** (veya Google ile bağla)
 4. **Beklenen:** Aynı kullanıcı adı, aynı öğretici durumu, aynı istatistikler korunur. "Misafir" rozeti kaybolur. Arkadaşlar ve dereceli maç açılır.
+
+### C1b. Misafir liderlik tablosunda görünmemeli (kritik)
+1. Misafirken **Liderlik Tablosu** → Genel ve Haftalık sekmelerini aç
+2. **Beklenen:** Kendi adın hiçbir sekmede yok; alttaki çubuk sıra yerine "Misafirler liderlik tablosunda yer almaz" der. Tablo yine de okunabilir.
+3. Ayarlar → Hesap → Google ile bağla → uygulamayı kapatıp aç → Liderlik Tablosu
+4. **Beklenen:** Artık tablodasın ve puanın misafirken taşıdığın puanla aynı.
 
 ### C2. Google girişini iptal etme
 1. Karşılama ekranı → Google ile devam et → hesap seçiciyi **geri tuşuyla kapat**
@@ -113,9 +141,28 @@ başarısız olduğu not edilmelidir.
 2. **Beklenen:** Karşılama ekranına dönülür. Aynı e-posta ile tekrar giriş **yapılamaz** (hesap yok).
 3. Silinen kullanıcının arkadaş listesindeki bir hesapla giriş yap → **Beklenen:** Silinen kişi listede yok.
 
+### C7. Aynı cihazda ikinci hesap — kullanıcı adı kapısı (kritik)
+Öğreticiyi bir kez bitirmiş bir cihazda, **uygulamayı hiç kapatmadan** ikinci bir hesaba
+geçmek kapıyı atlatabiliyordu: giriş ekranı, o ekran çizildiği andaki oturumu okuyordu ve o
+oturum hâlâ önceki oyuncuya aitti.
+1. Misafir olarak gir, öğreticiyi bitir, ana menüye ulaş
+2. Ayarlar → Hesap → **Çıkış yap** (uygulamayı kapatma)
+3. Karşılama ekranı → daha önce hiç kullanılmamış bir e-posta ile **yeni hesap oluştur**
+4. **Beklenen:** Öğretici tekrar sorulmaz ama **kullanıcı adı ekranı gelir** ve geri tuşu onu
+   kapatmaz. Ad seçilmeden ana menüye ulaşılamaz.
+5. Aynı adımları Google ile girişte tekrarla → **Beklenen:** aynı.
+
 ---
 
-## D. Arkadaşlık ve davet
+## D. Arkadaşlık, davet ve rövanş
+
+### D0. Arkadaşlar ekranına ulaşma
+1. Ana menü → **sol üstteki arkadaş simgesi** → **Beklenen:** Arkadaşlar ekranı açılır.
+2. Ana menü → "Diğer" → **Beklenen:** listede arkadaşlar girişi **yoktur** (tek yol simgedir).
+3. Ana menü → sağ üstteki profil arması → **Beklenen:** profil sayfasından da Arkadaşlar'a
+   gidilebilir.
+4. Dili العربية yap ve 1. maddeyi tekrarla → **Beklenen:** simge sağ üste geçer, ayarlar/dil
+   armaları sola; hiçbiri tahtanın duvar rafıyla çakışmaz.
 
 ### D1. Arkadaş ekleme
 1. Cihaz 2'nin kullanıcı adını Cihaz 1'de ara → Arkadaş ekle
@@ -132,9 +179,59 @@ başarısız olduğu not edilmelidir.
 3. **Beklenen:** İstek gönderilemez. Cihaz 2'de "engellendiniz" gibi bir mesaj **görünmez** (sessiz başarısızlık).
 4. Cihaz 1: Engeli kaldır → istek tekrar gönderilebilir olmalı.
 
-### D4. Oyuna davet
+### D4. Oyuna davet — iki yol
 1. Cihaz 1: Oda oluştur → bekleme ekranında arkadaş listesinden Cihaz 2'yi davet et
 2. **Beklenen:** Cihaz 2'nin Arkadaşlar ekranında davet görünür → Katıl → doğrudan o odaya girer.
+3. Cihaz 1: Arkadaşlar → arkadaş satırındaki **oyun kolu simgesi** → **Beklenen:** liste yerini
+   bekleme paneline bırakır: "… bekleniyor", oda kodu ve "Odayı kapat".
+4. Cihaz 2 daveti kabul edince → **Beklenen:** iki cihazda da tahta açılır; geri tuşu
+   arkadaşlar ekranına değil, ana menüye çıkar (oda paneli geride bırakılmaz).
+5. Cihaz 1: 3. maddeyi tekrarla, ama bu kez **Odayı kapat**'a bas → **Beklenen:** panel kapanır
+   ve Cihaz 2'nin daveti artık bir odaya götürmez.
+
+### D5. İstek çubuğu — davet nerede olursan ol gelir
+Rövanş ve oyun daveti aynı canlı kanalda gider; ikisi de ekranın tepesinde tek bir çubukta çıkar.
+
+1. Cihaz 2: **oyun ekranında** dur (bota karşı bir maç açık olsun)
+2. Cihaz 1: Arkadaşlar → Cihaz 2'yi oyuna davet et
+3. **Beklenen:** Cihaz 2'de tepede bir çubuk belirir — "… seni maça davet etti", kabul ve ret
+   simgeleriyle. Çubuk, ekranın **geri butonunun üstüne binmez**, onun altında durur.
+4. Çubuğun **dışına** dokun → **Beklenen:** dokunuş alttaki ekrana geçer, çubuk kaybolmaz.
+5. Kabul et → **Beklenen:** bot maçı kapanır, yerine çevrim içi tahta açılır; geri tuşu
+   **ikinci bir tahtaya çıkmaz** (üst üste binmiş iki maç yok).
+6. Tekrar dene, bu kez **reddet** → **Beklenen:** çubuk kapanır, Cihaz 1'in odası bekler.
+7. Şifreli bir odaya davet et → kabul et → **Beklenen:** çubukta şifre sorulmaz; lobiye kod
+   girilmiş hâlde gidilir.
+8. Sistem Ayarları → Erişilebilirlik → **Animasyonları kaldır** açıkken tekrarla →
+   **Beklenen:** çubuk kayarak değil, doğrudan belirir.
+
+### D6. Rövanş
+1. İki cihazla çevrim içi bir maç oyna ve bitir
+2. **Beklenen:** Kazanan ekranında "Rövanş" ve altında "Başka bir oyun" düğmeleri; bota veya
+   aynı telefonda oynanan maçtan sonra yalnızca eski "Tekrar oyna" düğmesi çıkar.
+3. Cihaz 1: **Rövanş** → **Beklenen:** "Rakibinin yanıtı bekleniyor…"; Cihaz 2'de tepede
+   "… rövanş istiyor" çubuğu belirir.
+4. Cihaz 2: Kabul et → **Beklenen:** iki cihazda da yeni maç açılır ve **renkler ilk maça göre
+   yer değiştirir** — ilk maçta mavi olan bu kez kırmızıdır; yine mavi olan başlar.
+5. Tekrarla, bu kez Cihaz 2 **reddetsin** → **Beklenen:** Cihaz 1'de "Rakibin rövanşı kabul
+   etmedi." yazar, "Başka bir oyun" ve "Ana menü" hâlâ tek dokunuş uzakta.
+6. Tekrarla, bu kez Cihaz 1 yanıt gelmeden **Ana menü**'ye çıksın → **Beklenen:** Cihaz 2'deki
+   çubuk kaybolur ve o oda kapanmıştır (kod lobide işe yaramaz).
+7. Cihaz 1 misafir hesapla oynasın → **Beklenen:** kazanan ekranında Rövanş **yoktur**, düğme
+   eski hâliyle "Tekrar oyna"dır.
+
+### D7. Rakibin profili
+1. Çevrim içi maç sürerken tur başlığındaki **rakip adına** dokun
+2. **Beklenen:** rakibin profili açılır — kullanıcı adı, avatarı, puanı ve "Arkadaş ekle".
+   Sayfada "Profili düzenle" gibi kendi hesabına ait hiçbir düğme **yoktur**.
+3. Arkadaş ekle → Cihaz 2 kabul etsin (sayfa açıkken) → **Beklenen:** düğme kendiliğinden
+   "Arkadaşsınız"a döner.
+4. Bota karşı ve aynı telefonda oynanan maçlarda tur başlığı → **Beklenen:** isimler düz yazıdır,
+   dokunulacak bir şey yoktur.
+5. Liderlik tablosunda bir satıra dokun → **Beklenen:** aynı profil sayfası açılır. Ekranın
+   altına sabitlenmiş **kendi** sıralamana dokunmak hiçbir şey yapmaz.
+6. Liderlik tablosunda **kendi** satırına dokun → **Beklenen:** sayfa açılır ama arkadaşlık
+   düğmesi hiç çıkmaz.
 
 ---
 

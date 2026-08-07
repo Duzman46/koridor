@@ -34,8 +34,7 @@ Son güncelleme: uygulama sürümü 0.4.0.
 |---|---|---|---|---|
 | E-posta adresi | Hayır (yalnızca e-posta ile kayıtta) | Hesap kimliği, şifre sıfırlama | Firebase Auth + `usersPrivate/{uid}/email` | **Hayır** |
 | Kullanıcı kimliği (UID) | Evet | Tüm verilerin anahtarı | Firebase | Dolaylı (profil erişimi için) |
-| Kullanıcı adı | Evet | Oyuncuların birbirini bulması | `users/{uid}/username` | **Evet** |
-| Görünen ad | Evet | Profilde gösterim | `users/{uid}/displayName` | **Evet** |
+| Kullanıcı adı | Evet | Oyuncuların birbirini bulması ve profilde gösterim | `users/{uid}/username` | **Evet** |
 | Avatar kimliği | Evet | Profil görseli (yerel olarak çizilir, dosya yüklenmez) | `users/{uid}/avatarId` | **Evet** |
 | Hesap türü (misafir/e-posta/Google) | Evet | Özellik erişimi | `users/{uid}/accountType` | Evet |
 | Dil tercihi | Hayır | Cihazlar arası dil senkronizasyonu | `users/{uid}/preferredLanguage` | Evet |
@@ -162,7 +161,7 @@ Aşağıdaki tablo forma doğrudan aktarılabilir.
 |---|---|---|---|---|---|
 | Kişisel bilgiler | E-posta adresi | ✅ | ❌ | Hayır | Hesap yönetimi |
 | Kişisel bilgiler | Kullanıcı kimlikleri | ✅ | ❌ | Evet | Hesap yönetimi, Uygulama işlevselliği |
-| Kişisel bilgiler | Ad (görünen ad / kullanıcı adı) | ✅ | ❌ | Evet | Uygulama işlevselliği |
+| Kişisel bilgiler | Ad (kullanıcı adı) | ✅ | ❌ | Evet | Uygulama işlevselliği |
 | Uygulama etkinliği | Uygulama içi eylemler (maç sonuçları, istatistikler) | ✅ | ❌ | Evet | Uygulama işlevselliği |
 | Uygulama etkinliği | Diğer kullanıcı tarafından oluşturulan içerik (oda adı) | ✅ | ❌ | Hayır | Uygulama işlevselliği |
 | Finansal bilgiler | Satın alma geçmişi | ✅ | ❌ | Hayır | Uygulama işlevselliği |

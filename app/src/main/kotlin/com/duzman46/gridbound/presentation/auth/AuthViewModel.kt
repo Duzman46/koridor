@@ -33,11 +33,12 @@ data class AuthUiState(
 )
 
 sealed interface AuthEvent {
-    /** The player is in and the tutorial gate should decide where they land. */
+    /**
+     * There is an identity now. Where the player lands — the tutorial, the username picker
+     * or the game — is not this screen's business; the entry gate decides, so that a new
+     * account and a returning one are held to the same sequence.
+     */
     data object Entered : AuthEvent
-
-    /** A brand new account: send them to pick a username before anything else. */
-    data object NeedsUsername : AuthEvent
 
     data object PasswordResetSent : AuthEvent
 }
@@ -105,13 +106,12 @@ class AuthViewModel @Inject constructor(
         if (!EmailRules.isValid(state.email)) return@submit fail(AppError.EMAIL_INVALID)
         val password = PasswordRules.validateMatching(state.password, state.confirmPassword)
         if (password is Outcome.Failure) return@submit fail(password.error)
-        val result = sessionManager.createAccountWithEmail(
-            email = state.email,
-            password = state.password,
-            username = state.email.substringBefore('@'),
-        )
+        // No name is suggested from the address: a username is public, and half of an email
+        // address is not something to publish on a player's behalf. They pick one at the
+        // entry gate, which is where every other new account picks one too.
+        val result = sessionManager.createAccountWithEmail(state.email, state.password)
         when (result) {
-            is Outcome.Success -> _events.emit(AuthEvent.NeedsUsername)
+            is Outcome.Success -> _events.emit(AuthEvent.Entered)
             is Outcome.Failure -> fail(result.error)
         }
     }

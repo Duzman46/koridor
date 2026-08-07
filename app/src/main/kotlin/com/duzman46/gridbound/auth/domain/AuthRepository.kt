@@ -43,6 +43,21 @@ interface AuthRepository {
     suspend fun signOut()
 
     /**
+     * Presents the account's own credential again, so Firebase counts the sign-in as fresh.
+     *
+     * Destructive operations are refused on a session that has been open for a while, and
+     * the refusal arrives as an exception thrown by the operation itself rather than as a
+     * question the player could have answered. Asking first turns it into a prompt they
+     * expect, before anything irreversible has happened.
+     *
+     * @param activityContext the hosting Activity, or null when none could be reached. A
+     *   Google account is proved through the Credential Manager sheet, which has nowhere to
+     *   draw without one and says so rather than failing silently.
+     * @param password the account's password, read only for an email account.
+     */
+    suspend fun reauthenticate(activityContext: Context?, password: String): Outcome<Unit>
+
+    /**
      * Removes the Firebase identity. Profile data is erased by
      * [com.duzman46.gridbound.profile.domain.UserProfileRepository.deleteAccountData]
      * before this is called, because the rules stop allowing those writes afterwards.

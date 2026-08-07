@@ -13,6 +13,7 @@ import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -26,8 +27,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 @Singleton
 class FirebaseAuthRepository @Inject constructor(
@@ -40,18 +45,37 @@ class FirebaseAuthRepository @Inject constructor(
     override val isGoogleSignInAvailable: Boolean
         get() = firebase.isConfigured && googleCredentialClient.isAvailable
 
+    /**
+     * Nudged after an operation that changes who the current user is without replacing them.
+     *
+     * Linking a credential onto an anonymous user is the case that matters: the uid is
+     * unchanged, so as far as Firebase's listeners are concerned nobody signed in and nobody
+     * signed out, and the app would go on believing it is talking to a guest. The player
+     * sees a link that appears to do nothing.
+     */
+    private val identityChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     override val authState: Flow<AuthState> =
         if (!firebase.isConfigured) {
             flowOf(AuthState.SignedOut)
         } else {
-            callbackFlow {
-                val auth = firebase.auth
-                val listener = FirebaseAuth.AuthStateListener { instance ->
-                    trySend(instance.currentUser.toAuthState())
-                }
-                auth.addAuthStateListener(listener)
-                awaitClose { auth.removeAuthStateListener(listener) }
-            }
+            merge(
+                callbackFlow {
+                    val auth = firebase.auth
+                    // The token listener rather than the auth-state one: the latter reports
+                    // only a change of user, and gaining a credential is a change to the
+                    // user you already had.
+                    val listener = FirebaseAuth.IdTokenListener { instance ->
+                        trySend(instance.currentUser.toAuthState())
+                    }
+                    auth.addIdTokenListener(listener)
+                    awaitClose { auth.removeIdTokenListener(listener) }
+                },
+                identityChanged.map { firebase.auth.currentUser.toAuthState() },
+            )
+                // A token refreshes roughly hourly and says nothing new about the identity.
+                // Passing that on would restart every listener downstream for no reason.
+                .distinctUntilChanged()
         }
 
     override fun currentUser(): AuthUser? =
@@ -100,8 +124,7 @@ class FirebaseAuthRepository @Inject constructor(
         }
 
     override suspend fun linkGuestWithEmail(email: String, password: String): Outcome<AuthUser> {
-        val credential = com.google.firebase.auth.EmailAuthProvider
-            .getCredential(email.trim(), password)
+        val credential = EmailAuthProvider.getCredential(email.trim(), password)
         return linkCurrentUser("link-email") { it.linkWithCredential(credential).await().user }
     }
 
@@ -109,6 +132,39 @@ class FirebaseAuthRepository @Inject constructor(
         if (!firebase.isConfigured) return
         firebase.auth.signOut()
         googleCredentialClient.clearSelection()
+    }
+
+    override suspend fun reauthenticate(activityContext: Context?, password: String): Outcome<Unit> {
+        if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
+        val user = firebase.auth.currentUser ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
+        val credential = when (user.resolveAccountType()) {
+            // Anonymous play rests on the session alone. There is no credential to present,
+            // and Firebase asks for none.
+            AccountType.GUEST -> return Outcome.Success(Unit)
+
+            AccountType.GOOGLE -> {
+                val host = activityContext ?: return Outcome.Failure(AppError.GOOGLE_UNAVAILABLE)
+                when (val token = googleCredentialClient.requestIdToken(host)) {
+                    is Outcome.Failure -> return token
+                    is Outcome.Success -> GoogleAuthProvider.getCredential(token.value, null)
+                }
+            }
+
+            AccountType.EMAIL -> {
+                val email = user.email
+                if (email.isNullOrBlank() || password.isEmpty()) {
+                    return Outcome.Failure(AppError.INVALID_CREDENTIALS)
+                }
+                EmailAuthProvider.getCredential(email, password)
+            }
+        }
+        return try {
+            user.reauthenticate(credential).await()
+            Outcome.Success(Unit)
+        } catch (error: Exception) {
+            AppLog.warn("reauthenticate", error)
+            Outcome.Failure(error.toAppError())
+        }
     }
 
     override suspend fun deleteAccount(): Outcome<Unit> {
@@ -136,6 +192,7 @@ class FirebaseAuthRepository @Inject constructor(
         val current = firebase.auth.currentUser ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
         return try {
             val linked = block(current) ?: return Outcome.Failure(AppError.UNKNOWN)
+            identityChanged.tryEmit(Unit)
             Outcome.Success(linked.toAuthUser())
         } catch (error: Exception) {
             AppLog.warn(operation, error)

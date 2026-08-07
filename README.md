@@ -259,6 +259,11 @@ Cihazda doğrulanması gereken senaryolar: [`docs/MANUAL_TESTS.md`](docs/MANUAL_
 - `rating`, `wins`, `losses`, `draws`, `totalGames`, `highestRating`, seriler ve
   `purchasedEntitlements` alanlarının **istemci yazma kuralı yoktur**. Yalnızca Admin SDK
   kullanan Cloud Functions yazabilir.
+- Liderlik tablosu `rating` ile değil, `leaderboardRating` ile sıralanır: aynı sayının yalnızca
+  hesabını bağlamış oyuncuda bulunan bir kopyası. Kural bu kopyayı `rating` ile birebir eşit
+  olmaya zorlar ve `GUEST` profiline yazdırmaz; `/users` üzerinde izin verilen tek sorgu da bu
+  dizin üzerindendir. Haftalık tabloya ise sunucu misafir için hiç satır yazmaz. Misafir
+  tablodan **süzülmez**, dizinde hiç bulunmaz; hesabını bağladığı gün kazandığı puanla girer.
 - Maç raporu, odanın kendi `winnerUserId` ve `endReason` alanlarıyla **birebir eşleşmek
   zorundadır**; oda kuralları bu değerleri tahtaya (normal bitiş) veya sunucu saatine
   (süre aşımı) karşı doğrular.

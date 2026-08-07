@@ -15,8 +15,9 @@ import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
 import com.duzman46.gridbound.social.domain.FriendshipRules
 import com.duzman46.gridbound.social.domain.FriendshipStatus
-import com.duzman46.gridbound.social.domain.GameInvite
+import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.PresenceState
+import com.duzman46.gridbound.social.domain.RequestKind
 import com.duzman46.gridbound.social.domain.SocialRepository
 import com.duzman46.gridbound.util.enumValueOrDefault
 import com.google.firebase.FirebaseNetworkException
@@ -76,15 +77,15 @@ class RtdbSocialRepository @Inject constructor(
             }
     }
 
-    override fun observeInvites(userId: String): Flow<List<GameInvite>> {
+    override fun observeRequests(userId: String): Flow<List<PlayerRequest>> {
         if (!firebase.isConfigured || userId.isBlank()) return flowOf(emptyList())
         return invitesRef(userId).snapshotFlow()
             .map { snapshot ->
                 val now = System.currentTimeMillis()
-                snapshot.children.mapNotNull(::decodeInvite).filterNot { it.isExpired(now) }
+                snapshot.children.mapNotNull(::decodeRequest).filterNot { it.isExpired(now) }
             }
             .catch { error ->
-                AppLog.warn("observe-invites", error)
+                AppLog.warn("observe-requests", error)
                 emit(emptyList())
             }
     }
@@ -132,8 +133,13 @@ class RtdbSocialRepository @Inject constructor(
         if (userId == otherUserId) return Outcome.Failure(AppError.UNKNOWN)
         return dbCall("friendship-${action.name.lowercase()}") {
             val mine = readStatus(userId, otherUserId)
-            val theirs = readStatus(otherUserId, userId)
-            val update = FriendshipRules.apply(action, mine, theirs)
+            // Only our own half is read. friendships/{them}/{me} is readable by them alone —
+            // reading it to find out whether they had blocked us was rejected by the rules,
+            // which failed every single friendship action before the write was even tried.
+            // The rules already enforce that invariant on write: the update to their half is
+            // refused when they have us blocked, and refusing there is also what keeps a
+            // block from being detectable.
+            val update = FriendshipRules.apply(action, mine, FriendshipStatus.NONE)
                 ?: return@dbCall Outcome.Failure(AppError.UNKNOWN)
 
             val now = System.currentTimeMillis()
@@ -153,31 +159,64 @@ class RtdbSocialRepository @Inject constructor(
 
     override suspend fun sendInvite(
         fromUserId: String,
+        fromUsername: String,
         toUserId: String,
         roomCode: String,
     ): Outcome<Unit> = dbCall("send-invite") {
-        // Checked here for a clear message, and again by the rules, which are the authority.
-        val recipientView = readStatus(toUserId, fromUserId)
-        if (!FriendshipRules.canInvite(recipientView)) {
-            return@dbCall Outcome.Failure(AppError.NOT_SIGNED_IN)
+        // Our own half, not theirs: friendships/{them}/{me} is unreadable to us, and asking
+        // for it made every invite fail. The two halves are written in one atomic update, so
+        // our side answers the same question, and the rules re-check theirs on write.
+        if (!FriendshipRules.canInvite(readStatus(fromUserId, toUserId))) {
+            return@dbCall Outcome.Failure(AppError.NOT_FRIENDS)
         }
-        val now = System.currentTimeMillis()
-        // Keyed by sender, so repeatedly tapping invite refreshes one entry rather than
-        // filling the recipient's list.
-        invitesRef(toUserId).child(fromUserId).setValue(
-            mapOf(
-                Keys.FROM_USER_ID to fromUserId,
-                Keys.ROOM_CODE to roomCode,
-                Keys.CREATED_AT to now,
-                Keys.EXPIRES_AT to now + Constants.Social.INVITE_TTL_MILLIS,
-            ),
-        ).await()
+        writeRequest(RequestKind.GAME_INVITE, fromUserId, fromUsername, toUserId, roomCode)
         Outcome.Success(Unit)
     }
 
-    override suspend fun dismissInvite(userId: String, inviteId: String): Outcome<Unit> =
-        dbCall("dismiss-invite") {
-            invitesRef(userId).child(inviteId).removeValue().await()
+    override suspend fun sendRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit> = dbCall("send-rematch") {
+        // No friendship is asked for, here or in the rules. You have just spent a match with
+        // this person; needing to befriend them first to offer them another one would be an
+        // obstacle in front of the one thing everybody wants after losing.
+        writeRequest(
+            kind = RequestKind.REMATCH,
+            fromUserId = fromUserId,
+            fromUsername = fromUsername,
+            toUserId = toUserId,
+            roomCode = roomCode,
+            playedRoomCode = playedRoomCode,
+        )
+        Outcome.Success(Unit)
+    }
+
+    override suspend fun declineRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit> = dbCall("decline-rematch") {
+        writeRequest(
+            kind = RequestKind.REMATCH_DECLINED,
+            fromUserId = fromUserId,
+            fromUsername = fromUsername,
+            toUserId = toUserId,
+            // Echoed back so the asker can tell this answer from one to a request they have
+            // since replaced, and so they know which room they are now free to close.
+            roomCode = roomCode,
+            playedRoomCode = playedRoomCode,
+        )
+        Outcome.Success(Unit)
+    }
+
+    override suspend fun clearRequest(recipientId: String, senderId: String): Outcome<Unit> =
+        dbCall("clear-request") {
+            invitesRef(recipientId).child(senderId).removeValue().await()
             Outcome.Success(Unit)
         }
 
@@ -201,23 +240,44 @@ class RtdbSocialRepository @Inject constructor(
         }.onFailure { AppLog.warn("clear-presence", it) }
     }
 
+    /**
+     * Every path is written one relationship deep.
+     *
+     * `friendships/{me}` and `invites/{me}` look like the obvious things to remove, and both
+     * are refused: the rules grant a write one level further down, at
+     * `friendships/{owner}/{other}` and `invites/{recipient}/{sender}`, and permission in the
+     * Realtime Database only ever flows downwards. Asking for the parent asks for a
+     * permission nobody was granted, and in a single atomic update it took everything else
+     * down with it — which is why an account's friendships and invitations outlived it.
+     */
     override suspend fun deleteSocialData(userId: String): Outcome<Unit> =
         dbCall("delete-social-data") {
-            // Remove this player from the lists of everyone they are connected to, so no
-            // dangling half-relationship survives the account.
             val friendships = friendshipsRef(userId).awaitSnapshot()
+            // The rows on other players' nodes, each on its own. Someone who blocked this
+            // player keeps their block — the rules say so, and rightly — so this one write
+            // can be refused, and it must not be able to abort the rest of the deletion.
+            friendships.children.forEach { child ->
+                val otherId = child.key ?: return@forEach
+                removeQuietly(friendshipsRef(otherId).child(userId))
+                removeQuietly(invitesRef(otherId).child(userId))
+            }
             val payload = buildMap<String, Any?> {
-                friendships.children.mapNotNull(DataSnapshot::getKey).forEach { otherId ->
-                    put("${Constants.Social.FRIENDSHIPS_PATH}/$otherId/$userId", null)
-                    put("${Constants.Social.INVITES_PATH}/$otherId/$userId", null)
+                friendships.children.forEach { child ->
+                    child.key?.let { put("${Constants.Social.FRIENDSHIPS_PATH}/$userId/$it", null) }
                 }
-                put("${Constants.Social.FRIENDSHIPS_PATH}/$userId", null)
-                put("${Constants.Social.INVITES_PATH}/$userId", null)
+                invitesRef(userId).awaitSnapshot().children.forEach { child ->
+                    child.key?.let { put("${Constants.Social.INVITES_PATH}/$userId/$it", null) }
+                }
                 put("${Constants.Social.PRESENCE_PATH}/$userId", null)
             }
             firebase.database.reference.updateChildren(payload).await()
             Outcome.Success(Unit)
         }
+
+    private suspend fun removeQuietly(reference: DatabaseReference) {
+        runCatching { reference.removeValue().await() }
+            .onFailure { AppLog.warn("delete-social-mirror", it) }
+    }
 
     private suspend fun readStatus(owner: String, other: String): FriendshipStatus =
         enumValueOrDefault(
@@ -245,15 +305,47 @@ class RtdbSocialRepository @Inject constructor(
         }
     }
 
-    private fun decodeInvite(snapshot: DataSnapshot): GameInvite? {
-        val inviteId = snapshot.key ?: return null
-        val fromUserId = snapshot.child(Keys.FROM_USER_ID).getValue(String::class.java) ?: return null
+    private suspend fun writeRequest(
+        kind: RequestKind,
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String = "",
+    ) {
+        val now = System.currentTimeMillis()
+        // Keyed by sender, so asking again refreshes one entry rather than filling the
+        // recipient's channel with the same question.
+        invitesRef(toUserId).child(fromUserId).setValue(
+            mapOf(
+                Keys.KIND to kind.name,
+                Keys.FROM_USER_ID to fromUserId,
+                Keys.FROM_USERNAME to fromUsername,
+                Keys.ROOM_CODE to roomCode,
+                Keys.PLAYED_ROOM_CODE to playedRoomCode,
+                Keys.CREATED_AT to now,
+                Keys.EXPIRES_AT to now + Constants.Social.INVITE_TTL_MILLIS,
+            ),
+        ).await()
+    }
+
+    private fun decodeRequest(snapshot: DataSnapshot): PlayerRequest? {
+        // The key is the sender, and the rules refuse an entry whose payload disagrees with
+        // it, so the key is the identity worth trusting.
+        val fromUserId = snapshot.key ?: return null
         val roomCode = snapshot.child(Keys.ROOM_CODE).getValue(String::class.java) ?: return null
-        return GameInvite(
-            inviteId = inviteId,
+        return PlayerRequest(
             fromUserId = fromUserId,
             fromUsername = snapshot.child(Keys.FROM_USERNAME).getValue(String::class.java).orEmpty(),
+            // An entry carrying no kind came from a build that could only invite.
+            kind = enumValueOrDefault(
+                snapshot.child(Keys.KIND).getValue(String::class.java),
+                RequestKind.GAME_INVITE,
+            ),
             roomCode = roomCode,
+            playedRoomCode = snapshot.child(Keys.PLAYED_ROOM_CODE)
+                .getValue(String::class.java)
+                .orEmpty(),
             createdAt = snapshot.child(Keys.CREATED_AT).getValue(Long::class.java) ?: 0L,
             expiresAt = snapshot.child(Keys.EXPIRES_AT).getValue(Long::class.java) ?: 0L,
         )
@@ -288,9 +380,11 @@ class RtdbSocialRepository @Inject constructor(
         const val UPDATED_AT = "updatedAt"
         const val ONLINE = "online"
         const val LAST_SEEN = "lastSeen"
+        const val KIND = "kind"
         const val FROM_USER_ID = "fromUserId"
         const val FROM_USERNAME = "fromUsername"
         const val ROOM_CODE = "roomCode"
+        const val PLAYED_ROOM_CODE = "playedRoomCode"
         const val CREATED_AT = "createdAt"
         const val EXPIRES_AT = "expiresAt"
     }

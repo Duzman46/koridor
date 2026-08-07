@@ -21,15 +21,13 @@ interface UserProfileRepository {
      * Creates the profile on first sign-in, otherwise refreshes the fields that change with
      * each session. Safe to call on every sign-in.
      */
-    suspend fun ensureProfile(user: AuthUser, suggestedName: String? = null): Outcome<UserProfile>
+    suspend fun ensureProfile(user: AuthUser): Outcome<UserProfile>
 
     /** Validates format first, then checks the uniqueness index. */
     suspend fun isUsernameAvailable(username: String): Outcome<Boolean>
 
     /** Claims the name atomically and releases the previous one. */
     suspend fun changeUsername(userId: String, username: String): Outcome<String>
-
-    suspend fun updateDisplayName(userId: String, displayName: String): Outcome<Unit>
 
     suspend fun updateAvatar(userId: String, avatarId: String): Outcome<Unit>
 

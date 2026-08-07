@@ -6,6 +6,7 @@ import com.duzman46.gridbound.auth.domain.AuthState
 import com.duzman46.gridbound.auth.domain.AuthUser
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
+import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.di.ApplicationScope
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.profile.domain.UserProfile
@@ -54,6 +55,8 @@ data class SessionState(
     val tutorialCompleted: Boolean = false,
     val isOnlineAvailable: Boolean = false,
     val isGoogleSignInAvailable: Boolean = false,
+    /** False until the player has named themselves; a profile starts with a generated one. */
+    val usernameChosen: Boolean = false,
 ) {
     val isGuest: Boolean
         get() = status == SessionStatus.LOCAL_ONLY || user?.accountType?.isGuest == true
@@ -64,6 +67,20 @@ data class SessionState(
 
     /** Guests may play and learn, but competitive and social features need a real account. */
     val canUseSocialFeatures: Boolean get() = status == SessionStatus.SIGNED_IN && !isGuest
+
+    /**
+     * A real account has to be named before it plays a single move: the name is what other
+     * players see on the leaderboard, in a friend request and across the board from them,
+     * and it is the one thing about an account nobody else can supply.
+     *
+     * Never true for a guest. A guest is handed a name instead, because asking someone who
+     * chose the "no account" door to fill in a form is the opposite of what they asked for.
+     *
+     * The profile is required because there is nowhere to write the answer without one: an
+     * account signed in against an unreachable backend is left alone until it has one.
+     */
+    val needsUsername: Boolean
+        get() = canUseSocialFeatures && profile != null && !usernameChosen
 }
 
 /**
@@ -90,7 +107,8 @@ class SessionManager @Inject constructor(
         },
         gameRepository.tutorialCompleted,
         gameRepository.guestModeAccepted,
-    ) { (auth, profile), locallyCompleted, guestAccepted ->
+        gameRepository.usernameChosen,
+    ) { (auth, profile), locallyCompleted, guestAccepted, nameChosen ->
         SessionState(
             status = when {
                 auth is AuthState.SignedIn -> SessionStatus.SIGNED_IN
@@ -105,6 +123,11 @@ class SessionManager @Inject constructor(
             tutorialCompleted = locallyCompleted || profile?.tutorialCompleted == true,
             isOnlineAvailable = authRepository.isConfigured,
             isGoogleSignInAvailable = authRepository.isGoogleSignInAvailable,
+            // The local flag only knows about this install. A name that is not one the app
+            // made up was typed by a person, so a reinstall or a second handset does not
+            // demand that an established player name themselves a second time.
+            usernameChosen = nameChosen ||
+                profile?.username?.let { !UsernameRules.isGenerated(it) } == true,
         )
     }.stateIn(
         scope = scope,
@@ -164,12 +187,8 @@ class SessionManager @Inject constructor(
     suspend fun signInWithEmail(email: String, password: String): Outcome<UserProfile> =
         authRepository.signInWithEmail(email, password).thenEnsureProfile()
 
-    suspend fun createAccountWithEmail(
-        email: String,
-        password: String,
-        username: String?,
-    ): Outcome<UserProfile> =
-        authRepository.createAccountWithEmail(email, password).thenEnsureProfile(username)
+    suspend fun createAccountWithEmail(email: String, password: String): Outcome<UserProfile> =
+        authRepository.createAccountWithEmail(email, password).thenEnsureProfile()
 
     suspend fun signInWithGoogle(activityContext: Context): Outcome<UserProfile> =
         authRepository.signInWithGoogle(activityContext).thenEnsureProfile()
@@ -177,12 +196,25 @@ class SessionManager @Inject constructor(
     /**
      * Upgrades the current guest without changing the user id, so the profile that already
      * holds their stats simply gains a credential.
+     *
+     * A guest who never got an anonymous identity — they first launched with no connection —
+     * has no user id and no cloud progress to carry over, so for them this is an ordinary
+     * sign-in. Without that branch the only way a local guest could reach a real account was
+     * to sign out first, and the button in front of them answered "you are not signed in".
      */
     suspend fun linkGuestWithGoogle(activityContext: Context): Outcome<UserProfile> =
-        authRepository.linkGuestWithGoogle(activityContext).thenEnsureProfile()
+        if (state.value.status == SessionStatus.LOCAL_ONLY) {
+            signInWithGoogle(activityContext)
+        } else {
+            authRepository.linkGuestWithGoogle(activityContext).thenEnsureProfile()
+        }
 
     suspend fun linkGuestWithEmail(email: String, password: String): Outcome<UserProfile> =
-        authRepository.linkGuestWithEmail(email, password).thenEnsureProfile()
+        if (state.value.status == SessionStatus.LOCAL_ONLY) {
+            createAccountWithEmail(email, password)
+        } else {
+            authRepository.linkGuestWithEmail(email, password).thenEnsureProfile()
+        }
 
     suspend fun sendPasswordReset(email: String): Outcome<Unit> =
         authRepository.sendPasswordReset(email)
@@ -196,16 +228,16 @@ class SessionManager @Inject constructor(
 
     suspend fun changeUsername(username: String): Outcome<String> {
         val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
-        return profileRepository.changeUsername(userId, username)
+        return profileRepository.changeUsername(userId, username).also { result ->
+            // Recorded locally, so the "what should we call you?" step is asked once and
+            // never again — including for a guest, whose generated name is otherwise
+            // indistinguishable from one they picked.
+            if (result is Outcome.Success) gameRepository.setUsernameChosen(true)
+        }
     }
 
     suspend fun isUsernameAvailable(username: String): Outcome<Boolean> =
         profileRepository.isUsernameAvailable(username)
-
-    suspend fun updateDisplayName(displayName: String): Outcome<Unit> {
-        val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
-        return profileRepository.updateDisplayName(userId, displayName)
-    }
 
     suspend fun updateAvatar(avatarId: String): Outcome<Unit> {
         val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
@@ -224,20 +256,34 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Erases profile data before the credential, because the database rules only authorise
-     * those deletions while the user is still signed in.
+     * Erases everything the account owns, then the credential itself.
+     *
+     * The order is forced from both ends. The database rules only authorise a player to
+     * delete their own rows while they are still signed in, so the data cannot go last —
+     * and Firebase refuses to delete a credential whose sign-in it considers stale, so the
+     * proof has to come first. Deleting the data on a session that then turns out to be too
+     * old to remove leaves a player signed into an account with nothing in it and no way
+     * back, which is worse than the refusal.
+     *
+     * @param activityContext the hosting Activity; a Google account proves itself through
+     *   the Credential Manager sheet, which draws over it.
+     * @param password the account's password, needed only by an email account.
      */
-    suspend fun deleteAccount(): Outcome<Unit> {
+    suspend fun deleteAccount(activityContext: Context?, password: String): Outcome<Unit> {
         val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
+        val proof = authRepository.reauthenticate(activityContext, password)
+        if (proof is Outcome.Failure) return proof
         // Social links first: they live under other players' nodes, which stop being
         // writable the moment this identity is gone.
-        socialRepository.deleteSocialData(userId)
+        val socialDeletion = socialRepository.deleteSocialData(userId)
+        if (socialDeletion is Outcome.Failure) return socialDeletion
         val dataDeletion = profileRepository.deleteAccountData(userId)
         if (dataDeletion is Outcome.Failure) return dataDeletion
         val accountDeletion = authRepository.deleteAccount()
         if (accountDeletion is Outcome.Success) {
             gameRepository.setTutorialCompleted(false)
             gameRepository.setGuestModeAccepted(false)
+            gameRepository.setUsernameChosen(false)
         }
         return accountDeletion
     }
@@ -245,10 +291,8 @@ class SessionManager @Inject constructor(
     private fun currentUserId(): String? =
         state.value.user?.userId ?: authRepository.currentUser()?.userId
 
-    private suspend fun Outcome<AuthUser>.thenEnsureProfile(
-        suggestedName: String? = null,
-    ): Outcome<UserProfile> = when (this) {
+    private suspend fun Outcome<AuthUser>.thenEnsureProfile(): Outcome<UserProfile> = when (this) {
         is Outcome.Failure -> this
-        is Outcome.Success -> profileRepository.ensureProfile(value, suggestedName)
+        is Outcome.Success -> profileRepository.ensureProfile(value)
     }
 }

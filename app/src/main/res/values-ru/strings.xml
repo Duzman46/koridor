@@ -56,6 +56,7 @@
     <string name="auth_error_account_exists_with_other_method">Этот адрес уже привязан к другому способу входа.</string>
     <string name="auth_error_requires_recent_login">В целях безопасности войдите ещё раз, прежде чем продолжить.</string>
     <string name="auth_error_credential_in_use">Этот аккаунт уже привязан к другому игроку.</string>
+    <string name="auth_error_account_switch_failed">Не удалось перейти в этот аккаунт. Гостевого прогресса больше нет — войдите через Google, чтобы продолжить.</string>
 
     <string name="auth_link_title">Сохраните свой прогресс</string>
     <string name="auth_link_explainer">Привяжите аккаунт, чтобы прогресс, покупки и друзья оставались с вами на любом устройстве.</string>
@@ -105,6 +106,15 @@
     <string name="profile_best_streak">Лучшая серия</string>
     <string name="profile_member_since">В игре с %1$s</string>
     <string name="profile_player_title">Профиль игрока</string>
+    <string name="profile_recent_games">Последние игры</string>
+    <string name="profile_recent_empty">Онлайн-игр пока не было.</string>
+    <string name="profile_recent_show_all">Показать все (%1$d)</string>
+    <string name="profile_recent_show_fewer">Показать меньше</string>
+    <string name="profile_recent_result_win">Победа</string>
+    <string name="profile_recent_result_loss">Поражение</string>
+    <string name="profile_recent_result_draw">Ничья</string>
+    <string name="profile_recent_unranked">Без рейтинга</string>
+    <string name="profile_recent_unknown_opponent">Удалённый игрок</string>
 
     <string name="account_title">Аккаунт</string>
     <string name="account_delete_title">Удалить аккаунт</string>
@@ -175,6 +185,23 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Ваш ход</string>
     <string name="game_rival_turn">Ход соперника</string>
+
+    <string name="chat_open">Скажи что-нибудь</string>
+    <string name="chat_mute">Отключить сообщения</string>
+    <string name="chat_good_luck">Удачи</string>
+    <string name="chat_nice_move">Хороший ход</string>
+    <string name="chat_well_played">Отлично сыграно</string>
+    <string name="chat_good_game">Хорошая партия</string>
+    <string name="chat_thanks">Спасибо</string>
+    <string name="chat_oops">Ой</string>
+    <string name="chat_sorry">Извини</string>
+    <string name="chat_good_luck_next_time">Удачи в следующий раз</string>
+    <string name="chat_reaction_smile">Улыбка</string>
+    <string name="chat_reaction_wow">Ого</string>
+    <string name="chat_reaction_thinking">Раздумья</string>
+    <string name="chat_reaction_brilliant">Блестяще</string>
+    <string name="chat_reaction_strong">Сила</string>
+    <string name="chat_reaction_sad">Грусть</string>
 
     <string name="leaderboard_title">Таблица лидеров</string>
     <string name="leaderboard_tab_global">Общая</string>
@@ -263,6 +290,8 @@
     <string name="settings_sounds_description">Звуки ходов, стен и результата.</string>
     <string name="settings_haptics">Тактильный отклик</string>
     <string name="settings_haptics_description">Вибрация при ходах и ошибках.</string>
+    <string name="settings_chat">Сообщения в матче</string>
+    <string name="settings_chat_description">Готовые фразы и эмодзи в онлайн-матчах.</string>
     <string name="settings_default_ai">ИИ по умолчанию</string>
     <string name="settings_ad_privacy">Настройки приватности рекламы</string>
 

@@ -1,6 +1,6 @@
 # Koridor — Manuel Test Senaryoları
 
-Otomatik testler saf mantığı kapsar (202 JVM testi, 128 güvenlik kuralı testi). Bu belge,
+Otomatik testler saf mantığı kapsar (237 JVM testi, 156 güvenlik kuralı testi). Bu belge,
 **yalnızca gerçek cihazda doğrulanabilecek** senaryoları listeler: ağ davranışı, iki cihaz
 arası eşzamanlılık, sistem diyalogları ve görsel yerleşim.
 
@@ -54,6 +54,28 @@ eskiden iki oyuncu aynı anda bastığında ikisi de kendi odasında kalıp birb
    **Beklenen:** Cihaz 2 eşleşmez. Cihaz 1 geri geldiğinde de maça düşmüş olmaz.
 7. Cihaz 1: Hızlı eşleşme → uygulamayı görev listesinden **tamamen kapat** → Cihaz 2: Hızlı
    eşleşme → **Beklenen:** Cihaz 2 eşleşmez; kapanan cihazın adı listeden düşmüştür.
+
+### A6. Maç içi hazır mesajlar
+Yazılabilen hiçbir şey yok: gönderilebilecek her şey sabit bir listedir. Sınav, listenin kapalı
+kalması ve tahtanın hiçbir zaman rahatsız edilmemesidir.
+
+1. Maç sürerken iki cihazda da tahtanın üstündeki gülen yüz düğmesine dokun →
+   **Beklenen:** alttan bir sayfa açılır; altı emoji ve sekiz hazır ifade vardır, **hiçbir yerde
+   yazı yazılacak bir alan yoktur**.
+2. Cihaz 1: "Bol şans" seç → **Beklenen:** sayfa kapanır, kendi tarafında yalnızca emoji görünür;
+   Cihaz 2'de emoji ve yazı birlikte görünür, birkaç saniye sonra ikisi de kendiliğinden
+   kaybolur — kapatmak için hiçbir şeye dokunmak gerekmez.
+3. Cihaz 1: hemen ikinci bir mesaj göndermeyi dene → **Beklenen:** hata sesi gelir, mesaj gitmez.
+   Üç saniye bekleyip tekrar dene → gider.
+4. Mesaj satırı maç boyunca **aynı yüksekliktedir**: mesaj gelip gitse de tahta ne büyür ne
+   küçülür, kareler yerinden oynamaz.
+5. Duvar modundayken gülen yüz düğmesinin hemen altına, tahtanın üst kenarına dokun →
+   **Beklenen:** dokunuş tahtaya gider, düğmeye değil; yanlışlıkla mesaj sayfası açılmaz.
+6. Cihaz 2: Ayarlar → Oyun deneyimi → **Maç mesajları**'nı kapat → maça dön →
+   **Beklenen:** mesaj satırı tamamen kaybolur; Cihaz 1 mesaj gönderse de hiçbir şey görünmez.
+7. Cihaz 2: mesajları geri aç → mesaj seçicisini aç → **"Mesajları kapat"** bağlantısına dokun →
+   **Beklenen:** sayfa kapanır, satır kaybolur, ayar da kapanmıştır (Ayarlar ekranında görülür).
+8. Bot maçında ve aynı cihazda iki kişilik maçta → **Beklenen:** mesaj satırı hiç yoktur.
 
 ---
 
@@ -152,6 +174,28 @@ oturum hâlâ önceki oyuncuya aitti.
    kapatmaz. Ad seçilmeden ana menüye ulaşılamaz.
 5. Aynı adımları Google ile girişte tekrarla → **Beklenen:** aynı.
 
+### C8. Misafirken zaten var olan bir hesaba geçme (kritik)
+Bu akış "Giriş yapıldı" yazıp hiçbir şey yapmamış olabiliyordu: çağrılar dönüyordu ama oturum
+önceki oyuncuda kalıyordu. Sınav, ekrandaki cümlenin ekrandaki verilerle aynı hesabı
+anlatmasıdır.
+1. Cihaz 1'de bir Google hesabıyla giriş yap, kullanıcı adı ver, **dereceli bir maç oynayıp
+   kazan** (puanı 1000'den farklı olsun), çıkış yap
+2. Aynı cihazda misafir olarak gir ve **en az beş dakika** oyna. Bu bekleme testin parçasıdır:
+   Firebase, birkaç dakikadan eski bir misafir oturumunu silmeyi reddeder ve hata yalnızca o
+   reddin ardından ortaya çıkıyordu
+3. Ayarlar → Hesap → **Google ile bağla** → 1. adımdaki hesabı seç
+4. **Beklenen:** "Bu hesap zaten kullanılıyor" uyarısı çıkar ve neyin kaybedileceğini söyler
+5. **Misafir kal**'a dokun → **Beklenen:** hiçbir şey değişmez; misafirin puanı, adı ve
+   istatistikleri yerinde. Ekrandan çıkıp geri gel → **Beklenen:** aynı teklif kendiliğinden
+   tekrar açılmaz
+6. 3. adımı tekrarla ve bu kez **devam et** → **Beklenen:** bekleme boyunca ekranın üstünde
+   bir ilerleme çubuğu vardır; iş bitince "Giriş yapıldı" yazar **ve** aynı ekranda artık
+   1. adımdaki hesabın puanı ile istatistikleri durur, "İlerlemeni koru" kartı **yoktur**
+7. Profili ve liderlik tablosunu aç → **Beklenen:** ikisi de 1. adımdaki hesabı gösterir,
+   misafirin puanını değil
+8. Uçak modunu açıp 3–6. adımları tekrarla → **Beklenen:** "Bu hesaba geçilemedi. Misafir
+   ilerlemen artık yok…" hatası ekranda **kalır**; başka bir ekrana atılmazsın
+
 ---
 
 ## D. Arkadaşlık, davet ve rövanş
@@ -232,6 +276,27 @@ Rövanş ve oyun daveti aynı canlı kanalda gider; ikisi de ekranın tepesinde 
    altına sabitlenmiş **kendi** sıralamana dokunmak hiçbir şey yapmaz.
 6. Liderlik tablosunda **kendi** satırına dokun → **Beklenen:** sayfa açılır ama arkadaşlık
    düğmesi hiç çıkmaz.
+
+### D8. Profilde son oyunlar
+Listeyi sunucu yazar, telefon değil: bir maç bittikten sonra satırın görünmesi **bir dakikaya
+kadar** sürebilir. Erken bakıp "gelmedi" demek bu senaryonun tek tuzağıdır.
+1. İki cihazla dereceli bir maç oynayıp bitir → bir dakika bekle → kendi profilini aç
+2. **Beklenen:** "Son oyunlar" başlığı altında maç durur: rakibin adı, tarih, "Galibiyet" ya
+   da "Mağlubiyet" ve `+12` gibi işaretli bir puan değişimi
+3. Cihaz 2'de aynı maç → **Beklenen:** aynı satır, ters sonuç ve ters işaretli puan
+4. Dereceli olmayan bir maç oyna → **Beklenen:** o da listede, ama puan yerine "Derecesiz"
+   yazar — **sıfır değil**
+5. Üçten fazla maç oynanmış bir hesapta → **Beklenen:** yalnızca üç satır ve altında
+   "Tümünü göster (n)"; dokununca hepsi açılır, "Daha az göster" geri toplar
+6. Üç ya da daha az maçı olan bir hesapta → **Beklenen:** "Tümünü göster" satırı hiç yoktur
+7. Hiç çevrim içi oynamamış bir hesapta → **Beklenen:** "Henüz çevrim içi oyun oynanmadı."
+8. Uçak modunda profili aç → **Beklenen:** bölüm hiç çizilmez; hata da yazmaz, "hiç
+   oynamadın" da demez
+9. Rakibinin profilini aç (tur başlığındaki adına dokunarak) → **Beklenen:** aynı bölüm
+   orada da var ve **onun** maçlarını gösterir
+10. Profil ekranını varsayılan yazı tipi ölçeğiyle aç → **Beklenen:** dört düğme kaydırmadan
+    görünür ve "Son oyunlar" başlığı ekranın alt ucundan görünür — bölümün düğmelerin
+    *altında* durmasının tek sebebi budur
 
 ---
 

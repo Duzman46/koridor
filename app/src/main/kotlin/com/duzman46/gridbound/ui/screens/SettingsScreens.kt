@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
@@ -57,6 +58,7 @@ fun SettingsScreen(
     onThemeMode: (ThemeMode) -> Unit,
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
+    onMatchMessages: (Boolean) -> Unit,
     onDifficulty: (Difficulty) -> Unit,
     onAccount: () -> Unit,
     monetization: MonetizationState,
@@ -128,6 +130,11 @@ fun SettingsScreen(
                     SettingsCard(stringResource(R.string.settings_game_experience)) {
                         SettingSwitch(stringResource(R.string.settings_sounds), stringResource(R.string.settings_sounds_description), Icons.AutoMirrored.Rounded.VolumeUp, state.settings.soundEnabled, onSound)
                         SettingSwitch(stringResource(R.string.settings_haptics), stringResource(R.string.settings_haptics_description), Icons.Rounded.TouchApp, state.settings.hapticsEnabled, onHaptics)
+                        // Sits beside sound and vibration because it is the same kind of
+                        // choice — how much the app is allowed to say to you — and because
+                        // this screen is two taps from the board, which is where somebody
+                        // reaches for it while a rival is being tiresome.
+                        SettingSwitch(stringResource(R.string.settings_chat), stringResource(R.string.settings_chat_description), Icons.AutoMirrored.Rounded.Chat, state.settings.matchMessagesEnabled, onMatchMessages)
                     }
                 }
                 item {

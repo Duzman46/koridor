@@ -56,6 +56,7 @@
     <string name="auth_error_account_exists_with_other_method">Cet e-mail est déjà associé à une autre méthode de connexion.</string>
     <string name="auth_error_requires_recent_login">Pour ta sécurité, reconnecte-toi avant de continuer.</string>
     <string name="auth_error_credential_in_use">Ce compte est déjà associé à un autre joueur.</string>
+    <string name="auth_error_account_switch_failed">Le passage à ce compte n\'a pas abouti. Ta progression d\'invité n\'existe plus : connecte-toi avec Google pour continuer.</string>
 
     <string name="auth_link_title">Conserve ta progression</string>
     <string name="auth_link_explainer">Associe un compte pour que ta progression, tes achats et tes amis te suivent sur tous tes appareils.</string>
@@ -103,6 +104,15 @@
     <string name="profile_best_streak">Meilleure série</string>
     <string name="profile_member_since">Membre depuis %1$s</string>
     <string name="profile_player_title">Profil du joueur</string>
+    <string name="profile_recent_games">Parties récentes</string>
+    <string name="profile_recent_empty">Aucune partie en ligne jouée pour l\'instant.</string>
+    <string name="profile_recent_show_all">Tout afficher (%1$d)</string>
+    <string name="profile_recent_show_fewer">Afficher moins</string>
+    <string name="profile_recent_result_win">Victoire</string>
+    <string name="profile_recent_result_loss">Défaite</string>
+    <string name="profile_recent_result_draw">Match nul</string>
+    <string name="profile_recent_unranked">Non classée</string>
+    <string name="profile_recent_unknown_opponent">Joueur supprimé</string>
 
     <string name="account_title">Compte</string>
     <string name="account_delete_title">Supprimer le compte</string>
@@ -173,6 +183,23 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">À toi de jouer</string>
     <string name="game_rival_turn">Au tour de l\'adversaire</string>
+
+    <string name="chat_open">Dis quelque chose</string>
+    <string name="chat_mute">Désactiver les messages</string>
+    <string name="chat_good_luck">Bonne chance</string>
+    <string name="chat_nice_move">Joli coup</string>
+    <string name="chat_well_played">Bien joué</string>
+    <string name="chat_good_game">Belle partie</string>
+    <string name="chat_thanks">Merci</string>
+    <string name="chat_oops">Oups</string>
+    <string name="chat_sorry">Désolé</string>
+    <string name="chat_good_luck_next_time">Bonne chance la prochaine fois</string>
+    <string name="chat_reaction_smile">Sourire</string>
+    <string name="chat_reaction_wow">Waouh</string>
+    <string name="chat_reaction_thinking">Réflexion</string>
+    <string name="chat_reaction_brilliant">Brillant</string>
+    <string name="chat_reaction_strong">Force</string>
+    <string name="chat_reaction_sad">Tristesse</string>
 
     <string name="leaderboard_title">Classement</string>
     <string name="leaderboard_tab_global">Général</string>
@@ -260,6 +287,8 @@
     <string name="settings_sounds_description">Sons des coups, des murs et des résultats.</string>
     <string name="settings_haptics">Retour haptique</string>
     <string name="settings_haptics_description">Vibration lors des coups et des erreurs.</string>
+    <string name="settings_chat">Messages en partie</string>
+    <string name="settings_chat_description">Phrases toutes faites et emojis dans les parties en ligne.</string>
     <string name="settings_default_ai">IA par défaut</string>
     <string name="settings_ad_privacy">Options de confidentialité des publicités</string>
 

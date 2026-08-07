@@ -92,3 +92,30 @@ enum class MatchProcessingState {
     /** Rejected by the server, for example because the board did not support the claim. */
     REJECTED,
 }
+
+/** How a match went for the player on whose profile it is being shown. */
+enum class MatchOutcome {
+    WIN,
+    LOSS,
+    DRAW,
+}
+
+/**
+ * One finished match as a profile lists it, read from `recentMatches/{uid}`.
+ *
+ * Every field is a copy taken when the match was recorded rather than a pointer to something
+ * that can still change. The opponent's name in particular: a row that looked their name up
+ * would cost a profile read per line and would empty itself the day they deleted their
+ * account, and a match against somebody who has since left is still a match that was played.
+ *
+ * @param ratingChange null when nothing was at stake — an unranked match, or one against a
+ *   guest, which the app marks unranked for the same reason. Null rather than zero because
+ *   zero is a different answer: two evenly matched players who draw move each other by
+ *   nothing, and that is a rated result, not a casual one.
+ */
+data class RecentMatch(
+    val opponentName: String,
+    val outcome: MatchOutcome,
+    val playedAt: Long,
+    val ratingChange: Int? = null,
+)

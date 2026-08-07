@@ -117,6 +117,10 @@ class AccountViewModel @Inject constructor(
      *
      * Only reachable from that warning, which is what makes losing the guest's progress a
      * decision the player made rather than a consequence they discovered.
+     *
+     * The success line is drawn from the session having become that account, because
+     * [SessionManager.signInToExistingAccount] succeeds on nothing weaker. A hand-over that
+     * did not land says so, in the failure the player can read and act on.
      */
     fun signInToExistingAccount() = submit {
         _uiState.update { it.copy(existingAccountWarning = false) }
@@ -128,9 +132,16 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    /** Declining costs nothing: they are still a guest, with everything they had. */
-    fun dismissExistingAccountWarning() =
+    /**
+     * Declining costs nothing: they are still a guest, with everything they had.
+     *
+     * The offer is answered all the same, so the credential kept only to answer it is
+     * handed back rather than left where a later question could spend it.
+     */
+    fun dismissExistingAccountWarning() {
+        sessionManager.declineExistingAccount()
         _uiState.update { it.copy(existingAccountWarning = false) }
+    }
 
     fun signOut() = submit {
         sessionManager.signOut()

@@ -17,9 +17,19 @@ const {
   assertSucceeds,
   initializeTestEnvironment,
 } = require("@firebase/rules-unit-testing");
+const firebase = require("firebase/compat/app").default;
+require("firebase/compat/database");
 
 const ALICE = "alice-uid";
 const BOB = "bob-uid";
+
+/**
+ * The sentinel the server replaces with its own clock.
+ *
+ * Anything the rules time — how long ago the last message was sent — has to be stamped this
+ * way, because a value a handset chose is a value a handset can choose again.
+ */
+const SERVER_TIME = firebase.database.ServerValue.TIMESTAMP;
 
 /**
  * A profile shaped the way the rules demand a fresh one must be.
@@ -811,6 +821,84 @@ describe("match results", () => {
   it("refuses a report that claims to be already rated", async () => {
     const db = testEnv.authenticatedContext(ALICE).database();
     await assertFails(db.ref("matchResults/m1").set({ ...REPORT, state: "APPLIED" }));
+  });
+});
+
+describe("the recent games on a profile", () => {
+  const MATCH = "ABC123_1";
+
+  /**
+   * A row put there the way the only writer there is puts it there.
+   *
+   * `worker/src/sweep.ts` holds the service-account credential and so goes past the rules
+   * entirely; disabling them here is what that looks like from inside a test.
+   */
+  async function seedHistory(uid, matchId = MATCH, entry = {}) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`recentMatches/${uid}/${matchId}`).set({
+        opponentName: "bob",
+        result: "WIN",
+        playedAt: 1,
+        ratingChange: 12,
+        ...entry,
+      });
+    });
+  }
+
+  it("lets any signed-in player read somebody else's", async () => {
+    // The point of the list: it is on a public profile, and a profile is public to whoever
+    // opened it — from the leaderboard, from a friend list, from a search result.
+    await seedHistory(ALICE);
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertSucceeds(bob.ref(`recentMatches/${ALICE}`).get());
+  });
+
+  it("refuses a player writing their own", async () => {
+    // The refusal that makes the list worth showing at all. A player who could write here
+    // could invent the wins, and name an opponent who never existed.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref(`recentMatches/${ALICE}/${MATCH}`).set({
+        opponentName: "bob",
+        result: "WIN",
+        playedAt: 1,
+        ratingChange: 400,
+      }),
+    );
+  });
+
+  it("refuses a player deleting a match out of their own", async () => {
+    // Erasing a loss is a write too. Allowed, the list would be every match a player was
+    // content to be seen losing.
+    await seedHistory(ALICE, MATCH, { result: "LOSS", ratingChange: -12 });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`recentMatches/${ALICE}/${MATCH}`).remove());
+  });
+
+  it("refuses a player writing into somebody else's", async () => {
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertFails(
+      bob.ref(`recentMatches/${ALICE}/${MATCH}`).set({
+        opponentName: "bob",
+        result: "LOSS",
+        playedAt: 1,
+        ratingChange: -400,
+      }),
+    );
+  });
+
+  it("refuses an unauthenticated read", async () => {
+    await seedHistory(ALICE);
+    const anonymous = testEnv.unauthenticatedContext().database();
+    await assertFails(anonymous.ref(`recentMatches/${ALICE}`).get());
+  });
+
+  it("refuses reading everybody's at once", async () => {
+    // A profile asks for one player's list. Nothing asks for the whole tree, and a tree that
+    // could be read whole is a record of who played whom across the entire game.
+    await seedHistory(ALICE);
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertFails(bob.ref("recentMatches").get());
   });
 });
 
@@ -1721,5 +1809,213 @@ describe("match reports", () => {
     });
     const db = testEnv.authenticatedContext(ALICE).database();
     await assertFails(db.ref("matchResults/m9").get());
+  });
+});
+
+describe("what a player is allowed to say", () => {
+  // Canned messages live inside the room, one slot per player, so they are swept away with
+  // it and the cap is structural rather than pruned. Everything that keeps them harmless is
+  // here: only the two players may write, only under their own id, only one of the fourteen
+  // known keys, and not fifty a second.
+  //
+  // The move path matters as much as the message path. A move is written as the whole room
+  // node, so every message in it is rewritten on every turn — which must keep working, and
+  // must not become a way to put words in the rival's mouth.
+
+  /** A match under way with ALICE hosting from seat one and to move. */
+  function playing(overrides = {}) {
+    return {
+      hostUserId: ALICE,
+      guestUserId: BOB,
+      status: "IN_PROGRESS",
+      currentTurnUserId: ALICE,
+      version: 4,
+      winnerUserId: "",
+      endReason: "",
+      createdAt: 1,
+      lastMoveAt: 1,
+      ranked: true,
+      visibility: "PUBLIC",
+      turnDurationSeconds: 0,
+      browseKey: "PUBLIC_IN_PROGRESS",
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 5,
+        players: {
+          PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 0, column: 4, wallsRemaining: 10 },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  /** ALICE steps forward, which is the write that carries the whole room back up. */
+  function moved(room) {
+    return {
+      ...room,
+      version: room.version + 1,
+      lastMoveAt: Date.now(),
+      currentTurnUserId: BOB,
+      board: {
+        ...room.board,
+        currentPlayer: "PLAYER_TWO",
+        turnNumber: room.board.turnNumber + 1,
+        players: {
+          ...room.board.players,
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+        },
+      },
+    };
+  }
+
+  function said(key, at = SERVER_TIME) {
+    return { key, at };
+  }
+
+  async function seed(room) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("rooms/CHAT01").set(room);
+    });
+  }
+
+  it("lets a player say one of the things there are to say", async () => {
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("GOOD_LUCK")));
+  });
+
+  it("refuses a word that is not in the vocabulary", async () => {
+    // This is the whole reason the feature is not user-generated content: the set of things
+    // that can be written is fixed here, not merely in the app that writes them.
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("YOU_PLAY_LIKE_A_DOG")));
+  });
+
+  it("refuses a player speaking as their rival", async () => {
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + BOB).set(said("SORRY")));
+  });
+
+  it("refuses a message from somebody who is not in the room", async () => {
+    await seed(playing());
+    const mallory = testEnv.authenticatedContext("mallory-uid").database();
+    await assertFails(
+      mallory.ref("rooms/CHAT01/chat/mallory-uid").set(said("NICE_MOVE")),
+    );
+  });
+
+  it("refuses anything but the two fields a message has", async () => {
+    // Without this a modified client writes its own field beside the key and has the free
+    // text the closed vocabulary exists to avoid.
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/CHAT01/chat/" + ALICE).set({ ...said("THANKS"), text: "hello" }),
+    );
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE + "/text").set("hello"));
+  });
+
+  it("refuses free text buried underneath one of those two fields", async () => {
+    // The subtle way in, and the one a reading of the rules can talk itself out of: a
+    // parent's `.validate` is never evaluated for a write to something below it, so the rule
+    // on `key` does not see a write to `key/note`. What stands there is `$otherFields`, which
+    // matches at every depth. Anything looser and the vocabulary is closed at the top and
+    // open one level down, which is not closed at all.
+    await seed(playing({ chat: { [ALICE]: said("GOOD_LUCK", Date.now() - 30_000) } }));
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE + "/key/note").set("hello"));
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE + "/at/note").set("hello"));
+    await assertFails(
+      alice.ref("rooms/CHAT01/chat/" + ALICE).set({ key: { note: "hello" }, at: SERVER_TIME }),
+    );
+  });
+
+  it("refuses a player writing the messages node rather than their slot in it", async () => {
+    // Permission is granted at the slot and never flows upward, so this is refused even
+    // though every value in it would have been accepted one level down. That is what keeps
+    // the two slots two: a write here is a write to the rival's as well, and clearing what
+    // they said is not this player's to do.
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/CHAT01/chat").set({ [ALICE]: said("GOOD_LUCK") }),
+    );
+  });
+
+  it("refuses a message a phone dated itself", async () => {
+    // The gap between two messages is measured against the stamp on the last one, so a
+    // device that could write its own could backdate it and send as many as it liked.
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("OOPS", Date.now())));
+  });
+
+  it("refuses a second message sent straight after the first", async () => {
+    await seed(playing());
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("GOOD_LUCK"));
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("NICE_MOVE")));
+  });
+
+  it("takes the next one once the gap has passed", async () => {
+    await seed(playing({ chat: { [ALICE]: said("GOOD_LUCK", Date.now() - 30_000) } }));
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("NICE_MOVE")));
+  });
+
+  it("refuses swapping the key without a fresh stamp", async () => {
+    // Writing the key on its own would otherwise slip past the gap, which is measured on the
+    // stamp beside it.
+    await seed(playing({ chat: { [ALICE]: said("GOOD_LUCK", Date.now() - 30_000) } }));
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE + "/key").set("SORRY"));
+  });
+
+  it("refuses a message in a room nobody is playing", async () => {
+    await seed(playing({ status: "WAITING", guestUserId: "", currentTurnUserId: ALICE }));
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("GOOD_LUCK")));
+  });
+
+  it("still takes the last word from a match that has just ended", async () => {
+    // "Good game" is said at the end, and the end may land between the sheet opening and the
+    // tap. A message refused because the winning move arrived first would be the one message
+    // players most want to send.
+    await seed(playing({ status: "FINISHED", winnerUserId: BOB, currentTurnUserId: "" }));
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("rooms/CHAT01/chat/" + ALICE).set(said("GOOD_GAME")));
+  });
+
+  it("carries the rival's message through a move untouched", async () => {
+    // A move rewrites the whole room, the rival's message included. If that were refused,
+    // one message would end the match: nobody could move again.
+    const spoken = Date.now() - 30_000;
+    const room = playing({ chat: { [BOB]: said("GOOD_LUCK", spoken) } });
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("rooms/CHAT01").set(moved(room)));
+  });
+
+  it("refuses a move that rewrites what the rival said", async () => {
+    // Same stamp, different words: the move is the one write a player is entitled to make
+    // over the whole room, and it must not be a way to speak for the other seat.
+    const spoken = Date.now() - 30_000;
+    const room = playing({ chat: { [BOB]: said("GOOD_LUCK", spoken) } });
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    const forged = { ...moved(room), chat: { [BOB]: said("SORRY", spoken) } };
+    await assertFails(alice.ref("rooms/CHAT01").set(forged));
+  });
+
+  it("refuses a move that puts words in a rival who has said nothing", async () => {
+    const room = playing();
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    const forged = { ...moved(room), chat: { [BOB]: said("OOPS", Date.now()) } };
+    await assertFails(alice.ref("rooms/CHAT01").set(forged));
   });
 });

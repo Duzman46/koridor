@@ -14,6 +14,16 @@ data class AppSettings(
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val difficulty: Difficulty = Difficulty.MEDIUM,
+    /**
+     * Whether an online rival's canned messages reach this player, and whether this player
+     * can send any.
+     *
+     * On by default, because eight pleasantries and six faces are what most people want out
+     * of playing a stranger. Off is the whole defence a closed vocabulary allows: nobody can
+     * be insulted with it, but somebody determined enough can still be tiresome, and the only
+     * answer to tiresome is to stop hearing it.
+     */
+    val matchMessagesEnabled: Boolean = true,
 )
 
 data class GameStatistics(

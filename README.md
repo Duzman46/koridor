@@ -24,10 +24,12 @@ Koridor, yol kurma ve duvar yerleştirme mekaniğine sahip özgün bir Android s
 - Kodla katılma, açık oda listesi (filtrelerle), hızlı eşleşme, arkadaş daveti
 - Bağlantı kesilince maça geri dönme; kısa kopmada yenilgi yok
 - Süre aşımı, pes etme ve normal bitiş ayrı ayrı ele alınır
+- Maç içi hazır mesajlar: sekiz ifade ve altı emoji, serbest metin yok, ayarlardan kapatılabilir
 
 **Rekabet**
 - ELO tabanlı puan sistemi (başlangıç 1000), sunucu tarafında uygulanır
 - Genel, haftalık ve arkadaş liderlik tabloları, sayfalı yükleme
+- Profilde son oyunlar: kendinin ve başkasının profilinde son 3 maç, dokununca 10'a çıkar
 
 **Sosyal**
 - Kullanıcı adıyla arama, arkadaşlık istekleri, engelleme, oyun davetleri
@@ -283,8 +285,19 @@ Cihazda doğrulanması gereken senaryolar: [`docs/MANUAL_TESTS.md`](docs/MANUAL_
   zorundadır**; oda kuralları bu değerleri tahtaya (normal bitiş) veya sunucu saatine
   (süre aşımı) karşı doğrular.
 - `matchId = roomCode_createdAt` ve write-once kural ile aynı maç iki kez puanlanamaz.
+- Profildeki "son oyunlar" listesi `recentMatches/{uid}` altındadır ve **hiçbir istemcinin
+  yazma kuralı yoktur**; yalnızca sunucu yazar, giriş yapmış her oyuncu okuyabilir. Herkese
+  açık bir profilde duran bir geçmişi telefon yazsaydı, telefon düzenleyebilirdi: yenilgiyi
+  hiç bildirmemekle gerçekten bildirmemek arasındaki farkı veritabanı göremez. Liste on maçta
+  tutulur, en eskisi düşer.
 - Oda şifresi hash'i, hiçbir istemcinin okuyamadığı `roomSecrets/{code}` altındadır;
   karşılaştırmayı kural yapar.
+- Maç içi mesajlarda **serbest metin yoktur ve olmamalıdır**. Kural, `rooms/{code}/chat/{uid}`
+  altına yalnızca uygulamadaki sabit listenin anahtarlarından birini kabul eder; başka bir alan
+  eklenemez, bir oyuncu diğerinin adına yazamaz ve ardışık iki mesaj arasında en az üç saniye
+  olmak zorundadır — zaman damgasını sunucu koyar, telefon değil. Kapalı liste yalnızca
+  sadelik değil: serbest metin uygulamayı Play'in kullanıcı içeriği yükümlülükleri kapsamına
+  sokar. Mesajlar odanın içinde durur, odayla birlikte silinir.
 - Engelleme sunucuda uygulanır: engellenen kullanıcı karşı tarafın düğümüne yazamaz.
 - E-posta adresleri `usersPrivate/{uid}` altındadır ve yalnızca sahibi okuyabilir.
 - Release derlemesinde debug logları R8 tarafından tamamen kaldırılır.

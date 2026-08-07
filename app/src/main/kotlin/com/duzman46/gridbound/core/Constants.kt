@@ -77,6 +77,7 @@ object Constants {
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_SOUND_ENABLED = "sound_enabled"
         const val KEY_HAPTICS_ENABLED = "haptics_enabled"
+        const val KEY_MATCH_MESSAGES_ENABLED = "match_messages_enabled"
         const val KEY_DIFFICULTY = "difficulty"
         const val KEY_TOTAL_GAMES = "total_games"
         const val KEY_TOTAL_WINS = "total_wins"
@@ -159,6 +160,25 @@ object Constants {
          * anyone actually takes, so it can only catch a player who has genuinely walked away.
          */
         const val IDLE_FORFEIT_MILLIS = 600_000L
+
+        /**
+         * The shortest gap allowed between two messages from the same player.
+         *
+         * database.rules.json holds the same number and is what actually enforces it; this
+         * copy only keeps the app from sending a write it already knows will be refused. A
+         * closed vocabulary means nobody can say anything unpleasant, but fifty of anything a
+         * second is unpleasant on its own.
+         */
+        const val CHAT_MIN_INTERVAL_MILLIS = 3_000L
+
+        /**
+         * How long a message stays on screen.
+         *
+         * Long enough to read across a board, short enough that a rival's last word is not
+         * still sitting there ten moves later — which is what makes it something nobody has
+         * to dismiss.
+         */
+        const val CHAT_VISIBLE_MILLIS = 7_000L
     }
 
     /** Realtime Database layout. Every path is mirrored by a rule in database.rules.json. */
@@ -175,12 +195,33 @@ object Constants {
         /** Append-only match reports, consumed by the rating Cloud Function. */
         const val MATCH_RESULTS_PATH = "matchResults"
 
+        /**
+         * recentMatches/{uid} — the short match history a profile shows, written and capped
+         * by the server and readable by any signed-in player.
+         *
+         * Deliberately not a child of the profile: the leaderboard reads fifty profiles in one
+         * query and the session listens to one for as long as the app is open, and neither of
+         * them wants ten match rows riding along on every read.
+         */
+        const val RECENT_MATCHES_PATH = "recentMatches"
+
         /** leaderboards/weekly/{weekKey}/{uid}, maintained by the rating function. */
         const val LEADERBOARDS_PATH = "leaderboards"
         const val WEEKLY_LEADERBOARD_PATH = "weekly"
 
         const val STARTING_RATING = 1_000
         const val MAX_USERNAME_ATTEMPTS = 6
+
+        /**
+         * How long a change of identity is given to reach the session every screen reads
+         * before it counts as having failed.
+         *
+         * Generous, because the wait spans a sign-in and the database connection
+         * re-authenticating behind it, and telling a player "that did not work" while it
+         * quietly did is the worst answer available. Bounded, because the alternative to a
+         * bound is a confirmation that never comes back.
+         */
+        const val IDENTITY_SETTLE_TIMEOUT_MILLIS = 15_000L
     }
 
     object Billing {

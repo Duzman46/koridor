@@ -56,6 +56,7 @@
     <string name="auth_error_account_exists_with_other_method">यह ईमेल पहले से किसी दूसरे साइन-इन तरीक़े से जुड़ा है।</string>
     <string name="auth_error_requires_recent_login">सुरक्षा के लिए, आगे बढ़ने से पहले दोबारा साइन इन करें।</string>
     <string name="auth_error_credential_in_use">यह खाता पहले से किसी दूसरे खिलाड़ी से जुड़ा है।</string>
+    <string name="auth_error_account_switch_failed">उस खाते पर स्विच नहीं हो सका। आपकी अतिथि प्रगति अब नहीं रही — जारी रखने के लिए Google से साइन इन करें।</string>
 
     <string name="auth_link_title">अपनी प्रगति सहेजें</string>
     <string name="auth_link_explainer">खाता जोड़ें ताकि आपकी प्रगति, ख़रीदारी और दोस्त हर डिवाइस पर आपके साथ रहें।</string>
@@ -101,6 +102,15 @@
     <string name="profile_best_streak">सर्वश्रेष्ठ लगातार जीत</string>
     <string name="profile_member_since">%1$s से सदस्य</string>
     <string name="profile_player_title">खिलाड़ी प्रोफ़ाइल</string>
+    <string name="profile_recent_games">हाल के खेल</string>
+    <string name="profile_recent_empty">अभी तक कोई ऑनलाइन खेल नहीं खेला गया।</string>
+    <string name="profile_recent_show_all">सभी दिखाएँ (%1$d)</string>
+    <string name="profile_recent_show_fewer">कम दिखाएँ</string>
+    <string name="profile_recent_result_win">जीत</string>
+    <string name="profile_recent_result_loss">हार</string>
+    <string name="profile_recent_result_draw">बराबरी</string>
+    <string name="profile_recent_unranked">बिना रेटिंग</string>
+    <string name="profile_recent_unknown_opponent">हटाया गया खिलाड़ी</string>
 
     <string name="account_title">खाता</string>
     <string name="account_delete_title">खाता हटाएँ</string>
@@ -171,6 +181,23 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">आपकी बारी</string>
     <string name="game_rival_turn">प्रतिद्वंद्वी की बारी</string>
+
+    <string name="chat_open">कुछ कहें</string>
+    <string name="chat_mute">संदेश बंद करें</string>
+    <string name="chat_good_luck">शुभकामनाएँ</string>
+    <string name="chat_nice_move">बढ़िया चाल</string>
+    <string name="chat_well_played">अच्छा खेले</string>
+    <string name="chat_good_game">अच्छा खेल</string>
+    <string name="chat_thanks">धन्यवाद</string>
+    <string name="chat_oops">अरे</string>
+    <string name="chat_sorry">माफ़ करें</string>
+    <string name="chat_good_luck_next_time">अगली बार शुभकामनाएँ</string>
+    <string name="chat_reaction_smile">मुस्कान</string>
+    <string name="chat_reaction_wow">वाह</string>
+    <string name="chat_reaction_thinking">सोच रहे हैं</string>
+    <string name="chat_reaction_brilliant">शानदार</string>
+    <string name="chat_reaction_strong">ताक़त</string>
+    <string name="chat_reaction_sad">उदास</string>
 
     <string name="leaderboard_title">लीडरबोर्ड</string>
     <string name="leaderboard_tab_global">वैश्विक</string>
@@ -257,6 +284,8 @@
     <string name="settings_sounds_description">चाल, दीवार और नतीजे की आवाज़ें।</string>
     <string name="settings_haptics">हैप्टिक फ़ीडबैक</string>
     <string name="settings_haptics_description">चालों और ग़लतियों पर कंपन।</string>
+    <string name="settings_chat">मैच के संदेश</string>
+    <string name="settings_chat_description">ऑनलाइन मैचों में तय वाक्य और इमोजी।</string>
     <string name="settings_default_ai">डिफ़ॉल्ट AI</string>
     <string name="settings_ad_privacy">विज्ञापन गोपनीयता विकल्प</string>
 

@@ -1,8 +1,8 @@
 # Koridor's server
 
-Rating, the weekly leaderboard, room expiry and the matchmaking backstop — everything that
-has to be written by something no player controls, or that nobody's phone can be relied on to
-do.
+Rating, the weekly leaderboard, the match history on a profile, room expiry and the
+matchmaking backstop — everything that has to be written by something no player controls, or
+that nobody's phone can be relied on to do.
 
 This was originally three Cloud Functions. Cloud Functions require a Firebase project on the
 Blaze plan, and Blaze requires a payment method, so the same work runs here instead: a
@@ -14,17 +14,26 @@ Once a minute the worker:
 
 1. finds match reports still marked `PENDING`, re-checks each against the room it claims to
    come from, and applies Elo to both players plus the current week's board;
-2. deletes rooms that expired without ever being played, and closes matches that ran past
+2. writes every one of those matches — rated or not — into both players' histories under
+   `recentMatches/{uid}`, keeping the last ten and dropping the oldest;
+3. deletes rooms that expired without ever being played, and closes matches that ran past
    their window rather than deleting them mid-game;
-3. pairs whoever is still in the matchmaking list, closest ratings first, and clears entries
+4. pairs whoever is still in the matchmaking list, closest ratings first, and clears entries
    nothing is behind any more;
-4. on a run that had no match to rate, walks a page of the profile tree and takes any linked
+5. on a run that had no match to rate, walks a page of the profile tree and takes any linked
    account that is not yet in the all-time board's index onto it.
+
+Step 2 is here rather than on the phones because the history sits on a public profile: a list
+a device writes is a list a device edits, and nothing in the database could tell a real loss
+from a modified client quietly not filing one. The rules therefore grant no client any write
+under `recentMatches`, while letting every signed-in player read anyone's. An unranked match
+and a match against a guest are recorded too — they were played — and carry no `ratingChange`
+field at all rather than a zero, because zero is what an evenly matched draw actually pays.
 
 The board's index is a copy of the rating written under `leaderboardRating`, and only a linked
 account ever gets one — that is what keeps guests off the table. A profile carrying no copy is
 not last in that ordering, it is absent from it, so before step 4 existed every account
-written before the copy did was invisible on a board that reported no fault. Step 4 is the
+written before the copy did was invisible on a board that reported no fault. Step 5 is the
 only hand that can reach those profiles: their owners are signed in already and will not be
 signing in again, and the rules let a phone write nobody's profile but its own.
 
@@ -44,15 +53,19 @@ trigger became a schedule. The cost is up to a minute of latency before a rating
 benefit is that nothing has to be exposed to the network to receive an event, and a report
 filed while a run is already going is simply picked up by the next one.
 
-`MAX_REPORTS_PER_RUN` is four. The limit is not the work, it is subrequests: the free plan
-allows fifty outbound requests per invocation and one report costs about eight.
+`MAX_REPORTS_PER_RUN` is three. The limit is not the work, it is subrequests: the free plan
+allows fifty outbound requests per invocation and one rated report costs ten — two to claim
+it, one to re-check the room, four to read both records and both weekly rows, two to read
+both histories, and one for the update that lands all of it. Three of those leaves twenty for
+the pending query, the room sweep and the matchmaking backstop, whose combined worst case is
+seventeen — and still rates four thousand matches a day.
 
 ## Layout
 
 | file | what it is |
 | --- | --- |
 | `src/index.ts` | the `scheduled` entry point, and the only place secrets are read |
-| `src/sweep.ts` | the actual work: rate reports, expire rooms, pair the waiting list, index the board |
+| `src/sweep.ts` | the actual work: rate reports, record histories, expire rooms, pair the waiting list, index the board |
 | `src/db.ts` | the Realtime Database REST client, including compare-and-set via ETags |
 | `src/auth.ts` | service-account key → access token, signed with WebCrypto |
 | `src/elo.ts` | the rating maths |
@@ -119,9 +132,11 @@ npm run test:e2e  # the whole sweep, against the database emulator
 
 The end-to-end test is the one that matters. It starts the emulator with this project's real
 `database.rules.json`, seeds an honest match, a false report, an unranked match, two dead
-rooms and four players waiting to be paired, and checks what the sweep does with each — including that running it twice does not
-rate the same match twice. Every part of this failed silently in production when it was
-wrong: a sweep that finds nothing looks exactly like a sweep with nothing to do.
+rooms, four players waiting to be paired and a pair who play eleven matches, and checks what
+the sweep does with each — including that running it twice does not rate the same match
+twice, and that the eleventh match pushes the first out of a history rather than the tenth.
+Every part of this failed silently in production when it was wrong: a sweep that finds
+nothing looks exactly like a sweep with nothing to do.
 
 ## Not here
 

@@ -4,12 +4,18 @@ import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
+import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.runTransactionSuspend
+import com.duzman46.gridbound.data.firebase.string
+import com.duzman46.gridbound.data.firebase.stringOrNull
+import com.duzman46.gridbound.match.domain.MatchOutcome
 import com.duzman46.gridbound.match.domain.MatchProcessingState
 import com.duzman46.gridbound.match.domain.MatchReport
 import com.duzman46.gridbound.match.domain.MatchRepository
+import com.duzman46.gridbound.match.domain.RecentMatch
 import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.Transaction
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -56,6 +62,30 @@ class RtdbMatchRepository @Inject constructor(
         }
     }
 
+    override suspend fun loadRecentMatches(userId: String): Outcome<List<RecentMatch>> {
+        if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
+        if (userId.isBlank()) return Outcome.Failure(AppError.NOT_SIGNED_IN)
+        return try {
+            val history = firebase.database
+                .getReference(Constants.Backend.RECENT_MATCHES_PATH)
+                .child(userId)
+                .awaitSnapshot()
+            // Sorted here rather than by the database, because the node is keyed by match id:
+            // an ordered query would need an index on a node capped at ten rows, which is a
+            // server-side sort of a list that fits in one screen.
+            Outcome.Success(
+                history.children
+                    .mapNotNull(DataSnapshot::toRecentMatch)
+                    .sortedByDescending(RecentMatch::playedAt),
+            )
+        } catch (error: Exception) {
+            AppLog.warn("load-recent-matches", error)
+            Outcome.Failure(
+                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
+            )
+        }
+    }
+
     object Keys {
         const val ROOM_CODE = "roomCode"
         const val HOST_UID = "hostUid"
@@ -68,4 +98,35 @@ class RtdbMatchRepository @Inject constructor(
         const val REPORTED_BY = "reportedBy"
         const val STATE = "state"
     }
+
+    /** The fields `worker/src/sweep.ts` writes under `recentMatches/{uid}/{matchId}`. */
+    object HistoryKeys {
+        const val OPPONENT_NAME = "opponentName"
+        const val RESULT = "result"
+        const val PLAYED_AT = "playedAt"
+        const val RATING_CHANGE = "ratingChange"
+    }
+}
+
+/**
+ * A history row, or null when it is too damaged to draw.
+ *
+ * Only the server writes here, so a row missing its time or its result is a fault rather than
+ * a variation — and a fault is better left out of the list than shown as a nameless game on an
+ * unknown date. The rating change is the one field allowed to be absent, and its absence is
+ * the fact the row is carrying: see [RecentMatch.ratingChange].
+ */
+private fun DataSnapshot.toRecentMatch(): RecentMatch? {
+    val playedAt = child(RtdbMatchRepository.HistoryKeys.PLAYED_AT)
+        .getValue(Long::class.java) ?: return null
+    val outcome = MatchOutcome.entries.firstOrNull {
+        it.name == stringOrNull(RtdbMatchRepository.HistoryKeys.RESULT)
+    } ?: return null
+    return RecentMatch(
+        opponentName = string(RtdbMatchRepository.HistoryKeys.OPPONENT_NAME),
+        outcome = outcome,
+        playedAt = playedAt,
+        ratingChange = child(RtdbMatchRepository.HistoryKeys.RATING_CHANGE)
+            .getValue(Long::class.java)?.toInt(),
+    )
 }

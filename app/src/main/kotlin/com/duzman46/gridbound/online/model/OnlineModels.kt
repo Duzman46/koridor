@@ -141,6 +141,14 @@ data class OnlineRoom(
     val hostSeat: PlayerId,
     /** Incremented on every accepted move; the optimistic-concurrency guard. */
     val version: Long,
+    /**
+     * What each player last said, at most one entry each and empty until somebody does.
+     *
+     * Carried on the room rather than fetched separately: the board screen is already
+     * listening to this node, so a message costs no second listener and arrives on the same
+     * update as the move it was a reaction to.
+     */
+    val chat: List<MatchChatEntry> = emptyList(),
 ) {
     val playerCount: Int get() = if (guestUserId.isNullOrBlank()) 1 else 2
 

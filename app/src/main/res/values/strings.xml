@@ -67,6 +67,7 @@
     <string name="auth_error_account_exists_with_other_method">This email is already linked to a different sign-in method.</string>
     <string name="auth_error_requires_recent_login">For your security, please sign in again before continuing.</string>
     <string name="auth_error_credential_in_use">This account is already linked to another player.</string>
+    <string name="auth_error_account_switch_failed">Could not switch to that account. Your guest progress is gone — sign in with Google to continue.</string>
 
     <!-- Guest linking -->
     <string name="auth_link_title">Keep your progress</string>
@@ -115,6 +116,15 @@
     <string name="profile_best_streak">Best streak</string>
     <string name="profile_member_since">Member since %1$s</string>
     <string name="profile_player_title">Player profile</string>
+    <string name="profile_recent_games">Recent games</string>
+    <string name="profile_recent_empty">No online games played yet.</string>
+    <string name="profile_recent_show_all">Show all (%1$d)</string>
+    <string name="profile_recent_show_fewer">Show fewer</string>
+    <string name="profile_recent_result_win">Won</string>
+    <string name="profile_recent_result_loss">Lost</string>
+    <string name="profile_recent_result_draw">Draw</string>
+    <string name="profile_recent_unranked">Casual</string>
+    <string name="profile_recent_unknown_opponent">Deleted player</string>
 
     <!-- Account management -->
     <string name="account_title">Account</string>
@@ -193,6 +203,27 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Your turn</string>
     <string name="game_rival_turn">Rival\'s turn</string>
+
+    <!--
+        Canned messages during an online match. The vocabulary is closed on purpose and the
+        database rules refuse anything outside it; see MatchMessage before adding to it.
+    -->
+    <string name="chat_open">Say something</string>
+    <string name="chat_mute">Turn messages off</string>
+    <string name="chat_good_luck">Good luck</string>
+    <string name="chat_nice_move">Nice move</string>
+    <string name="chat_well_played">Well played</string>
+    <string name="chat_good_game">Good game</string>
+    <string name="chat_thanks">Thanks</string>
+    <string name="chat_oops">Oops</string>
+    <string name="chat_sorry">Sorry</string>
+    <string name="chat_good_luck_next_time">Good luck next time</string>
+    <string name="chat_reaction_smile">Smile</string>
+    <string name="chat_reaction_wow">Wow</string>
+    <string name="chat_reaction_thinking">Thinking</string>
+    <string name="chat_reaction_brilliant">Brilliant</string>
+    <string name="chat_reaction_strong">Strong</string>
+    <string name="chat_reaction_sad">Sad</string>
 
     <!-- Leaderboard -->
     <string name="leaderboard_title">Leaderboard</string>
@@ -285,6 +316,8 @@
     <string name="settings_sounds_description">Move, wall, and result sounds.</string>
     <string name="settings_haptics">Haptic feedback</string>
     <string name="settings_haptics_description">Vibration for moves and errors.</string>
+    <string name="settings_chat">Match messages</string>
+    <string name="settings_chat_description">Fixed phrases and emoji in online matches.</string>
     <string name="settings_default_ai">Default AI</string>
     <string name="settings_ad_privacy">Ad Privacy Options</string>
 

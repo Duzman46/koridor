@@ -163,6 +163,12 @@
         ".validate": "newData.hasChildren(['roomCode', 'hostUid', 'guestUid', 'winnerUid', 'endReason', 'ranked', 'turnCount', 'reportedAt', 'reportedBy', 'state']) && newData.child('roomCode').isString() && newData.child('hostUid').isString() && newData.child('guestUid').isString() && newData.child('winnerUid').isString() && newData.child('endReason').isString() && newData.child('ranked').isBoolean() && newData.child('turnCount').isNumber() && newData.child('reportedAt').isNumber() && newData.child('reportedBy').isString()"
       }
     },
+    "recentMatches": {
+      ".write": false,
+      "$uid": {
+        ".read": "auth != null"
+      }
+    },
     "leaderboards": {
       "weekly": {
         "$weekKey": {
@@ -233,6 +239,21 @@
         },
         "turnDurationSeconds": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600"
+        },
+        "chat": {
+          "$authorId": {
+            ".write": "auth != null && auth.uid == $authorId && (root.child('rooms').child($code).child('hostUserId').val() == auth.uid || root.child('rooms').child($code).child('guestUserId').val() == auth.uid) && (root.child('rooms').child($code).child('status').val() == 'IN_PROGRESS' || root.child('rooms').child($code).child('status').val() == 'FINISHED')",
+            ".validate": "newData.hasChildren(['key', 'at']) && ($authorId == auth.uid || (data.exists() && newData.child('key').val() == data.child('key').val() && newData.child('at').val() == data.child('at').val()))",
+            "key": {
+              ".validate": "newData.isString() && (newData.val() == 'GOOD_LUCK' || newData.val() == 'NICE_MOVE' || newData.val() == 'WELL_PLAYED' || newData.val() == 'GOOD_GAME' || newData.val() == 'THANKS' || newData.val() == 'OOPS' || newData.val() == 'SORRY' || newData.val() == 'GOOD_LUCK_NEXT_TIME' || newData.val() == 'SMILE' || newData.val() == 'WOW' || newData.val() == 'THINKING' || newData.val() == 'BRILLIANT' || newData.val() == 'STRONG' || newData.val() == 'SAD') && (newData.val() == data.val() || newData.parent().child('at').val() == now)"
+            },
+            "at": {
+              ".validate": "newData.isNumber() && (newData.val() == data.val() || (newData.val() == now && (!data.exists() || now > data.val() + 3000)))"
+            },
+            "$otherFields": {
+              ".validate": false
+            }
+          }
         }
       }
     }

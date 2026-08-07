@@ -54,19 +54,36 @@ interface AuthRepository {
      * exist. Nothing of the current session survives it, so the caller owes the player a
      * plain warning first and owes the database the removal of whatever the abandoned
      * identity owns, while that identity is still the one asking.
+     *
+     * Succeeds only when the signed-in user really is that account. A completed call proves
+     * the backend answered, not that the player in the chair changed, and success on the
+     * weaker reading is what turns a hand-over that did nothing into a screen announcing it
+     * worked.
      */
     suspend fun signInToExistingAccount(): Outcome<AuthUser>
 
     /**
-     * Removes the anonymous identity a player is walking away from, best effort.
+     * Empties the chair the anonymous player was sitting in.
      *
-     * Deliberately silent about failure. Firebase refuses to delete a credential whose
+     * The auth record itself is best effort: Firebase refuses to delete a credential whose
      * sign-in it considers stale, and an anonymous session has nothing to present a second
      * time — a guest who has been playing for weeks simply cannot prove anything. By this
-     * point their data is already gone and the sign-in that follows replaces the session
-     * either way, so a refusal costs no more than an auth record with nothing attached.
+     * point their data is already gone, so a refusal costs no more than an auth record with
+     * nothing attached.
+     *
+     * The session is not best effort. Whatever becomes of the record, no anonymous user may
+     * still be signed in when this returns, because everything after it is a sign-in as
+     * somebody else and none of it is safe to reason about over a guest who is still there.
      */
     suspend fun discardGuestIdentity()
+
+    /**
+     * Drops the credential a failed link is holding, unspent.
+     *
+     * The offer it enables is a question, and declining is an answer to it. A credential
+     * kept past its answer is one that can be spent on a question nobody asked.
+     */
+    fun forgetExistingAccountCredential()
 
     suspend fun signOut()
 

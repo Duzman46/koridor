@@ -147,16 +147,33 @@ class FirebaseAuthRepository @Inject constructor(
         // asks again who the player means; a credential lying around after its question was
         // answered is one that can be spent on a question nobody asked.
         existingAccountCredential = null
-        return authCall("sign-in-existing-account") {
+        val signedIn = authCall("sign-in-existing-account") {
             firebase.auth.signInWithCredential(credential).await().user
         }
+        if (signedIn is Outcome.Failure) return signedIn
+        // Read back off the session rather than off the call that just returned. Firebase
+        // hands a user object to a completed sign-in whether or not it replaced the one
+        // already in the chair, and a guest still sitting there is the difference between a
+        // hand-over and a message claiming one happened.
+        val settled = firebase.auth.currentUser?.takeUnless { it.isAnonymous }
+            ?: return Outcome.Failure(AppError.ACCOUNT_SWITCH_FAILED)
+        return Outcome.Success(settled.toAuthUser())
     }
 
     override suspend fun discardGuestIdentity() {
         if (!firebase.isConfigured) return
         val guest = firebase.auth.currentUser?.takeIf { it.isAnonymous } ?: return
-        runCatching { guest.delete().await() }
-            .onFailure { AppLog.warn("discard-guest-identity", it) }
+        runCatching { guest.delete().await() }.onFailure { error ->
+            AppLog.warn("discard-guest-identity", error)
+            // FirebaseAuth's own sign-out rather than this repository's: the credential the
+            // hand-over is about to be answered with is held here, and the repository's
+            // sign-out drops it along with the remembered Google account.
+            firebase.auth.signOut()
+        }
+    }
+
+    override fun forgetExistingAccountCredential() {
+        existingAccountCredential = null
     }
 
     override suspend fun signOut() {

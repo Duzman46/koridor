@@ -40,6 +40,7 @@ import com.duzman46.gridbound.presentation.account.AccountViewModel
 import com.duzman46.gridbound.presentation.auth.AuthEvent
 import com.duzman46.gridbound.presentation.auth.AuthViewModel
 import com.duzman46.gridbound.presentation.profile.ProfileViewModel
+import com.duzman46.gridbound.presentation.profile.RecentGamesViewModel
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.session.SessionStatus
@@ -350,12 +351,17 @@ fun AppNavigation(
             composable(Routes.PROFILE) { entry ->
                 val viewModel: ProfileViewModel = hiltViewModel()
                 val state by viewModel.session.collectAsStateWithLifecycle()
+                // The same view model another player's page uses. This route carries no user
+                // id, and that absence is what tells it to ask about the signed-in player.
+                val recentGamesViewModel: RecentGamesViewModel = hiltViewModel()
+                val recentGames by recentGamesViewModel.state.collectAsStateWithLifecycle()
                 ProfileScreen(
                     profile = state.profile,
                     // Not "signed in": an ordinary guest signs in anonymously and is
                     // SIGNED_IN too, so testing that spun forever for exactly the players who
                     // have no profile. What decides it is whether a profile can exist at all.
                     hasAccount = state.canUseSocialFeatures,
+                    recentGames = recentGames,
                     onBack = navController::popBackStack,
                     onEdit = { navController.navigateFrom(entry, Routes.EDIT_PROFILE) },
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
@@ -587,6 +593,7 @@ fun AppNavigation(
                     onThemeMode = viewModel::setThemeMode,
                     onSound = viewModel::setSoundEnabled,
                     onHaptics = viewModel::setHapticsEnabled,
+                    onMatchMessages = viewModel::setMatchMessagesEnabled,
                     onDifficulty = viewModel::setDifficulty,
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     monetization = monetization,

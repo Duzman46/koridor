@@ -3,6 +3,7 @@ package com.duzman46.gridbound.ui.screens
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -12,11 +13,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,6 +34,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Mood
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -42,11 +47,14 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -81,6 +89,9 @@ import com.duzman46.gridbound.game.models.GameStatus
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.TurnRecord
 import com.duzman46.gridbound.game.models.WallOrientation
+import com.duzman46.gridbound.online.model.MatchChatEntry
+import com.duzman46.gridbound.online.model.MatchMessage
+import com.duzman46.gridbound.online.model.MatchMessageKind
 import com.duzman46.gridbound.presentation.game.GameEvent
 import com.duzman46.gridbound.presentation.game.GameUiState
 import com.duzman46.gridbound.presentation.game.GameViewModel
@@ -130,6 +141,8 @@ fun GameRoute(
         onConfirmWall = viewModel::confirmPendingWall,
         onCancelWall = viewModel::cancelPendingWall,
         onResign = viewModel::resign,
+        onSendMessage = viewModel::sendMessage,
+        onMuteMessages = viewModel::muteMatchMessages,
     )
 }
 
@@ -165,6 +178,8 @@ private fun GameScreen(
     onConfirmWall: () -> Unit,
     onCancelWall: () -> Unit,
     onResign: () -> Unit,
+    onSendMessage: (MatchMessage) -> Unit,
+    onMuteMessages: () -> Unit,
 ) {
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
@@ -302,6 +317,7 @@ private fun GameScreen(
                         onOpenProfile = onOpenProfile,
                     )
                     OnlineClockBar(state, now)
+                    MatchChatBar(state, onSendMessage, onMuteMessages)
                 }
                 if (shared) {
                     SeatPanel(
@@ -429,6 +445,200 @@ private fun OnlineClockBar(state: GameUiState, now: Long) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
             )
+        }
+    }
+}
+
+/**
+ * Everything the match has to say, and the one way to say something back.
+ *
+ * The row is reserved for the whole of an online match instead of appearing when a message
+ * arrives. The board is measured out of what is left over, so a strip that came and went would
+ * resize it mid-game — and a board that changes size under a thumb already on its way down is
+ * how a tap meant for one square lands on the next.
+ *
+ * The way in sits at the end of this row rather than over the board or in the app bar, which
+ * puts it where the messages are without putting it anywhere near a square. It is above the
+ * board, and the board is square inside a box that is not: on a tall screen the board is as
+ * wide as the screen allows and floats in the spare height, so there is dead space beneath
+ * this button; on a squat one it is as tall as the screen allows and narrower than this row,
+ * so the button overhangs the background instead. Either way a thumb that misses it misses the
+ * board too.
+ */
+@Composable
+private fun MatchChatBar(
+    state: GameUiState,
+    onSend: (MatchMessage) -> Unit,
+    onMute: () -> Unit,
+) {
+    if (!state.showsMatchMessages) return
+    var picking by remember { mutableStateOf(false) }
+    if (picking) {
+        MatchMessageSheet(
+            onPick = {
+                picking = false
+                onSend(it)
+            },
+            onMute = {
+                picking = false
+                onMute()
+            },
+            onDismiss = { picking = false },
+        )
+    }
+    Row(
+        Modifier.fillMaxWidth().height(48.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            ChatBubble(
+                entry = state.rivalMessage,
+                container = MaterialTheme.colorScheme.secondaryContainer,
+                showWords = true,
+            )
+        }
+        // Only the glyph coming back, because you already know what you said. It keeps the
+        // rival's half of the row wide enough for a phrase that runs to four words.
+        ChatBubble(
+            entry = state.ownMessage,
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            showWords = false,
+        )
+        IconButton(onClick = { picking = true }, enabled = state.canSendMessage) {
+            Icon(Icons.Rounded.Mood, contentDescription = stringResource(R.string.chat_open))
+        }
+    }
+}
+
+/**
+ * One message, shown for a few seconds and then gone.
+ *
+ * There is nothing to dismiss. A bubble waiting to be tapped is one more thing to hit by
+ * mistake beside a board, and a rival who says nothing further would otherwise leave their last
+ * word sitting there for the rest of the match. A message that is already past its welcome when
+ * it first arrives — which is what a player rejoining a match reads out of the room — is never
+ * shown at all.
+ */
+@Composable
+private fun ChatBubble(
+    entry: MatchChatEntry?,
+    container: Color,
+    showWords: Boolean,
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(entry?.userId, entry?.sentAt) {
+        val remaining = entry?.let {
+            Constants.Online.CHAT_VISIBLE_MILLIS - (System.currentTimeMillis() - it.sentAt)
+        } ?: 0L
+        visible = remaining > 0L
+        if (visible) {
+            delay(remaining)
+            visible = false
+        }
+    }
+    // Faded rather than removed, so the message is still there to draw while it goes.
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, label = "chatBubbleAlpha")
+    if (entry == null || alpha == 0f) return
+
+    val label = stringResource(entry.message.labelRes)
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = container,
+        modifier = Modifier.alpha(alpha).semantics(mergeDescendants = true) {
+            contentDescription = label
+        },
+    ) {
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(entry.message.glyph, style = MaterialTheme.typography.titleMedium)
+            if (showWords && entry.message.kind == MatchMessageKind.PHRASE) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The whole vocabulary, in one sheet.
+ *
+ * Faces and phrases share it rather than getting a control each: they are the same act — saying
+ * something without typing it — and a second way in would be a second thing to hit on a screen
+ * whose only target that matters is the board. Sorting them into "an emoji" or "a phrase"
+ * before choosing what to say would be asking the player about the implementation.
+ *
+ * The mute lives at the bottom of it, next to the thing being muted, because that is where
+ * somebody is standing when a rival has said the same thing eleven times. It writes the same
+ * setting the settings screen holds; there is no such thing as a mute for this match only.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MatchMessageSheet(
+    onPick: (MatchMessage) -> Unit,
+    onMute: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                stringResource(R.string.chat_open),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MatchMessage.entries
+                    .filter { it.kind == MatchMessageKind.REACTION }
+                    .forEach { message ->
+                        val label = stringResource(message.labelRes)
+                        IconButton(
+                            onClick = { onPick(message) },
+                            modifier = Modifier.semantics { contentDescription = label },
+                        ) {
+                            Text(message.glyph, style = MaterialTheme.typography.headlineSmall)
+                        }
+                    }
+            }
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                MatchMessage.entries
+                    .filter { it.kind == MatchMessageKind.PHRASE }
+                    .forEach { message ->
+                        SuggestionChip(
+                            onClick = { onPick(message) },
+                            label = { Text(stringResource(message.labelRes)) },
+                            icon = { Text(message.glyph) },
+                        )
+                    }
+            }
+            TextButton(onClick = onMute, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(R.string.chat_mute))
+            }
         }
     }
 }

@@ -4,8 +4,11 @@ import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.data.OnlineBoardCodec
 import com.duzman46.gridbound.online.data.RoomCodec
+import com.duzman46.gridbound.online.model.MatchChatEntry
+import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomTiming
+import com.google.firebase.database.ServerValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -41,6 +44,60 @@ class RoomCodecTest {
     }
 
     @Test
+    fun `the room carries what each player last said`() {
+        val room = codec.decode(
+            "ABC234",
+            storedRoom(
+                mapOf(
+                    "chat" to mapOf(
+                        "guest-uid" to mapOf("key" to "GOOD_LUCK", "at" to 1_700L),
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(1, room?.chat?.size)
+        assertEquals(MatchMessage.GOOD_LUCK, room?.chat?.first()?.message)
+        assertEquals("guest-uid", room?.chat?.first()?.userId)
+        assertEquals(1_700L, room?.chat?.first()?.sentAt)
+    }
+
+    @Test
+    fun `a message this build has no words for is dropped rather than shown`() {
+        // The vocabulary can only grow, so an unrecognised key is a phone on a newer release.
+        // An empty bubble would be worse than nothing, and it must not cost the whole room.
+        val room = codec.decode(
+            "ABC234",
+            storedRoom(
+                mapOf(
+                    "chat" to mapOf(
+                        "guest-uid" to mapOf("key" to "SOMETHING_NEWER", "at" to 1_700L),
+                        "host-uid" to mapOf("key" to "THANKS", "at" to 1_800L),
+                    ),
+                ),
+            ),
+        )
+
+        assertNotNull(room)
+        assertEquals(listOf(MatchMessage.THANKS), room?.chat?.map { it.message })
+    }
+
+    @Test
+    fun `a room nobody has spoken in carries no messages`() {
+        assertEquals(emptyList<MatchChatEntry>(), codec.decode("ABC234", storedRoom())?.chat)
+    }
+
+    @Test
+    fun `a message is sent under the server's clock`() {
+        // A handset that could date its own messages could backdate them, and the gap the
+        // rules enforce between two messages is measured on exactly that stamp.
+        val payload = codec.encodeMessage(MatchMessage.NICE_MOVE)
+
+        assertEquals("NICE_MOVE", payload["key"])
+        assertEquals(ServerValue.TIMESTAMP, payload["at"])
+    }
+
+    @Test
     fun `a new room is opened without one`() {
         val payload = codec.encodeNewRoom(
             configuration = RoomConfiguration(timing = RoomTiming(turnDurationSeconds = 30)),
@@ -54,7 +111,7 @@ class RoomCodecTest {
         assertFalse(payload.containsKey("totalDurationSeconds"))
     }
 
-    private fun storedRoom(extras: Map<String, Any?>): Map<String, Any?> = mapOf(
+    private fun storedRoom(extras: Map<String, Any?> = emptyMap()): Map<String, Any?> = mapOf(
         "roomName" to "Test",
         "hostUserId" to "host-uid",
         "guestUserId" to "guest-uid",

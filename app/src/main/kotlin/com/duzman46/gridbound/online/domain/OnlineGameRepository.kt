@@ -2,6 +2,7 @@ package com.duzman46.gridbound.online.domain
 
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.game.models.GameAction
+import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineRoom
@@ -59,6 +60,16 @@ interface OnlineGameRepository {
 
     /** Concedes the match to the opponent. */
     suspend fun resign(session: OnlineSession): Outcome<Unit>
+
+    /**
+     * Says one of the fixed [MatchMessage] values to the other seat.
+     *
+     * Written into the room under this player's own id, so it is swept away with the room and
+     * there is no second lifetime to manage. Whether it is allowed at all is decided by the
+     * database rules, which refuse a key outside the vocabulary, a message written under the
+     * other player's id, and one sent too soon after the last.
+     */
+    suspend fun sendMessage(session: OnlineSession, message: MatchMessage): Outcome<Unit>
 
     /**
      * Ends the match once the move clock has run out, handing the win to whichever seat is

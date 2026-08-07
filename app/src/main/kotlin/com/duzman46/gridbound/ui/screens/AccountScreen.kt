@@ -23,6 +23,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -121,6 +122,15 @@ fun AccountScreen(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    // Every action on this page is several backend round trips long, and
+                    // handing an account over is the longest of them: data erased, an
+                    // identity given up, another signed in, and the session read back. The
+                    // card whose button carries a spinner is the first thing to disappear
+                    // when that starts, so without this the screen goes still at precisely
+                    // the moment the player most needs telling that it has not.
+                    if (state.isSubmitting) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
                     state.error?.let { FormMessage(it) }
                     state.info?.let { FormMessage(it, isError = false) }
                 }

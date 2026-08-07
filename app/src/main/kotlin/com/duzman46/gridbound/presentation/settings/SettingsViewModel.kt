@@ -42,6 +42,8 @@ class SettingsViewModel @Inject constructor(
     fun setLanguage(language: AppLanguage) = launchUpdate { settingsManager.setLanguage(language) }
     fun setSoundEnabled(enabled: Boolean) = launchUpdate { settingsManager.setSoundEnabled(enabled) }
     fun setHapticsEnabled(enabled: Boolean) = launchUpdate { settingsManager.setHapticsEnabled(enabled) }
+    fun setMatchMessagesEnabled(enabled: Boolean) =
+        launchUpdate { settingsManager.setMatchMessagesEnabled(enabled) }
     fun setDifficulty(difficulty: Difficulty) = launchUpdate { settingsManager.setDifficulty(difficulty) }
 
     private fun launchUpdate(update: suspend () -> Unit) {

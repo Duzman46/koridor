@@ -60,6 +60,7 @@
     <string name="auth_error_account_exists_with_other_method">هذا البريد مرتبط بالفعل بطريقة تسجيل دخول أخرى.</string>
     <string name="auth_error_requires_recent_login">من أجل أمانك، سجّل الدخول مرة أخرى قبل المتابعة.</string>
     <string name="auth_error_credential_in_use">هذا الحساب مرتبط بلاعب آخر.</string>
+    <string name="auth_error_account_switch_failed">تعذّر الانتقال إلى ذلك الحساب. لم يعد تقدّم الضيف موجودًا؛ سجّل الدخول بـ Google للمتابعة.</string>
 
     <string name="auth_link_title">احتفظ بتقدّمك</string>
     <string name="auth_link_explainer">اربط حسابًا ليبقى تقدّمك ومشترياتك وأصدقاؤك معك على كل جهاز.</string>
@@ -113,6 +114,15 @@
     <string name="profile_best_streak">أفضل سلسلة</string>
     <string name="profile_member_since">عضو منذ %1$s</string>
     <string name="profile_player_title">ملف اللاعب</string>
+    <string name="profile_recent_games">المباريات الأخيرة</string>
+    <string name="profile_recent_empty">لم تُلعب أي مباراة عبر الإنترنت بعد.</string>
+    <string name="profile_recent_show_all">عرض الكل (%1$d)</string>
+    <string name="profile_recent_show_fewer">عرض أقل</string>
+    <string name="profile_recent_result_win">فوز</string>
+    <string name="profile_recent_result_loss">خسارة</string>
+    <string name="profile_recent_result_draw">تعادل</string>
+    <string name="profile_recent_unranked">بدون تصنيف</string>
+    <string name="profile_recent_unknown_opponent">لاعب محذوف</string>
 
     <string name="account_title">الحساب</string>
     <string name="account_delete_title">حذف الحساب</string>
@@ -183,6 +193,23 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">دورك</string>
     <string name="game_rival_turn">دور الخصم</string>
+
+    <string name="chat_open">قل شيئًا</string>
+    <string name="chat_mute">إيقاف الرسائل</string>
+    <string name="chat_good_luck">حظًا موفقًا</string>
+    <string name="chat_nice_move">نقلة جميلة</string>
+    <string name="chat_well_played">أحسنت اللعب</string>
+    <string name="chat_good_game">مباراة جيدة</string>
+    <string name="chat_thanks">شكرًا</string>
+    <string name="chat_oops">خطأ مني</string>
+    <string name="chat_sorry">آسف</string>
+    <string name="chat_good_luck_next_time">حظًا أوفر في المرة القادمة</string>
+    <string name="chat_reaction_smile">ابتسامة</string>
+    <string name="chat_reaction_wow">مذهل</string>
+    <string name="chat_reaction_thinking">تفكير</string>
+    <string name="chat_reaction_brilliant">رائع</string>
+    <string name="chat_reaction_strong">قوة</string>
+    <string name="chat_reaction_sad">حزن</string>
 
     <string name="leaderboard_title">لوحة الصدارة</string>
     <string name="leaderboard_tab_global">عام</string>
@@ -273,6 +300,8 @@
     <string name="settings_sounds_description">أصوات النقلات والجدران والنتيجة.</string>
     <string name="settings_haptics">الاستجابة اللمسية</string>
     <string name="settings_haptics_description">اهتزاز عند النقلات والأخطاء.</string>
+    <string name="settings_chat">رسائل المباراة</string>
+    <string name="settings_chat_description">عبارات ثابتة ورموز تعبيرية في المباريات عبر الإنترنت.</string>
     <string name="settings_default_ai">الذكاء الاصطناعي الافتراضي</string>
     <string name="settings_ad_privacy">خيارات خصوصية الإعلانات</string>
 

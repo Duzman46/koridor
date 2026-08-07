@@ -34,6 +34,7 @@ interface GameRepository {
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setSoundEnabled(enabled: Boolean)
     suspend fun setHapticsEnabled(enabled: Boolean)
+    suspend fun setMatchMessagesEnabled(enabled: Boolean)
     suspend fun setDifficulty(difficulty: Difficulty)
 
     suspend fun recordCompletedGame(

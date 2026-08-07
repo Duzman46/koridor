@@ -10,6 +10,7 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.Position
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.WallOrientation
+import com.duzman46.gridbound.online.model.MatchChatEntry
 import com.duzman46.gridbound.online.model.RoomEndReason
 
 data class GameUiState(
@@ -59,6 +60,15 @@ data class GameUiState(
      * would open a profile it cannot show.
      */
     val onlineOpponent: OnlineOpponent? = null,
+    /**
+     * The account this device is playing as, which is the only way to tell whose message is
+     * whose. Blank outside an online match, where nobody is addressing anybody.
+     */
+    val localUserId: String = "",
+    /** What each seat last said; see [MatchChatEntry]. At most one entry per player. */
+    val chat: List<MatchChatEntry> = emptyList(),
+    /** The player's own setting, which switches both halves off: nothing sent, nothing shown. */
+    val matchMessagesEnabled: Boolean = true,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
@@ -75,6 +85,25 @@ data class GameUiState(
     val leavingForfeits: Boolean
         get() = isOnline && isOnlineConnected && winner == null &&
             boardState.status == GameStatus.IN_PROGRESS
+
+    /**
+     * True when this screen carries canned messages at all.
+     *
+     * Online only, and only while the player still wants them. A bot has nothing to say, and
+     * the second player on a shared handset is close enough to say it out loud.
+     */
+    val showsMatchMessages: Boolean get() = isOnline && matchMessagesEnabled
+
+    /** True while a message would actually reach a rival who is still playing. */
+    val canSendMessage: Boolean
+        get() = showsMatchMessages && isOnlineConnected && winner == null &&
+            boardState.status == GameStatus.IN_PROGRESS
+
+    /** The last thing the rival said, whether or not it is still worth showing. */
+    val rivalMessage: MatchChatEntry? get() = chat.firstOrNull { it.userId != localUserId }
+
+    /** This player's own last message, echoed back so that sending one visibly did something. */
+    val ownMessage: MatchChatEntry? get() = chat.firstOrNull { it.userId == localUserId }
 
     val acceptsHumanInput: Boolean
         get() = !isAiThinking && !isOnlineSyncing && when (mode) {

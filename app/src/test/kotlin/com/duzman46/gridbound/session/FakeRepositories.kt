@@ -24,6 +24,7 @@ import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.PresenceState
 import com.duzman46.gridbound.social.domain.SocialRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -52,6 +53,20 @@ class FakeAuthRepository(
 
     /** The anonymous identities dropped on the way to somebody else's account. */
     val discardedGuestIds = mutableListOf<String>()
+
+    /**
+     * Stands in for Firebase refusing to delete a session it considers stale, which is
+     * every anonymous session more than a few minutes old. The auth record survives; the
+     * player must not still be sitting in it.
+     */
+    var guestDeletionRefused = false
+
+    /**
+     * Stands in for a sign-in the backend accepts without the session ever becoming that
+     * account. The call answers and the chair stays empty, which is the shape of every way
+     * a hand-over can be announced without having happened.
+     */
+    var existingAccountSignInStrandsSession = false
 
     /**
      * Stands in for Firebase having kept the credential a link collided with.
@@ -94,13 +109,19 @@ class FakeAuthRepository(
     override suspend fun signInToExistingAccount(): Outcome<AuthUser> {
         if (!hasCredentialForExistingAccount) return Outcome.Failure(AppError.UNKNOWN)
         hasCredentialForExistingAccount = false
-        return complete { AuthUser(EXISTING_USER_ID, EXISTING_EMAIL, AccountType.GOOGLE, true) }
+        val account = AuthUser(EXISTING_USER_ID, EXISTING_EMAIL, AccountType.GOOGLE, true)
+        if (existingAccountSignInStrandsSession) return Outcome.Success(account)
+        return complete { account }
     }
 
     override suspend fun discardGuestIdentity() {
         val guest = currentUser()?.takeIf { it.accountType.isGuest } ?: return
-        discardedGuestIds += guest.userId
+        if (!guestDeletionRefused) discardedGuestIds += guest.userId
         state.value = AuthState.SignedOut
+    }
+
+    override fun forgetExistingAccountCredential() {
+        hasCredentialForExistingAccount = false
     }
 
     override suspend fun signOut() {
@@ -171,8 +192,19 @@ class FakeUserProfileRepository : UserProfileRepository {
     /** Simulates a database that is out of reach when the erase is attempted. */
     var failDelete = false
 
+    /**
+     * Simulates a listener that is never answered — a connection re-authenticating with a
+     * token it has not been given yet, a read the backend simply sits on. The identity is
+     * known all the same, and the session has to say so.
+     */
+    var profileReadsNeverAnswer = false
+
     override fun observeProfile(userId: String): Flow<UserProfile?> =
-        profiles.map { it[userId] }
+        if (profileReadsNeverAnswer) {
+            MutableSharedFlow()
+        } else {
+            profiles.map { it[userId] }
+        }
 
     override suspend fun loadProfile(userId: String): Outcome<UserProfile> =
         profiles.value[userId]?.let { Outcome.Success(it) } ?: Outcome.Failure(AppError.UNKNOWN)
@@ -336,6 +368,10 @@ class FakeGameRepository : GameRepository {
 
     override suspend fun setHapticsEnabled(enabled: Boolean) {
         settingsState.value = settingsState.value.copy(hapticsEnabled = enabled)
+    }
+
+    override suspend fun setMatchMessagesEnabled(enabled: Boolean) {
+        settingsState.value = settingsState.value.copy(matchMessagesEnabled = enabled)
     }
 
     override suspend fun setDifficulty(difficulty: Difficulty) {

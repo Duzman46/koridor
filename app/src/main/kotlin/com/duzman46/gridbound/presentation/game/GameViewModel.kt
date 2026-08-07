@@ -29,6 +29,7 @@ import com.duzman46.gridbound.match.domain.MatchEndReason
 import com.duzman46.gridbound.match.domain.MatchReport
 import com.duzman46.gridbound.match.domain.MatchRepository
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
 import com.duzman46.gridbound.online.model.OnlineSession
@@ -94,6 +95,7 @@ class GameViewModel @Inject constructor(
             mode = mode,
             difficulty = difficulty,
             localPlayer = localPlayer,
+            localUserId = onlineSession?.userId.orEmpty(),
         ),
     )
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -115,6 +117,9 @@ class GameViewModel @Inject constructor(
     /** The opponent whose profile read is already in flight; see [resolveOpponent]. */
     private var resolvingOpponentId: String? = null
 
+    /** When this device last said something; see [sendMessage]. */
+    private var lastMessageAt = 0L
+
     init {
         viewModelScope.launch {
             settingsManager.settings.collectLatest { settings ->
@@ -122,6 +127,7 @@ class GameViewModel @Inject constructor(
                     it.copy(
                         soundEnabled = settings.soundEnabled,
                         hapticsEnabled = settings.hapticsEnabled,
+                        matchMessagesEnabled = settings.matchMessagesEnabled,
                     )
                 }
             }
@@ -267,6 +273,7 @@ class GameViewModel @Inject constructor(
             localPlayer = localPlayer,
             soundEnabled = prior.soundEnabled,
             hapticsEnabled = prior.hapticsEnabled,
+            matchMessagesEnabled = prior.matchMessagesEnabled,
         )
         finishOrRunAi(_uiState.value.boardState)
     }
@@ -491,6 +498,7 @@ class GameViewModel @Inject constructor(
                 },
                 onlineWinner = roomWinner,
                 onlineEndReason = room.endReason.takeIf { roomWinner != null },
+                chat = room.chat,
                 // Held on to once seen, so a room whose guest seat has just emptied still
                 // remembers who was in it — which is who a rematch would be offered to.
                 opponentUserId = room.userFor(session.playerId.opponent)
@@ -664,6 +672,36 @@ class GameViewModel @Inject constructor(
             reportedBy = onlineSession?.userId.orEmpty(),
         )
         viewModelScope.launch { matchRepository.reportMatch(report) }
+    }
+
+    /**
+     * Says one of the fixed [MatchMessage] values to the rival.
+     *
+     * The gap check is the same one the database rules apply, kept here so that a double tap
+     * is answered by the app rather than by a write the server throws away — and so the
+     * player hears why nothing happened.
+     */
+    fun sendMessage(message: MatchMessage) {
+        val session = onlineSession ?: return
+        if (!_uiState.value.canSendMessage) return
+        val now = System.currentTimeMillis()
+        if (now - lastMessageAt < Constants.Online.CHAT_MIN_INTERVAL_MILLIS) {
+            feedback(SoundEffect.ERROR)
+            return
+        }
+        lastMessageAt = now
+        viewModelScope.launch { onlineRepository.sendMessage(session, message) }
+    }
+
+    /**
+     * Switches match messages off for good, from inside the match they are spoiling.
+     *
+     * The same setting the settings screen holds, deliberately: a mute that lasted only until
+     * the next match would have to be found again every time, and the player who reaches for
+     * it has already decided.
+     */
+    fun muteMatchMessages() {
+        viewModelScope.launch { settingsManager.setMatchMessagesEnabled(false) }
     }
 
     /** Concedes the match. The rules only allow handing the win to the opponent. */

@@ -12,23 +12,30 @@ import {
 /**
  * Everything the server does, once a minute.
  *
- * Four jobs: rate the matches players have reported, clear away rooms nobody played out, pair
- * whoever the phones left waiting in the matchmaking list, and keep the all-time board's index
- * complete. The first two used to be Cloud Functions — one triggered by a database write, one
- * by a schedule — and both are now polled instead, because a worker cannot subscribe to
- * database events. Polling is the lesser evil here: it needs no endpoint open to the internet,
- * and a report that arrives while a run is already going is simply picked up by the next one.
+ * Four jobs: rate the matches players have reported — and record every one of them in both
+ * players' histories — clear away rooms nobody played out, pair whoever the phones left
+ * waiting in the matchmaking list, and keep the all-time board's index complete. The first two
+ * used to be Cloud Functions — one triggered by a database write, one by a schedule — and both
+ * are now polled instead, because a worker cannot subscribe to database events. Polling is the
+ * lesser evil here: it needs no endpoint open to the internet, and a report that arrives while
+ * a run is already going is simply picked up by the next one.
  */
 
 /**
  * How many reports one run will take on.
  *
- * The ceiling is not the work, it is subrequests: the free plan allows fifty outbound
- * requests per invocation and a single report costs about eight. Four leaves room for the
- * query and the room sweep with margin to spare, and at one run a minute that is far more
- * throughput than this game will ever produce.
+ * The ceiling is not the work, it is subrequests: the free plan allows fifty outbound requests
+ * per invocation and one rated report costs ten — two to claim it, one to re-check the room,
+ * four to read both records and both weekly rows, two to read both histories, and one for the
+ * update that lands all of it. Three of those leaves twenty for the pending query, the room
+ * sweep and the matchmaking backstop, and the worst those can want between them is seventeen.
+ * At one run a minute that is still four thousand matches a day, which is far more than this
+ * game will produce.
+ *
+ * Exported so the end-to-end test knows how many runs a batch of reports needs; a run that
+ * silently left one behind would look exactly like a run that rated everything.
  */
-const MAX_REPORTS_PER_RUN = 4;
+export const MAX_REPORTS_PER_RUN = 3;
 
 /** Rooms handled per run. One query and one update however many come back. */
 const MAX_ROOMS_PER_RUN = 200;
@@ -73,6 +80,19 @@ export const MAX_BACKFILL_PROFILES_PER_RUN = 40;
  * denies the whole subtree — so this is the worker talking to itself between runs.
  */
 const BACKFILL_CURSOR_PATH = "maintenance/boardIndexBackfill/cursor";
+
+/** recentMatches/{uid}/{matchId} — the short history shown on a player's profile. */
+const RECENT_MATCHES_PATH = "recentMatches";
+
+/**
+ * How many matches a profile's history holds before the oldest is dropped.
+ *
+ * The number is the whole reason the list is safe to read in one go: a profile page fetches
+ * the node entire, so a bound here is a bound on every read of it forever. Ten because that is
+ * what the profile offers to show — three at rest, all ten once the player asks — and keeping
+ * more would be storing rows with nothing that can display them.
+ */
+const RECENT_MATCHES_KEPT = 10;
 
 const DEFAULT_AVATAR = "avatar_01";
 
@@ -129,6 +149,29 @@ interface WeeklyRecord {
   totalGames: number;
 }
 
+/**
+ * One line of a player's history, as `recentMatches/{uid}/{matchId}` holds it.
+ *
+ * The opponent's name is copied in rather than looked up, for the same reason the weekly board
+ * copies it: reading ten names back out would cost ten profile reads to draw one card. It is
+ * also the only way the row survives the opponent deleting their account, which is a match
+ * that still happened.
+ */
+interface RecentMatch {
+  opponentName: string;
+  result: "WIN" | "LOSS" | "DRAW";
+  playedAt: number;
+  /**
+   * Absent when nothing was at stake — an unranked match, or one against a guest, which the
+   * phones mark unranked for the same reason.
+   *
+   * Absent rather than zero, because zero is a real answer: two evenly matched players who
+   * draw move each other's rating by nothing at all, and a screen that cannot tell that from
+   * a casual game would report the casual game as a rated one worth no points.
+   */
+  ratingChange?: number;
+}
+
 /** One player waiting to be paired, as matchmaking/{uid} stores them. */
 export interface QueueEntry {
   rating: number;
@@ -163,9 +206,9 @@ export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
   await rateReportedMatches(db, now, result);
   await expireRooms(db, now, result);
   await pairWaitingPlayers(db, now, result);
-  // Last, and only on a run that rated nothing. Rating a match costs about eight of the fifty
-  // subrequests a run gets, so a full four of them leaves no room for anything else — and of
-  // everything here this is the one job with nobody waiting on it.
+  // Last, and only on a run that rated nothing. A rated match costs ten of the fifty
+  // subrequests a run gets, so a full [MAX_REPORTS_PER_RUN] of them leaves no room for
+  // anything else — and of everything here this is the one job with nobody waiting on it.
   if (result.rated === 0) await backfillBoardIndex(db, result);
   return result;
 }
@@ -201,10 +244,11 @@ async function rateReportedMatches(
         continue;
       }
       if (!report.ranked) {
+        await recordCasualMatch(db, matchId, report, now);
         result.unranked += 1;
         continue;
       }
-      await applyRating(db, report, now);
+      await applyRating(db, matchId, report, now);
       result.rated += 1;
     } catch (error) {
       // Hand the report back so the next run can pick it up rather than losing the match.
@@ -256,7 +300,12 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
   return "ok";
 }
 
-async function applyRating(db: Rtdb, report: MatchReport, now: number): Promise<void> {
+async function applyRating(
+  db: Rtdb,
+  matchId: string,
+  report: MatchReport,
+  now: number
+): Promise<void> {
   const week = weekKey(report.reportedAt || now);
   const [host, guest, hostWeek, guestWeek] = await Promise.all([
     readRecord(db, report.hostUid),
@@ -276,6 +325,22 @@ async function applyRating(db: Rtdb, report: MatchReport, now: number): Promise<
     hostScore
   );
 
+  const playedAt = report.reportedAt || now;
+  const [hostHistory, guestHistory] = await Promise.all([
+    historyUpdates(
+      db,
+      report.hostUid,
+      matchId,
+      played(guest.username, hostScore, playedAt, rated.playerOne.newRating - host.rating)
+    ),
+    historyUpdates(
+      db,
+      report.guestUid,
+      matchId,
+      played(host.username, guestScore, playedAt, rated.playerTwo.newRating - guest.rating)
+    ),
+  ]);
+
   // A single multi-path update, so both players move together or not at all.
   await db.update({
     ...playerUpdates(report.hostUid, host, rated.playerOne.newRating, hostScore),
@@ -289,7 +354,98 @@ async function applyRating(db: Rtdb, report: MatchReport, now: number): Promise<
       rated.playerTwo.newRating,
       guestScore
     ),
+    ...hostHistory,
+    ...guestHistory,
   });
+}
+
+/**
+ * Files a match that moved nobody's rating in both players' histories anyway.
+ *
+ * An unranked game and a game against a guest are still games that were played, and a profile
+ * that showed only the rated ones would be telling a player their evening did not happen. The
+ * two profile reads here are for the names alone — there is no record to update, which is the
+ * whole difference between this and [applyRating].
+ */
+async function recordCasualMatch(
+  db: Rtdb,
+  matchId: string,
+  report: MatchReport,
+  now: number
+): Promise<void> {
+  const [hostName, guestName] = await Promise.all([
+    readUsername(db, report.hostUid),
+    readUsername(db, report.guestUid),
+  ]);
+  const hostScore = scoreFor(report, report.hostUid);
+  const playedAt = report.reportedAt || now;
+  const [hostHistory, guestHistory] = await Promise.all([
+    historyUpdates(db, report.hostUid, matchId, played(guestName, hostScore, playedAt, null)),
+    historyUpdates(
+      db,
+      report.guestUid,
+      matchId,
+      played(hostName, mirror(hostScore), playedAt, null)
+    ),
+  ]);
+  await db.update({ ...hostHistory, ...guestHistory });
+}
+
+/**
+ * The paths that put [entry] at the head of one player's history and drop whatever that
+ * pushes off the end.
+ *
+ * ## Why the server writes this and not the phones
+ *
+ * A history sits on a public profile, and a history a phone writes is a history a phone
+ * edits: nothing in the database can tell a genuine report of a loss from a modified client
+ * choosing not to file one, or filing it as a win against a name it invented. The only writer
+ * that can be trusted with a record of who beat whom is the one holding a credential no player
+ * has — and that writer is already here, reading and writing both players at the end of every
+ * match. So the rules grant no client any write under `recentMatches`, and this is the hand
+ * that fills it. Reading it is another matter entirely: the list *is* the public part, and any
+ * signed-in player may read anyone's.
+ *
+ * Keyed by the match rather than by a push id, so a report that is somehow processed twice
+ * overwrites its own row instead of appearing as two games. That mirrors the write-once rule
+ * on the report itself: the same match is the same row wherever it is written.
+ */
+async function historyUpdates(
+  db: Rtdb,
+  uid: string,
+  matchId: string,
+  entry: RecentMatch
+): Promise<Record<string, unknown>> {
+  const base = `${RECENT_MATCHES_PATH}/${uid}`;
+  const held = (await db.get<Record<string, RecentMatch | null>>(base)) ?? {};
+  const updates: Record<string, unknown> = { [`${base}/${matchId}`]: entry };
+  const older = Object.entries(held)
+    // The row being written is not one of the ones it could displace.
+    .filter((row): row is [string, RecentMatch] => !!row[1] && row[0] !== matchId)
+    // Newest first, so what falls off the end is the oldest. The key breaks a tie because two
+    // matches reported in the same millisecond still have to be dropped in a settled order:
+    // leaving it to the order a JSON parser handed the members back would drop a different
+    // one on every run, and the list would flicker rather than age.
+    .sort((a, b) => b[1].playedAt - a[1].playedAt || (a[0] < b[0] ? -1 : 1));
+  // The new row has already taken a place, so only one short of the cap survives beside it.
+  for (const [id] of older.slice(RECENT_MATCHES_KEPT - 1)) updates[`${base}/${id}`] = null;
+  return updates;
+}
+
+function played(
+  opponentName: string,
+  score: MatchScore,
+  playedAt: number,
+  ratingChange: number | null
+): RecentMatch {
+  return {
+    opponentName,
+    result: score === SCORE_WIN ? "WIN" : score === SCORE_LOSS ? "LOSS" : "DRAW",
+    playedAt,
+    // See [RecentMatch.ratingChange]: a match nobody was rated on carries no number at all,
+    // because zero is something else.
+    ...(ratingChange === null ? {} : { ratingChange }),
+  };
 }
 
 /**
@@ -637,6 +793,12 @@ async function readRecord(db: Rtdb, uid: string): Promise<PlayerRecord> {
     avatarId: typeof value.avatarId === "string" ? value.avatarId : DEFAULT_AVATAR,
     isGuest: value.accountType === GUEST_ACCOUNT_TYPE,
   };
+}
+
+/** The one field a casual match needs off a profile. Empty when the account is already gone. */
+async function readUsername(db: Rtdb, uid: string): Promise<string> {
+  const value = await db.get<unknown>(`users/${uid}/username`);
+  return typeof value === "string" ? value : "";
 }
 
 async function readWeekly(db: Rtdb, week: string, uid: string): Promise<WeeklyRecord> {

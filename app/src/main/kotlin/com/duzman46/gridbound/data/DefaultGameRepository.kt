@@ -33,6 +33,8 @@ class DefaultGameRepository @Inject constructor(
         val themeMode = stringPreferencesKey(Constants.Data.KEY_THEME_MODE)
         val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
         val hapticsEnabled = booleanPreferencesKey(Constants.Data.KEY_HAPTICS_ENABLED)
+        val matchMessagesEnabled =
+            booleanPreferencesKey(Constants.Data.KEY_MATCH_MESSAGES_ENABLED)
         val difficulty = stringPreferencesKey(Constants.Data.KEY_DIFFICULTY)
         val tutorialCompleted = booleanPreferencesKey(Constants.Tutorial.KEY_COMPLETED)
         val guestModeAccepted = booleanPreferencesKey(Constants.Session.KEY_GUEST_MODE_ACCEPTED)
@@ -66,6 +68,7 @@ class DefaultGameRepository @Inject constructor(
             soundEnabled = values[Keys.soundEnabled] ?: true,
             hapticsEnabled = values[Keys.hapticsEnabled] ?: true,
             difficulty = enumValueOrDefault(values[Keys.difficulty], Difficulty.MEDIUM),
+            matchMessagesEnabled = values[Keys.matchMessagesEnabled] ?: true,
         )
     }
 
@@ -111,6 +114,8 @@ class DefaultGameRepository @Inject constructor(
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
     override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)
     override suspend fun setHapticsEnabled(enabled: Boolean) = update(Keys.hapticsEnabled, enabled)
+    override suspend fun setMatchMessagesEnabled(enabled: Boolean) =
+        update(Keys.matchMessagesEnabled, enabled)
     override suspend fun setDifficulty(difficulty: Difficulty) = update(Keys.difficulty, difficulty.name)
 
     override suspend fun recordCompletedGame(

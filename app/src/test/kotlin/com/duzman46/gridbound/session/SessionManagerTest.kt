@@ -130,6 +130,23 @@ class SessionManagerTest {
     }
 
     @Test
+    fun `the session follows the identity even when the profile never answers`() = runTest {
+        // Who is playing is an auth fact; what they have played is a database read. Holding
+        // the session until the read lands leaves every screen drawing the previous player,
+        // which is how a sign-in that worked could still look like nothing happened.
+        profiles.profileReadsNeverAnswer = true
+        val session = manager()
+
+        session.signInWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+
+        assertEquals(SessionStatus.SIGNED_IN, session.state.value.status)
+        assertEquals("email-user", session.state.value.user?.userId)
+        assertFalse(session.state.value.isGuest)
+        assertNull(session.state.value.profile)
+    }
+
+    @Test
     fun `a guest gets in even when the profile cannot be written`() = runTest {
         // Happens against a project whose database rules are not deployed yet: the identity
         // is created but the profile write is refused. The player must still reach the game.
@@ -242,6 +259,88 @@ class SessionManagerTest {
         assertEquals(1450, session.state.value.profile?.rating)
         assertEquals("Koray", session.state.value.profile?.username)
         assertFalse(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `a hand-over the session never carries is not reported as success`() = runTest {
+        // The one failure that matters most, because it is the one that used to be reported
+        // as a success: every call along the way answers, and the player is still not in the
+        // account the screen has just told them they are in.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        auth.hasCredentialForExistingAccount = true
+        auth.existingAccountSignInStrandsSession = true
+        val handedOver = session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertEquals(AppError.ACCOUNT_SWITCH_FAILED, handedOver.errorOrNull)
+        assertNull(session.state.value.user)
+        // Not a guest either: their record is gone, and saying otherwise would offer to keep
+        // progress that no longer exists.
+        assertFalse(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `handing over forgets what the device knew about the guest`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        auth.hasCredentialForExistingAccount = true
+        session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        // Guest entry left standing reads as "still a guest" for as long as no identity is
+        // in place, and the name answer left standing belongs to somebody who is now gone.
+        assertFalse(game.isGuestModeAccepted)
+        assertFalse(game.isUsernameChosen)
+    }
+
+    @Test
+    fun `a guest whose identity cannot be deleted still loses the chair`() = runTest {
+        // Firebase refuses to delete a credential whose sign-in it considers stale, which is
+        // every anonymous session more than a few minutes old. The record can survive that;
+        // an anonymous user still signed in underneath the next sign-in cannot.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        auth.guestDeletionRefused = true
+        auth.hasCredentialForExistingAccount = true
+        val handedOver = session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertTrue(handedOver is Outcome.Success)
+        assertEquals(FakeAuthRepository.EXISTING_USER_ID, session.state.value.user?.userId)
+        assertEquals(1450, session.state.value.profile?.rating)
+        assertFalse(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `declining the offer changes nothing and leaves no credential behind`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val guestId = session.state.value.user?.userId
+        val guestProfile = session.state.value.profile
+
+        auth.hasCredentialForExistingAccount = true
+        session.declineExistingAccount()
+        advanceUntilIdle()
+
+        assertEquals(guestId, session.state.value.user?.userId)
+        assertEquals(guestProfile, session.state.value.profile)
+        assertTrue(session.state.value.isGuest)
+        assertTrue(game.isGuestModeAccepted)
+        assertTrue(profiles.deletedUserIds.isEmpty())
+        assertTrue(auth.discardedGuestIds.isEmpty())
+        // The question was answered, so nothing is left that could answer it again.
+        assertFalse(session.canSignInToExistingAccount)
     }
 
     @Test

@@ -59,6 +59,7 @@
     <string name="auth_error_account_exists_with_other_method">Email ini sudah tertaut ke metode masuk lain.</string>
     <string name="auth_error_requires_recent_login">Demi keamanan, masuk kembali sebelum melanjutkan.</string>
     <string name="auth_error_credential_in_use">Akun ini sudah tertaut ke pemain lain.</string>
+    <string name="auth_error_account_switch_failed">Tidak bisa beralih ke akun itu. Progres tamu kamu sudah tidak ada; masuk dengan Google untuk melanjutkan.</string>
 
     <string name="auth_link_title">Simpan progresmu</string>
     <string name="auth_link_explainer">Tautkan akun agar progres, pembelian, dan temanmu ikut di setiap perangkat.</string>
@@ -102,6 +103,15 @@
     <string name="profile_best_streak">Rentetan terbaik</string>
     <string name="profile_member_since">Anggota sejak %1$s</string>
     <string name="profile_player_title">Profil pemain</string>
+    <string name="profile_recent_games">Permainan terbaru</string>
+    <string name="profile_recent_empty">Belum ada permainan online yang dimainkan.</string>
+    <string name="profile_recent_show_all">Tampilkan semua (%1$d)</string>
+    <string name="profile_recent_show_fewer">Tampilkan lebih sedikit</string>
+    <string name="profile_recent_result_win">Menang</string>
+    <string name="profile_recent_result_loss">Kalah</string>
+    <string name="profile_recent_result_draw">Seri</string>
+    <string name="profile_recent_unranked">Tanpa peringkat</string>
+    <string name="profile_recent_unknown_opponent">Pemain terhapus</string>
 
     <string name="account_title">Akun</string>
     <string name="account_delete_title">Hapus akun</string>
@@ -172,6 +182,23 @@
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Giliranmu</string>
     <string name="game_rival_turn">Giliran lawan</string>
+
+    <string name="chat_open">Katakan sesuatu</string>
+    <string name="chat_mute">Matikan pesan</string>
+    <string name="chat_good_luck">Semoga beruntung</string>
+    <string name="chat_nice_move">Langkah bagus</string>
+    <string name="chat_well_played">Main bagus</string>
+    <string name="chat_good_game">Permainan bagus</string>
+    <string name="chat_thanks">Terima kasih</string>
+    <string name="chat_oops">Ups</string>
+    <string name="chat_sorry">Maaf</string>
+    <string name="chat_good_luck_next_time">Semoga beruntung lain kali</string>
+    <string name="chat_reaction_smile">Senyum</string>
+    <string name="chat_reaction_wow">Wah</string>
+    <string name="chat_reaction_thinking">Berpikir</string>
+    <string name="chat_reaction_brilliant">Brilian</string>
+    <string name="chat_reaction_strong">Kuat</string>
+    <string name="chat_reaction_sad">Sedih</string>
 
     <string name="leaderboard_title">Papan Peringkat</string>
     <string name="leaderboard_tab_global">Global</string>
@@ -257,6 +284,8 @@
     <string name="settings_sounds_description">Suara langkah, dinding, dan hasil.</string>
     <string name="settings_haptics">Umpan balik getaran</string>
     <string name="settings_haptics_description">Getaran saat melangkah dan saat terjadi kesalahan.</string>
+    <string name="settings_chat">Pesan pertandingan</string>
+    <string name="settings_chat_description">Frasa tetap dan emoji dalam pertandingan daring.</string>
     <string name="settings_default_ai">AI bawaan</string>
     <string name="settings_ad_privacy">Opsi privasi iklan</string>
 

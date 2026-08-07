@@ -3,6 +3,8 @@ package com.duzman46.gridbound.online.data
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.PlayerId
+import com.duzman46.gridbound.online.model.MatchChatEntry
+import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.OnlineGameMode
 import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
@@ -61,8 +63,42 @@ class RoomCodec @Inject constructor(
             // that was the only shape the protocol had. The absent field means exactly that.
             hostSeat = enumValueOrDefault(map.string(Keys.HOST_SEAT), PlayerId.PLAYER_ONE),
             version = map.long(Keys.VERSION),
+            chat = decodeChat(map[Keys.CHAT]),
         )
     }.getOrNull()
+
+    /**
+     * The messages stored under the room, keyed by the player who said each one.
+     *
+     * A key this build does not recognise is dropped rather than shown as a blank bubble: the
+     * vocabulary can only ever grow, so an unknown key is a phone running a newer release and
+     * saying something this one has no words for.
+     */
+    private fun decodeChat(value: Any?): List<MatchChatEntry> {
+        val entries = value as? Map<*, *> ?: return emptyList()
+        return entries.mapNotNull { (userId, stored) ->
+            val fields = stored as? Map<*, *> ?: return@mapNotNull null
+            val message = MatchMessage.forKey(fields.string(Keys.CHAT_MESSAGE))
+                ?: return@mapNotNull null
+            MatchChatEntry(
+                userId = userId as? String ?: return@mapNotNull null,
+                message = message,
+                sentAt = fields.long(Keys.CHAT_SENT_AT),
+            )
+        }
+    }
+
+    /**
+     * One player's message, written under their own id.
+     *
+     * The stamp is the server's, and the rules insist on it: they refuse a message that
+     * arrives too soon after the last one, and a device that could date its own messages
+     * could date them backwards and send as many as it liked.
+     */
+    fun encodeMessage(message: MatchMessage): Map<String, Any?> = mapOf(
+        Keys.CHAT_MESSAGE to message.name,
+        Keys.CHAT_SENT_AT to ServerValue.TIMESTAMP,
+    )
 
     /**
      * The payload written when a room is opened. Values must line up with what the database
@@ -194,6 +230,11 @@ class RoomCodec @Inject constructor(
         const val VERSION = "version"
         const val BROWSE_KEY = "browseKey"
         const val HOST_SEAT = "hostSeat"
+
+        /** chat/{uid} — one slot per player, torn down with the room around it. */
+        const val CHAT = "chat"
+        const val CHAT_MESSAGE = "key"
+        const val CHAT_SENT_AT = "at"
 
         /** Lives under roomSecrets/{code}; never written into the room itself. */
         const val PASSWORD_HASH = "passwordHash"

@@ -3,6 +3,7 @@ package com.duzman46.gridbound.match
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardWeek
 import com.duzman46.gridbound.match.domain.MatchEndReason
+import com.duzman46.gridbound.match.domain.MatchOutcome
 import com.duzman46.gridbound.match.domain.MatchReport
 import com.duzman46.gridbound.rating.MatchScore
 import java.time.Instant
@@ -97,6 +98,18 @@ class MatchReportTest {
         assertFalse(MatchEndReason.TIMEOUT.isVerifiableFromBoard)
         assertFalse(MatchEndReason.RESIGNATION.isVerifiableFromBoard)
         assertFalse(MatchEndReason.DISCONNECT.isVerifiableFromBoard)
+    }
+
+    @Test
+    fun `a history row's outcomes are the words the server writes`() {
+        // worker/src/sweep.ts stores each recentMatches row's result as one of these three
+        // strings and RtdbMatchRepository decodes it by matching the enum name against them.
+        // There is no table in between, so renaming a constant here stops every row on every
+        // profile decoding — and a page that decodes nothing says the player has never played.
+        assertEquals(
+            setOf("WIN", "LOSS", "DRAW"),
+            MatchOutcome.entries.map(MatchOutcome::name).toSet(),
+        )
     }
 
     @Test

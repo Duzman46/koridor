@@ -17,5 +17,7 @@ class SettingsManager @Inject constructor(
     suspend fun setThemeMode(mode: ThemeMode) = repository.setThemeMode(mode)
     suspend fun setSoundEnabled(enabled: Boolean) = repository.setSoundEnabled(enabled)
     suspend fun setHapticsEnabled(enabled: Boolean) = repository.setHapticsEnabled(enabled)
+    suspend fun setMatchMessagesEnabled(enabled: Boolean) =
+        repository.setMatchMessagesEnabled(enabled)
     suspend fun setDifficulty(difficulty: Difficulty) = repository.setDifficulty(difficulty)
 }

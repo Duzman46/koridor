@@ -5,6 +5,7 @@ import com.duzman46.gridbound.auth.domain.AuthRepository
 import com.duzman46.gridbound.auth.domain.AuthState
 import com.duzman46.gridbound.auth.domain.AuthUser
 import com.duzman46.gridbound.core.AppError
+import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.di.ApplicationScope
@@ -20,11 +21,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 enum class SessionStatus {
     LOADING,
@@ -111,8 +115,15 @@ class SessionManager @Inject constructor(
     val state: StateFlow<SessionState> = combine(
         authRepository.authState.flatMapLatest { auth ->
             when (auth) {
+                // Who is playing is known the instant the identity changes; what they have
+                // played is a database read that can be slow, refused, or waiting behind a
+                // connection re-authenticating with the new token. Holding the pair until
+                // both have landed keeps the whole session — status, user, everything a
+                // screen draws — on the player who just left, for as long as that read
+                // takes. A profile that has not arrived yet is null and says so.
                 is AuthState.SignedIn -> profileRepository.observeProfile(auth.user.userId)
-                    .let { profiles -> combine(flowOf(auth), profiles) { a, p -> a to p } }
+                    .onStart { emit(null) }
+                    .map { profile -> auth to profile }
 
                 else -> flowOf(auth to null)
             }
@@ -255,6 +266,12 @@ class SessionManager @Inject constructor(
      * local guest with nothing in the cloud, and the same button signs them in again. The
      * reverse order litters the database on every attempt that succeeds, and nothing can
      * ever tidy it.
+     *
+     * Success is the session carrying the other account, not the calls along the way coming
+     * back without an exception. Everything the player is about to look at — their rating,
+     * their record, whether the screen still offers to keep a guest's progress — is drawn
+     * from [state], so [state] is the only thing whose agreement means the hand-over
+     * happened.
      */
     suspend fun signInToExistingAccount(): Outcome<UserProfile> {
         if (!authRepository.hasCredentialForExistingAccount) {
@@ -268,8 +285,46 @@ class SessionManager @Inject constructor(
             if (erased is Outcome.Failure) return erased
             authRepository.discardGuestIdentity()
         }
-        return authRepository.signInToExistingAccount().thenEnsureProfile()
+        // Both flags describe the player who is leaving, and both are read as if they
+        // described whoever is here now. Guest entry left standing keeps the session
+        // reading LOCAL_ONLY — a guest, with the offer to keep a guest's progress still on
+        // screen — for as long as no identity is in place. The name answer left standing
+        // waves the arriving account past the entry gate wearing whatever the app invented
+        // for it.
+        gameRepository.setGuestModeAccepted(false)
+        gameRepository.setUsernameChosen(false)
+        val account = when (val signedIn = authRepository.signInToExistingAccount()) {
+            is Outcome.Failure -> return signedIn
+            is Outcome.Success -> signedIn.value
+        }
+        val profile = profileRepository.ensureProfile(account)
+        if (profile is Outcome.Failure) return profile
+        return if (awaitIdentity(account.userId)) {
+            profile
+        } else {
+            Outcome.Failure(AppError.ACCOUNT_SWITCH_FAILED)
+        }
     }
+
+    /**
+     * Suspends until [state] reports [userId] as the signed-in account, and answers whether
+     * it ever did.
+     *
+     * Bounded rather than open-ended: a confirmation that never returns is its own kind of
+     * lie, and the caller has a message ready for a hand-over that did not land.
+     */
+    private suspend fun awaitIdentity(userId: String): Boolean =
+        withTimeoutOrNull(Constants.Backend.IDENTITY_SETTLE_TIMEOUT_MILLIS) {
+            state.first { it.status == SessionStatus.SIGNED_IN && it.user?.userId == userId }
+            true
+        } == true
+
+    /**
+     * Answers the offer of somebody else's account with "no", and the guest keeps
+     * everything. The credential goes with the answer: it was kept only so the question
+     * could be settled on the spot.
+     */
+    fun declineExistingAccount() = authRepository.forgetExistingAccountCredential()
 
     suspend fun sendPasswordReset(email: String): Outcome<Unit> =
         authRepository.sendPasswordReset(email)

@@ -29,6 +29,15 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     REQUIRES_RECENT_LOGIN(R.string.auth_error_requires_recent_login),
     CREDENTIAL_IN_USE(R.string.auth_error_credential_in_use),
 
+    /**
+     * The hand-over to an account that already existed did not put the player in it.
+     *
+     * Its own failure because everything before it worked: the credential was accepted and
+     * the guest was given up, so neither a network message nor a credentials message would
+     * describe where the player has ended up or what to do about it.
+     */
+    ACCOUNT_SWITCH_FAILED(R.string.auth_error_account_switch_failed),
+
     USERNAME_BLANK(R.string.username_error_blank),
 
     /** Length messages resolve through plurals; see [message]. */

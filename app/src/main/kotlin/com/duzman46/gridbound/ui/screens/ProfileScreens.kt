@@ -54,12 +54,15 @@ import com.duzman46.gridbound.core.asString
 import com.duzman46.gridbound.presentation.profile.PlayerProfileUiState
 import com.duzman46.gridbound.presentation.profile.PlayerProfileViewModel
 import com.duzman46.gridbound.presentation.profile.ProfileEditState
+import com.duzman46.gridbound.presentation.profile.RecentGamesState
+import com.duzman46.gridbound.presentation.profile.RecentGamesViewModel
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.ui.components.AvatarPalette
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.GateTopBar
+import com.duzman46.gridbound.ui.components.RecentGamesCard
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
@@ -129,12 +132,17 @@ fun UsernameScreen(
  * portrait-style headers and a stack of separate cards spend most of their height on padding.
  *
  * The scroll is a safety net for accessibility font scales, not part of the intended
- * experience. At default scale the content is short enough that it never moves.
+ * experience. At default scale everything down to the last button is short enough that it
+ * never moves — which is why the recent games sit *below* those buttons rather than under the
+ * record where they read most naturally. Above them, three more rows would push the ways out
+ * of this screen off the bottom of it; below, the section heading peeks over the edge and is
+ * the one thing here worth scrolling for.
  */
 @Composable
 fun ProfileScreen(
     profile: UserProfile?,
     hasAccount: Boolean,
+    recentGames: RecentGamesState,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAccount: () -> Unit,
@@ -200,6 +208,7 @@ fun ProfileScreen(
                         text = stringResource(R.string.account_title),
                         onClick = onAccount,
                     )
+                    RecentGamesCard(recentGames)
                 }
             }
         }
@@ -221,10 +230,13 @@ fun ProfileScreen(
 fun PlayerProfileRoute(
     onBack: () -> Unit,
     viewModel: PlayerProfileViewModel = hiltViewModel(),
+    recentGamesViewModel: RecentGamesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val recentGames by recentGamesViewModel.state.collectAsStateWithLifecycle()
     PlayerProfileScreen(
         state = state,
+        recentGames = recentGames,
         onBack = onBack,
         onSendRequest = viewModel::sendRequest,
         onAccept = viewModel::accept,
@@ -236,6 +248,7 @@ fun PlayerProfileRoute(
 @Composable
 private fun PlayerProfileScreen(
     state: PlayerProfileUiState,
+    recentGames: RecentGamesState,
     onBack: () -> Unit,
     onSendRequest: () -> Unit,
     onAccept: () -> Unit,
@@ -277,6 +290,7 @@ private fun PlayerProfileScreen(
                     ProfileIdentity(profile)
                     ProfileStatsCard(profile)
                     FriendAction(state, onSendRequest, onAccept, onUnblock)
+                    RecentGamesCard(recentGames)
                 }
             }
         }

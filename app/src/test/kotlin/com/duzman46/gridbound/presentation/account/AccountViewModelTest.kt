@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -81,6 +83,7 @@ class AccountViewModelTest {
         val events = collectEvents(viewModel)
 
         viewModel.signInToExistingAccount()
+        advanceUntilIdle()
 
         assertEquals(listOf(AccountEvent.Linked(needsUsername = false)), events)
         assertNull(viewModel.uiState.value.error)
@@ -93,10 +96,50 @@ class AccountViewModelTest {
         val events = collectEvents(viewModel)
 
         viewModel.signInToExistingAccount()
+        advanceUntilIdle()
 
         assertTrue(events.isEmpty())
         assertNotNull(viewModel.uiState.value.error)
         assertTrue(sessionManager.state.value.isGuest)
+    }
+
+    @Test
+    fun `a hand-over the session never carries is never announced as one that worked`() =
+        runTest(dispatcher) {
+            // Every call answers and the player is still not in that account. Announcing it
+            // anyway is what put "signed in" over a screen still offering to keep a guest's
+            // progress, and it is the one outcome this screen must never produce.
+            val viewModel = viewModel()
+            sessionManager.enterGuestMode()
+            profiles.seedExistingAccount(username = "Koray", rating = 1450)
+            auth.hasCredentialForExistingAccount = true
+            auth.existingAccountSignInStrandsSession = true
+            val events = collectEvents(viewModel)
+
+            viewModel.signInToExistingAccount()
+            advanceUntilIdle()
+
+            assertTrue(events.isEmpty())
+            assertNotNull(viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.info)
+        }
+
+    @Test
+    fun `staying a guest costs the guest nothing`() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        sessionManager.enterGuestMode()
+        auth.hasCredentialForExistingAccount = true
+        val events = collectEvents(viewModel)
+
+        viewModel.dismissExistingAccountWarning()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.existingAccountWarning)
+        assertTrue(events.isEmpty())
+        assertTrue(sessionManager.state.value.isGuest)
+        assertNotNull(sessionManager.state.value.profile)
+        assertTrue(profiles.deletedUserIds.isEmpty())
+        assertFalse(sessionManager.canSignInToExistingAccount)
     }
 
     /**

@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { restDatabase } from "./db.js";
 import {
   MAX_BACKFILL_PROFILES_PER_RUN,
+  MAX_REPORTS_PER_RUN,
   MatchReport,
   QueueEntry,
+  SweepResult,
   closestPairs,
   sweep,
   verifyReport,
@@ -42,6 +44,10 @@ const ANON = "grace-uid";
 
 /** A linked account from before the all-time board had a sort key of its own. */
 const LEGACY = "heidi-uid";
+
+/** Two players who go on to play more matches than a history is allowed to keep. */
+const REGULAR_ONE = "ivan-uid";
+const REGULAR_TWO = "judy-uid";
 
 const db = restDatabase("http://127.0.0.1:9000", async () => "owner", { ns: NAMESPACE });
 
@@ -132,6 +138,33 @@ function queued(rating: number, queuedAt: number): QueueEntry {
   return { rating, ranked: true, queuedAt };
 }
 
+/** One player's history, exactly as a profile page reads it back. */
+type History = Record<
+  string,
+  { opponentName: string; result: string; playedAt: number; ratingChange?: number }
+>;
+
+async function historyOf(uid: string): Promise<History> {
+  return (await db.get<History>(`recentMatches/${uid}`)) ?? {};
+}
+
+/**
+ * The sweep, run as many times as the reports waiting need.
+ *
+ * One run takes at most [MAX_REPORTS_PER_RUN] of them, so what the sweep made of a batch
+ * larger than that is the sum over the runs it takes. Nothing else is counted twice: the
+ * rooms, the waiting list and the board index are all dealt with by the first run and found
+ * empty by the next, which is a claim worth having in the totals below.
+ */
+async function sweepReports(now: number, reports: number): Promise<SweepResult> {
+  const total = await sweep(db, now);
+  for (let taken = MAX_REPORTS_PER_RUN; taken < reports; taken += MAX_REPORTS_PER_RUN) {
+    const run = await sweep(db, now);
+    for (const key of Object.keys(total) as Array<keyof SweepResult>) total[key] += run[key];
+  }
+  return total;
+}
+
 const checks: Array<[string, boolean]> = [];
 function check(label: string, passed: boolean) {
   checks.push([label, passed]);
@@ -179,8 +212,9 @@ async function main(): Promise<void> {
     },
   });
 
-  const first = await sweep(db, now);
-  console.log("first run :", JSON.stringify(first));
+  // The four reports seeded above, however many runs a run's report limit makes that.
+  const first = await sweepReports(now, 4);
+  console.log("first runs:", JSON.stringify(first));
 
   const winner = await db.get<Record<string, number>>(`users/${HOST}`);
   const loser = await db.get<Record<string, number>>(`users/${GUEST}`);
@@ -222,6 +256,38 @@ async function main(): Promise<void> {
     "the weekly board is not padded with the refused or unranked match",
     week !== null && Object.keys(weekly?.[week] ?? {}).length === 2
   );
+
+  // The history a profile page shows. Every part of it fails quietly if it is wrong: a list
+  // written for one side only looks like an opponent who never plays, and a rating column
+  // filled in for a casual game looks like a rated one worth nothing.
+  const hostGames = await historyOf(HOST);
+  const guestGames = await historyOf(GUEST);
+
+  check(
+    "a rated match is written into both players' histories",
+    "GOOD01-1" in hostGames && "GOOD01-1" in guestGames
+  );
+  check(
+    "each side sees the other's name and its own result",
+    hostGames["GOOD01-1"]?.opponentName === "bob" &&
+      hostGames["GOOD01-1"]?.result === "WIN" &&
+      guestGames["GOOD01-1"]?.opponentName === "alice" &&
+      guestGames["GOOD01-1"]?.result === "LOSS"
+  );
+  check(
+    "and the rating each of them moved, adding up to the rating they now hold",
+    Object.values(hostGames).reduce((sum, game) => sum + (game.ratingChange ?? 0), 0) ===
+      (winner?.rating ?? 0) - 1000
+  );
+  check(
+    "the unranked match is listed too, because it was still played",
+    hostGames["CASU01-1"]?.result === "WIN"
+  );
+  check(
+    "with no rating change at all rather than a change of zero",
+    "CASU01-1" in hostGames && !("ratingChange" in hostGames["CASU01-1"])
+  );
+  check("the refused report reached neither history", !("LIE001-1" in hostGames));
 
   check("the abandoned room was deleted", (await db.get("rooms/DEAD01")) === null);
   check("its password secret went with it", (await db.get("roomSecrets/DEAD01")) === null);
@@ -294,8 +360,8 @@ async function main(): Promise<void> {
 
   // A guest's match is supposed to be casual, and a phone marks it so. This one arrives
   // marked ranked anyway, which is what a modified client looks like — the rating may move,
-  // but neither board may take them. Seeded after the runs above because a run rates only
-  // four reports and the choreography of the first one is worth leaving alone.
+  // but neither board may take them. Seeded after the runs above because a run takes only a
+  // few reports and the choreography of the first ones is worth leaving alone.
   await db.update({
     [`users/${ANON}`]: profile("grace", "GUEST"),
     "rooms/ANON01": finishedRoom({
@@ -371,6 +437,47 @@ async function main(): Promise<void> {
 
   const fifth = await sweep(db, now);
   check("a later run finds nobody left to index", fifth.boardIndexed === 0);
+
+  // A pair who keep playing. The cap is the only thing standing between a profile and a list
+  // that grows for as long as the account exists, and it is invisible until it is missing:
+  // eleven matches in a ten-match history look exactly like ten until somebody counts.
+  const codes = Array.from({ length: 11 }, (_, index) => `RUN${String(index).padStart(3, "0")}`);
+  const marathon: Record<string, unknown> = {
+    [`users/${REGULAR_ONE}`]: profile("ivan"),
+    [`users/${REGULAR_TWO}`]: profile("judy"),
+  };
+  for (const [index, code] of codes.entries()) {
+    marathon[`rooms/${code}`] = finishedRoom({
+      hostUserId: REGULAR_ONE,
+      guestUserId: REGULAR_TWO,
+      winnerUserId: REGULAR_ONE,
+    });
+    marathon[`matchResults/${code}-1`] = report({
+      roomCode: code,
+      hostUid: REGULAR_ONE,
+      guestUid: REGULAR_TWO,
+      winnerUid: REGULAR_ONE,
+      reportedBy: REGULAR_ONE,
+      // A minute apart, so which of them is the oldest is a fact and not a coin toss.
+      reportedAt: Date.UTC(2026, 7, 5) + index * 60_000,
+    });
+  }
+  await db.update(marathon);
+
+  const marathonRuns = await sweepReports(now, codes.length);
+  console.log("marathon  :", JSON.stringify(marathonRuns));
+  const ivanGames = await historyOf(REGULAR_ONE);
+  const judyGames = await historyOf(REGULAR_TWO);
+
+  check("all eleven matches were rated", marathonRuns.rated === codes.length);
+  check(
+    "but a history stops at ten, on both sides of them",
+    Object.keys(ivanGames).length === 10 && Object.keys(judyGames).length === 10
+  );
+  check(
+    "and it is the oldest that fell off, not the newest",
+    !(`${codes[0]}-1` in ivanGames) && `${codes[codes.length - 1]}-1` in ivanGames
+  );
 
   // More profiles than one lap can carry. Every account above fitted in a single page, so the
   // cursor was only ever written back as "" and the branch that actually moves it never ran —

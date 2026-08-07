@@ -13,6 +13,7 @@ import com.duzman46.gridbound.game.models.ActionResult
 import com.duzman46.gridbound.game.models.GameAction
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.MatchmakingRules
 import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
@@ -335,6 +336,21 @@ class FirebaseOnlineGameRepository @Inject constructor(
             // Resigning always hands the win to the other seat.
             room.userFor(session.playerId.opponent).orEmpty()
         }
+
+    override suspend fun sendMessage(
+        session: OnlineSession,
+        message: MatchMessage,
+    ): Outcome<Unit> = dbCall("send-message") {
+        // Straight at this player's own slot rather than through the room transaction: a
+        // message is not a move, it must not bump the version other devices are racing on,
+        // and it must not be able to fail because somebody moved while the sheet was open.
+        roomRef(session.roomCode)
+            .child(RoomCodec.Keys.CHAT)
+            .child(session.userId)
+            .setValue(codec.encodeMessage(message))
+            .await()
+        Outcome.Success(Unit)
+    }
 
     override suspend fun resolveTurnTimeout(session: OnlineSession): Outcome<Unit> =
         finishRoom(session, RoomEndReason.TIMEOUT) { room ->

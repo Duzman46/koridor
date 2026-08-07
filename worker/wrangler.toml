@@ -1,0 +1,26 @@
+name = "koridor-server"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# No workers.dev address, and no route anywhere else. The cron trigger below runs the worker
+# without one, and this is the switch that keeps it that way: the thing holding the database's
+# admin key has no URL at all, so there is nothing to find, probe, or aim traffic at.
+workers_dev = false
+
+# Once a minute. A player who finishes a ranked match sees their new rating by the time they
+# reach their profile. Cron runs are invocations like any other: 1,440 a day against a free
+# allowance of 100,000, so the schedule costs a rounding error of the quota.
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+FIREBASE_DATABASE_URL = "https://gridbound-duzman46-default-rtdb.europe-west1.firebasedatabase.app"
+
+# FIREBASE_SERVICE_ACCOUNT is a secret, not a var. Set it with:
+#   npx wrangler secret put FIREBASE_SERVICE_ACCOUNT
+# and paste the whole service-account JSON. It is stored encrypted by Cloudflare and cannot
+# be read back out — which is also why it must never be written into this file or the repo.
+
+# Logs are off by default, so `wrangler tail` would show nothing.
+[observability]
+enabled = true

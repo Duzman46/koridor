@@ -10,6 +10,7 @@
     "build": "tsc",
     "lint": "tsc --noEmit",
     "test": "node --test lib/elo.test.js",
+    "test:e2e": "npm run build && firebase emulators:exec --only functions,database --project demo-koridor \"node rating.e2e.js\"",
     "serve": "npm run build && firebase emulators:start --only functions,database",
     "deploy": "npm run build && firebase deploy --only functions"
   },

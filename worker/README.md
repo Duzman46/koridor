@@ -1,0 +1,125 @@
+# Koridor's server
+
+Rating, the weekly leaderboard, room expiry and the matchmaking backstop — everything that
+has to be written by something no player controls, or that nobody's phone can be relied on to
+do.
+
+This was originally three Cloud Functions. Cloud Functions require a Firebase project on the
+Blaze plan, and Blaze requires a payment method, so the same work runs here instead: a
+scheduled Cloudflare Worker on the free plan, which needs no card.
+
+## What it does
+
+Once a minute the worker:
+
+1. finds match reports still marked `PENDING`, re-checks each against the room it claims to
+   come from, and applies Elo to both players plus the current week's board;
+2. deletes rooms that expired without ever being played, and closes matches that ran past
+   their window rather than deleting them mid-game;
+3. pairs whoever is still in the matchmaking list, closest ratings first, and clears entries
+   nothing is behind any more.
+
+Quick match is a waiting list, and the phones pair each other out of it — two devices reading
+the same list reach the same answer, and the room a pairing lands in is named after the player
+being claimed so that two devices going for the same person collide on one node. This is what
+catches the cases that leaves behind: an odd number waiting, a device that lost a race and
+then went quiet, a phone that wrote itself into the list and never managed anything else.
+
+It has **no `fetch` handler**, so it has no public URL. The thing holding the database's
+admin key cannot be reached from the internet at all — there is no endpoint to find or probe.
+
+## Why polling
+
+A worker cannot subscribe to Realtime Database events the way `onValueCreated` did, so the
+trigger became a schedule. The cost is up to a minute of latency before a rating moves; the
+benefit is that nothing has to be exposed to the network to receive an event, and a report
+filed while a run is already going is simply picked up by the next one.
+
+`MAX_REPORTS_PER_RUN` is four. The limit is not the work, it is subrequests: the free plan
+allows fifty outbound requests per invocation and one report costs about eight.
+
+## Layout
+
+| file | what it is |
+| --- | --- |
+| `src/index.ts` | the `scheduled` entry point, and the only place secrets are read |
+| `src/sweep.ts` | the actual work: rate reports, expire rooms, pair the waiting list |
+| `src/db.ts` | the Realtime Database REST client, including compare-and-set via ETags |
+| `src/auth.ts` | service-account key → access token, signed with WebCrypto |
+| `src/elo.ts` | the rating maths |
+
+`src/elo.ts` is deliberately a sibling of the Kotlin `EloCalculator` and of
+`functions/src/elo.ts`. They are kept in step by tests that pin the same reference values —
+`EloCalculatorTest`, and `elo.test.ts` beside each copy. Change a constant in one and the
+others fail.
+
+## Setup
+
+Steps 1–3 need your accounts and have to be done by you. After that everything is scripted.
+
+### 1. A Cloudflare account
+
+<https://dash.cloudflare.com/sign-up> — free, no card.
+
+### 2. A service-account key
+
+Firebase Console → **Project settings → Service accounts → Generate new private key**. This
+downloads a JSON file.
+
+**Save it outside this repository** — `Koridor/private/` next to the signing keystore is the
+right place. It is a key to the whole database; it must never be committed, and it is not
+needed again after step 4.
+
+### 3. Sign wrangler in
+
+```bash
+npx wrangler login
+```
+
+### 4. Hand over the key
+
+```bash
+npx wrangler secret put FIREBASE_SERVICE_ACCOUNT < ../../private/koridor-service-account.json
+```
+
+Reading it from the file rather than pasting keeps the key out of your shell history.
+Cloudflare stores it encrypted and cannot read it back out, which is also why it must never
+be written into `wrangler.toml`.
+
+### 5. Deploy
+
+```bash
+npx wrangler deploy
+```
+
+Then watch a run go by:
+
+```bash
+npx wrangler tail
+```
+
+Every run logs a `sweep` line even when it finds nothing, so a cron that quietly stopped
+firing looks different from a cron with nothing to do.
+
+## Tests
+
+```bash
+npm test        # the rating maths
+npm run test:e2e  # the whole sweep, against the database emulator
+```
+
+The end-to-end test is the one that matters. It starts the emulator with this project's real
+`database.rules.json`, seeds an honest match, a false report, an unranked match, two dead
+rooms and four players waiting to be paired, and checks what the sweep does with each — including that running it twice does not
+rate the same match twice. Every part of this failed silently in production when it was
+wrong: a sweep that finds nothing looks exactly like a sweep with nothing to do.
+
+## Not here
+
+Play purchase verification (`functions/src/purchases.ts`) has not been ported. It needs a
+second service account linked in the Play Console, and nothing depends on it: the "remove
+ads" entitlement comes from Play Billing's own signed response on the device, and the receipt
+the app files is an audit trail with no consumer for now.
+
+`functions/` is left in place, dormant. If the project is ever moved to Blaze it can be
+deployed as-is, and this worker deleted.

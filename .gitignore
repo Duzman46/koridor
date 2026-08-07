@@ -22,3 +22,6 @@ rules-tests/package-lock.json
 firebase-debug.log
 database-debug.log
 ui-debug.log
+worker/node_modules/
+worker/lib/
+worker/.wrangler/

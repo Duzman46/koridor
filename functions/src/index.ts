@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { Database, getDatabase } from "firebase-admin/database";
 import { onValueCreated } from "firebase-functions/v2/database";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { logger } from "firebase-functions";
 import {
   MatchScore,
@@ -11,6 +12,16 @@ import {
   rateMatch,
   weekKey,
 } from "./elo";
+
+/**
+ * A ceiling on how far this can ever scale.
+ *
+ * Running on a paid plan means a bug or a flood of traffic bills real money, and the
+ * default ceiling is a thousand instances. Ten is far more than this game's traffic will
+ * ever need — a rating write takes milliseconds — and it turns a runaway loop from a
+ * frightening invoice into a queue.
+ */
+setGlobalOptions({ maxInstances: 10 });
 
 initializeApp();
 
@@ -42,6 +53,8 @@ interface PlayerRecord {
   bestWinStreak: number;
   username: string;
   avatarId: string;
+  /** An anonymous account. Earns a rating like anyone else, but holds no place on a board. */
+  isGuest: boolean;
 }
 
 interface WeeklyRecord {
@@ -50,6 +63,9 @@ interface WeeklyRecord {
 }
 
 const DEFAULT_AVATAR = "avatar_01";
+
+/** The value `AccountType.GUEST` writes into a profile. Mirrors worker/src/sweep.ts. */
+const GUEST_ACCOUNT_TYPE = "GUEST";
 
 /**
  * Applies rating to a reported match.
@@ -71,10 +87,16 @@ export const rateReportedMatch = onValueCreated(
 
     // Claim the report first. A function can be delivered more than once, and only the
     // invocation that flips PENDING is allowed to apply rating.
-    const claim = await stateRef.transaction((current) =>
-      current === "PENDING" ? "RATED" : undefined
-    );
-    if (!claim.committed) {
+    const claim = await stateRef.transaction((current) => {
+      // A transaction's first run is handed the local cache, and for a node this process
+      // has never read that is null rather than the stored value. Aborting there ends the
+      // transaction without ever asking the server, which refused every first delivery —
+      // no match was ever rated. Returning a value instead makes the SDK fetch the real
+      // one and run this again, and that run sees PENDING or an already-claimed state.
+      if (current === null) return "RATED";
+      return current === "PENDING" ? "RATED" : undefined;
+    });
+    if (!claim.committed || claim.snapshot.val() !== "RATED") {
       logger.info("match already processed", { matchId });
       return;
     }
@@ -125,12 +147,18 @@ async function verifyReport(db: Database, report: MatchReport): Promise<string> 
     return "end reason does not match the room";
   }
   if (report.endReason === "NORMAL") {
+    // The board only ever names a seat, and the host is not always seat one: choosing red
+    // puts them in seat two. A room written before seats existed carries no hostSeat, which
+    // means the host opened — the only arrangement that protocol had.
+    const hostInSeatTwo = room.hostSeat === "PLAYER_TWO";
+    const seatOneUid = hostInSeatTwo ? report.guestUid : report.hostUid;
+    const seatTwoUid = hostInSeatTwo ? report.hostUid : report.guestUid;
     const boardStatus = room.board?.status;
     const expected =
       boardStatus === "PLAYER_ONE_WON"
-        ? report.hostUid
+        ? seatOneUid
         : boardStatus === "PLAYER_TWO_WON"
-          ? report.guestUid
+          ? seatTwoUid
           : null;
     if (expected === null) return "board does not show a finished game";
     if (report.winnerUid !== expected) return "winner does not match the board";
@@ -191,6 +219,10 @@ function playerUpdates(
   const streak = won ? record.currentWinStreak + 1 : 0;
   return {
     [`users/${uid}/rating`]: rating,
+    // The all-time board is ordered by this second copy rather than by the rating itself, so
+    // that a guest — who never gets one written — has no place in the index to be read out of.
+    // It is written here, level with the rating, because the two are shown as one row.
+    ...(record.isGuest ? {} : { [`users/${uid}/leaderboardRating`]: rating }),
     [`users/${uid}/highestRating`]: Math.max(record.highestRating, rating),
     [`users/${uid}/totalGames`]: record.totalGames + 1,
     [`users/${uid}/wins`]: record.wins + (won ? 1 : 0),
@@ -204,6 +236,10 @@ function playerUpdates(
 /**
  * The weekly board is denormalised: it carries the name and avatar so a page of fifty rows
  * costs one query instead of fifty profile reads.
+ *
+ * A guest gets no row. Nothing under `leaderboards` is writable by a client, so the two
+ * server-side writers — this and worker/src/sweep.ts — are the only hands that ever write
+ * there, and refusing in both is refusing outright.
  */
 function weeklyUpdates(
   week: string,
@@ -213,6 +249,7 @@ function weeklyUpdates(
   rating: number,
   score: MatchScore
 ): Record<string, unknown> {
+  if (record.isGuest) return {};
   const base = `leaderboards/weekly/${week}/${uid}`;
   return {
     [`${base}/username`]: record.username,
@@ -236,6 +273,7 @@ async function readRecord(db: Database, uid: string): Promise<PlayerRecord> {
     bestWinStreak: numberOr(value.bestWinStreak, 0),
     username: typeof value.username === "string" ? value.username : "",
     avatarId: typeof value.avatarId === "string" ? value.avatarId : DEFAULT_AVATAR,
+    isGuest: value.accountType === GUEST_ACCOUNT_TYPE,
   };
 }
 

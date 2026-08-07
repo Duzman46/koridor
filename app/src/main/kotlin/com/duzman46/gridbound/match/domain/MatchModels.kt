@@ -68,12 +68,20 @@ data class MatchReport(
          */
         fun matchId(roomCode: String, createdAt: Long): String = "${roomCode}_$createdAt"
 
-        fun winnerUid(winner: PlayerId?, hostUid: String, guestUid: String): String? =
-            when (winner) {
-                PlayerId.PLAYER_ONE -> hostUid
-                PlayerId.PLAYER_TWO -> guestUid
-                null -> null
-            }
+        /**
+         * @param hostSeat which of the two board seats the host took. The board only knows
+         *   seats, and the host is not always seat one, so naming the winner needs both.
+         */
+        fun winnerUid(
+            winner: PlayerId?,
+            hostSeat: PlayerId,
+            hostUid: String,
+            guestUid: String,
+        ): String? = when (winner) {
+            null -> null
+            hostSeat -> hostUid
+            else -> guestUid
+        }
     }
 }
 

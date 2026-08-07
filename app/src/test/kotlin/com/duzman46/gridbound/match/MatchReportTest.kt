@@ -45,9 +45,20 @@ class MatchReportTest {
 
     @Test
     fun `winner maps from the board player to the right account`() {
-        assertEquals(host, MatchReport.winnerUid(PlayerId.PLAYER_ONE, host, guest))
-        assertEquals(guest, MatchReport.winnerUid(PlayerId.PLAYER_TWO, host, guest))
-        assertNull(MatchReport.winnerUid(null, host, guest))
+        val seatOne = PlayerId.PLAYER_ONE
+        assertEquals(host, MatchReport.winnerUid(PlayerId.PLAYER_ONE, seatOne, host, guest))
+        assertEquals(guest, MatchReport.winnerUid(PlayerId.PLAYER_TWO, seatOne, host, guest))
+        assertNull(MatchReport.winnerUid(null, seatOne, host, guest))
+    }
+
+    @Test
+    fun `a host in seat two takes the win the board gives to seat two`() {
+        // The board only ever says which seat won. Reading that as "seat one is the host"
+        // would hand every win in a red-host room to the wrong account.
+        val seatTwo = PlayerId.PLAYER_TWO
+        assertEquals(guest, MatchReport.winnerUid(PlayerId.PLAYER_ONE, seatTwo, host, guest))
+        assertEquals(host, MatchReport.winnerUid(PlayerId.PLAYER_TWO, seatTwo, host, guest))
+        assertNull(MatchReport.winnerUid(null, seatTwo, host, guest))
     }
 
     @Test

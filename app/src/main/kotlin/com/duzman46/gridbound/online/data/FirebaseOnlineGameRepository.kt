@@ -13,6 +13,8 @@ import com.duzman46.gridbound.game.models.ActionResult
 import com.duzman46.gridbound.game.models.GameAction
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
+import com.duzman46.gridbound.online.model.MatchmakingRules
+import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
@@ -20,17 +22,25 @@ import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomEndReason
 import com.duzman46.gridbound.online.model.RoomVisibility
+import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ServerValue
 import com.google.firebase.database.Transaction
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.withIndex
 
 @Singleton
 class FirebaseOnlineGameRepository @Inject constructor(
@@ -49,6 +59,9 @@ class FirebaseOnlineGameRepository @Inject constructor(
         return lobbyCall {
             val userId = requireUserId()
             val host = profileRepository.loadProfile(userId).successOrNull
+            // Drawn once, outside the retry loop: a host who left the colour to chance is
+            // choosing a seat, not re-rolling it every time a room code collides.
+            val hostSeat = configuration.hostSeat ?: PlayerId.entries.random(random)
             repeat(Constants.Online.MAX_ROOM_CREATE_ATTEMPTS) {
                 val roomCode = RoomCredentials.generateCode(random)
                 val now = System.currentTimeMillis()
@@ -60,12 +73,12 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 }
                 val created = roomRef(roomCode).runTransactionSuspend { current ->
                     if (current.value != null) return@runTransactionSuspend Transaction.abort()
-                    current.value = codec.encodeNewRoom(configuration, host, userId, now)
+                    current.value = codec.encodeNewRoom(configuration, host, userId, hostSeat, now)
                     Transaction.success(current)
                 }
                 if (created) {
                     return@lobbyCall OnlineLobbyResult.Success(
-                        OnlineSession(roomCode, userId, PlayerId.PLAYER_ONE),
+                        OnlineSession(roomCode, userId, hostSeat),
                     )
                 }
                 if (hash != null) runCatching { secretRef(roomCode).removeValue().await() }
@@ -82,25 +95,173 @@ class FirebaseOnlineGameRepository @Inject constructor(
         return lobbyCall { seat(normalized, requireUserId(), password) }
     }
 
-    override suspend fun quickMatch(preferRanked: Boolean): OnlineLobbyResult = lobbyCall {
-        val userId = requireUserId()
-        val candidates = openRooms()
-            .filter { it.hostUserId != userId && !it.requiresPassword }
-            .sortedByDescending { it.ranked == preferRanked }
-        // Rooms can be taken between listing and joining, so walk the list until one sticks.
-        for (room in candidates) {
-            val result = seat(room.roomCode, userId, password = "")
-            if (result is OnlineLobbyResult.Success) return@lobbyCall result
+    override fun matchmake(ranked: Boolean): Flow<MatchmakingState> {
+        if (!firebase.isConfigured) {
+            return flowOf(MatchmakingState.Failed(AppError.SERVICE_UNAVAILABLE))
         }
-        OnlineLobbyResult.Failure(AppError.ROOM_NO_OPPONENT_FOUND)
+        return queueSession(ranked).catch { error ->
+            AppLog.warn("matchmake", error)
+            emit(
+                MatchmakingState.Failed(
+                    if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
+                ),
+            )
+        }
+    }
+
+    /**
+     * One trip through the waiting list: write the entry, hold it, end in a room.
+     *
+     * The entry is given up in a `finally`, so cancelling the collection — the player pressing
+     * cancel, the lobby leaving the screen — is all it takes to leave the list. onDisconnect
+     * covers the case that never reaches a `finally`: a process killed, or a phone that walks
+     * out of signal. Between them, a name in this list is always a device that is still there.
+     */
+    private fun queueSession(ranked: Boolean): Flow<MatchmakingState> = flow {
+        val userId = requireUserId()
+        val profile = profileRepository.loadProfile(userId).successOrNull
+        val entry = queueRef().child(userId)
+        // Registered before the entry is written, so a process that dies between the two
+        // still leaves nothing behind: the server runs the removal either way.
+        entry.onDisconnect().removeValue()
+        try {
+            emit(MatchmakingState.Searching)
+            // Losing the place is not the end of the wait. The worker clears out entries old
+            // enough to be from a phone that never came back, and a player who is genuinely
+            // still here would otherwise be left watching a list they are no longer in.
+            while (true) {
+                val session = awaitPairing(userId, profile, ranked, takePlace(entry, profile, ranked))
+                if (session != null) {
+                    emit(MatchmakingState.Paired(session))
+                    return@flow
+                }
+            }
+        } finally {
+            entry.onDisconnect().cancel()
+            // Not awaited: this usually runs while the caller is being cancelled, and the
+            // database client sends it from its own queue whether or not anyone is listening.
+            entry.removeValue()
+        }
+    }
+
+    /** Writes the entry and returns the stamp the server settled on. */
+    private suspend fun takePlace(
+        entry: DatabaseReference,
+        profile: UserProfile?,
+        ranked: Boolean,
+    ): Long {
+        entry.setValue(
+            mapOf(
+                MatchmakingCodec.Keys.RATING to
+                    (profile?.rating ?: Constants.Backend.STARTING_RATING),
+                MatchmakingCodec.Keys.RANKED to ranked,
+                MatchmakingCodec.Keys.QUEUED_AT to ServerValue.TIMESTAMP,
+            ),
+        ).await()
+        // Read back rather than trust the local estimate of the stamp. Every decision from
+        // here on compares one server stamp against another, which is what makes them sound
+        // on a handset whose own clock is wrong.
+        return entry.child(MatchmakingCodec.Keys.QUEUED_AT)
+            .awaitSnapshot()
+            .getValue(Long::class.java)
+            ?: error("the queue entry carries no timestamp")
+    }
+
+    /** A pairing, or the loss of this player's place in the list. */
+    private sealed interface Pairing {
+        val session: OnlineSession?
+
+        data class Made(override val session: OnlineSession) : Pairing
+
+        data object Lost : Pairing {
+            override val session: OnlineSession? = null
+        }
+    }
+
+    /**
+     * Suspends until this player is in a room, or until their place in the list is gone.
+     *
+     * Three sources, and the first to answer wins. Claiming is this device pairing from the
+     * list itself. Then there is every room that names this player and did not exist when they
+     * queued, which covers both being claimed by the phone at the other end and being paired
+     * by the scheduled worker — neither of which can tell this device anything directly, and
+     * neither of which needs to be able to. "Did not exist when they queued" is a comparison of
+     * two server stamps, so a match this player walked out of an hour ago is never mistaken for
+     * the one just made for them.
+     *
+     * The third is the entry going missing, which the caller answers by taking a new place.
+     */
+    private suspend fun awaitPairing(
+        userId: String,
+        profile: UserProfile?,
+        ranked: Boolean,
+        queuedAt: Long,
+    ): OnlineSession? = merge(
+        queueRef().snapshotFlow().withIndex().mapNotNull { (index, snapshot) ->
+            when {
+                snapshot.hasChild(userId) -> claim(userId, profile, ranked, snapshot)?.let(Pairing::Made)
+                // Never on the first snapshot. That one can be served from the local cache
+                // before the write that put this player in the list has reached it, and
+                // starting over on the strength of it would loop.
+                index > 0 -> Pairing.Lost
+                else -> null
+            }
+        },
+        pairedRooms(RoomCodec.Keys.HOST_USER_ID, userId, queuedAt).map(Pairing::Made),
+        pairedRooms(RoomCodec.Keys.GUEST_USER_ID, userId, queuedAt).map(Pairing::Made),
+    ).first().session
+
+    private fun pairedRooms(field: String, userId: String, queuedAt: Long): Flow<OnlineSession> =
+        roomsRef().orderByChild(field).equalTo(userId).snapshotFlow().mapNotNull { snapshot ->
+            snapshot.children
+                .mapNotNull { codec.decode(it.key.orEmpty(), it.value) }
+                .filter { it.status.isPlayable && it.createdAt >= queuedAt }
+                .firstNotNullOfOrNull { room ->
+                    room.playerFor(userId)?.let { OnlineSession(room.roomCode, userId, it) }
+                }
+        }
+
+    /**
+     * Writes the room for the pair [MatchmakingRules] settled on, or returns null.
+     *
+     * Null covers both "keep waiting" and "somebody else got there first": the room is named
+     * after the player being claimed, so two devices that go for the same person aim at one
+     * node and only one transaction commits.
+     */
+    private suspend fun claim(
+        userId: String,
+        profile: UserProfile?,
+        ranked: Boolean,
+        snapshot: DataSnapshot,
+    ): OnlineSession? {
+        val waiting = snapshot.children.mapNotNull(MatchmakingCodec::decode)
+        val partner = MatchmakingRules.partnerFor(userId, waiting) ?: return null
+        val code = RoomCredentials.meetingCode(partner.userId, partner.queuedAt)
+        // Neither player picked a colour, so the seats are drawn here — once, by the phone
+        // that writes the room, because the room is where both of them read the answer.
+        val hostSeat = PlayerId.entries.random(random)
+        val committed = roomRef(code).runTransactionSuspend { current ->
+            if (current.value != null) return@runTransactionSuspend Transaction.abort()
+            current.value = codec.encodePairedRoom(
+                host = profile,
+                hostUserId = userId,
+                guestUserId = partner.userId,
+                hostSeat = hostSeat,
+                // A guest's result cannot move a rating, so one guest makes the match casual.
+                ranked = ranked && partner.ranked,
+                expiresAt = System.currentTimeMillis() + Constants.Online.ROOM_EXPIRY_MILLIS,
+            )
+            Transaction.success(current)
+        }
+        return if (committed) OnlineSession(code, userId, hostSeat) else null
     }
 
     override suspend fun loadOpenRooms(): Outcome<List<OnlineRoom>> =
         dbCall("open-rooms") { Outcome.Success(openRooms()) }
 
-    override suspend fun findResumableSession(userId: String): Outcome<OnlineSession?> =
-        dbCall("resumable-session") {
-            if (userId.isBlank()) return@dbCall Outcome.Success(null)
+    override suspend fun closeIdleMatches(userId: String): Outcome<Unit> =
+        dbCall("close-idle-matches") {
+            if (userId.isBlank()) return@dbCall Outcome.Success(Unit)
             // Two narrow indexed queries beat scanning every room in the database.
             val hosted = roomsRef()
                 .orderByChild(RoomCodec.Keys.HOST_USER_ID)
@@ -110,14 +271,15 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 .orderByChild(RoomCodec.Keys.GUEST_USER_ID)
                 .equalTo(userId)
                 .awaitSnapshot()
-            val resumable = (hosted.children + joined.children)
+            val now = System.currentTimeMillis()
+            (hosted.children + joined.children)
                 .mapNotNull { codec.decode(it.key.orEmpty(), it.value) }
-                .firstOrNull { it.status.isPlayable }
-            Outcome.Success(
-                resumable?.let { room ->
-                    room.playerFor(userId)?.let { OnlineSession(room.roomCode, userId, it) }
-                },
-            )
+                .filter { it.hasIdled(now) }
+                .forEach { room ->
+                    val seat = room.playerFor(userId) ?: return@forEach
+                    resolveIdleMatch(OnlineSession(room.roomCode, userId, seat))
+                }
+            Outcome.Success(Unit)
         }
 
     override fun observeRoom(roomCode: String): Flow<OnlineRoom> =
@@ -143,11 +305,14 @@ class FirebaseOnlineGameRepository @Inject constructor(
             val result = gameEngine.perform(room.boardState, action)
             if (result !is ActionResult.Success) return@runTransactionSuspend Transaction.abort()
 
-            val now = System.currentTimeMillis()
             val winner = result.state.status.winner
             current.child(RoomCodec.Keys.BOARD).value = boardCodec.encodeBoard(result.state)
             current.child(RoomCodec.Keys.VERSION).value = room.version + 1L
-            current.child(RoomCodec.Keys.LAST_MOVE_AT).value = now
+            // The server stamps this, not the handset. The rule compares it against the
+            // server's own `now`, so a phone whose clock ran even slightly fast had every
+            // one of its moves rejected — and the move clock it feeds is what decides
+            // timeouts, which no device should be able to influence.
+            current.child(RoomCodec.Keys.LAST_MOVE_AT).value = ServerValue.TIMESTAMP
             current.child(RoomCodec.Keys.CURRENT_TURN_USER_ID).value =
                 if (winner != null) "" else room.userFor(result.state.currentPlayer).orEmpty()
             if (winner != null) {
@@ -171,36 +336,57 @@ class FirebaseOnlineGameRepository @Inject constructor(
             room.userFor(session.playerId.opponent).orEmpty()
         }
 
-    override suspend fun claimTurnTimeout(session: OnlineSession): Outcome<Unit> =
+    override suspend fun resolveTurnTimeout(session: OnlineSession): Outcome<Unit> =
         finishRoom(session, RoomEndReason.TIMEOUT) { room ->
-            val now = System.currentTimeMillis()
-            // Only the player who is *not* on the clock may claim, and only once the
-            // deadline has passed. The rules re-check this against the server clock.
-            val onClock = room.boardState.currentPlayer
-            if (onClock == session.playerId || !room.hasTurnExpired(now)) return@finishRoom null
-            room.userFor(session.playerId).orEmpty()
+            // Both devices ask, and one of them belongs to the loser. Reading the winner off
+            // the room instead of off who is asking is what makes the two agree, and what
+            // lets a match end while the player it was won by has their phone in a pocket.
+            room.waiting()?.takeIf { room.hasTurnExpired(System.currentTimeMillis()) }
         }
+
+    override suspend fun resolveIdleMatch(session: OnlineSession): Outcome<Unit> =
+        finishRoom(session, RoomEndReason.TIMEOUT) { room ->
+            room.waiting()?.takeIf { room.hasIdled(System.currentTimeMillis()) }
+        }
+
+    /**
+     * The member who is *not* on the clock, and so the one a clock running out hands the match
+     * to. Null when the room names nobody, which aborts rather than awarding it to no one.
+     *
+     * Read from `currentTurnUserId` because that is the field the database rules judge these
+     * writes by; deriving it from the seats instead would let a disagreement between the two
+     * turn into a write the server refuses on every retry.
+     */
+    private fun OnlineRoom.waiting(): String? = when (currentTurnUserId.orEmpty()) {
+        hostUserId -> guestUserId
+        guestUserId -> hostUserId
+        else -> null
+    }?.takeIf(String::isNotBlank)
 
     override suspend fun leaveRoom(session: OnlineSession) {
         runCatching {
+            // Who owns the room is the host, not a seat: a host who chose red holds seat two,
+            // and it is still their room to tear down.
+            var wasHost = false
             roomRef(session.roomCode).runTransactionSuspend { current ->
                 val room = decodeMutable(session.roomCode, current)
                     ?: return@runTransactionSuspend Transaction.abort()
-                // A match under way is left standing so the player can reconnect to it.
+                wasHost = session.userId == room.hostUserId
+                // A match under way is left standing: walking out of it is not a resignation,
+                // and it is settled by the idle rule once the clock has run long enough.
                 // Only a room that never started is torn down here.
                 if (room.status != OnlineRoomStatus.WAITING) {
                     return@runTransactionSuspend Transaction.success(current)
                 }
-                when (session.playerId) {
-                    PlayerId.PLAYER_ONE -> current.value = null
-                    PlayerId.PLAYER_TWO -> {
-                        current.child(RoomCodec.Keys.GUEST_USER_ID).value = ""
-                        current.child(RoomCodec.Keys.STATUS).value = OnlineRoomStatus.WAITING.name
-                    }
+                if (wasHost) {
+                    current.value = null
+                } else {
+                    current.child(RoomCodec.Keys.GUEST_USER_ID).value = ""
+                    current.child(RoomCodec.Keys.STATUS).value = OnlineRoomStatus.WAITING.name
                 }
                 Transaction.success(current)
             }
-            if (session.playerId == PlayerId.PLAYER_ONE) {
+            if (wasHost) {
                 runCatching { secretRef(session.roomCode).removeValue().await() }
             }
         }.onFailure { AppLog.warn("leave-room", it) }
@@ -238,8 +424,13 @@ class FirebaseOnlineGameRepository @Inject constructor(
             val now = System.currentTimeMillis()
             current.child(RoomCodec.Keys.GUEST_USER_ID).value = userId
             current.child(RoomCodec.Keys.STATUS).value = OnlineRoomStatus.IN_PROGRESS.name
-            current.child(RoomCodec.Keys.CURRENT_TURN_USER_ID).value = room.hostUserId
-            current.child(RoomCodec.Keys.LAST_MOVE_AT).value = now
+            // Seat one opens, and until this moment it may have been the empty seat: a host
+            // who chose red has been waiting for the player who now takes the first turn.
+            current.child(RoomCodec.Keys.CURRENT_TURN_USER_ID).value =
+                if (room.hostSeat == PlayerId.PLAYER_ONE) room.hostUserId else userId
+            // Server-stamped for the same reason as a move: this starts the opening player's
+            // clock, and the joiner's handset must not be able to shorten it.
+            current.child(RoomCodec.Keys.LAST_MOVE_AT).value = ServerValue.TIMESTAMP
             current.child(RoomCodec.Keys.EXPIRES_AT).value =
                 now + Constants.Online.ROOM_EXPIRY_MILLIS
             current.child(RoomCodec.Keys.BROWSE_KEY).value =
@@ -251,7 +442,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
             Transaction.success(current)
         }
         return if (committed && joined) {
-            OnlineLobbyResult.Success(OnlineSession(roomCode, userId, PlayerId.PLAYER_TWO))
+            OnlineLobbyResult.Success(OnlineSession(roomCode, userId, existing.hostSeat.opponent))
         } else if (existing.requiresPassword) {
             // The rules reject a join whose supplied hash does not match the stored secret,
             // so a refused commit on a protected room means a wrong password.
@@ -316,6 +507,9 @@ class FirebaseOnlineGameRepository @Inject constructor(
         firebase.database.getReference(Constants.Online.ROOMS_PATH)
 
     private fun roomRef(roomCode: String): DatabaseReference = roomsRef().child(roomCode)
+
+    private fun queueRef(): DatabaseReference =
+        firebase.database.getReference(Constants.Online.MATCHMAKING_PATH)
 
     private fun secretRef(roomCode: String): DatabaseReference =
         firebase.database.getReference(Constants.Online.ROOM_SECRETS_PATH).child(roomCode)

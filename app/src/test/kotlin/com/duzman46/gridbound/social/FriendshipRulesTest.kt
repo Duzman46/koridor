@@ -8,7 +8,8 @@ import com.duzman46.gridbound.social.domain.FriendshipStatus.FRIENDS
 import com.duzman46.gridbound.social.domain.FriendshipStatus.NONE
 import com.duzman46.gridbound.social.domain.FriendshipStatus.REQUEST_RECEIVED
 import com.duzman46.gridbound.social.domain.FriendshipStatus.REQUEST_SENT
-import com.duzman46.gridbound.social.domain.GameInvite
+import com.duzman46.gridbound.social.domain.PlayerRequest
+import com.duzman46.gridbound.social.domain.RequestKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -184,18 +185,33 @@ class FriendshipRulesTest {
         }
     }
 
-    // --- Invites ----------------------------------------------------------------------
+    // --- The request channel ------------------------------------------------------------
+
+    private fun request(kind: RequestKind, expiresAt: Long) = PlayerRequest(
+        fromUserId = "from",
+        fromUsername = "name",
+        kind = kind,
+        roomCode = "ABC234",
+        expiresAt = expiresAt,
+    )
 
     @Test
-    fun `an invite expires after its deadline`() {
-        val invite = GameInvite("id", "from", "name", "ABC234", createdAt = 0L, expiresAt = 1_000L)
+    fun `a request expires after its deadline`() {
+        val invite = request(RequestKind.GAME_INVITE, expiresAt = 1_000L)
         assertFalse(invite.isExpired(now = 999L))
         assertTrue(invite.isExpired(now = 1_001L))
     }
 
     @Test
-    fun `an invite with no deadline never expires`() {
-        val invite = GameInvite("id", "from", "name", "ABC234", createdAt = 0L, expiresAt = 0L)
+    fun `a request with no deadline never expires`() {
+        val invite = request(RequestKind.GAME_INVITE, expiresAt = 0L)
         assertFalse(invite.isExpired(now = Long.MAX_VALUE))
+    }
+
+    @Test
+    fun `only a refusal is not something to ask the player about`() {
+        assertTrue(RequestKind.GAME_INVITE.isAsk)
+        assertTrue(RequestKind.REMATCH.isAsk)
+        assertFalse(RequestKind.REMATCH_DECLINED.isAsk)
     }
 }

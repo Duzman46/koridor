@@ -2,6 +2,7 @@ package com.duzman46.gridbound.game.board
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import com.duzman46.gridbound.game.models.PlayerId
 
 /**
  * The board's colours.
@@ -11,20 +12,19 @@ import androidx.compose.ui.graphics.Color
  * made the game better to play. What is left is the scheme that was always the default,
  * following the app's own light and dark colours.
  *
- * The two pawn and goal colours are fixed rather than themed on purpose: blue and orange have
- * to stay distinguishable from each other in both themes, and they are referenced by name in
- * the tutorial's own text.
+ * The two pawn and goal colours come from [SeatColors], which is the one place they are
+ * defined — they are named in the tutorial text and offered by name when a room is created.
  */
 fun boardPalette(colors: ColorScheme): BoardPalette = BoardPalette(
     background = colors.surfaceVariant.copy(alpha = 0.58f),
     tile = colors.surface,
     tileAlternate = colors.surfaceVariant.copy(alpha = 0.72f),
-    goalOne = Color(0xFF3F82FF),
-    goalTwo = Color(0xFFFF9D3F),
+    goalOne = SeatColors.goal(PlayerId.PLAYER_ONE),
+    goalTwo = SeatColors.goal(PlayerId.PLAYER_TWO),
     valid = Color(0xFF32D583),
     invalid = colors.error,
     wall = colors.secondary,
-    playerOne = Color(0xFF3F82FF),
-    playerTwo = Color(0xFFFF8A34),
+    playerOne = SeatColors.pawn(PlayerId.PLAYER_ONE),
+    playerTwo = SeatColors.pawn(PlayerId.PLAYER_TWO),
     selection = colors.primary,
 )

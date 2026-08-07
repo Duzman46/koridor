@@ -14,6 +14,7 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     NETWORK(R.string.error_network),
     SERVICE_UNAVAILABLE(R.string.error_service_unavailable),
     NOT_SIGNED_IN(R.string.error_not_signed_in),
+    NOT_FRIENDS(R.string.error_not_friends),
     UNKNOWN(R.string.error_unknown),
 
     EMAIL_INVALID(R.string.auth_error_email_invalid),
@@ -44,7 +45,6 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     ROOM_PASSWORD_WRONG(R.string.room_error_password_wrong),
     ROOM_PASSWORD_TOO_SHORT(R.string.room_error_password_too_short),
     ROOM_NAME_TOO_LONG(R.string.room_error_name_too_long),
-    ROOM_NO_OPPONENT_FOUND(R.string.room_error_no_opponent),
     RANKED_REQUIRES_ACCOUNT(R.string.room_error_ranked_requires_account),
     ;
 

@@ -7,6 +7,7 @@ import com.duzman46.gridbound.auth.domain.AuthState
 import com.duzman46.gridbound.auth.domain.AuthUser
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
+import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.GameStatistics
@@ -19,7 +20,7 @@ import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
-import com.duzman46.gridbound.social.domain.GameInvite
+import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.PresenceState
 import com.duzman46.gridbound.social.domain.SocialRepository
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +44,11 @@ class FakeAuthRepository(
 
     var deleteCount = 0
     var signOutCount = 0
+    var reauthenticateCount = 0
     var nextFailure: AppError? = null
+
+    /** Stands in for Firebase refusing a stale sign-in until the credential is presented. */
+    var reauthenticationFailure: AppError? = null
 
     /** Anonymous ids are handed out in order so a test can assert the id did not change. */
     private var nextGuestId = 1
@@ -76,6 +81,11 @@ class FakeAuthRepository(
     override suspend fun signOut() {
         signOutCount++
         state.value = AuthState.SignedOut
+    }
+
+    override suspend fun reauthenticate(activityContext: Context?, password: String): Outcome<Unit> {
+        reauthenticateCount++
+        return reauthenticationFailure?.let { Outcome.Failure(it) } ?: Outcome.Success(Unit)
     }
 
     override suspend fun deleteAccount(): Outcome<Unit> {
@@ -116,16 +126,18 @@ class FakeUserProfileRepository : UserProfileRepository {
     override suspend fun loadProfile(userId: String): Outcome<UserProfile> =
         profiles.value[userId]?.let { Outcome.Success(it) } ?: Outcome.Failure(AppError.UNKNOWN)
 
-    override suspend fun ensureProfile(user: AuthUser, suggestedName: String?): Outcome<UserProfile> {
+    override suspend fun ensureProfile(user: AuthUser): Outcome<UserProfile> {
         ensureCount++
         if (failEnsure) return Outcome.Failure(AppError.UNKNOWN)
         val existing = profiles.value[user.userId]
+        // A new profile is named by the app, never by the player: the same generated shape
+        // the real repository writes, which is what tells the two apart later.
+        val generated = UsernameRules.generatedName()
         val profile = existing?.copy(accountType = user.accountType, email = user.email)
             ?: UserProfile(
                 userId = user.userId,
-                username = suggestedName ?: "player_${user.userId.takeLast(4)}",
-                normalizedUsername = (suggestedName ?: "player_${user.userId.takeLast(4)}").lowercase(),
-                displayName = suggestedName ?: user.userId,
+                username = generated,
+                normalizedUsername = generated,
                 avatarId = "avatar_01",
                 email = user.email,
                 accountType = user.accountType,
@@ -147,9 +159,6 @@ class FakeUserProfileRepository : UserProfileRepository {
             )
         return Outcome.Success(username)
     }
-
-    override suspend fun updateDisplayName(userId: String, displayName: String): Outcome<Unit> =
-        mutate(userId) { it.copy(displayName = displayName) }
 
     override suspend fun updateAvatar(userId: String, avatarId: String): Outcome<Unit> =
         mutate(userId) { it.copy(avatarId = avatarId) }
@@ -179,7 +188,7 @@ class FakeSocialRepository : SocialRepository {
     val deletedUserIds = mutableListOf<String>()
 
     override fun observeFriendships(userId: String): Flow<List<Friend>> = flowOf(emptyList())
-    override fun observeInvites(userId: String): Flow<List<GameInvite>> = flowOf(emptyList())
+    override fun observeRequests(userId: String): Flow<List<PlayerRequest>> = flowOf(emptyList())
     override fun observePresence(userIds: Set<String>): Flow<Map<String, PresenceState>> =
         flowOf(emptyMap())
 
@@ -194,11 +203,28 @@ class FakeSocialRepository : SocialRepository {
 
     override suspend fun sendInvite(
         fromUserId: String,
+        fromUsername: String,
         toUserId: String,
         roomCode: String,
     ): Outcome<Unit> = Outcome.Success(Unit)
 
-    override suspend fun dismissInvite(userId: String, inviteId: String): Outcome<Unit> =
+    override suspend fun sendRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit> = Outcome.Success(Unit)
+
+    override suspend fun declineRematch(
+        fromUserId: String,
+        fromUsername: String,
+        toUserId: String,
+        roomCode: String,
+        playedRoomCode: String,
+    ): Outcome<Unit> = Outcome.Success(Unit)
+
+    override suspend fun clearRequest(recipientId: String, senderId: String): Outcome<Unit> =
         Outcome.Success(Unit)
 
     override fun startPresence(userId: String) {
@@ -219,15 +245,18 @@ class FakeGameRepository : GameRepository {
     private val settingsState = MutableStateFlow(AppSettings())
     private val tutorialState = MutableStateFlow(false)
     private val guestState = MutableStateFlow(false)
+    private val usernameChosenState = MutableStateFlow(false)
 
     override val settings: Flow<AppSettings> = settingsState
     override val statistics: Flow<GameStatistics> = MutableStateFlow(GameStatistics())
     override val tutorialCompleted: Flow<Boolean> = tutorialState
     override val guestModeAccepted: Flow<Boolean> = guestState
+    override val usernameChosen: Flow<Boolean> = usernameChosenState
 
     val currentSettings: AppSettings get() = settingsState.value
     val isTutorialCompleted: Boolean get() = tutorialState.value
     val isGuestModeAccepted: Boolean get() = guestState.value
+    val isUsernameChosen: Boolean get() = usernameChosenState.value
 
     override suspend fun setTutorialCompleted(completed: Boolean) {
         tutorialState.value = completed
@@ -235,6 +264,10 @@ class FakeGameRepository : GameRepository {
 
     override suspend fun setGuestModeAccepted(accepted: Boolean) {
         guestState.value = accepted
+    }
+
+    override suspend fun setUsernameChosen(chosen: Boolean) {
+        usernameChosenState.value = chosen
     }
 
     override suspend fun setLanguage(language: AppLanguage) {

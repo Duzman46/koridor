@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { restDatabase } from "./db.js";
-import { MatchReport, QueueEntry, closestPairs, sweep, verifyReport } from "./sweep.js";
+import {
+  MAX_BACKFILL_PROFILES_PER_RUN,
+  MatchReport,
+  QueueEntry,
+  closestPairs,
+  sweep,
+  verifyReport,
+} from "./sweep.js";
 
 /**
  * End-to-end check of the sweep, run against the database emulator with `npm run test:e2e`.
@@ -32,6 +39,9 @@ const GHOST = "frank-uid";
 
 /** An anonymous player: rated like anyone else, and on neither leaderboard. */
 const ANON = "grace-uid";
+
+/** A linked account from before the all-time board had a sort key of its own. */
+const LEGACY = "heidi-uid";
 
 const db = restDatabase("http://127.0.0.1:9000", async () => "owner", { ns: NAMESPACE });
 
@@ -320,6 +330,81 @@ async function main(): Promise<void> {
     (await db.get<number>(`users/${HOST}/leaderboardRating`)) ===
       (await db.get<number>(`users/${HOST}/rating`)) &&
       (await db.get(`leaderboards/weekly/${week}/${HOST}`)) !== null
+  );
+
+  // The accounts that were already there the day the all-time board grew a sort key of its
+  // own. Nothing about them ever writes it: their owners are signed in on a phone that will
+  // not be signing in again, and they are not the two ends of a rated match. Ordered by a key
+  // they do not carry, they are not last on the board — they are missing from it, silently,
+  // which is a board with nobody on it and no error to explain why.
+  await db.set(`users/${LEGACY}`, profile("heidi"));
+  const fourth = await sweep(db, now);
+  console.log("fourth run:", JSON.stringify(fourth));
+
+  check(
+    "the run with no match to rate backfills the board index instead",
+    fourth.rated === 0 && fourth.boardIndexed === 1
+  );
+  check(
+    "and takes the account on at the rating it already held",
+    (await db.get<number>(`users/${LEGACY}/leaderboardRating`)) === 1000
+  );
+  check(
+    "the guest is still left out of it",
+    (await db.get(`users/${ANON}/leaderboardRating`)) === null
+  );
+
+  // The query the all-time board actually makes. This is the one that was returning nothing.
+  const board = await db.get<Record<string, unknown>>("users", {
+    orderBy: '"leaderboardRating"',
+    startAt: "0",
+    limitToLast: "51",
+  });
+  check(
+    "the board query returns the accounts it used to skip, and still not the guest",
+    board !== null && LEGACY in board && HOST in board && GUEST in board && !(ANON in board)
+  );
+  check(
+    "the walk wraps round at the end rather than wedging on the last profile",
+    (await db.get<string>("maintenance/boardIndexBackfill/cursor")) === ""
+  );
+
+  const fifth = await sweep(db, now);
+  check("a later run finds nobody left to index", fifth.boardIndexed === 0);
+
+  // More profiles than one lap can carry. Every account above fitted in a single page, so the
+  // cursor was only ever written back as "" and the branch that actually moves it never ran —
+  // and that branch is the only one a real database ever takes. What it can get wrong is
+  // silent: a cursor that does not advance re-reads the same page for ever, indexes nothing
+  // after the first lap and reports a clean run every minute while the board stays half empty.
+  const crowd = Array.from(
+    { length: MAX_BACKFILL_PROFILES_PER_RUN + 5 },
+    (_, index) => `legacy-${String(index).padStart(3, "0")}-uid`
+  );
+  for (const uid of crowd) {
+    await db.set(`users/${uid}`, profile(uid.replace(/-/g, "")));
+  }
+
+  let indexed = 0;
+  const trail: string[] = [];
+  // A fixed number of laps rather than "until it finishes": a walk that stops advancing would
+  // otherwise hang this script rather than fail it, and where it got to is the thing under
+  // test. Four is one more than a tree this size needs, so the last one wraps.
+  for (let lap = 0; lap < 4; lap += 1) {
+    indexed += (await sweep(db, now)).boardIndexed;
+    trail.push((await db.get<string>("maintenance/boardIndexBackfill/cursor")) ?? "");
+  }
+  console.log(`crowd walk: ${indexed} indexed, cursors ${JSON.stringify(trail)}`);
+
+  check("a walk longer than one page takes every profile on it", indexed === crowd.length);
+  check(
+    "and never sat on the same cursor twice, which is what a wedged walk looks like",
+    trail.every((at, index) => index === 0 || at !== trail[index - 1])
+  );
+  check("and reached the end of the tree, which is where it wraps", trail.includes(""));
+  check(
+    "the last profile in key order was not walked past",
+    (await db.get<number>(`users/${crowd[crowd.length - 1]}/leaderboardRating`)) === 1000
   );
 
   const failed = checks.filter(([, passed]) => !passed);

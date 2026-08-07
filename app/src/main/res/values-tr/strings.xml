@@ -68,6 +68,12 @@
     <string name="auth_link_with_google">Google ile bağla</string>
     <string name="auth_link_with_email">E-posta ile bağla</string>
     <string name="auth_link_success">Hesabın bağlandı. İlerlemen korundu.</string>
+    <string name="auth_link_account">Hesap bağla</string>
+    <string name="auth_existing_account_title">Bu hesap zaten var</string>
+    <string name="auth_existing_account_message">Bu Google hesabının kendi Koridor profili zaten var ve iki profil birleştirilemez. Bu hesaba giriş yaparsan misafirken oynadığın her şey — puanın ve maç geçmişin — kalıcı olarak silinir. O hesap kendi puanını, istatistiklerini ve arkadaşlarını korur; bundan sonra göreceğin onlar olur. Hiçbir şey birleştirilmez.</string>
+    <string name="auth_existing_account_confirm">Yine de giriş yap</string>
+    <string name="auth_existing_account_cancel">Misafir kal</string>
+    <string name="auth_existing_account_success">Giriş yapıldı. Bu hesabın puanı, istatistikleri ve arkadaşları geri geldi.</string>
     <string name="auth_guest_badge">Misafir</string>
 
     <!-- Kullanıcı adı -->
@@ -92,6 +98,7 @@
     <!-- Profil -->
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Profili düzenle</string>
+    <string name="profile_username_guest_explainer">Misafir adları otomatik verilir ve değiştirilemez. Diğer oyuncuların göreceği adı seçmek için bir hesap bağla.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Puan</string>
     <string name="profile_highest_rating">En yüksek puan</string>

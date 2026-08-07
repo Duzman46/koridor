@@ -74,6 +74,12 @@
     <string name="auth_link_with_google">Link with Google</string>
     <string name="auth_link_with_email">Link with email</string>
     <string name="auth_link_success">Your account is linked. Your progress has been kept.</string>
+    <string name="auth_link_account">Link an account</string>
+    <string name="auth_existing_account_title">This account already exists</string>
+    <string name="auth_existing_account_message">This Google account already has a Koridor profile of its own, and the two cannot be joined. Sign in to it and everything you played as a guest — your rating and your match record — is deleted for good. That account keeps its own rating, statistics and friends, and those are what you will see. Nothing is merged.</string>
+    <string name="auth_existing_account_confirm">Sign in anyway</string>
+    <string name="auth_existing_account_cancel">Stay a guest</string>
+    <string name="auth_existing_account_success">Signed in. The rating, statistics and friends on this account are back.</string>
     <string name="auth_guest_badge">Guest</string>
 
     <!-- Username -->
@@ -97,6 +103,7 @@
     <!-- Profile -->
     <string name="profile_title">Profile</string>
     <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_username_guest_explainer">Guest names are given out automatically and cannot be changed. Link an account to choose the name other players will see.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Rating</string>
     <string name="profile_highest_rating">Best rating</string>

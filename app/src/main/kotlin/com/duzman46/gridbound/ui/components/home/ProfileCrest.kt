@@ -50,15 +50,15 @@ private const val STREAK_TARGET = 5
  * Who is playing, at the trailing end of the home screen's utility row.
  *
  * The ring around the avatar carries the state without a word of translated text: dashed
- * means there is no real account behind this yet, a solid track means there is, and the amber
- * arc fills as a win streak grows.
+ * means there is no real account behind this yet, a solid track means there is, and the arc
+ * fills as a win streak grows.
  *
  * A null profile is not a loading blip — [SessionState.profile] is only ever populated for a
  * signed-in player, so a guest playing offline has none and never will. That state gets a
  * pawn in a dashed ring rather than an empty circle, and it stays tappable: it is the way in
  * to linking an account.
  *
- * The signed-in form brings its own dark ground with it, so the rating and the amber arc keep
+ * The signed-in form brings its own dark ground with it, so the rating and the streak arc keep
  * the contrast they were drawn for. The two provisional forms have no ground of their own and
  * are read straight off the page, so their marks come from the theme instead.
  */
@@ -216,7 +216,7 @@ private fun Modifier.streakRing(streak: Int): Modifier = drawWithContent {
     val progress = streak.coerceIn(0, STREAK_TARGET) / STREAK_TARGET.toFloat()
     if (progress > 0f) {
         drawArc(
-            color = HomePalette.Amber,
+            color = HomePalette.Accent,
             startAngle = -90f,
             sweepAngle = 360f * progress,
             useCenter = false,
@@ -230,9 +230,10 @@ private fun Modifier.streakRing(streak: Int): Modifier = drawWithContent {
 /**
  * A round glyph button, matching the language chip and the crest in the same row.
  *
- * Still cut from the well's material rather than the theme's: these read as small pieces of
- * the board panel they sit above, which is what holds the top of the screen together, and it
- * is the only ground on which the crest's amber streak arc still means "wall".
+ * Cut from the well's material rather than the theme's: these read as small pieces of the
+ * board panel they sit above, which is what holds the top of the screen together, and a fixed
+ * dark ground is what lets the jade in the crest keep the contrast it was mixed for on a pale
+ * page as well as a near-black one.
  */
 @Composable
 fun HomeIconButton(

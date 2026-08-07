@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Color
  * - `colorScheme.primary` is a **fill**. When the accent has to be text or an icon, use
  *   `colorScheme.secondary`, which is the same hue darkened enough to be read as ink.
  * - `live` is the ember, and it is budgeted: at most one live control on a screen, and never
- *   on a screen that draws a board. Amber already means "wall" inside the well, and two
- *   warm accents in one frame make neither of them mean anything.
+ *   on a screen that draws a board. Warm already belongs to a seat wherever there are pawns,
+ *   and two warm accents in one frame make neither of them mean anything.
  */
 @Immutable
 data class KoridorColors(
@@ -37,8 +37,11 @@ val LightKoridor = KoridorColors(
     // A darkened sibling of the dark scheme's ring below: that value is only 2.05:1 on a light
     // tile, this is 3.96:1. The same mark, still readable on the opposite ground.
     provisionalRing = Color(0xFF5E7568),
+    // WCAG exempts inactive controls, and this pair still clears 3:1 anyway. "Unavailable" is
+    // carried by the flat fill and the missing border; it does not also need a label nobody
+    // with low vision can read.
     disabledFill = Color(0xFFD3D6D2),
-    disabledInk = Color(0xFF989D98),
+    disabledInk = Color(0xFF6F7572),
 )
 
 val DarkKoridor = KoridorColors(
@@ -50,8 +53,10 @@ val DarkKoridor = KoridorColors(
     // The provisional mark reads the same everywhere it appears on a dark ground — the crest's
     // dashed ring and a provisional rating are one idea, so they are one colour.
     provisionalRing = Color(0xFF8FA79A),
-    disabledFill = Color(0xFF1E2925),
-    disabledInk = Color(0xFF5C6661),
+    // The fill sits one step off the near-black ground so a dead control is still a control,
+    // and the ink clears 3:1 on it; see the light pair above for why.
+    disabledFill = Color(0xFF1A211E),
+    disabledInk = Color(0xFF6E7A75),
 )
 
 val LocalKoridorColors = staticCompositionLocalOf { LightKoridor }

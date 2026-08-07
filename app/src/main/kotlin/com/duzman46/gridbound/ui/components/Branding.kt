@@ -12,14 +12,19 @@ import androidx.compose.ui.graphics.Color
 /**
  * The app mark: a pawn standing in a corridor.
  *
- * The same drawing as the launcher icon, on the same 108-unit canvas and with the same
- * coordinates — see res/drawable/ic_launcher_foreground.xml. That was previously only an
- * aspiration in a comment: the icon was a 3x3 board with two pawns and amber walls, the mark
- * was a 3x3 board with one pawn and green walls, and the player met both back to back on
- * every cold start. Two drawings of the same thing read as neither.
+ * The same shape as the launcher icon, on the same 108-unit canvas and to the same
+ * coordinates — see res/drawable/ic_launcher_foreground.xml. One drawing for one app: a player
+ * who meets a different mark on the splash screen from the one they tapped to get there
+ * remembers neither.
  *
- * Drawn rather than shipped as an asset so it follows the theme: the launcher plate is fixed
- * jade, but in the app the mark sits on whichever ground the theme is using.
+ * Flat where the launcher is shaded, and that is not a divergence. The icon's gradients are
+ * lit for one fixed jade plate; this mark takes its two colours from the caller and lands on a
+ * near-black page, a pale one or a dark well, and highlights mixed for one of those are wrong
+ * on the other two. The silhouette is what makes it the same mark, so the silhouette is what
+ * is shared.
+ *
+ * Drawn rather than shipped as an asset so it can follow the theme at all, and so it costs
+ * nothing at five densities.
  */
 @Composable
 fun KoridorMark(

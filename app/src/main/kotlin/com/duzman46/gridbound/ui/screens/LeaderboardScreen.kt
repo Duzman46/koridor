@@ -242,9 +242,9 @@ private fun LeaderboardRow(
 /**
  * The player's own row, pinned so it stays visible however far the list is scrolled.
  *
- * With no row to pin, the bar says why there is none. A guest is told the particular reason —
- * an anonymous account is rated but never ranked — because "sign in" reads as an instruction
- * they have already followed.
+ * With no row to pin, the bar says why there is none, and
+ * [LeaderboardUiState.noStandingMessage] is where that is decided — the reason belongs to the
+ * player's situation, not to this layout.
  */
 @Composable
 private fun OwnStandingBar(state: LeaderboardUiState) {
@@ -274,13 +274,7 @@ private fun OwnStandingBar(state: LeaderboardUiState) {
                 }
 
                 else -> Text(
-                    stringResource(
-                        if (state.isGuest) {
-                            R.string.leaderboard_guest_not_ranked
-                        } else {
-                            R.string.leaderboard_sign_in_required
-                        },
-                    ),
+                    state.noStandingMessage.asString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

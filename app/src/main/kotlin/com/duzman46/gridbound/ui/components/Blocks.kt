@@ -38,6 +38,25 @@ import com.duzman46.gridbound.ui.components.home.GlyphKind
 import com.duzman46.gridbound.ui.components.home.KoridorGlyph
 
 /**
+ * How tall a block's content is allowed to get down to.
+ *
+ * Public because the home screen has one flexible element and four fixed ones, and it can only
+ * work out how much room the flexible one gets by adding these up. A button height typed twice
+ * is a button height that will drift. Each block also reserves [Dimens.PressTravel] underneath
+ * these, which is the strip it sinks into.
+ */
+object BlockHeight {
+    /** The one way forward on a screen. */
+    val Loud = 72.dp
+
+    /** Anything else that spans the column. */
+    val Wide = 56.dp
+
+    /** Text only. */
+    val Text = 48.dp
+}
+
+/**
  * How loud a control is. At most one [PRIMARY] on a screen — when everything is emphasised
  * the player has to read all of it to find the way in.
  */
@@ -106,9 +125,9 @@ fun KoridorBlock(
     val wide = rank != BlockRank.TERTIARY
     val shape = RoundedCornerShape(if (wide) Dimens.RadiusSm else Dimens.RadiusXs)
     val minHeight = when {
-        loud -> 72.dp
-        wide -> 56.dp
-        else -> 48.dp
+        loud -> BlockHeight.Loud
+        wide -> BlockHeight.Wide
+        else -> BlockHeight.Text
     }
 
     Box(if (wide) modifier.fillMaxWidth() else modifier) {

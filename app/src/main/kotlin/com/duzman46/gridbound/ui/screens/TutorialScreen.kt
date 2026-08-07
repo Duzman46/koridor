@@ -177,7 +177,9 @@ private fun StepProgress(
                         if (done) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            MaterialTheme.colorScheme.outlineVariant
+                            // How many steps are still to come is the whole point of the row,
+                            // so those dots have to be visible rather than merely present.
+                            MaterialTheme.colorScheme.outline
                         },
                     ),
             )

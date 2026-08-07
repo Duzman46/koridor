@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.duzman46.gridbound.R
@@ -38,6 +40,7 @@ import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.components.AdBanner
+import com.duzman46.gridbound.ui.components.BlockHeight
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.LanguagePickerDialog
 import com.duzman46.gridbound.session.SessionState
@@ -94,6 +97,40 @@ fun SplashScreen(onFinished: () -> Unit) {
     }
 }
 
+/** The secondary choices under the loud one. */
+private const val HOME_CHOICES = 4
+
+/**
+ * What the round marks in the utility row measure once Material's 48 dp touch floor applies to
+ * them, which is more than the 44 dp they are drawn at.
+ */
+private val HomeUtilityRowHeight = 48.dp
+
+/** One line of the wordmark: the 30 dp size [HomeWordmark] fixes it to, in its 1.2 line box. */
+private val HomeWordmarkHeight = 36.dp
+
+/**
+ * Every fixed row of the home screen added up, at default font scale.
+ *
+ * The board panel is the only element here that can be any size, so it gets what is left of
+ * the window after this — which is the one arrangement in which the whole screen fits a phone
+ * without scrolling. On a 360x740 dp content area that leaves 184 dp of panel behind a 50 dp
+ * ad banner and 144 dp behind the 90 dp one a tall device asks for, against a floor of 133 dp;
+ * `HomeLayoutBudgetTest` holds those numbers to it.
+ *
+ * Written as the rows it is made of rather than as one total, so a spacing or control token
+ * that moves takes the budget with it, and declared under the pieces it is built from because
+ * a file's properties are initialised in the order they are written. A row added to the screen
+ * has to be added here as well, or the screen starts scrolling again.
+ */
+internal val HomeChrome: Dp =
+    Dimens.SpaceMd + HomeUtilityRowHeight +
+        Dimens.SpaceLg + HomeWordmarkHeight +
+        Dimens.SpaceSm + // the wordmark's gap to the panel
+        Dimens.SpaceLg + BlockHeight.Loud + Dimens.PressTravel +
+        (Dimens.SpaceMd + BlockHeight.Wide + Dimens.PressTravel) * HOME_CHOICES +
+        Dimens.SpaceLg
+
 /**
  * The home screen.
  *
@@ -106,6 +143,10 @@ fun SplashScreen(onFinished: () -> Unit) {
  * Read top to bottom the screen is: who you are and who you know, the name of the game, the
  * game itself, then how to start one. The panel in the middle holds nothing but artwork, which
  * is the only arrangement in which all of the artwork can be seen.
+ *
+ * It still scrolls, and that is not a contradiction: at a doubled font scale, or in landscape,
+ * five controls alone are taller than the window and something has to give. What the budget
+ * buys is that nobody at default settings ever has to scroll to find the way in.
  */
 @Composable
 fun MainMenuScreen(
@@ -178,50 +219,77 @@ fun MainMenuScreen(
         bottomBar = { if (showAdBanner) AdBanner(Modifier.navigationBarsPadding()) },
     ) { padding ->
         ScreenBackground {
-            Column(
+            // Measured outside the scroll, because inside one the height is unbounded and
+            // there is nothing left to divide up. What arrives here is the window minus the
+            // status bar and minus whatever the ad banner took, which is exactly the space
+            // the screen has to fit into.
+            BoxWithConstraints(
                 Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(padding),
             ) {
+                val hero = maxHeight - HomeChrome
                 Column(
                     Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = Dimens.MenuMaxWidth)
-                        .padding(horizontal = Dimens.ScreenPadding),
-                    horizontalAlignment = Alignment.Start,
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeTopBar(
-                        session = session,
-                        language = language,
-                        onFriends = onFriends,
-                        onSettings = onSettings,
-                        onLanguage = { languagePickerOpen = true },
-                        onProfile = onProfile,
-                    )
-                    Spacer(Modifier.height(Dimens.SpaceLg))
-                    // Tight to the panel, loose from the row above it: the wordmark belongs to
-                    // the picture it introduces, and equal gaps on both sides would leave it
-                    // floating between two things it has nothing to do with.
-                    HomeWordmark()
-                    Spacer(Modifier.height(Dimens.SpaceSm))
-                    BoardShowcase()
-                    Spacer(Modifier.height(Dimens.SpaceXl))
-                    PlaySlab(stringResource(R.string.menu_play), onClick = onPlay)
-                    Spacer(Modifier.height(Dimens.SpaceMd))
-                    // Learning the game and seeing where you stand are the two things a
-                    // player looks for by name. Buried in a sheet they were never found, and
-                    // the screen had nothing under the slab but empty ground.
-                    HomeChoice(stringResource(R.string.menu_tutorial), GlyphKind.TUTORIAL, onClick = onTutorial)
-                    Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeChoice(stringResource(R.string.leaderboard_title), GlyphKind.LEADERBOARD, onClick = onLeaderboard)
-                    Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeChoice(stringResource(R.string.game_settings), GlyphKind.SETTINGS, onClick = onSettings)
-                    Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeChoice(stringResource(R.string.menu_more), GlyphKind.MORE, onClick = { openSheet = HomeMenu.MORE })
-                    Spacer(Modifier.height(Dimens.SpaceXl))
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = Dimens.MenuMaxWidth)
+                            .padding(horizontal = Dimens.ScreenPadding),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Spacer(Modifier.height(Dimens.SpaceMd))
+                        HomeTopBar(
+                            session = session,
+                            language = language,
+                            onFriends = onFriends,
+                            onSettings = onSettings,
+                            onLanguage = { languagePickerOpen = true },
+                            onProfile = onProfile,
+                        )
+                        Spacer(Modifier.height(Dimens.SpaceLg))
+                        // Tight to the panel, loose from the row above it: the wordmark
+                        // belongs to the picture it introduces, and equal gaps on both sides
+                        // would leave it floating between two things it has nothing to do
+                        // with.
+                        HomeWordmark()
+                        Spacer(Modifier.height(Dimens.SpaceSm))
+                        BoardShowcase(hero)
+                        Spacer(Modifier.height(Dimens.SpaceLg))
+                        PlaySlab(stringResource(R.string.menu_play), onClick = onPlay)
+                        Spacer(Modifier.height(Dimens.SpaceMd))
+                        // Learning the game and seeing where you stand are the two things a
+                        // player looks for by name. Buried in a sheet they were never found,
+                        // and the screen had nothing under the slab but empty ground.
+                        HomeChoice(
+                            label = stringResource(R.string.menu_tutorial),
+                            glyph = GlyphKind.TUTORIAL,
+                            onClick = onTutorial,
+                        )
+                        Spacer(Modifier.height(Dimens.SpaceMd))
+                        HomeChoice(
+                            label = stringResource(R.string.leaderboard_title),
+                            glyph = GlyphKind.LEADERBOARD,
+                            onClick = onLeaderboard,
+                        )
+                        Spacer(Modifier.height(Dimens.SpaceMd))
+                        HomeChoice(
+                            label = stringResource(R.string.game_settings),
+                            glyph = GlyphKind.SETTINGS,
+                            onClick = onSettings,
+                        )
+                        Spacer(Modifier.height(Dimens.SpaceMd))
+                        HomeChoice(
+                            label = stringResource(R.string.menu_more),
+                            glyph = GlyphKind.MORE,
+                            onClick = { openSheet = HomeMenu.MORE },
+                        )
+                        Spacer(Modifier.height(Dimens.SpaceLg))
+                    }
                 }
             }
         }

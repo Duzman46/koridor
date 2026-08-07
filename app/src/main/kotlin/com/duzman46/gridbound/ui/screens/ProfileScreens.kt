@@ -159,7 +159,7 @@ fun ProfileScreen(
                         // do it — the one screen they would go to in order to do it.
                         action = {
                             Button(onClick = onAccount) {
-                                Text(stringResource(R.string.auth_link_title))
+                                Text(stringResource(R.string.auth_link_account))
                             }
                         },
                     )
@@ -359,12 +359,27 @@ private fun RelationshipNote(
     }
 }
 
+/**
+ * Everything about a player that is theirs to set — with one exception that depends on who
+ * they are.
+ *
+ * A guest gets [GuestUsernameNote] where the name field would be. Their name was handed out
+ * and cannot be replaced, so a field there could only ever be typed into and refused; what
+ * stands in its place is the thing that would genuinely give them a name, and it goes
+ * straight there. The avatar stays: it is theirs, it costs nothing to keep, and taking the
+ * whole screen away over one row would punish them for the row they cannot have.
+ *
+ * @param canChangeUsername false for a guest. See
+ *   [com.duzman46.gridbound.session.SessionState.canChangeUsername] for why.
+ */
 @Composable
 fun EditProfileScreen(
     state: ProfileEditState,
+    canChangeUsername: Boolean,
     onBack: () -> Unit,
     onUsername: (String) -> Unit,
     onAvatar: (String) -> Unit,
+    onLinkAccount: () -> Unit,
     onSubmit: () -> Unit,
 ) {
     Scaffold(
@@ -385,7 +400,11 @@ fun EditProfileScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    UsernameField(state, onUsername)
+                    if (canChangeUsername) {
+                        UsernameField(state, onUsername)
+                    } else {
+                        GuestUsernameNote(onLinkAccount)
+                    }
                     Text(
                         stringResource(R.string.profile_avatar_label),
                         style = MaterialTheme.typography.titleMedium,
@@ -445,6 +464,29 @@ private fun AvatarPicker(
                 }
             }
         }
+    }
+}
+
+/**
+ * What a guest is shown where the name field would be.
+ *
+ * Not a disabled field with an explanation beside it: a control that can never be used is a
+ * question the screen keeps asking and answering. The sentence says why the name is fixed,
+ * and the button underneath is the only thing that changes that answer.
+ */
+@Composable
+private fun GuestUsernameNote(onLinkAccount: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            stringResource(R.string.profile_username_guest_explainer),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SubmitButton(
+            text = stringResource(R.string.auth_link_account),
+            onClick = onLinkAccount,
+            leadingIcon = Icons.Rounded.PersonAdd,
+        )
     }
 }
 

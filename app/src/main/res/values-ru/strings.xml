@@ -62,6 +62,12 @@
     <string name="auth_link_with_google">Привязать через Google</string>
     <string name="auth_link_with_email">Привязать по эл. почте</string>
     <string name="auth_link_success">Аккаунт привязан. Ваш прогресс сохранён.</string>
+    <string name="auth_link_account">Привязать аккаунт</string>
+    <string name="auth_existing_account_title">Такой аккаунт уже есть</string>
+    <string name="auth_existing_account_message">У этого аккаунта Google уже есть свой профиль в Koridor, и объединить их нельзя. Если вы войдёте в него, всё, что вы наиграли как гость — рейтинг и история матчей — будет удалено навсегда. У аккаунта останутся его собственные рейтинг, статистика и друзья, и видеть вы будете именно их. Ничего не объединяется.</string>
+    <string name="auth_existing_account_confirm">Всё равно войти</string>
+    <string name="auth_existing_account_cancel">Остаться гостем</string>
+    <string name="auth_existing_account_success">Вход выполнен. Рейтинг, статистика и друзья этого аккаунта снова на месте.</string>
     <string name="auth_guest_badge">Гость</string>
 
     <string name="username_title">Выберите имя пользователя</string>
@@ -87,6 +93,7 @@
 
     <string name="profile_title">Профиль</string>
     <string name="profile_edit_title">Изменить профиль</string>
+    <string name="profile_username_guest_explainer">Гостевые имена выдаются автоматически и не меняются. Привяжите аккаунт, чтобы выбрать имя, которое увидят другие игроки.</string>
     <string name="profile_avatar_label">Аватар</string>
     <string name="profile_rating">Рейтинг</string>
     <string name="profile_highest_rating">Лучший рейтинг</string>

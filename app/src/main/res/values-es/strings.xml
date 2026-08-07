@@ -62,6 +62,12 @@
     <string name="auth_link_with_google">Vincular con Google</string>
     <string name="auth_link_with_email">Vincular con correo</string>
     <string name="auth_link_success">Tu cuenta está vinculada. Se ha conservado tu progreso.</string>
+    <string name="auth_link_account">Vincular una cuenta</string>
+    <string name="auth_existing_account_title">Esta cuenta ya existe</string>
+    <string name="auth_existing_account_message">Esta cuenta de Google ya tiene su propio perfil de Koridor y no se pueden combinar. Si inicias sesión con ella, todo lo que jugaste como invitado —tu puntuación y tu historial de partidas— se borra para siempre. Esa cuenta conserva su puntuación, sus estadísticas y sus amigos, y eso es lo que verás. No se fusiona nada.</string>
+    <string name="auth_existing_account_confirm">Iniciar sesión igualmente</string>
+    <string name="auth_existing_account_cancel">Seguir como invitado</string>
+    <string name="auth_existing_account_success">Sesión iniciada. La puntuación, las estadísticas y los amigos de esta cuenta han vuelto.</string>
     <string name="auth_guest_badge">Invitado</string>
 
     <string name="username_title">Elige un nombre de usuario</string>
@@ -85,6 +91,7 @@
 
     <string name="profile_title">Perfil</string>
     <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_username_guest_explainer">Los nombres de invitado se asignan automáticamente y no se pueden cambiar. Vincula una cuenta para elegir el nombre que verán los demás jugadores.</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Puntuación</string>
     <string name="profile_highest_rating">Mejor puntuación</string>

@@ -153,9 +153,10 @@ class SessionManagerTest {
         val guestId = session.state.value.user?.userId
         assertNotNull(guestId)
 
-        // Give the guest something to lose, then link.
+        // Give the guest something to lose, then link. Not a chosen name: a guest has none
+        // to give, which is the subject of the guest-naming tests below.
         session.setTutorialCompleted(true)
-        session.changeUsername("Koray")
+        session.updateAvatar("avatar_07")
         advanceUntilIdle()
 
         val linked = session.linkGuestWithEmail("player@example.com", "longenough1")
@@ -165,8 +166,122 @@ class SessionManagerTest {
         assertEquals(guestId, session.state.value.user?.userId)
         assertEquals(AccountType.EMAIL, session.state.value.user?.accountType)
         // Progress survived the upgrade.
-        assertEquals("Koray", profiles.profiles.value[guestId]?.username)
+        assertEquals("avatar_07", profiles.profiles.value[guestId]?.avatarId)
         assertTrue(profiles.profiles.value[guestId]?.tutorialCompleted == true)
+    }
+
+    @Test
+    fun `a linked account is asked for a name it has never been asked for`() = runTest {
+        // The name it carries out of guest play was handed out, and the account is about to
+        // be visible to other players under it.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+
+        session.linkGuestWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+
+        assertTrue(session.state.value.needsUsername)
+        assertTrue(UsernameRules.isGenerated(session.state.value.profile!!.username))
+    }
+
+    // --- Naming a guest ------------------------------------------------------------------
+
+    @Test
+    fun `a guest is not offered a new name and cannot take one`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val handedOut = session.state.value.profile!!.username
+
+        assertFalse(session.state.value.canChangeUsername)
+        val renamed = session.changeUsername("Koray")
+        advanceUntilIdle()
+
+        assertEquals(AppError.NOT_SIGNED_IN, renamed.errorOrNull)
+        assertEquals(handedOut, session.state.value.profile?.username)
+        // The refusal must not look like an answer to "what should we call you?" either.
+        assertFalse(game.isUsernameChosen)
+    }
+
+    @Test
+    fun `a real account names itself and the answer sticks`() = runTest {
+        val session = manager()
+        session.signInWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+        assertTrue(session.state.value.canChangeUsername)
+
+        assertTrue(session.changeUsername("Koray") is Outcome.Success)
+        advanceUntilIdle()
+
+        assertEquals("Koray", session.state.value.profile?.username)
+        assertTrue(game.isUsernameChosen)
+    }
+
+    // --- Handing over to an account that already exists -----------------------------------
+
+    @Test
+    fun `handing over erases the guest, then brings the other account's own record`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val guestId = session.state.value.user!!.userId
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        auth.hasCredentialForExistingAccount = true
+        val handedOver = session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertTrue(handedOver is Outcome.Success)
+        // Erased while the guest was still the one authorised to erase it, credential and all.
+        assertEquals(listOf(guestId), profiles.deletedUserIds)
+        assertEquals(listOf(guestId), auth.discardedGuestIds)
+        assertNull(profiles.profiles.value[guestId])
+        // What arrives is the other account's history, not a merge of the two.
+        assertEquals(FakeAuthRepository.EXISTING_USER_ID, session.state.value.user?.userId)
+        assertEquals(1450, session.state.value.profile?.rating)
+        assertEquals("Koray", session.state.value.profile?.username)
+        assertFalse(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `a guest that cannot be erased is not handed over either`() = runTest {
+        // Otherwise the profile row and the reservation holding its name would be stranded
+        // under a user id nobody can authenticate as ever again.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val guestId = session.state.value.user!!.userId
+
+        profiles.failDelete = true
+        auth.hasCredentialForExistingAccount = true
+        val handedOver = session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertEquals(AppError.NETWORK, handedOver.errorOrNull)
+        assertTrue(auth.discardedGuestIds.isEmpty())
+        assertEquals(guestId, session.state.value.user?.userId)
+        assertNotNull(session.state.value.profile)
+        assertTrue(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `nothing is destroyed without a credential to hand over to`() = runTest {
+        // The offer is built on the credential Firebase actually kept, never on the error
+        // message the player was shown. With no credential there is nothing to hand over to,
+        // and a guest whose data had already gone would be left with neither account.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+
+        assertFalse(session.canSignInToExistingAccount)
+        val handedOver = session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertEquals(AppError.UNKNOWN, handedOver.errorOrNull)
+        assertTrue(profiles.deletedUserIds.isEmpty())
+        assertTrue(auth.discardedGuestIds.isEmpty())
+        assertTrue(session.state.value.isGuest)
     }
 
     @Test
@@ -279,6 +394,23 @@ class SessionManagerTest {
         assertFalse(game.isGuestModeAccepted)
         // Back to the welcome screen, not stuck in a half-signed-in state.
         assertEquals(SessionStatus.SIGNED_OUT, session.state.value.status)
+    }
+
+    @Test
+    fun `signing out forgets that this player answered the name question`() = runTest {
+        // Whoever signs in next has not answered it. Left set, the flag would wave a brand
+        // new account past the gate still wearing the name the app invented for it.
+        val session = manager()
+        session.signInWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+        session.changeUsername("Koray")
+        advanceUntilIdle()
+        assertTrue(game.isUsernameChosen)
+
+        session.signOut()
+        advanceUntilIdle()
+
+        assertFalse(game.isUsernameChosen)
     }
 
     // --- Account deletion ---------------------------------------------------------------

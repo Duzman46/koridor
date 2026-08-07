@@ -3,7 +3,7 @@
     ".read": false,
     ".write": false,
     "users": {
-      ".read": "auth != null && query.orderByChild == 'leaderboardRating' && query.startAt != null && (query.startAt == 0 || query.startAt == root.child('users').child(auth.uid).child('leaderboardRating').val())",
+      ".read": "auth != null && query.orderByChild == 'leaderboardRating' && query.startAt != null && (query.startAt == 0 || query.startAt == root.child('users').child(auth.uid).child('rating').val())",
       ".indexOn": [
         "leaderboardRating"
       ],
@@ -172,6 +172,10 @@
           ]
         }
       }
+    },
+    "maintenance": {
+      ".read": false,
+      ".write": false
     },
     "matchmaking": {
       ".read": "auth != null",

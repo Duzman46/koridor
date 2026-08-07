@@ -279,6 +279,29 @@ describe("the board index — who may be on the leaderboard", () => {
       db.ref("users").orderByChild("leaderboardRating").startAfter(1400).limitToFirst(RANK_SCAN).get(),
     );
   });
+
+  it("lets an account the index has not reached yet ask where it stands", async () => {
+    // The scan is pinned to the rating rather than to the copy of it the board is sorted by,
+    // and this is why: an account that predates the copy holds a rating and no copy at all,
+    // and pinning to the copy compared their rating against nothing and refused them. The two
+    // numbers are the same number — the validate rule above will not accept a copy that is
+    // anything else — so nothing is opened by asking about the one that is always there.
+    await seedProfile(ALICE, "alice", { accountType: "GOOGLE" });
+    const db = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      db.ref("users").orderByChild("leaderboardRating").startAfter(1000).limitToFirst(RANK_SCAN).get(),
+    );
+  });
+});
+
+describe("server bookkeeping", () => {
+  it("keeps the backfill cursor out of every client's reach", async () => {
+    // The worker's note to itself about how far through the profile tree it has walked. A
+    // client that could move it could stop accounts being taken onto the board at all.
+    const db = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(db.ref("maintenance/boardIndexBackfill/cursor").get());
+    await assertFails(db.ref("maintenance/boardIndexBackfill/cursor").set(""));
+  });
 });
 
 describe("private data", () => {
@@ -699,6 +722,63 @@ describe("erasing an account", () => {
     await seedEntangledPlayers();
     const bob = testEnv.authenticatedContext(BOB).database();
     await assertFails(bob.ref(`presence/${ALICE}`).remove());
+  });
+});
+
+describe("handing a guest over to an account that already exists", () => {
+  // Signing in as an account a guest's credential turned out to already belong to merges
+  // nothing: Firebase has no join between two identities that both exist, so the guest's rows
+  // are erased first, while the guest is still the identity making the request. A moment later
+  // that uid is signed out on this handset and reachable from no other, and anything left under
+  // it is left for good — a profile nobody can read and a name reserved against nobody.
+  //
+  // What that ordering rests on is a set of rules facts the client cannot see, so they are
+  // pinned here. These are exactly the writes RtdbUserProfileRepository.deleteAccountData
+  // makes, in the order it makes them.
+
+  /** The shape of a name the app hands out, which is the only kind a guest ever carries. */
+  const GENERATED = "guest_483920";
+
+  async function seedGuest() {
+    await seedProfile(ALICE, GENERATED, { accountType: "GUEST" });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`usersPrivate/${ALICE}/email`).set("");
+    });
+  }
+
+  it("lets a guest give up everything it owns", async () => {
+    // A generated name has to be releasable by the account holding it, or every guest that
+    // ever signs into another account burns one of them permanently. `guest_######` is inside
+    // what the username key validates, and that is not obvious from either end on its own.
+    await seedGuest();
+    const guest = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(guest.ref(`usernames/${GENERATED}`).remove());
+    await assertSucceeds(guest.ref(`usersPrivate/${ALICE}`).remove());
+    await assertSucceeds(guest.ref(`users/${ALICE}`).remove());
+  });
+
+  it("still lets the profile go once its name has already been released", async () => {
+    // The order is forced — the name is read off the profile, so it has to be released while
+    // the profile is still there — and it is the order that could quietly stop working. The
+    // profile rule reaches into `usernames` to authorise a *new* profile, and folding that
+    // condition up into the rule as a whole would leave a guest here with their name already
+    // given up and a profile they can no longer delete: half erased, and no way back.
+    await seedGuest();
+    const guest = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(guest.ref(`usernames/${GENERATED}`).remove());
+    await assertSucceeds(guest.ref(`users/${ALICE}`).remove());
+  });
+
+  it("refuses the account being signed into tidying up after the guest", async () => {
+    // Why the erasure cannot simply happen afterwards, when it would be easier to be sure the
+    // sign-in succeeded first. Nobody but the guest may take the guest's rows down, and by
+    // then the guest is gone.
+    await seedGuest();
+    await seedProfile(BOB, "bob", { accountType: "GOOGLE" });
+    const other = testEnv.authenticatedContext(BOB).database();
+    await assertFails(other.ref(`users/${ALICE}`).remove());
+    await assertFails(other.ref(`usersPrivate/${ALICE}`).remove());
+    await assertFails(other.ref(`usernames/${GENERATED}`).remove());
   });
 });
 

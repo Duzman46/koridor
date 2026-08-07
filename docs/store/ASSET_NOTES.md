@@ -1,20 +1,17 @@
 # Store asset notes
 
-The Koridor launcher icon is an original project-bound raster asset generated with the built-in image generation workflow and then downsampled with Lanczos resampling for Android launcher densities. Launcher-density images use a rounded alpha safety mask; the Google Play 512 px asset remains an opaque square as required for store submission.
-
-Final prompt:
-
-> An original minimal emblem for Koridor: a clean top-down 3×3 abstract board motif with one cool blue pawn, one warm orange pawn, and two golden corridor walls forming an open path. Crisp vector-like flat app icon, modern Material 3 sensibility, deep charcoal-green background and emerald tiles. Centered inside the launcher safe zone. No text, trademarks, watermark, mockup, border, or tiny details.
+The launcher icon is an adaptive icon authored as vectors: `res/drawable/ic_launcher_background.xml`, `ic_launcher_foreground.xml` and the themed `ic_launcher_monochrome.xml`, on the standard 108-unit canvas. Everything raster is rendered from those same coordinates, so a launcher reading the legacy bitmap shows the artwork the adaptive icon shows. Launcher-density bitmaps carry a rounded alpha mask, because nothing masks them for us; `store-assets/play-icon-512.png` stays an opaque full-bleed square, as Google Play requires.
 
 Files:
 
-- `icon-master.png`: full-resolution project master
-- `icon-512.png`: Google Play listing icon
+- `store-assets/play-icon-512.png`: Google Play listing icon
+- `app/src/main/res/mipmap-*/ic_launcher.png`: Android launcher densities
 - `feature-graphic-1024x500.png`: Google Play feature graphic
 - `screenshots/phone-01-gameplay-tr.png`: Turkish gameplay screenshot (1080×2160)
 - `screenshots/phone-02-main-menu-tr.png`: Turkish main menu screenshot (1080×2160)
 - `screenshots/phone-03-exit-confirmation-tr.png`: Turkish exit confirmation screenshot (1080×2160)
-- `app/src/main/res/mipmap-*/ic_launcher.png`: Android launcher densities
+
+**Not yet reshot for the current artwork**, and all three would ship a picture of an app the player will not recognise: `icon-master.png` and `icon-512.png` in this folder are the earlier raster emblem, the feature graphic below was generated from it, and the screenshots predate the near-black palette.
 
 The feature graphic was generated with the built-in image generation mode, using the project icon as the visual reference, and then center-cropped to the exact Google Play size of 1024×500 pixels.
 

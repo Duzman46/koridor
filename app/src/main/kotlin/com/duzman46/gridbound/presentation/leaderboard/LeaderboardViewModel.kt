@@ -2,6 +2,7 @@ package com.duzman46.gridbound.presentation.leaderboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardCursor
@@ -40,9 +41,29 @@ data class LeaderboardUiState(
     val ownStandingError: UiText? = null,
     /** True while the player holds no place on the board because they have not linked one. */
     val isGuest: Boolean = false,
+    /** False until there is an account that could hold a place at all. */
+    val hasAccount: Boolean = false,
 ) {
     val current: LeaderboardTabState
         get() = tabs[selectedScope] ?: LeaderboardTabState()
+
+    /**
+     * What stands in for the player's own row when there is none to show.
+     *
+     * Every answer here is about this player, not about the request that came back empty. A
+     * guest is told the particular reason they are unranked, someone with no account is told
+     * to make one, and anybody else has already done both of those things — so what they are
+     * told is that their position did not load, which is the truth and is also something they
+     * can act on by retrying. Reaching for the sign-in line whenever a row is missing is what
+     * once answered a signed-in player with "sign in", and there is no state in which that
+     * sentence is wrong and harmless at the same time.
+     */
+    val noStandingMessage: UiText
+        get() = when {
+            isGuest -> UiText.Res(R.string.leaderboard_guest_not_ranked)
+            !hasAccount -> UiText.Res(R.string.leaderboard_sign_in_required)
+            else -> ownStandingError ?: UiText.Res(R.string.error_unknown)
+        }
 }
 
 /**
@@ -62,7 +83,12 @@ class LeaderboardViewModel @Inject constructor(
     private var friendIds: Set<String> = emptySet()
 
     private val _uiState = MutableStateFlow(
-        LeaderboardUiState(isGuest = sessionManager.state.value.isGuest),
+        sessionManager.state.value.let { session ->
+            LeaderboardUiState(
+                isGuest = session.isGuest,
+                hasAccount = session.canUseSocialFeatures,
+            )
+        },
     )
     val uiState: StateFlow<LeaderboardUiState> = _uiState.asStateFlow()
 

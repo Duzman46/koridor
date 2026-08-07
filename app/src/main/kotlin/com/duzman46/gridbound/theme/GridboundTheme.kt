@@ -11,41 +11,54 @@ import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.ThemeMode
 
 /**
- * Jade on a ground that is green all the way down, not black with a green light on it.
+ * The brand's jade: the accent, and the colour a wall is drawn in on a dark board.
  *
- * The dark scheme read as washed out, and the cause was not the accent — it was the ground.
- * `#06100C` is black to any eye and to any OLED panel, `surface` and `surfaceVariant` sat
- * within six points of it, and `outline` was a neutral grey. So the screen was one flat black
- * sheet with grey lines drawn on it: nothing had a surface, nothing had an edge, and the one
- * green control had no field to be green *against*. A single accent on a colourless ground
- * does not read as vivid, it reads as a lone bright thing on a dead one.
+ * Public because the home screen's board panel is painted outside the theme and still has to
+ * agree with it. A wall on the panel and a wall in a live match are the same object, so they
+ * are one value rather than two hexes in two files that will drift apart.
+ */
+val KoridorJade = Color(0xFF16E9A0)
+
+/**
+ * A ground that is black first and green second, with the jade kept for things you can act on.
  *
- * The fix is depth and hue rather than more saturation. The ground lifts off black and keeps
- * real chroma; surface and surfaceVariant step up in clear increments so panels are objects;
- * and the outlines carry the same hue, so an outlined control is a green-edged thing rather
- * than a grey rectangle.
+ * Chroma in the ground is what makes a dark game screen look faded: a field with real green in
+ * it turns pale the moment anything on it is also green, and it drags the accent down with it
+ * by simultaneous contrast. So the neutrals here are black carrying only enough hue to keep
+ * them from going blue-grey beside the accent, and every saturated green on the screen belongs
+ * to a control.
+ *
+ * Black on its own is not enough either. Three near-identical blacks with grey lines drawn on
+ * them give nothing a surface and nothing an edge, which is the other way a dark screen dies.
+ * The three grounds therefore step apart in clear increments — 0x06 / 0x10 / 0x1E — so a card
+ * is an object without a shadow under it, and the outlines keep the jade hue so an outlined
+ * control is a green-edged thing rather than a grey rectangle.
+ *
+ * [outline] is pitched against the palest of the three grounds and not the darkest: it is the
+ * entire boundary of a secondary button, so what it has to clear 3:1 on is `surfaceVariant`,
+ * and a green mixed to look right on near-black is half of what that takes. [outlineVariant]
+ * is the divider token and stays quieter on purpose — anything that has to be *identified*
+ * rather than merely separated uses [outline] instead.
  *
  * `primary` is a fill colour and `secondary` is the same hue as ink — on a light ground a
  * fill bright enough to sit under white text is too light to be read as text itself. In dark
  * they are the same value, because there the ground does that work.
  */
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF16E9A0),
+    primary = KoridorJade,
     onPrimary = Color(0xFF00251A),
-    secondary = Color(0xFF16E9A0),
+    secondary = KoridorJade,
     onSecondary = Color(0xFF00251A),
     tertiary = Color(0xFFFF7A3D),
     onTertiary = Color(0xFF2A0A00),
-    // Three clearly separated steps — 0x07/0x0D/0x16 — instead of three shades of the same
-    // black. This is what lets a card look like a card without a shadow under it.
-    background = Color(0xFF071A15),
-    onBackground = Color(0xFFE6F6EE),
-    surface = Color(0xFF0D251E),
-    onSurface = Color(0xFFE6F6EE),
-    surfaceVariant = Color(0xFF163329),
-    onSurfaceVariant = Color(0xFF9CC7B3),
-    outline = Color(0xFF2F6B57),
-    outlineVariant = Color(0xFF24503F),
+    background = Color(0xFF060C0A),
+    onBackground = Color(0xFFE7F1EC),
+    surface = Color(0xFF101815),
+    onSurface = Color(0xFFE7F1EC),
+    surfaceVariant = Color(0xFF1E2A25),
+    onSurfaceVariant = Color(0xFFA3BAB0),
+    outline = Color(0xFF4C7A69),
+    outlineVariant = Color(0xFF2B4A3E),
     error = Color(0xFFFF8F86),
     onError = Color(0xFF3A0603),
 )
@@ -55,9 +68,15 @@ private val DarkColors = darkColorScheme(
  *
  * Its ground is a pale mint paper rather than plain white: white behind white cards gives
  * nothing to separate them, and a green accent on neutral white is dulled by the same
- * simultaneous contrast that flattened the old dark ground. Cards stay pure white so they
- * lift off the paper, and the outline is a deep jade rather than near-black — a black hairline
- * on white is the heaviest mark on the screen and drags every button towards a wireframe.
+ * simultaneous contrast that flattens a chroma-heavy dark ground. Cards stay pure white so
+ * they lift off the paper, and the outline is a deep jade rather than near-black — a black
+ * hairline on white is the heaviest mark on the screen and drags every button towards a
+ * wireframe.
+ *
+ * `surfaceVariant` is doing two jobs at once and neither of them may be given up for the
+ * other: it is the fill of a borderless section card, so it cannot be lightened towards the
+ * paper without the card dissolving into it, and it is the board's alternate tile, so it
+ * cannot be deepened without the two pawns losing 3:1 on the squares they stand on.
  */
 private val LightColors = lightColorScheme(
     primary = Color(0xFF00875C),

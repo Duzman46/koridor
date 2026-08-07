@@ -364,14 +364,17 @@ fun AppNavigation(
                 )
             }
 
-            composable(Routes.EDIT_PROFILE) {
+            composable(Routes.EDIT_PROFILE) { entry ->
                 val viewModel: ProfileViewModel = hiltViewModel()
                 val state by viewModel.editState.collectAsStateWithLifecycle()
+                val profileSession by viewModel.session.collectAsStateWithLifecycle()
                 EditProfileScreen(
                     state = state,
+                    canChangeUsername = profileSession.canChangeUsername,
                     onBack = navController::popBackStack,
                     onUsername = viewModel::setUsername,
                     onAvatar = viewModel::setAvatar,
+                    onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     onSubmit = { viewModel.saveProfile { navController.popBackStack() } },
                 )
             }
@@ -388,7 +391,17 @@ fun AppNavigation(
                                     popUpTo(0) { inclusive = true }
                                 }
 
-                            AccountEvent.Linked -> Unit
+                            // An account that just became real is still carrying the name the
+                            // app handed its guest, and that name is about to be public. The
+                            // gate every other account passes through has to be reached from
+                            // here too; the event says so itself because the session behind
+                            // this screen has not necessarily caught up yet.
+                            is AccountEvent.Linked ->
+                                if (event.needsUsername) {
+                                    navController.navigate(Routes.USERNAME) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
                         }
                     }
                 }
@@ -402,6 +415,8 @@ fun AppNavigation(
                         context.findActivity()?.let(viewModel::linkWithGoogle)
                     },
                     onLinkEmail = viewModel::linkWithEmail,
+                    onSignInToExistingAccount = viewModel::signInToExistingAccount,
+                    onDismissExistingAccount = viewModel::dismissExistingAccountWarning,
                     onSignOut = viewModel::signOut,
                     // Passed through even when it is null: an Activity that cannot be found
                     // is something the player needs told, not a tap that quietly does nothing.

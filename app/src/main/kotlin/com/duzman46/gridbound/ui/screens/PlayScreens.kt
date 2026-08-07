@@ -138,7 +138,10 @@ private fun SeatSwatch(
         color = if (chosen) swatch.copy(alpha = 0.18f) else Color.Transparent,
         border = BorderStroke(
             width = if (chosen) Dimens.BorderStrong else 1.dp,
-            color = if (chosen) swatch else MaterialTheme.colorScheme.outlineVariant,
+            // An unchosen option carries no fill, so this hairline is the whole control: it
+            // has to be the outline proper rather than the divider token, which is mixed to
+            // be ignored.
+            color = if (chosen) swatch else MaterialTheme.colorScheme.outline,
         ),
     ) {
         Row(

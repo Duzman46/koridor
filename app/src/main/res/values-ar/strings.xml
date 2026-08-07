@@ -66,6 +66,12 @@
     <string name="auth_link_with_google">الربط عبر Google</string>
     <string name="auth_link_with_email">الربط بالبريد الإلكتروني</string>
     <string name="auth_link_success">تم ربط حسابك، وحُفظ تقدّمك.</string>
+    <string name="auth_link_account">اربط حسابًا</string>
+    <string name="auth_existing_account_title">هذا الحساب موجود بالفعل</string>
+    <string name="auth_existing_account_message">لحساب Google هذا ملف تعريف خاص به في Koridor، ولا يمكن دمج الاثنين. إذا سجّلت الدخول إليه فسيُحذف نهائيًا كل ما لعبته كضيف — تصنيفك وسجل مبارياتك. يحتفظ ذلك الحساب بتصنيفه وإحصاءاته وأصدقائه، وهذا ما ستراه. لا يُدمج أي شيء.</string>
+    <string name="auth_existing_account_confirm">سجّل الدخول على أي حال</string>
+    <string name="auth_existing_account_cancel">ابقَ ضيفًا</string>
+    <string name="auth_existing_account_success">تم تسجيل الدخول. عاد تصنيف هذا الحساب وإحصاءاته وأصدقاؤه.</string>
     <string name="auth_guest_badge">ضيف</string>
 
     <string name="username_title">اختر اسم مستخدم</string>
@@ -95,6 +101,7 @@
 
     <string name="profile_title">الملف الشخصي</string>
     <string name="profile_edit_title">تعديل الملف الشخصي</string>
+    <string name="profile_username_guest_explainer">تُمنح أسماء الضيوف تلقائيًا ولا يمكن تغييرها. اربط حسابًا لتختار الاسم الذي سيراه اللاعبون الآخرون.</string>
     <string name="profile_avatar_label">الصورة الرمزية</string>
     <string name="profile_rating">التصنيف</string>
     <string name="profile_highest_rating">أفضل تصنيف</string>

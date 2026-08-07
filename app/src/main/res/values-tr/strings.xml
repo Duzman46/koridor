@@ -14,8 +14,6 @@
 
     <!-- Ortak durumlar -->
     <string name="state_loading">Yükleniyor…</string>
-    <string name="state_offline_title">İnternet bağlantısı yok</string>
-    <string name="state_offline_message">Çevrim içi özellikler bağlantı ister. Yerel oyunlar çalışmaya devam eder.</string>
     <string name="state_empty_title">Burada henüz bir şey yok</string>
     <string name="state_error_title">Bir sorun oluştu</string>
 
@@ -94,7 +92,6 @@
     <!-- Profil -->
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Profili düzenle</string>
-    <string name="profile_display_name_label">Görünen ad</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Puan</string>
     <string name="profile_highest_rating">En yüksek puan</string>
@@ -105,11 +102,13 @@
     <string name="profile_win_streak">Galibiyet serisi</string>
     <string name="profile_best_streak">En iyi seri</string>
     <string name="profile_member_since">%1$s tarihinden beri üye</string>
+    <string name="profile_player_title">Oyuncu profili</string>
 
     <!-- Hesap yönetimi -->
     <string name="account_title">Hesap</string>
     <string name="account_delete_title">Hesabı sil</string>
     <string name="account_delete_warning">Bu işlem profilini, istatistiklerini, arkadaşlarını ve puanını kalıcı olarak siler. Sonrasında satın alımlar geri yüklenemez. Bu işlem geri alınamaz.</string>
+    <string name="account_delete_reauth_explainer">Hesabın silinmeden önce oturumunu doğrulaman istenecek.</string>
     <string name="account_delete_confirm_label">Onaylamak için %1$s yaz</string>
     <string name="account_delete_action">Hesabımı kalıcı olarak sil</string>
     <string name="account_delete_success">Hesabın silindi.</string>
@@ -124,15 +123,15 @@
     <string name="tutorial_finish">Oynamaya başla</string>
 
     <string name="tutorial_step_select_title">Taşını seç</string>
-    <string name="tutorial_step_select_message">Nereye gidebileceğini görmek için mavi piyonuna dokun.</string>
+    <string name="tutorial_step_select_message">Mavi piyonuna dokun. Beliren yeşil noktalar, bu turda gidebileceği tüm kareler.</string>
     <string name="tutorial_step_move_title">Bir hamle yap</string>
-    <string name="tutorial_step_move_message">Bir adım ilerlemek için vurgulanan kareye dokun.</string>
+    <string name="tutorial_step_move_message">Piyon her turda bir kare ilerler — yukarı, aşağı, sağa veya sola; çapraz gidemez. İşaretli kareye dokun.</string>
     <string name="tutorial_step_jump_title">Rakibinin üzerinden atla</string>
-    <string name="tutorial_step_jump_message">Karşı karşıya geldiğinizde rakibinin üzerinden düz atlayabilirsin.</string>
+    <string name="tutorial_step_jump_message">Burun buruna geldiğinizde rakibinin üzerinden atlayıp arkasındaki kareye konabilirsin. Bu da senin hamlen sayılır.</string>
     <string name="tutorial_step_blocked_title">Duvar yolu tamamen kapatamaz</string>
-    <string name="tutorial_step_blocked_message">Bu duvarı dene. Son yolu kapatacağı için reddediliyor.</string>
+    <string name="tutorial_step_blocked_message">Şimdi rakibini kapatmayı dene. Kurallar buna izin vermez — bir duvar, oyuncunun hedefine giden son yolunu asla kapatamaz. Yani kimse kapana kısılamaz.</string>
     <string name="tutorial_step_win_title">Oyunu kazan</string>
-    <string name="tutorial_step_win_message">Kazanmak için karşı kenara ulaş. Son sıraya ilerle.</string>
+    <string name="tutorial_step_win_message">Senin hedefin karşı sıra, rakibinin hedefi senin başladığın sıra. Son sıraya adımını at, maç senin.</string>
     <string name="tutorial_hint_wrong_move">O değil. Vurgulanan ipucunu izle.</string>
 
     <!-- Çevrim içi odalar -->
@@ -143,7 +142,6 @@
     <string name="room_error_password_wrong">Oda şifresi hatalı.</string>
     <string name="room_error_password_too_short">Oda şifresi en az %1$d karakter olmalı.</string>
     <string name="room_error_name_too_long">Oda adı çok uzun.</string>
-    <string name="room_error_no_opponent">Rakip bulunamadı. Bunun yerine bir oda oluşturmayı dene.</string>
     <string name="room_error_ranked_requires_account">Dereceli maç için hesap gerekir. Dereceli oynamak için hesabını bağla.</string>
 
     <string name="online_title">Çevrim İçi Oyna</string>
@@ -152,19 +150,10 @@
     <string name="online_browse_rooms">Açık odalar</string>
     <string name="online_quick_match">Hızlı eşleşme</string>
     <string name="online_quick_match_searching">Rakip aranıyor…</string>
-    <string name="online_rejoin_match">Maçına dön</string>
-    <string name="online_rejoin_explainer">Devam eden bir maçın var.</string>
 
     <string name="room_name_label">Oda adı</string>
     <string name="room_name_placeholder">İsteğe bağlı</string>
-    <string name="room_visibility_label">Kimler katılabilir</string>
-    <string name="room_visibility_public">Herkes</string>
-    <string name="room_visibility_private">Sadece kodla</string>
-    <string name="room_visibility_friends">Arkadaşlar</string>
-    <string name="room_ranked_label">Dereceli maç</string>
-    <string name="room_ranked_description">Dereceli maçlar puanını değiştirir.</string>
     <string name="room_turn_duration_label">Hamle süresi</string>
-    <string name="room_total_duration_label">Oyuncu süresi</string>
     <string name="room_duration_unlimited">Sınırsız</string>
     <string name="room_duration_minutes">%1$d dk</string>
     <string name="room_duration_seconds">%1$d sn</string>
@@ -176,10 +165,6 @@
     <string name="room_close">Odayı kapat</string>
 
     <string name="room_browser_empty">Şu anda açık oda yok. Bir oda oluştur ve rakip bekle.</string>
-    <string name="room_browser_filter_all">Tümü</string>
-    <string name="room_browser_filter_ranked">Dereceli</string>
-    <string name="room_browser_filter_casual">Derecesiz</string>
-    <string name="room_browser_filter_fast">Hızlı</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Şifre korumalı</string>
@@ -188,7 +173,6 @@
     <string name="game_resign_confirm_title">Maçtan çekilesin mi?</string>
     <string name="game_resign_confirm_message">Rakibin kazanır ve dereceli maçta puanın düşer.</string>
     <string name="game_opponent_left">Rakibinin bağlantısı koptu. Dönmesi için biraz süresi var.</string>
-    <string name="game_claim_win">Galibiyeti al</string>
     <string name="game_reconnecting">Yeniden bağlanılıyor…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Senin sıran</string>
@@ -205,6 +189,7 @@
     <string name="leaderboard_your_rank">Senin sıran</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Liderlik tablosunda yer almak için giriş yap.</string>
+    <string name="leaderboard_guest_not_ranked">Misafirler liderlik tablosunda yer almaz. Sıralamaya girmek için hesabını bağla.</string>
     <string name="leaderboard_record">%1$d galibiyet · %2$d maç</string>
     <string name="cd_leaderboard_row">Sıra %1$d, %2$s, puan %3$d</string>
 
@@ -227,6 +212,7 @@
     <string name="game_history_pawn_label">Piyon</string>
     <string name="game_exit_title">Oyundan çıkılsın mı?</string>
     <string name="game_exit_message">Mevcut oyun sona erecek. Oyundan çıkmak istediğine emin misin?</string>
+    <string name="game_exit_online_message">Çıkmak maçı kaybetmektir. Rakibin kazanır ve dereceli maçta puanın düşer.</string>
     <string name="game_exit_keep_playing">Oyuna Devam</string>
     <string name="game_exit_confirm">Oyundan Çık</string>
     <string name="game_place_wall">Duvar Yerleştir</string>
@@ -246,9 +232,9 @@
     <string name="game_online_match">Çevrim içi oyun</string>
     <string name="game_vs_ai">%1$s yapay zekâ</string>
     <string name="game_player_blue">Mavi</string>
-    <string name="game_player_orange">Turuncu</string>
+    <string name="game_player_red">Kırmızı</string>
     <string name="game_turn_blue">Mavi oyuncunun sırası</string>
-    <string name="game_turn_orange">Turuncu oyuncunun sırası</string>
+    <string name="game_turn_red">Kırmızı oyuncunun sırası</string>
     <string name="game_turn_opponent">Rakibin sırası</string>
     <string name="game_turn_yours">Senin sıran · %1$s</string>
     <string name="winner_reached_goal">%1$s oyuncu hedef kenara ulaştı.</string>
@@ -260,13 +246,19 @@
     <!-- Kazanan -->
     <string name="winner_victory">Zafer!</string>
     <string name="winner_ai_won">Bu kez yapay zekâ kazandı</string>
+    <string name="winner_rival_won">Rakibin kazandı</string>
     <string name="winner_retry_hint">Yeni bir stratejiyle tekrar dene.</string>
+    <string name="winner_rival_left">Rakibin maçtan ayrıldı.</string>
+    <string name="winner_turn_clock_ran_out">Hamle süresi doldu.</string>
     <string name="winner_play_again">Tekrar Oyna</string>
+    <string name="winner_rematch">Rövanş</string>
+    <string name="winner_rematch_waiting">Rakibinin yanıtı bekleniyor…</string>
+    <string name="winner_rematch_declined">Rakibin rövanşı kabul etmedi.</string>
+    <string name="winner_another_game">Başka bir oyun</string>
     <string name="winner_main_menu">Ana Menü</string>
 
     <!-- Ayarlar ve istatistikler -->
     <string name="settings_language">Dil</string>
-    <string name="settings_language_device">Cihaz Dilini Kullan</string>
     <string name="settings_appearance">Görünüm</string>
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Açık</string>
@@ -325,28 +317,34 @@
     <string name="friends_online">Çevrim içi</string>
     <string name="friends_offline">Çevrim dışı</string>
     <string name="friends_requires_account">Arkadaşlık için hesap gerekir. Oyuncu eklemek için hesabını bağla.</string>
+    <string name="friends_invite_waiting">%1$s bekleniyor…</string>
+    <string name="friends_request_pending">Arkadaşlık isteği gönderildi</string>
+    <string name="friends_already_friends">Arkadaşsınız</string>
 
     <string name="invites_title">Oyun davetleri</string>
     <string name="invites_from">%1$s seni maça davet etti.</string>
+    <string name="requests_rematch_from">%1$s rövanş istiyor.</string>
     <string name="invites_join">Katıl</string>
     <string name="invites_dismiss">Yoksay</string>
 
     <!-- Erişilebilirlik -->
     <string name="cd_board">Oyun tahtası, 9\'a 9 kare</string>
     <string name="cd_avatar">Profil resmi</string>
+    <string name="cd_open_profile">Profili aç</string>
     <string name="menu_tutorial">Öğretici</string>
     <string name="tutorial_step_wall_vertical_title">Dikey duvar koy</string>
-    <string name="tutorial_step_wall_vertical_message">Dikey duvarlar iki sütunun arasına oturur. Rakibinin yana adımını kesmek için vurgulanan yuvaya dokun.</string>
+    <string name="tutorial_step_wall_vertical_message">Elinde on duvar var. Dikey duvar iki sütunun arasındaki yuvaya oturur ve iki sıra boyunca uzanır — rakibinin yana adımını keser ama tahtada ilerlemesini yavaşlatmaz.</string>
     <string name="tutorial_step_wall_horizontal_title">Yatay duvar koy</string>
-    <string name="tutorial_step_wall_horizontal_message">Yatay duvarlar iki satırın arasına oturur. Rakibinin ilerleyişini kesmek için vurgulanan yuvaya dokun.</string>
+    <string name="tutorial_step_wall_horizontal_message">Yatay duvar iki sıranın arasına girer. Rakibinin önüne konduğunda ona hamle kaybettirir: aynı parça, çevrildiğinde bambaşka bir iş yapar.</string>
     <string name="tutorial_step_correct">Doğru. Devam etmek için İleri\'ye dokun.</string>
     <string name="menu_play">Oyna</string>
     <string name="menu_online">Çevrim İçi</string>
     <string name="menu_more">Daha Fazla</string>
     <string name="play_vs_bot">Bota Karşı</string>
     <string name="play_local">Aynı Cihazda İki Oyuncu</string>
-    <string name="play_custom_start">Özel Oyunu Başlat</string>
-    <string name="online_play_with_friend">Arkadaşla Oyna</string>
     <string name="store_remove_ads">Reklamları Kaldır</string>
     <string name="more_about_version">Sürüm %1$s</string>
+    <string name="error_not_friends">Yalnızca arkadaşlarını davet edebilirsin.</string>
+    <string name="paint_label">Rengin</string>
+    <string name="online_quick_match_hint">Bas ve bekle — sırada bekleyenler arasından puanı sana en yakın olanla eşleşirsin.</string>
 </resources>

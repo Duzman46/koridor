@@ -87,10 +87,15 @@ class AccountViewModel @Inject constructor(
         _events.emit(AccountEvent.SignedOut)
     }
 
-    fun deleteAccount() = submit {
-        when (val result = sessionManager.deleteAccount()) {
+    /** @param activityContext the hosting Activity; a Google account is re-checked over it. */
+    fun deleteAccount(activityContext: Context?) = submit {
+        val result = sessionManager.deleteAccount(activityContext, _uiState.value.password)
+        when (result) {
             is Outcome.Success -> succeed(R.string.account_delete_success, AccountEvent.AccountDeleted)
-            is Outcome.Failure -> fail(result.error)
+            is Outcome.Failure ->
+                // Backing out of the account picker is a decision, not a failure, and on this
+                // screen it is the decision to keep the account.
+                if (result.error == AppError.GOOGLE_CANCELLED) idle() else fail(result.error)
         }
     }
 

@@ -3,13 +3,11 @@ package com.duzman46.gridbound.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Inbox
 import androidx.compose.material3.Button
@@ -17,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,8 +30,8 @@ import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.core.asString
 
 /**
- * The loading, empty, error and offline treatments every screen shares, so the states look
- * and behave the same everywhere instead of being reinvented per screen.
+ * The loading, empty and error treatments every screen shares, so the states look and behave
+ * the same everywhere instead of being reinvented per screen.
  */
 @Composable
 fun LoadingState(modifier: Modifier = Modifier) {
@@ -59,8 +56,10 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     icon: ImageVector = Icons.Rounded.Inbox,
     title: String = stringResource(R.string.state_empty_title),
+    /** Whatever the message tells the player to do, so the screen is not a dead end. */
+    action: @Composable (() -> Unit)? = null,
 ) {
-    InfoState(icon = icon, title = title, message = message, modifier = modifier)
+    InfoState(icon = icon, title = title, message = message, modifier = modifier, action = action)
 }
 
 @Composable
@@ -77,44 +76,6 @@ fun ErrorState(
         tint = MaterialTheme.colorScheme.error,
     ) {
         Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-    }
-}
-
-@Composable
-fun OfflineState(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    InfoState(
-        icon = Icons.Rounded.CloudOff,
-        title = stringResource(R.string.state_offline_title),
-        message = stringResource(R.string.state_offline_message),
-        modifier = modifier,
-    ) {
-        Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-    }
-}
-
-/** A compact inline banner for a screen that still has usable content behind it. */
-@Composable
-fun OfflineBanner(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Row(
-            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(Icons.Rounded.CloudOff, contentDescription = null)
-            Text(
-                stringResource(R.string.state_offline_title),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
     }
 }
 

@@ -2,7 +2,6 @@ package com.duzman46.gridbound.ui.components.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -23,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
 
 /**
@@ -139,38 +136,6 @@ fun SheetDivider() {
         Modifier.padding(vertical = Dimens.SpaceXs),
         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
     )
-}
-
-/** A labelled row of mutually exclusive choices, used by the custom-game sheet. */
-@Composable
-fun <T> SheetChoice(
-    label: String,
-    options: List<T>,
-    selected: T,
-    optionLabel: @Composable (T) -> String,
-    onSelect: (T) -> Unit,
-) {
-    Column(
-        Modifier.padding(top = Dimens.SpaceSm),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        // Wraps: three translated difficulty labels do not fit on one line in German, and a
-        // Row would squeeze the last until it broke a character per line.
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
-            options.forEach { option ->
-                FilterChip(
-                    selected = option == selected,
-                    onClick = { onSelect(option) },
-                    label = { Text(optionLabel(option)) },
-                )
-            }
-        }
-    }
 }
 
 /** A read-only line, for things like the version number that are information, not actions. */

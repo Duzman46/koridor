@@ -36,6 +36,7 @@ class DefaultGameRepository @Inject constructor(
         val difficulty = stringPreferencesKey(Constants.Data.KEY_DIFFICULTY)
         val tutorialCompleted = booleanPreferencesKey(Constants.Tutorial.KEY_COMPLETED)
         val guestModeAccepted = booleanPreferencesKey(Constants.Session.KEY_GUEST_MODE_ACCEPTED)
+        val usernameChosen = booleanPreferencesKey(Constants.Session.KEY_USERNAME_CHOSEN)
         val totalGames = intPreferencesKey(Constants.Data.KEY_TOTAL_GAMES)
         val totalWins = intPreferencesKey(Constants.Data.KEY_TOTAL_WINS)
         val totalLosses = intPreferencesKey(Constants.Data.KEY_TOTAL_LOSSES)
@@ -99,6 +100,12 @@ class DefaultGameRepository @Inject constructor(
 
     override suspend fun setGuestModeAccepted(accepted: Boolean) =
         update(Keys.guestModeAccepted, accepted)
+
+    override val usernameChosen: Flow<Boolean> =
+        preferences.map { values -> values[Keys.usernameChosen] ?: false }
+
+    override suspend fun setUsernameChosen(chosen: Boolean) =
+        update(Keys.usernameChosen, chosen)
 
     override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)

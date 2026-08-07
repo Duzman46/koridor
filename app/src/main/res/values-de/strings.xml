@@ -13,8 +13,6 @@
     <string name="action_skip">Überspringen</string>
 
     <string name="state_loading">Wird geladen…</string>
-    <string name="state_offline_title">Keine Internetverbindung</string>
-    <string name="state_offline_message">Online-Funktionen brauchen eine Verbindung. Lokale Partien laufen weiter.</string>
     <string name="state_empty_title">Hier ist noch nichts</string>
     <string name="state_error_title">Etwas ist schiefgelaufen</string>
 
@@ -85,7 +83,6 @@
 
     <string name="profile_title">Profil</string>
     <string name="profile_edit_title">Profil bearbeiten</string>
-    <string name="profile_display_name_label">Anzeigename</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Wertung</string>
     <string name="profile_highest_rating">Beste Wertung</string>
@@ -96,10 +93,12 @@
     <string name="profile_win_streak">Aktuelle Serie</string>
     <string name="profile_best_streak">Beste Serie</string>
     <string name="profile_member_since">Mitglied seit %1$s</string>
+    <string name="profile_player_title">Spielerprofil</string>
 
     <string name="account_title">Konto</string>
     <string name="account_delete_title">Konto löschen</string>
     <string name="account_delete_warning">Damit werden dein Profil, deine Statistiken, deine Freunde und deine Wertung endgültig gelöscht. Käufe lassen sich danach nicht mehr wiederherstellen. Das lässt sich nicht rückgängig machen.</string>
+    <string name="account_delete_reauth_explainer">Bevor dein Konto entfernt wird, wirst du gebeten, deine Anmeldung zu bestätigen.</string>
     <string name="account_delete_confirm_label">Tippe %1$s zur Bestätigung</string>
     <string name="account_delete_action">Mein Konto endgültig löschen</string>
     <string name="account_delete_success">Dein Konto wurde gelöscht.</string>
@@ -130,7 +129,6 @@
     <string name="room_error_password_wrong">Das Raumpasswort ist falsch.</string>
     <string name="room_error_password_too_short">Das Raumpasswort muss mindestens %1$d Zeichen haben.</string>
     <string name="room_error_name_too_long">Dieser Raumname ist zu lang.</string>
-    <string name="room_error_no_opponent">Kein Gegner gefunden. Erstelle stattdessen einen Raum.</string>
     <string name="room_error_ranked_requires_account">Ranglistenpartien brauchen ein Konto. Verknüpfe deins, um gewertet zu spielen.</string>
 
     <string name="online_title">Online spielen</string>
@@ -139,19 +137,10 @@
     <string name="online_browse_rooms">Offene Räume</string>
     <string name="online_quick_match">Schnelle Partie</string>
     <string name="online_quick_match_searching">Gegner wird gesucht…</string>
-    <string name="online_rejoin_match">Zurück zur Partie</string>
-    <string name="online_rejoin_explainer">Du hast eine laufende Partie.</string>
 
     <string name="room_name_label">Raumname</string>
     <string name="room_name_placeholder">Optional</string>
-    <string name="room_visibility_label">Wer beitreten darf</string>
-    <string name="room_visibility_public">Alle</string>
-    <string name="room_visibility_private">Nur mit Code</string>
-    <string name="room_visibility_friends">Freunde</string>
-    <string name="room_ranked_label">Ranglistenpartie</string>
-    <string name="room_ranked_description">Ranglistenpartien verändern deine Wertung.</string>
     <string name="room_turn_duration_label">Zeit pro Zug</string>
-    <string name="room_total_duration_label">Zeit pro Spieler</string>
     <string name="room_duration_unlimited">Unbegrenzt</string>
     <string name="room_duration_minutes">%1$d Min.</string>
     <string name="room_duration_seconds">%1$d Sek.</string>
@@ -163,10 +152,6 @@
     <string name="room_close">Raum schließen</string>
 
     <string name="room_browser_empty">Gerade sind keine Räume offen. Erstelle einen und warte auf einen Gegner.</string>
-    <string name="room_browser_filter_all">Alle</string>
-    <string name="room_browser_filter_ranked">Gewertet</string>
-    <string name="room_browser_filter_casual">Ungewertet</string>
-    <string name="room_browser_filter_fast">Schnell</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Passwortgeschützt</string>
@@ -175,7 +160,6 @@
     <string name="game_resign_confirm_title">Partie aufgeben?</string>
     <string name="game_resign_confirm_message">Dein Gegner gewinnt, und in einer Ranglistenpartie sinkt deine Wertung.</string>
     <string name="game_opponent_left">Dein Gegner hat die Verbindung verloren. Er hat einen Moment, um zurückzukommen.</string>
-    <string name="game_claim_win">Sieg beanspruchen</string>
     <string name="game_reconnecting">Verbindung wird wiederhergestellt…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Du bist am Zug</string>
@@ -191,6 +175,7 @@
     <string name="leaderboard_your_rank">Deine Platzierung</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Melde dich an, um in der Bestenliste zu erscheinen.</string>
+    <string name="leaderboard_guest_not_ranked">Gäste werden nicht gewertet. Verknüpfe ein Konto, um in die Bestenliste zu kommen.</string>
     <string name="leaderboard_record">%1$d S · %2$d Partien</string>
     <string name="cd_leaderboard_row">Platz %1$d, %2$s, Wertung %3$d</string>
 
@@ -211,6 +196,7 @@
     <string name="game_history_pawn_label">Figur</string>
     <string name="game_exit_title">Partie verlassen?</string>
     <string name="game_exit_message">Die laufende Partie wird beendet. Willst du wirklich gehen?</string>
+    <string name="game_exit_online_message">Wer geht, gibt die Partie auf. Dein Gegner gewinnt, und in einer Ranglistenpartie sinkt deine Wertung.</string>
     <string name="game_exit_keep_playing">Weiterspielen</string>
     <string name="game_exit_confirm">Partie verlassen</string>
     <string name="game_place_wall">Mauer setzen</string>
@@ -230,9 +216,9 @@
     <string name="game_online_match">Online-Partie</string>
     <string name="game_vs_ai">KI %1$s</string>
     <string name="game_player_blue">Blau</string>
-    <string name="game_player_orange">Orange</string>
+    <string name="game_player_red">Rot</string>
     <string name="game_turn_blue">Blau ist am Zug</string>
-    <string name="game_turn_orange">Orange ist am Zug</string>
+    <string name="game_turn_red">Rot ist am Zug</string>
     <string name="game_turn_opponent">Gegner ist am Zug</string>
     <string name="game_turn_yours">Du bist am Zug · %1$s</string>
     <string name="winner_reached_goal">Spieler %1$s hat die Zielreihe erreicht.</string>
@@ -243,12 +229,18 @@
 
     <string name="winner_victory">Sieg!</string>
     <string name="winner_ai_won">Diesmal hat die KI gewonnen</string>
+    <string name="winner_rival_won">Dein Gegner hat gewonnen</string>
     <string name="winner_retry_hint">Versuch es noch einmal mit einer neuen Strategie.</string>
+    <string name="winner_rival_left">Dein Gegner hat die Partie verlassen.</string>
+    <string name="winner_turn_clock_ran_out">Die Zugzeit ist abgelaufen.</string>
     <string name="winner_play_again">Nochmal spielen</string>
+    <string name="winner_rematch">Revanche</string>
+    <string name="winner_rematch_waiting">Warten auf die Antwort deines Gegners…</string>
+    <string name="winner_rematch_declined">Dein Gegner hat die Revanche abgelehnt.</string>
+    <string name="winner_another_game">Andere Partie</string>
     <string name="winner_main_menu">Hauptmenü</string>
 
     <string name="settings_language">Sprache</string>
-    <string name="settings_language_device">Gerätesprache verwenden</string>
     <string name="settings_appearance">Darstellung</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Hell</string>
@@ -305,14 +297,19 @@
     <string name="friends_online">Online</string>
     <string name="friends_offline">Offline</string>
     <string name="friends_requires_account">Für Freunde brauchst du ein Konto. Verknüpfe deins, um Spieler hinzuzufügen.</string>
+    <string name="friends_invite_waiting">Warten auf %1$s…</string>
+    <string name="friends_request_pending">Freundschaftsanfrage gesendet</string>
+    <string name="friends_already_friends">Ihr seid Freunde</string>
 
     <string name="invites_title">Spieleinladungen</string>
     <string name="invites_from">%1$s hat dich zu einer Partie eingeladen.</string>
+    <string name="requests_rematch_from">%1$s will eine Revanche.</string>
     <string name="invites_join">Beitreten</string>
     <string name="invites_dismiss">Verwerfen</string>
 
     <string name="cd_board">Spielbrett, 9 mal 9 Felder</string>
     <string name="cd_avatar">Profilbild</string>
+    <string name="cd_open_profile">Profil öffnen</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Setze eine senkrechte Mauer</string>
     <string name="tutorial_step_wall_vertical_message">Senkrechte Mauern stehen zwischen zwei Spalten. Tippe auf den markierten Schlitz, um den Seitenschritt deines Gegners zu sperren.</string>
@@ -324,8 +321,9 @@
     <string name="menu_more">Mehr</string>
     <string name="play_vs_bot">Gegen den Bot</string>
     <string name="play_local">Zwei Spieler an einem Gerät</string>
-    <string name="play_custom_start">Eigenes Spiel starten</string>
-    <string name="online_play_with_friend">Mit Freund spielen</string>
     <string name="store_remove_ads">Werbung entfernen</string>
     <string name="more_about_version">Version %1$s</string>
+    <string name="error_not_friends">Du kannst nur Freunde einladen.</string>
+    <string name="paint_label">Deine Farbe</string>
+    <string name="online_quick_match_hint">Drücken und warten — du wirst mit der wartenden Person verbunden, deren Wertung deiner am nächsten kommt.</string>
 </resources>

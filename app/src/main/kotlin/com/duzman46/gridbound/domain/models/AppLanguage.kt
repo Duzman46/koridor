@@ -34,9 +34,31 @@ enum class AppLanguage(val tag: String, val endonym: String) {
     val followsDevice: Boolean get() = this == SYSTEM
 
     companion object {
-        val selectable: List<AppLanguage> = entries
+        /**
+         * What the picker offers: real languages only.
+         *
+         * [SYSTEM] is still the stored default and still what a fresh install behaves as —
+         * it just isn't an entry any more. "Use the device language" told the player nothing
+         * about which language they were about to get, and sat above the list they actually
+         * came to read. A Turkish phone now simply shows Türkçe already ticked, which is the
+         * same behaviour said in a way that can be checked at a glance.
+         */
+        val selectable: List<AppLanguage> = entries.filterNot(AppLanguage::followsDevice)
 
         fun fromTag(tag: String?): AppLanguage =
             entries.firstOrNull { it.tag.equals(tag, ignoreCase = true) } ?: SYSTEM
+
+        /**
+         * The language [stored] actually produces on a device set to [deviceTag].
+         *
+         * Only [SYSTEM] needs resolving. A device set to a language the app does not ship
+         * falls back to English, which is what the resource system does anyway — so the tick
+         * lands on the language the player is really reading.
+         */
+        fun resolve(stored: AppLanguage, deviceTag: String?): AppLanguage = when {
+            !stored.followsDevice -> stored
+            else -> selectable.firstOrNull { it.tag.equals(deviceTag, ignoreCase = true) }
+                ?: ENGLISH
+        }
     }
 }

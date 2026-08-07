@@ -9,6 +9,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,33 +21,96 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
+import com.duzman46.gridbound.online.model.OnlineSession
+import com.duzman46.gridbound.online.model.RoomEndReason
+import com.duzman46.gridbound.presentation.game.RematchStage
+import com.duzman46.gridbound.presentation.game.RematchUiState
+import com.duzman46.gridbound.presentation.game.RematchViewModel
+import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.ScreenBackground
+import com.duzman46.gridbound.ui.components.SubmitButton
 
+/**
+ * The end of a match, and what can follow it.
+ *
+ * @param playedRoomCode the room the match was played in, empty off line. Together with
+ *   [opponentUserId] it is what makes a rematch possible: a rematch is a question put to a
+ *   named person about a specific finished game, and without either of them there is nobody
+ *   to ask and nothing to prove we ever played them.
+ */
 @Composable
-fun WinnerScreen(
+fun WinnerRoute(
     winner: PlayerId,
     mode: GameMode,
+    localPlayer: PlayerId,
+    endReason: RoomEndReason,
+    playedRoomCode: String,
+    opponentUserId: String,
+    onReplay: () -> Unit,
+    onHome: () -> Unit,
+    onRematchAccepted: (OnlineSession) -> Unit,
+    viewModel: RematchViewModel = hiltViewModel(),
+) {
+    val rematch by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.accepted.collect(onRematchAccepted) }
+    WinnerScreen(
+        winner = winner,
+        mode = mode,
+        localPlayer = localPlayer,
+        endReason = endReason,
+        rematch = rematch,
+        // Against a bot, on a shared handset, or where the rival never had an account there is
+        // nobody on the far end of a request, so the button keeps its old meaning and its old
+        // name and simply starts the next game.
+        canRematch = mode == GameMode.ONLINE && rematch.canAsk &&
+            playedRoomCode.isNotBlank() && opponentUserId.isNotBlank(),
+        onRematch = { viewModel.ask(playedRoomCode, opponentUserId, localPlayer) },
+        onReplay = onReplay,
+        onHome = onHome,
+    )
+}
+
+@Composable
+private fun WinnerScreen(
+    winner: PlayerId,
+    mode: GameMode,
+    /** Carried from the match, because against a bot the player is not always seat one. */
+    localPlayer: PlayerId,
+    /**
+     * How an online match ended. A player who was left, or whose clock ran out, is owed the
+     * reason: without it the screen claims someone crossed the board when nobody did.
+     */
+    endReason: RoomEndReason,
+    rematch: RematchUiState,
+    canRematch: Boolean,
+    onRematch: () -> Unit,
     onReplay: () -> Unit,
     onHome: () -> Unit,
 ) {
@@ -62,7 +127,9 @@ fun WinnerScreen(
         animationSpec = infiniteRepeatable(tween(Constants.Animation.CONFETTI_CYCLE_MILLIS)),
         label = "confetti",
     )
-    val humanLost = mode == GameMode.VS_AI && winner == PlayerId.PLAYER_TWO
+    // On a shared handset both players are here and one of them has won. Anywhere else the
+    // person holding the phone is one of the seats, so the screen has a side to take.
+    val lost = mode != GameMode.LOCAL_TWO_PLAYER && winner != localPlayer
     ScreenBackground {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Confetti(progress)
@@ -84,22 +151,33 @@ fun WinnerScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        if (humanLost) stringResource(R.string.winner_ai_won) else stringResource(R.string.winner_victory),
+                        when {
+                            !lost -> stringResource(R.string.winner_victory)
+                            mode == GameMode.ONLINE -> stringResource(R.string.winner_rival_won)
+                            else -> stringResource(R.string.winner_ai_won)
+                        },
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        if (humanLost) {
-                            stringResource(R.string.winner_retry_hint)
-                        } else {
-                            stringResource(
+                        when {
+                            endReason == RoomEndReason.TIMEOUT ->
+                                stringResource(R.string.winner_turn_clock_ran_out)
+
+                            // Told only to the player who was left. The one who walked out
+                            // already knows, and does not need it said back to them.
+                            endReason == RoomEndReason.RESIGNATION && !lost ->
+                                stringResource(R.string.winner_rival_left)
+
+                            lost -> stringResource(R.string.winner_retry_hint)
+                            else -> stringResource(
                                 R.string.winner_reached_goal,
                                 stringResource(
                                     if (winner == PlayerId.PLAYER_ONE) {
                                         R.string.game_player_blue
                                     } else {
-                                        R.string.game_player_orange
+                                        R.string.game_player_red
                                     },
                                 ),
                             )
@@ -107,9 +185,13 @@ fun WinnerScreen(
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Rounded.Replay, contentDescription = null)
-                        Text(stringResource(R.string.winner_play_again), Modifier.padding(start = 8.dp))
+                    if (canRematch) {
+                        RematchControls(rematch, onRematch, onReplay)
+                    } else {
+                        Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Rounded.Replay, contentDescription = null)
+                            Text(stringResource(R.string.winner_play_again), Modifier.padding(start = 8.dp))
+                        }
                     }
                     OutlinedButton(onClick = onHome, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Home, contentDescription = null)
@@ -118,6 +200,57 @@ fun WinnerScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * The rematch offer and whatever became of it.
+ *
+ * A rematch is a question put to somebody else, so it can go unanswered — and the screen never
+ * makes the player sit through that. Another game stays one tap away from the moment the offer
+ * goes out and remains there if the answer turns out to be no, which is also why the offer is
+ * not made twice: a rival who has said no has said it.
+ */
+@Composable
+private fun ColumnScope.RematchControls(
+    state: RematchUiState,
+    onRematch: () -> Unit,
+    onReplay: () -> Unit,
+) {
+    when (state.stage) {
+        RematchStage.IDLE -> SubmitButton(
+            text = stringResource(R.string.winner_rematch),
+            onClick = onRematch,
+            isSubmitting = state.isBusy,
+            leadingIcon = Icons.Rounded.Replay,
+        )
+
+        RematchStage.WAITING -> Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            CircularProgressIndicator(
+                Modifier.size(18.dp).clearAndSetSemantics { },
+                strokeWidth = 2.dp,
+            )
+            Text(
+                stringResource(R.string.winner_rematch_waiting),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        RematchStage.DECLINED -> Text(
+            stringResource(R.string.winner_rematch_declined),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    state.message?.let { FormMessage(it) }
+    OutlinedButton(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
+        Icon(Icons.Rounded.SportsEsports, contentDescription = null)
+        Text(stringResource(R.string.winner_another_game), Modifier.padding(start = 8.dp))
     }
 }
 

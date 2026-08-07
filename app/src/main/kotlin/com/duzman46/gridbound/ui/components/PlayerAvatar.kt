@@ -30,7 +30,7 @@ import java.util.Locale
  */
 object AvatarPalette {
     private val COLORS = listOf(
-        Color(0xFF3F82FF), Color(0xFFFF8A34), Color(0xFF32D583), Color(0xFFB692F6),
+        Color(0xFF3F82FF), Color(0xFFF0483F), Color(0xFF32D583), Color(0xFFB692F6),
         Color(0xFFF97066), Color(0xFF12B5CB), Color(0xFFFDB022), Color(0xFF7A5AF8),
         Color(0xFF2E90FA), Color(0xFFEE46BC), Color(0xFF66C61C), Color(0xFFEF6820),
     )

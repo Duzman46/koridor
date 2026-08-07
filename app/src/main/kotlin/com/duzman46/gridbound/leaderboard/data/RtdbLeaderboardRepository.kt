@@ -27,8 +27,35 @@ import kotlinx.coroutines.coroutineScope
 /**
  * Reads leaderboards straight from the profile and weekly aggregate nodes.
  *
- * Ordering relies on `.indexOn: ["rating"]` in database.rules.json, so the server does the
+ * Ordering relies on the `.indexOn` entries in database.rules.json, so the server does the
  * sorting and a page costs one query rather than a full download.
+ *
+ * ## Why guests are absent, and how
+ *
+ * An anonymous player is given a rating like anyone else — they have to be, the game rates a
+ * match without asking who is behind it — but a table of the best players is meant to list
+ * players, and an account that exists until the app is uninstalled is not one of them.
+ *
+ * Refusing them here, in the query, would be the weak version: the row would still be written
+ * and still be readable, so it would take one modified client to put them back. Both boards
+ * therefore leave them out at the point the row is written, and each board's query can only
+ * see what was written:
+ *
+ * - The weekly board is a table the server builds. `worker/src/sweep.ts` writes no row at all
+ *   for a guest, and database.rules.json grants no client any write under `leaderboards`, so
+ *   there is nothing to filter.
+ * - The all-time board cannot work that way, because its rows are the profiles themselves and
+ *   a profile has to exist. So it is ordered by [ProfileCodec.Keys.LEADERBOARD_RATING] — a
+ *   copy of the rating that is written only for a linked account. A guest holds no value for
+ *   that key, which in Realtime Database means they sort before every number and are dropped
+ *   by [BOARD_RATING_FLOOR]. They are not filtered out of the answer; they were never in the
+ *   index the question was asked of. The rules pin the copy to the rating it mirrors and
+ *   refuse it to a `GUEST` profile, and they admit no query over `/users` that orders by
+ *   anything else — so there is no reading of the table that puts a guest on it.
+ *
+ * A guest who links an account is not stranded by this: `RtdbUserProfileRepository` writes the
+ * key on the next sign-in with whatever rating they had already earned, and the worker keeps
+ * it level with the rating from then on.
  */
 @Singleton
 class RtdbLeaderboardRepository @Inject constructor(
@@ -49,12 +76,13 @@ class RtdbLeaderboardRepository @Inject constructor(
     override suspend fun loadOwnStanding(userId: String): Outcome<OwnStanding> =
         dbCall("leaderboard-own") {
             val profile = usersRef().child(userId).awaitSnapshot()
-            val entry = profile.toEntry() ?: return@dbCall Outcome.Failure(AppError.NOT_SIGNED_IN)
+            val entry = profile.toBoardEntry()
+                ?: return@dbCall Outcome.Failure(AppError.NOT_SIGNED_IN)
 
             // Rank is the number of players rated above this one, plus one. The scan is
             // capped so a single lookup stays bounded no matter how large the board grows.
             val above = usersRef()
-                .orderByChild(ProfileCodec.Keys.RATING)
+                .orderByChild(ProfileCodec.Keys.LEADERBOARD_RATING)
                 .startAfter(entry.rating.toDouble())
                 .limitToFirst(Constants.Leaderboard.RANK_SCAN_LIMIT)
                 .awaitSnapshot()
@@ -72,18 +100,20 @@ class RtdbLeaderboardRepository @Inject constructor(
         scope: LeaderboardScope,
         cursor: LeaderboardCursor?,
     ): Outcome<LeaderboardPage> {
-        val base = when (scope) {
-            LeaderboardScope.WEEKLY -> weeklyRef()
+        val ordered: Query = when (scope) {
+            // The weekly rows are the server's own, so every one of them belongs on the board
+            // and its rating needs no second copy to be trusted.
+            LeaderboardScope.WEEKLY -> weeklyRef().orderByChild(ProfileCodec.Keys.RATING)
             else -> usersRef()
+                .orderByChild(ProfileCodec.Keys.LEADERBOARD_RATING)
+                .startAt(BOARD_RATING_FLOOR)
         }
         // Fetch one extra row to learn whether a further page exists without a second query.
         val pageSize = Constants.Leaderboard.PAGE_SIZE
-        val query: Query = base.orderByChild(ProfileCodec.Keys.RATING).let { ordered ->
-            if (cursor == null) {
-                ordered.limitToLast(pageSize + 1)
-            } else {
-                ordered.endBefore(cursor.rating.toDouble(), cursor.userId).limitToLast(pageSize + 1)
-            }
+        val query: Query = if (cursor == null) {
+            ordered.limitToLast(pageSize + 1)
+        } else {
+            ordered.endBefore(cursor.rating.toDouble(), cursor.userId).limitToLast(pageSize + 1)
         }
         val snapshot = query.awaitSnapshot()
         // Realtime Database returns ascending order; a leaderboard reads top-first.
@@ -110,7 +140,7 @@ class RtdbLeaderboardRepository @Inject constructor(
             return Outcome.Success(LeaderboardPage(emptyList(), hasMore = false, cursor = null))
         }
         val entries = coroutineScope {
-            friendIds.map { id -> async { usersRef().child(id).awaitSnapshot().toEntry() } }
+            friendIds.map { id -> async { usersRef().child(id).awaitSnapshot().toBoardEntry() } }
                 .mapNotNull { it.await() }
         }
         val ranked = entries.sortedByDescending(LeaderboardEntry::rating)
@@ -139,6 +169,21 @@ class RtdbLeaderboardRepository @Inject constructor(
         }
     }
 }
+
+/**
+ * Every rating the rules will accept is at least this, so a range starting here keeps whoever
+ * carries a board rating and drops whoever carries none — which is exactly the guests.
+ */
+private const val BOARD_RATING_FLOOR = 0.0
+
+/**
+ * A profile's row, or null when the profile holds no place on the board.
+ *
+ * Used wherever a profile is read by id instead of through the index, which is the one way a
+ * guest could otherwise reach the table: their own standing, and the friends board.
+ */
+private fun DataSnapshot.toBoardEntry(): LeaderboardEntry? =
+    if (hasChild(ProfileCodec.Keys.LEADERBOARD_RATING)) toEntry() else null
 
 /** Shared by the profile node and the weekly aggregate, which use the same field names. */
 private fun DataSnapshot.toEntry(): LeaderboardEntry? {

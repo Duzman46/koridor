@@ -35,7 +35,6 @@ data class UsernameFieldState(
 
 data class ProfileEditState(
     val username: UsernameFieldState = UsernameFieldState(),
-    val displayName: String = "",
     val avatarId: String = "",
     val isSubmitting: Boolean = false,
     val error: UiText? = null,
@@ -80,10 +79,13 @@ class ProfileViewModel @Inject constructor(
                 .collect { state ->
                     val profile = state.profile ?: return@collect
                     if (_editState.value.initialized) return@collect
+                    // A name the app made up is not an answer to "what should we call you?",
+                    // so the field starts empty and the player has to say something. Filling
+                    // it in for them would turn the first-run gate into a Continue button.
+                    val chosen = profile.username.takeUnless(UsernameRules::isGenerated)
                     _editState.update {
                         it.copy(
-                            username = UsernameFieldState(value = profile.username),
-                            displayName = profile.displayName,
+                            username = UsernameFieldState(value = chosen.orEmpty()),
                             avatarId = profile.avatarId,
                             initialized = true,
                         )
@@ -109,8 +111,6 @@ class ProfileViewModel @Inject constructor(
         usernameQuery.value = trimmed
     }
 
-    fun setDisplayName(value: String) = _editState.update { it.copy(displayName = value, error = null) }
-
     fun setAvatar(avatarId: String) = _editState.update { it.copy(avatarId = avatarId, error = null) }
 
     /** Claims the username. Used by the first-run picker and by the profile editor. */
@@ -135,12 +135,13 @@ class ProfileViewModel @Inject constructor(
     fun saveProfile(onSuccess: () -> Unit = {}) = submit {
         val state = _editState.value
         val profile = session.value.profile
-        if (profile != null && state.username.value.trim() != profile.username) {
-            val renamed = sessionManager.changeUsername(state.username.value)
+        val desired = state.username.value.trim()
+        // An empty name field means "leave my name alone": a guest opens the editor with
+        // nothing in it, and changing their avatar should not oblige them to name themselves.
+        if (desired.isNotEmpty() && desired != profile?.username) {
+            val renamed = sessionManager.changeUsername(desired)
             if (renamed is Outcome.Failure) return@submit fail(renamed.error)
         }
-        val displayName = sessionManager.updateDisplayName(state.displayName)
-        if (displayName is Outcome.Failure) return@submit fail(displayName.error)
         val avatar = sessionManager.updateAvatar(state.avatarId)
         if (avatar is Outcome.Failure) return@submit fail(avatar.error)
         _editState.update { it.copy(isSubmitting = false) }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.LocalKoridorColors
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.components.drawPawnMark
 import java.util.Locale
@@ -45,7 +47,7 @@ import java.util.Locale
 private const val STREAK_TARGET = 5
 
 /**
- * Who is playing, in the top corner of the board well.
+ * Who is playing, at the trailing end of the home screen's utility row.
  *
  * The ring around the avatar carries the state without a word of translated text: dashed
  * means there is no real account behind this yet, a solid track means there is, and the amber
@@ -56,7 +58,9 @@ private const val STREAK_TARGET = 5
  * pawn in a dashed ring rather than an empty circle, and it stays tappable: it is the way in
  * to linking an account.
  *
- * Sits on the well's fixed dark ground, so its colours are theme-independent.
+ * The signed-in form brings its own dark ground with it, so the rating and the amber arc keep
+ * the contrast they were drawn for. The two provisional forms have no ground of their own and
+ * are read straight off the page, so their marks come from the theme instead.
  */
 @Composable
 fun ProfileCrest(
@@ -80,7 +84,7 @@ private fun SignedInCrest(profile: UserProfile, onProfile: () -> Unit, modifier:
         modifier = modifier
             .heightIn(min = Dimens.CrestHeight)
             .semantics(mergeDescendants = true) {
-                contentDescription = "${profile.displayName}, $ratingLabel ${profile.rating}"
+                contentDescription = "${profile.username}, $ratingLabel ${profile.rating}"
             },
         shape = RoundedCornerShape(percent = 50),
         color = HomePalette.ChipFill.copy(alpha = 0.92f),
@@ -108,7 +112,7 @@ private fun SignedInCrest(profile: UserProfile, onProfile: () -> Unit, modifier:
                     .streakRing(profile.currentWinStreak),
                 contentAlignment = Alignment.Center,
             ) {
-                PlayerAvatar(profile.avatarId, profile.displayName, size = 34.dp)
+                PlayerAvatar(profile.avatarId, profile.username, size = 34.dp)
             }
         }
     }
@@ -121,13 +125,16 @@ private fun GuestCrest(profile: UserProfile, onProfile: () -> Unit, modifier: Mo
     val badge = stringResource(R.string.auth_guest_badge)
     Box(
         modifier = modifier
+            // Surface reserves the 48 dp minimum for the other two forms; a bare Box has to
+            // ask, or the guest is the one player whose crest holds less room than a finger.
+            .minimumInteractiveComponentSize()
             .size(Dimens.CrestHeight)
             .clip(CircleShape)
             .clickable(onClick = onProfile)
             .semantics(mergeDescendants = true) { contentDescription = "$label, $badge" },
         contentAlignment = Alignment.Center,
     ) {
-        PlayerAvatar(profile.avatarId, profile.displayName, size = 34.dp)
+        PlayerAvatar(profile.avatarId, profile.username, size = 34.dp)
         DashedRing()
     }
 }
@@ -136,14 +143,20 @@ private fun GuestCrest(profile: UserProfile, onProfile: () -> Unit, modifier: Mo
  * Nobody signed in yet — a guest playing locally, or the first moments of a cold start.
  *
  * A plain pawn rather than an avatar, because there is no name to take an initial from, and
- * no spinner, because a spinner in the corner of a hero image says "wait" when there is
- * nothing to wait for. Still tappable: this is where linking an account starts.
+ * no spinner, because a spinner beside the language switch says "wait" when there is nothing
+ * to wait for. Still tappable: this is where linking an account starts.
+ *
+ * The pawn is theme ink. The near-white it used to be was mixed to sit on the well, and a
+ * near-white pawn on the light theme's pale ground is a 1.0:1 mark — a control that is simply
+ * not there.
  */
 @Composable
 private fun AnonymousCrest(onProfile: () -> Unit, modifier: Modifier) {
     val label = stringResource(R.string.profile_title)
+    val ink = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
+            .minimumInteractiveComponentSize()
             .size(Dimens.CrestHeight)
             .clip(CircleShape)
             .clickable(onClick = onProfile)
@@ -154,18 +167,26 @@ private fun AnonymousCrest(onProfile: () -> Unit, modifier: Modifier) {
             drawPawnMark(
                 center = Offset(size.width / 2f, size.height / 2f),
                 unit = size.minDimension * 0.62f,
-                color = HomePalette.OnWell.copy(alpha = 0.85f),
+                color = ink,
             )
         }
         DashedRing()
     }
 }
 
+/**
+ * The "no real account yet" ring.
+ *
+ * `provisionalRing` rather than a fixed grey-green: the dark theme's value is the same colour
+ * this ring has always been, while the light theme's is darkened to clear 4.5:1 on pale
+ * ground, where the original managed 2.3:1 and read as a smudge.
+ */
 @Composable
 private fun DashedRing() {
+    val ring = LocalKoridorColors.current.provisionalRing
     Canvas(Modifier.size(Dimens.CrestHeight)) {
         drawCircle(
-            color = HomePalette.GuestRing,
+            color = ring,
             radius = 20.dp.toPx(),
             style = Stroke(
                 width = 1.5.dp.toPx(),
@@ -207,11 +228,14 @@ private fun Modifier.streakRing(streak: Int): Modifier = drawWithContent {
 }
 
 /**
- * A round glyph button on the well, matching the language chip and the crest beside it.
- * Used for settings, which belongs near the player's own things rather than in the menu.
+ * A round glyph button, matching the language chip and the crest in the same row.
+ *
+ * Still cut from the well's material rather than the theme's: these read as small pieces of
+ * the board panel they sit above, which is what holds the top of the screen together, and it
+ * is the only ground on which the crest's amber streak arc still means "wall".
  */
 @Composable
-fun WellIconButton(
+fun HomeIconButton(
     glyph: GlyphKind,
     label: String,
     onClick: () -> Unit,
@@ -245,12 +269,8 @@ fun LanguageChip(
     modifier: Modifier = Modifier,
 ) {
     val configuration = LocalResources.current.configuration
-    val tag = if (language.followsDevice) {
-        configuration.locales[0].language
-    } else {
-        language.tag
-    }
-    val code = tag.take(2).uppercase(Locale.ROOT)
+    val effective = AppLanguage.resolve(language, configuration.locales[0].language)
+    val code = effective.tag.take(2).uppercase(Locale.ROOT)
     val label = stringResource(R.string.settings_language)
     Surface(
         onClick = onClick,

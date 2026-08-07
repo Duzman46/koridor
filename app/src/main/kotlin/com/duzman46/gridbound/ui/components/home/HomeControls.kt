@@ -1,77 +1,125 @@
 package com.duzman46.gridbound.ui.components.home
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.duzman46.gridbound.R
+import com.duzman46.gridbound.domain.models.AppLanguage
+import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.ui.components.BlockRank
+import com.duzman46.gridbound.ui.components.KoridorBlock
 
 /**
- * The one loud action. Everything else on the screen is quieter than this by design — when
- * every control is emphasised the player has to read all of them to find the way in.
+ * The home screen's utility row: other people on one side, the player's own things on the
+ * other, above the board panel rather than floating in its corners.
+ *
+ * These four are not menu entries and never were — three things nobody opens often should not
+ * take three of the four choices on the home screen. But sitting on the artwork they landed on
+ * the board's top rank of tiles, and a settings mark on a pawn reads as a mistake rather than
+ * as a layer. A row of their own costs one line and collides with nothing.
+ *
+ * Friends is alone at the leading edge and the isolation is the point: it is the one mark here
+ * that leads to other people rather than to the player's own settings, so grouping it with
+ * them would have buried it.
+ *
+ * The trailing group is weighted rather than free, so when a doubled font scale widens the
+ * crest it grows into what is left of the row instead of sliding under the friends button.
  */
 @Composable
-fun PlaySlab(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SlabHeight),
-        shape = RoundedCornerShape(Dimens.RadiusXs),
-        color = MaterialTheme.colorScheme.primary,
-        shadowElevation = 0.dp,
+fun HomeTopBar(
+    session: SessionState,
+    language: AppLanguage,
+    onFriends: () -> Unit,
+    onSettings: () -> Unit,
+    onLanguage: () -> Unit,
+    onProfile: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        HomeIconButton(GlyphKind.FRIENDS, stringResource(R.string.friends_title), onFriends)
         Row(
-            Modifier
-                .fillMaxSize()
-                .pieceDepth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            Modifier.weight(1f, fill = false),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            KoridorGlyph(
-                GlyphKind.QUICK_PLAY,
-                Modifier.size(Dimens.GlyphLg),
-                tint = MaterialTheme.colorScheme.onPrimary,
-            )
-            Text(
-                text = label,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.2.sp,
-                color = MaterialTheme.colorScheme.onPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            HomeIconButton(GlyphKind.SETTINGS, stringResource(R.string.game_settings), onSettings)
+            LanguageChip(language, onLanguage)
+            ProfileCrest(session, onProfile)
         }
     }
 }
 
 /**
- * One of the three quieter home choices, under the play slab.
+ * The name of the game, on its own line between the utility row and the board panel.
  *
- * Same shape and glyph treatment as the slab, one step down in weight — so the four choices
- * read as one set with an obvious first among them.
+ * It used to sit inside the panel, and carrying it there cost two scrim gradients that dimmed
+ * the bottom half of the artwork so that seven letters could be read against tiles. The
+ * picture is the point of the panel, so the letters had to leave rather than the picture.
+ *
+ * Not folded into [HomeTopBar] either: the two control groups leave roughly 130 dp between
+ * them on a 360 dp phone, and the wordmark needs half again that at the size it has to be to
+ * still be a wordmark. Squeezed between chips it becomes a caption. Given a line it keeps its
+ * full weight, it is the first thing read on the screen, and it still labels the picture
+ * directly beneath it — from above instead of from on top.
  */
+@Composable
+fun HomeWordmark(modifier: Modifier = Modifier) {
+    val density = LocalDensity.current
+    // Sized in dp then converted, so the wordmark keeps a fixed cap height and grows by at
+    // most a quarter at large font scales. Seven Black glyphs cannot clip at 320 dp.
+    val wordmarkSize = with(density) { 30.dp.toSp() } * density.fontScale.coerceAtMost(1.25f)
+    Text(
+        text = stringResource(R.string.app_name).uppercase(),
+        modifier = modifier,
+        fontSize = wordmarkSize,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 2.sp,
+        color = MaterialTheme.colorScheme.onBackground,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+/**
+ * The one loud action on a screen — now the block system's PRIMARY at loud size.
+ *
+ * Kept as its own name so the screens read as what they are rather than as a rank enum,
+ * and so the press behaviour is defined in exactly one place.
+ */
+@Composable
+fun PlaySlab(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    glyph: GlyphKind = GlyphKind.QUICK_PLAY,
+) {
+    KoridorBlock(
+        label = label,
+        onClick = onClick,
+        modifier = modifier,
+        rank = BlockRank.PRIMARY,
+        glyph = glyph,
+        loud = true,
+    )
+}
+
+/** A real alternative to the loud action: outlined, never a tinted pill. */
 @Composable
 fun HomeChoice(
     label: String,
@@ -79,161 +127,11 @@ fun HomeChoice(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    KoridorBlock(
+        label = label,
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SlabHeight),
-        shape = RoundedCornerShape(Dimens.RadiusXs),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .pieceDepth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            KoridorGlyph(
-                glyph,
-                Modifier.size(Dimens.GlyphLg),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = label,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-/**
- * The two room actions, side by side.
- *
- * [IntrinsicSize.Min] on the row is what keeps them honest in German and Russian: when one
- * label wraps to two lines both halves grow together, instead of one clipping.
- */
-@Composable
-fun RoomPair(
-    createLabel: String,
-    joinLabel: String,
-    onCreate: () -> Unit,
-    onJoin: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier.fillMaxWidth().height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        RoomButton(createLabel, GlyphKind.CREATE_ROOM, onCreate, Modifier.weight(1f))
-        RoomButton(joinLabel, GlyphKind.JOIN_ROOM, onJoin, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun RoomButton(
-    label: String,
-    glyph: GlyphKind,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxHeight().heightIn(min = Dimens.RoomHeight),
-        shape = RoundedCornerShape(Dimens.RadiusXs),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .pieceDepth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            KoridorGlyph(
-                glyph,
-                Modifier.size(Dimens.GlyphMd),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = label,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-/** One of the quiet destinations. Outlined, not filled: it must not compete with the slab. */
-@Composable
-fun DestinationChip(
-    label: String,
-    glyph: GlyphKind,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = Dimens.ChipHeight),
-        shape = RoundedCornerShape(20.dp),
-        color = androidx.compose.ui.graphics.Color.Transparent,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)),
-    ) {
-        Row(
-            Modifier.padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            KoridorGlyph(
-                glyph,
-                Modifier.size(Dimens.GlyphSm),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = label,
-                modifier = Modifier.widthIn(max = 160.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-/** One quiet destination: its label, its glyph and where it goes. */
-class Destination(
-    val label: String,
-    val glyph: GlyphKind,
-    val onClick: () -> Unit,
-)
-
-/**
- * The tail of the menu.
- *
- * A wrapping row rather than a grid, and that is the point: the lines come out uneven,
- * because the labels are different lengths in every one of the ten languages. A fixed grid
- * of equal tiles is the shape that made this screen look generated.
- */
-@Composable
-fun DestinationChips(destinations: List<Destination>, modifier: Modifier = Modifier) {
-    FlowRow(
-        modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        destinations.forEach { destination ->
-            DestinationChip(destination.label, destination.glyph, destination.onClick)
-        }
-    }
+        modifier = modifier,
+        rank = BlockRank.SECONDARY,
+        glyph = glyph,
+    )
 }

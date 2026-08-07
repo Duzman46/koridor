@@ -2,17 +2,25 @@ package com.duzman46.gridbound.navigation
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import androidx.core.net.toUri
+import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +34,7 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.monetization.BillingState
 import com.duzman46.gridbound.monetization.MonetizationState
 import com.duzman46.gridbound.monetization.domain.Entitlement
+import com.duzman46.gridbound.online.model.RoomEndReason
 import com.duzman46.gridbound.presentation.account.AccountEvent
 import com.duzman46.gridbound.presentation.account.AccountViewModel
 import com.duzman46.gridbound.presentation.auth.AuthEvent
@@ -34,21 +43,24 @@ import com.duzman46.gridbound.presentation.profile.ProfileViewModel
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.session.SessionStatus
+import com.duzman46.gridbound.ui.components.RequestBar
 import com.duzman46.gridbound.ui.screens.AccountScreen
+import com.duzman46.gridbound.ui.screens.DifficultyScreen
 import com.duzman46.gridbound.ui.screens.EditProfileScreen
 import com.duzman46.gridbound.ui.screens.FriendsRoute
 import com.duzman46.gridbound.ui.screens.GameRoute
 import com.duzman46.gridbound.ui.screens.LeaderboardRoute
-import com.duzman46.gridbound.ui.screens.LobbyTab
 import com.duzman46.gridbound.ui.screens.MainMenuScreen
 import com.duzman46.gridbound.ui.screens.OnlineLobbyRoute
+import com.duzman46.gridbound.ui.screens.PlayModeScreen
+import com.duzman46.gridbound.ui.screens.PlayerProfileRoute
 import com.duzman46.gridbound.ui.screens.ProfileScreen
 import com.duzman46.gridbound.ui.screens.SettingsScreen
 import com.duzman46.gridbound.ui.screens.SplashScreen
 import com.duzman46.gridbound.ui.screens.StatisticsScreen
 import com.duzman46.gridbound.ui.screens.TutorialRoute
 import com.duzman46.gridbound.ui.screens.UsernameScreen
-import com.duzman46.gridbound.ui.screens.WinnerScreen
+import com.duzman46.gridbound.ui.screens.WinnerRoute
 import com.duzman46.gridbound.ui.screens.auth.ForgotPasswordScreen
 import com.duzman46.gridbound.ui.screens.auth.SignInScreen
 import com.duzman46.gridbound.ui.screens.auth.SignUpScreen
@@ -64,6 +76,8 @@ private object Routes {
     const val FORGOT_PASSWORD = "forgotPassword"
     const val USERNAME = "username"
     const val TUTORIAL = "tutorial"
+    const val PLAY = "play"
+    const val DIFFICULTY = "difficulty"
     const val HOME = "home"
     const val SETTINGS = "settings"
     const val STATISTICS = "statistics"
@@ -72,18 +86,44 @@ private object Routes {
     const val ACCOUNT = "account"
     const val LEADERBOARD = "leaderboard"
     const val FRIENDS = "friends"
-    const val ONLINE = "online?inviteCode={inviteCode}&tab={tab}"
-    const val GAME = "game/{mode}/{difficulty}?roomCode={roomCode}&playerId={playerId}&userId={userId}"
-    const val WINNER = "winner/{winner}/{mode}/{difficulty}"
+    const val PLAYER_PROFILE = "player?userId={userId}"
+    const val ONLINE = "online?inviteCode={inviteCode}"
+    const val GAME = "game/{mode}/{difficulty}?roomCode={roomCode}&playerId={playerId}&userId={userId}&seat={seat}"
+    const val WINNER = "winner/{winner}/{mode}/{difficulty}" +
+        "?seat={seat}&endReason={endReason}&roomCode={roomCode}&opponentId={opponentId}"
 
-    fun online(inviteCode: String = "", tab: LobbyTab = LobbyTab.PLAY): String =
-        "online?inviteCode=$inviteCode&tab=${tab.name}"
-    fun game(mode: GameMode, difficulty: Difficulty): String = "game/${mode.name}/${difficulty.name}"
-    fun quickPlay(difficulty: Difficulty): String = game(GameMode.VS_AI, difficulty)
+    fun online(inviteCode: String = ""): String = "online?inviteCode=$inviteCode"
+
+    fun entry(destination: EntryDestination): String = when (destination) {
+        EntryDestination.WELCOME -> WELCOME
+        EntryDestination.TUTORIAL -> TUTORIAL
+        EntryDestination.USERNAME -> USERNAME
+        EntryDestination.HOME -> HOME
+    }
+
+    /** Encoded: a user id is opaque, and one stray character would silently split the route. */
+    fun playerProfile(userId: String): String = "player?userId=${Uri.encode(userId)}"
+    fun game(mode: GameMode, difficulty: Difficulty, seat: PlayerId = PlayerId.PLAYER_ONE): String =
+        "game/${mode.name}/${difficulty.name}?seat=${seat.name}"
+
     fun onlineGame(roomCode: String, playerId: PlayerId, userId: String): String =
         "game/${GameMode.ONLINE.name}/${Difficulty.MEDIUM.name}?roomCode=$roomCode&playerId=${playerId.name}&userId=$userId"
-    fun winner(winner: PlayerId, mode: GameMode, difficulty: Difficulty): String =
-        "winner/${winner.name}/${mode.name}/${difficulty.name}"
+    /**
+     * @param roomCode the finished online room, and [opponentId] who else was in it. The two
+     *   of them are what the winner screen needs to offer a rematch; both are empty off line.
+     */
+    fun winner(
+        winner: PlayerId,
+        mode: GameMode,
+        difficulty: Difficulty,
+        seat: PlayerId = PlayerId.PLAYER_ONE,
+        endReason: RoomEndReason = RoomEndReason.NORMAL,
+        roomCode: String = "",
+        opponentId: String = "",
+    ): String =
+        "winner/${winner.name}/${mode.name}/${difficulty.name}" +
+            "?seat=${seat.name}&endReason=${endReason.name}" +
+            "&roomCode=$roomCode&opponentId=${Uri.encode(opponentId)}"
 }
 
 @Composable
@@ -91,7 +131,6 @@ fun AppNavigation(
     session: SessionState,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
-    quickPlayDifficulty: Difficulty,
     monetization: MonetizationState,
     billing: BillingState,
     onBuy: (Entitlement) -> Unit,
@@ -115,380 +154,519 @@ fun AppNavigation(
         }
     }
 
-    NavHost(navController = navController, startDestination = Routes.SPLASH) {
-        composable(Routes.SPLASH) {
-            // Hold on the splash until both the intro animation and the first auth state
-            // have landed, so the player is never routed on a LOADING session.
-            var introFinished by rememberSaveable { mutableStateOf(false) }
-            SplashScreen { introFinished = true }
-            LaunchedEffect(introFinished, session.status) {
-                if (introFinished && session.status != SessionStatus.LOADING) {
-                    navController.navigateToEntryPoint(session)
-                }
-            }
-        }
-
-        composable(Routes.WELCOME) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            viewModel.HandleEntryEvents(navController, session)
-            WelcomeScreen(
-                state = state,
-                onGoogle = {
-                    context.findActivity()?.let(viewModel::signInWithGoogle)
-                },
-                onEmailSignIn = { navController.navigate(Routes.SIGN_IN) },
-                onCreateAccount = { navController.navigate(Routes.SIGN_UP) },
-                onGuest = viewModel::continueAsGuest,
-            )
-        }
-
-        composable(Routes.SIGN_IN) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            viewModel.HandleEntryEvents(navController, session)
-            SignInScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onEmail = viewModel::setEmail,
-                onPassword = viewModel::setPassword,
-                onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
-                onSubmit = viewModel::signInWithEmail,
-                onForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
-            )
-        }
-
-        composable(Routes.SIGN_UP) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            viewModel.HandleEntryEvents(navController, session)
-            SignUpScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onEmail = viewModel::setEmail,
-                onPassword = viewModel::setPassword,
-                onConfirmPassword = viewModel::setConfirmPassword,
-                onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
-                onSubmit = viewModel::createAccount,
-            )
-        }
-
-        composable(Routes.FORGOT_PASSWORD) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            ForgotPasswordScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onEmail = viewModel::setEmail,
-                onSubmit = viewModel::sendPasswordReset,
-            )
-        }
-
-        composable(Routes.USERNAME) {
-            val viewModel: ProfileViewModel = hiltViewModel()
-            val state by viewModel.editState.collectAsStateWithLifecycle()
-            UsernameScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onUsername = viewModel::setUsername,
-                onSubmit = {
-                    viewModel.saveUsername {
-                        navController.navigateAfterEntry(session, popUpToRoute = Routes.USERNAME)
-                    }
-                },
-            )
-        }
-
-        composable(Routes.TUTORIAL) {
-            TutorialRoute(
-                onFinished = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.TUTORIAL) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                },
-            )
-        }
-
-        composable(Routes.HOME) {
-            MainMenuScreen(
-                session = session,
-                language = language,
-                adsRemoved = billing.entitlements.contains(Entitlement.REMOVE_ADS),
-                onLanguage = onLanguage,
-                onPlayBot = { difficulty ->
-                    navController.navigate(Routes.game(GameMode.VS_AI, difficulty))
-                },
-                onPlayLocal = {
-                    navController.navigate(Routes.game(GameMode.LOCAL_TWO_PLAYER, Difficulty.MEDIUM))
-                },
-                onQuickMatch = { navController.navigate(Routes.online(tab = LobbyTab.PLAY)) },
-                onCreateRoom = { navController.navigate(Routes.online(tab = LobbyTab.CREATE)) },
-                onJoinRoom = { navController.navigate(Routes.online(tab = LobbyTab.BROWSE)) },
-                onFriends = { navController.navigate(Routes.FRIENDS) },
-                onLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
-                onProfile = { navController.navigate(Routes.PROFILE) },
-                onStatistics = { navController.navigate(Routes.STATISTICS) },
-                onTutorial = { navController.navigate(Routes.TUTORIAL) },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onRemoveAds = {
-                    // A guest has no account for Play to attach the purchase to, so it would
-                    // not survive a reinstall or follow them to another device. Link first.
-                    if (session.isGuest) {
-                        navController.navigate(Routes.ACCOUNT)
-                    } else {
-                        onBuy(Entitlement.REMOVE_ADS)
-                    }
-                },
-                onRestorePurchases = onRestorePurchases,
-                onOpenUrl = openUrl,
-                showAdBanner = monetization.adsAllowed,
-                defaultDifficulty = quickPlayDifficulty,
-            )
-        }
-
-        composable(Routes.LEADERBOARD) {
-            LeaderboardRoute(onBack = navController::popBackStack)
-        }
-
-        composable(Routes.FRIENDS) {
-            FriendsRoute(
-                onBack = navController::popBackStack,
-                // The lobby owns joining, so an invitation lands there with the code already
-                // filled in rather than duplicating the join logic on this screen.
-                onJoinInvite = { roomCode -> navController.navigate(Routes.online(roomCode)) },
-            )
-        }
-
-        composable(Routes.PROFILE) {
-            val viewModel: ProfileViewModel = hiltViewModel()
-            val state by viewModel.session.collectAsStateWithLifecycle()
-            ProfileScreen(
-                profile = state.profile,
-                hasAccount = state.status == SessionStatus.SIGNED_IN,
-                onBack = navController::popBackStack,
-                onEdit = { navController.navigate(Routes.EDIT_PROFILE) },
-                onAccount = { navController.navigate(Routes.ACCOUNT) },
-                onLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
-                onFriends = { navController.navigate(Routes.FRIENDS) },
-            )
-        }
-
-        composable(Routes.EDIT_PROFILE) {
-            val viewModel: ProfileViewModel = hiltViewModel()
-            val state by viewModel.editState.collectAsStateWithLifecycle()
-            EditProfileScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onUsername = viewModel::setUsername,
-                onDisplayName = viewModel::setDisplayName,
-                onAvatar = viewModel::setAvatar,
-                onSubmit = { viewModel.saveProfile { navController.popBackStack() } },
-            )
-        }
-
-        composable(Routes.ACCOUNT) {
-            val viewModel: AccountViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            val accountSession by viewModel.session.collectAsStateWithLifecycle()
-            LaunchedEffect(viewModel) {
-                viewModel.events.collect { event ->
-                    when (event) {
-                        AccountEvent.SignedOut, AccountEvent.AccountDeleted ->
-                            navController.navigate(Routes.WELCOME) {
-                                popUpTo(0) { inclusive = true }
-                            }
-
-                        AccountEvent.Linked -> Unit
-                    }
-                }
-            }
-            AccountScreen(
-                state = state,
-                session = accountSession,
-                onBack = navController::popBackStack,
-                onEmail = viewModel::setEmail,
-                onPassword = viewModel::setPassword,
-                onLinkGoogle = {
-                    context.findActivity()?.let(viewModel::linkWithGoogle)
-                },
-                onLinkEmail = viewModel::linkWithEmail,
-                onSignOut = viewModel::signOut,
-                onDeleteAccount = viewModel::deleteAccount,
-                onOpenUrl = openUrl,
-            )
-        }
-
-        composable(
-            route = Routes.ONLINE,
-            arguments = listOf(
-                navArgument("inviteCode") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("tab") {
-                    type = NavType.StringType
-                    defaultValue = LobbyTab.PLAY.name
-                },
-            ),
-        ) { entry ->
-            OnlineLobbyRoute(
-                inviteCode = entry.arguments?.getString("inviteCode").orEmpty(),
-                initialTab = enumValueOrDefault(entry.arguments?.getString("tab"), LobbyTab.PLAY),
-                onBack = navController::popBackStack,
-                onOpenGame = { onlineSession ->
-                    navController.navigate(
-                        Routes.onlineGame(
-                            onlineSession.roomCode,
-                            onlineSession.playerId,
-                            onlineSession.userId,
-                        ),
-                    ) {
-                        popUpTo(Routes.ONLINE) { inclusive = true }
-                    }
-                },
-            )
-        }
-
-
-        composable(
-            route = Routes.GAME,
-            arguments = listOf(
-                navArgument("mode") { type = NavType.StringType },
-                navArgument("difficulty") { type = NavType.StringType },
-                navArgument("roomCode") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("playerId") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("userId") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-            ),
-        ) {
-            GameRoute(
-                onHome = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onWinner = { winner, state ->
-                    navController.navigate(Routes.winner(winner, state.mode, state.difficulty)) {
-                        popUpTo(Routes.GAME) { inclusive = true }
-                    }
-                },
-            )
-        }
-
-        composable(
-            route = Routes.WINNER,
-            arguments = listOf(
-                navArgument("winner") { type = NavType.StringType },
-                navArgument("mode") { type = NavType.StringType },
-                navArgument("difficulty") { type = NavType.StringType },
-            ),
-        ) { entry ->
-            val winner = enumValueOrDefault(entry.arguments?.getString("winner"), PlayerId.PLAYER_ONE)
-            val mode = enumValueOrDefault(entry.arguments?.getString("mode"), GameMode.VS_AI)
-            val difficulty = enumValueOrDefault(entry.arguments?.getString("difficulty"), Difficulty.MEDIUM)
-            WinnerScreen(
-                winner = winner,
-                mode = mode,
-                onReplay = {
-                    onCompletedMatchExit {
-                        if (mode == GameMode.ONLINE) {
-                            navController.navigate(Routes.online()) {
-                                popUpTo(Routes.WINNER) { inclusive = true }
-                            }
-                        } else {
-                            navController.navigate(Routes.game(mode, difficulty)) {
-                                popUpTo(Routes.WINNER) { inclusive = true }
-                            }
+    Box(Modifier.fillMaxSize()) {
+        NavHost(navController = navController, startDestination = Routes.SPLASH) {
+            composable(Routes.SPLASH) {
+                // Hold on the splash until both the intro animation and the first auth state
+                // have landed, so the player is never routed on a LOADING session.
+                var introFinished by rememberSaveable { mutableStateOf(false) }
+                SplashScreen { introFinished = true }
+                LaunchedEffect(introFinished, session.status) {
+                    if (introFinished && session.status != SessionStatus.LOADING) {
+                        navController.navigateToEntry(session) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
                         }
                     }
-                },
-                onHome = {
-                    onCompletedMatchExit {
+                }
+            }
+
+            composable(Routes.WELCOME) { entry ->
+                val viewModel: AuthViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                viewModel.HandleEntryEvents(navController, session)
+                WelcomeScreen(
+                    state = state,
+                    onGoogle = {
+                        context.findActivity()?.let(viewModel::signInWithGoogle)
+                    },
+                    onEmailSignIn = { navController.navigateFrom(entry, Routes.SIGN_IN) },
+                    onCreateAccount = { navController.navigateFrom(entry, Routes.SIGN_UP) },
+                    onGuest = viewModel::continueAsGuest,
+                )
+            }
+
+            composable(Routes.SIGN_IN) { entry ->
+                val viewModel: AuthViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                viewModel.HandleEntryEvents(navController, session)
+                SignInScreen(
+                    state = state,
+                    onBack = navController::popBackStack,
+                    onEmail = viewModel::setEmail,
+                    onPassword = viewModel::setPassword,
+                    onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
+                    onSubmit = viewModel::signInWithEmail,
+                    onForgotPassword = { navController.navigateFrom(entry, Routes.FORGOT_PASSWORD) },
+                )
+            }
+
+            composable(Routes.SIGN_UP) {
+                val viewModel: AuthViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                viewModel.HandleEntryEvents(navController, session)
+                SignUpScreen(
+                    state = state,
+                    onBack = navController::popBackStack,
+                    onEmail = viewModel::setEmail,
+                    onPassword = viewModel::setPassword,
+                    onConfirmPassword = viewModel::setConfirmPassword,
+                    onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
+                    onSubmit = viewModel::createAccount,
+                )
+            }
+
+            composable(Routes.FORGOT_PASSWORD) {
+                val viewModel: AuthViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                ForgotPasswordScreen(
+                    state = state,
+                    onBack = navController::popBackStack,
+                    onEmail = viewModel::setEmail,
+                    onSubmit = viewModel::sendPasswordReset,
+                )
+            }
+
+            composable(Routes.USERNAME) {
+                val viewModel: ProfileViewModel = hiltViewModel()
+                val state by viewModel.editState.collectAsStateWithLifecycle()
+                UsernameScreen(
+                    state = state,
+                    onUsername = viewModel::setUsername,
+                    onSubmit = {
+                        viewModel.saveUsername {
+                            navController.navigateToEntry(session, EntryStep.USERNAME) {
+                                popUpTo(Routes.USERNAME) { inclusive = true }
+                            }
+                        }
+                    },
+                )
+            }
+
+            composable(Routes.TUTORIAL) {
+                TutorialRoute(
+                    // Skipping and finishing land in the same place on purpose: what the
+                    // skip button skips is the lesson, not the account it belongs to.
+                    onFinished = {
+                        navController.navigateToEntry(session, EntryStep.TUTORIAL) {
+                            popUpTo(Routes.TUTORIAL) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
+
+            composable(Routes.HOME) { entry ->
+                MainMenuScreen(
+                    session = session,
+                    language = language,
+                    adsRemoved = billing.entitlements.contains(Entitlement.REMOVE_ADS),
+                    onLanguage = onLanguage,
+                    onPlay = { navController.navigateFrom(entry, Routes.PLAY) },
+                    onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
+                    onLeaderboard = { navController.navigateFrom(entry, Routes.LEADERBOARD) },
+                    onTutorial = { navController.navigateFrom(entry, Routes.TUTORIAL) },
+                    onProfile = { navController.navigateFrom(entry, Routes.PROFILE) },
+                    onStatistics = { navController.navigateFrom(entry, Routes.STATISTICS) },
+                    onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
+                    onRemoveAds = {
+                        // A guest has no account for Play to attach the purchase to, so it would
+                        // not survive a reinstall or follow them to another device. Link first.
+                        if (session.isGuest) {
+                            navController.navigateFrom(entry, Routes.ACCOUNT)
+                        } else {
+                            onBuy(Entitlement.REMOVE_ADS)
+                        }
+                    },
+                    onRestorePurchases = onRestorePurchases,
+                    onOpenUrl = openUrl,
+                    showAdBanner = monetization.adsAllowed,
+                )
+            }
+
+            composable(Routes.PLAY) { entry ->
+                PlayModeScreen(
+                    onBack = navController::popBackStack,
+                    onVsBot = { navController.navigateFrom(entry, Routes.DIFFICULTY) },
+                    onLocal = {
+                        navController.navigateFrom(
+                            entry,
+                            Routes.game(GameMode.LOCAL_TWO_PLAYER, Difficulty.MEDIUM),
+                        )
+                    },
+                    onOnline = { navController.navigateFrom(entry, Routes.online()) },
+                )
+            }
+
+            composable(Routes.DIFFICULTY) { entry ->
+                DifficultyScreen(
+                    onBack = navController::popBackStack,
+                    onSelected = { difficulty, seat ->
+                        navController.navigateFrom(entry, Routes.game(GameMode.VS_AI, difficulty, seat))
+                    },
+                )
+            }
+
+            composable(Routes.LEADERBOARD) { entry ->
+                LeaderboardRoute(
+                    onBack = navController::popBackStack,
+                    onOpenProfile = { userId ->
+                        navController.navigateFrom(entry, Routes.playerProfile(userId))
+                    },
+                )
+            }
+
+            composable(Routes.FRIENDS) { entry ->
+                FriendsRoute(
+                    onBack = navController::popBackStack,
+                    // The lobby owns joining, so an invitation lands there with the code already
+                    // filled in rather than duplicating the join logic on this screen.
+                    onJoinInvite = { roomCode ->
+                        navController.navigateFrom(entry, Routes.online(roomCode))
+                    },
+                    onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
+                    // Popped, like the lobby's own hand-off: the room the friends screen was
+                    // holding open has been taken, so there is nothing left there to go back to.
+                    onOpenGame = { onlineSession ->
+                        navController.navigate(
+                            Routes.onlineGame(
+                                onlineSession.roomCode,
+                                onlineSession.playerId,
+                                onlineSession.userId,
+                            ),
+                        ) {
+                            popUpTo(Routes.FRIENDS) { inclusive = true }
+                        }
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.PLAYER_PROFILE,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+            ) {
+                PlayerProfileRoute(onBack = navController::popBackStack)
+            }
+
+            composable(Routes.PROFILE) { entry ->
+                val viewModel: ProfileViewModel = hiltViewModel()
+                val state by viewModel.session.collectAsStateWithLifecycle()
+                ProfileScreen(
+                    profile = state.profile,
+                    // Not "signed in": an ordinary guest signs in anonymously and is
+                    // SIGNED_IN too, so testing that spun forever for exactly the players who
+                    // have no profile. What decides it is whether a profile can exist at all.
+                    hasAccount = state.canUseSocialFeatures,
+                    onBack = navController::popBackStack,
+                    onEdit = { navController.navigateFrom(entry, Routes.EDIT_PROFILE) },
+                    onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
+                    onLeaderboard = { navController.navigateFrom(entry, Routes.LEADERBOARD) },
+                    onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
+                )
+            }
+
+            composable(Routes.EDIT_PROFILE) {
+                val viewModel: ProfileViewModel = hiltViewModel()
+                val state by viewModel.editState.collectAsStateWithLifecycle()
+                EditProfileScreen(
+                    state = state,
+                    onBack = navController::popBackStack,
+                    onUsername = viewModel::setUsername,
+                    onAvatar = viewModel::setAvatar,
+                    onSubmit = { viewModel.saveProfile { navController.popBackStack() } },
+                )
+            }
+
+            composable(Routes.ACCOUNT) {
+                val viewModel: AccountViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                val accountSession by viewModel.session.collectAsStateWithLifecycle()
+                LaunchedEffect(viewModel) {
+                    viewModel.events.collect { event ->
+                        when (event) {
+                            AccountEvent.SignedOut, AccountEvent.AccountDeleted ->
+                                navController.navigate(Routes.WELCOME) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+
+                            AccountEvent.Linked -> Unit
+                        }
+                    }
+                }
+                AccountScreen(
+                    state = state,
+                    session = accountSession,
+                    onBack = navController::popBackStack,
+                    onEmail = viewModel::setEmail,
+                    onPassword = viewModel::setPassword,
+                    onLinkGoogle = {
+                        context.findActivity()?.let(viewModel::linkWithGoogle)
+                    },
+                    onLinkEmail = viewModel::linkWithEmail,
+                    onSignOut = viewModel::signOut,
+                    // Passed through even when it is null: an Activity that cannot be found
+                    // is something the player needs told, not a tap that quietly does nothing.
+                    onDeleteAccount = { viewModel.deleteAccount(context.findActivity()) },
+                    onOpenUrl = openUrl,
+                )
+            }
+
+            composable(
+                route = Routes.ONLINE,
+                arguments = listOf(
+                    navArgument("inviteCode") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+            ) { entry ->
+                OnlineLobbyRoute(
+                    inviteCode = entry.arguments?.getString("inviteCode").orEmpty(),
+                    onBack = navController::popBackStack,
+                    onOpenGame = { onlineSession ->
+                        navController.navigate(
+                            Routes.onlineGame(
+                                onlineSession.roomCode,
+                                onlineSession.playerId,
+                                onlineSession.userId,
+                            ),
+                        ) {
+                            popUpTo(Routes.ONLINE) { inclusive = true }
+                        }
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.GAME,
+                arguments = listOf(
+                    navArgument("mode") { type = NavType.StringType },
+                    navArgument("difficulty") { type = NavType.StringType },
+                    navArgument("roomCode") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("playerId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("userId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("seat") {
+                        type = NavType.StringType
+                        defaultValue = PlayerId.PLAYER_ONE.name
+                    },
+                ),
+            ) { entry ->
+                GameRoute(
+                    onHome = {
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.HOME) { inclusive = false }
                             launchSingleTop = true
                         }
-                    }
-                },
-            )
+                    },
+                    onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
+                    onOpenProfile = { userId ->
+                        navController.navigateFrom(entry, Routes.playerProfile(userId))
+                    },
+                    onWinner = { winner, state ->
+                        navController.navigate(
+                            Routes.winner(
+                                winner = winner,
+                                mode = state.mode,
+                                difficulty = state.difficulty,
+                                seat = state.localPlayer,
+                                endReason = state.onlineEndReason ?: RoomEndReason.NORMAL,
+                                roomCode = entry.arguments?.getString("roomCode").orEmpty(),
+                                opponentId = state.opponentUserId,
+                            ),
+                        ) {
+                            popUpTo(Routes.GAME) { inclusive = true }
+                        }
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.WINNER,
+                arguments = listOf(
+                    navArgument("winner") { type = NavType.StringType },
+                    navArgument("mode") { type = NavType.StringType },
+                    navArgument("difficulty") { type = NavType.StringType },
+                    navArgument("seat") {
+                        type = NavType.StringType
+                        defaultValue = PlayerId.PLAYER_ONE.name
+                    },
+                    navArgument("endReason") {
+                        type = NavType.StringType
+                        defaultValue = RoomEndReason.NORMAL.name
+                    },
+                    navArgument("roomCode") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("opponentId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+            ) { entry ->
+                val winner = enumValueOrDefault(entry.arguments?.getString("winner"), PlayerId.PLAYER_ONE)
+                val seat = enumValueOrDefault(entry.arguments?.getString("seat"), PlayerId.PLAYER_ONE)
+                val mode = enumValueOrDefault(entry.arguments?.getString("mode"), GameMode.VS_AI)
+                val difficulty = enumValueOrDefault(entry.arguments?.getString("difficulty"), Difficulty.MEDIUM)
+                val endReason =
+                    enumValueOrDefault(entry.arguments?.getString("endReason"), RoomEndReason.NORMAL)
+                WinnerRoute(
+                    winner = winner,
+                    mode = mode,
+                    localPlayer = seat,
+                    endReason = endReason,
+                    playedRoomCode = entry.arguments?.getString("roomCode").orEmpty(),
+                    opponentUserId = entry.arguments?.getString("opponentId").orEmpty(),
+                    onRematchAccepted = { rematch ->
+                        onCompletedMatchExit {
+                            navController.navigate(
+                                Routes.onlineGame(
+                                    rematch.roomCode,
+                                    rematch.playerId,
+                                    rematch.userId,
+                                ),
+                            ) {
+                                popUpTo(Routes.WINNER) { inclusive = true }
+                            }
+                        }
+                    },
+                    onReplay = {
+                        onCompletedMatchExit {
+                            if (mode == GameMode.ONLINE) {
+                                navController.navigate(Routes.online()) {
+                                    popUpTo(Routes.WINNER) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(Routes.game(mode, difficulty, seat)) {
+                                    popUpTo(Routes.WINNER) { inclusive = true }
+                                }
+                            }
+                        }
+                    },
+                    onHome = {
+                        onCompletedMatchExit {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.HOME) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                )
+            }
+
+            composable(Routes.SETTINGS) { entry ->
+                val viewModel: SettingsViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                SettingsScreen(
+                    state = state,
+                    onBack = navController::popBackStack,
+                    onLanguage = viewModel::setLanguage,
+                    onThemeMode = viewModel::setThemeMode,
+                    onSound = viewModel::setSoundEnabled,
+                    onHaptics = viewModel::setHapticsEnabled,
+                    onDifficulty = viewModel::setDifficulty,
+                    onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
+                    monetization = monetization,
+                    onPrivacyOptions = onPrivacyOptions,
+                )
+            }
+
+            composable(Routes.STATISTICS) {
+                val viewModel: SettingsViewModel = hiltViewModel()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                StatisticsScreen(state.statistics, navController::popBackStack)
+            }
         }
 
-        composable(Routes.SETTINGS) {
-            val viewModel: SettingsViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            SettingsScreen(
-                state = state,
-                onBack = navController::popBackStack,
-                onLanguage = viewModel::setLanguage,
-                onThemeMode = viewModel::setThemeMode,
-                onSound = viewModel::setSoundEnabled,
-                onHaptics = viewModel::setHapticsEnabled,
-                onDifficulty = viewModel::setDifficulty,
-                onAccount = { navController.navigate(Routes.ACCOUNT) },
-                monetization = monetization,
-                onPrivacyOptions = onPrivacyOptions,
-            )
-        }
-
-        composable(Routes.STATISTICS) {
-            val viewModel: SettingsViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            StatisticsScreen(state.statistics, navController::popBackStack)
-        }
+        // Hung beside the graph rather than inside a screen, so a request reaches the
+        // player wherever they are. See [RequestBar] for why it sits where it does.
+        RequestBar(
+            onOpenGame = { session ->
+                navController.navigate(
+                    Routes.onlineGame(session.roomCode, session.playerId, session.userId),
+                ) {
+                    // A match accepted from inside another one replaces it rather than
+                    // stacking a second board on top of the first.
+                    popUpTo(Routes.GAME) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            onOpenLobby = { roomCode -> navController.navigate(Routes.online(roomCode)) },
+        )
     }
 }
 
 /**
- * Sends the player from the splash screen to wherever they belong: the welcome screen when
- * there is no identity, the tutorial when they have not learned the game, otherwise home.
+ * A screen keeps drawing — and keeps taking touches, on top of the screen replacing it — for
+ * the whole of its exit transition. A tap that lands in that window was aimed at the screen
+ * the player is looking at, not at the one on its way out, so only the destination that is
+ * still resumed is allowed to move them. Without this, backing out of the difficulty screen
+ * and immediately picking a mode starts the bot match the difficulty screen was still
+ * offering.
+ *
+ * This is for navigation a tap causes there and then. Navigation that arrives later — from a
+ * repository event, or after another activity has been in front, as the interstitial is
+ * between the winner screen and its exits — legitimately runs while the entry is not resumed
+ * and must not be dropped.
  */
-private fun NavHostController.navigateToEntryPoint(session: SessionState) {
-    val destination = when {
-        !session.hasEntered -> Routes.WELCOME
-        !session.tutorialCompleted -> Routes.TUTORIAL
-        else -> Routes.HOME
-    }
-    navigate(destination) {
-        popUpTo(Routes.SPLASH) { inclusive = true }
-    }
+private fun NavHostController.navigateFrom(
+    entry: NavBackStackEntry,
+    route: String,
+    builder: NavOptionsBuilder.() -> Unit = {},
+) {
+    if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) navigate(route, builder)
 }
 
-/** Where to land once sign-in succeeds: the tutorial gate still applies. */
-private fun NavHostController.navigateAfterEntry(session: SessionState, popUpToRoute: String) {
-    val destination = if (session.tutorialCompleted) Routes.HOME else Routes.TUTORIAL
-    navigate(destination) {
-        popUpTo(popUpToRoute) { inclusive = true }
-    }
+/**
+ * Moves the player on through the entry sequence, clearing the screen they are leaving.
+ *
+ * Every hand-off between the splash, the welcome screens, the tutorial and the username
+ * picker goes through here, so there is exactly one answer to "where does this player
+ * belong" and no screen can hold an opinion of its own. [entryDestinationFor] is that
+ * answer; this only turns it into a route and decides what to erase behind it.
+ */
+private fun NavHostController.navigateToEntry(
+    session: SessionState,
+    justCompleted: EntryStep = EntryStep.NONE,
+    clearBackStack: NavOptionsBuilder.() -> Unit,
+) {
+    navigate(Routes.entry(entryDestinationFor(session, justCompleted)), clearBackStack)
 }
 
+/**
+ * Turns the auth screens' one outcome into a move through the entry sequence.
+ *
+ * The collector is keyed on the view model alone, so it outlives every recomposition and is
+ * still running when the answer finally arrives. That makes the session it reads a matter of
+ * timing rather than of taste: a plain capture would freeze the state as it was when the
+ * welcome screen was drawn — before this player existed — and the gate would then be decided
+ * on the previous occupant of the device. Somebody signing in after a guest had finished the
+ * tutorial here would be waved through unnamed on that reading. [rememberUpdatedState] is
+ * what keeps the long-lived collector reading the session as it is now.
+ */
 @Composable
 private fun AuthViewModel.HandleEntryEvents(
     navController: NavHostController,
     session: SessionState,
 ) {
+    val currentSession by rememberUpdatedState(session)
     LaunchedEffect(this) {
         events.collect { event ->
             when (event) {
-                AuthEvent.Entered -> navController.navigate(
-                    if (session.tutorialCompleted) Routes.HOME else Routes.TUTORIAL,
-                ) {
-                    popUpTo(0) { inclusive = true }
-                }
-
-                AuthEvent.NeedsUsername -> navController.navigate(Routes.USERNAME) {
-                    popUpTo(0) { inclusive = true }
-                }
+                // The whole stack goes: none of the screens a player signed in from is
+                // somewhere they can go back to now that they have.
+                AuthEvent.Entered ->
+                    navController.navigateToEntry(currentSession, EntryStep.ENTRY) {
+                        popUpTo(0) { inclusive = true }
+                    }
 
                 AuthEvent.PasswordResetSent -> navController.popBackStack()
             }

@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -19,9 +20,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -29,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,12 +46,20 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.asString
+import com.duzman46.gridbound.presentation.profile.PlayerProfileUiState
+import com.duzman46.gridbound.presentation.profile.PlayerProfileViewModel
 import com.duzman46.gridbound.presentation.profile.ProfileEditState
 import com.duzman46.gridbound.profile.domain.UserProfile
+import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.ui.components.AvatarPalette
+import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.FormMessage
+import com.duzman46.gridbound.ui.components.GateTopBar
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
@@ -57,15 +70,23 @@ import com.duzman46.gridbound.ui.components.SubmitButton
 import java.text.DateFormat
 import java.util.Date
 
-/** First-run username picker, shown right after an account is created. */
+/**
+ * The gate every real account passes through once, before it ever reaches the game.
+ *
+ * It has no way out, and that is the whole design: there is no back arrow, and the system
+ * back gesture is swallowed. A name is not a preference to be deferred — it is what every
+ * other player will call you, and every screen past this one shows it to somebody. A skip,
+ * a back arrow or a dismissable dialog would each hand out an unnamed account, and an
+ * unnamed account is one the player has to be chased for later.
+ */
 @Composable
 fun UsernameScreen(
     state: ProfileEditState,
-    onBack: () -> Unit,
     onUsername: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.username_title), onBack) }) { padding ->
+    BackHandler { }
+    Scaffold(topBar = { GateTopBar(stringResource(R.string.username_title)) }) { padding ->
         ScreenBackground {
             Box(
                 Modifier
@@ -100,6 +121,16 @@ fun UsernameScreen(
     }
 }
 
+/**
+ * The player's own page: who they are, their record, and the screens that belong to them.
+ *
+ * Built to a hard budget — all of it has to be readable on one phone screen. That is why the
+ * avatar sits beside the name instead of above it and why every statistic shares one card:
+ * portrait-style headers and a stack of separate cards spend most of their height on padding.
+ *
+ * The scroll is a safety net for accessibility font scales, not part of the intended
+ * experience. At default scale the content is short enough that it never moves.
+ */
 @Composable
 fun ProfileScreen(
     profile: UserProfile?,
@@ -123,82 +154,208 @@ fun ProfileScreen(
                         message = stringResource(R.string.auth_guest_explainer),
                         modifier = Modifier.padding(padding),
                         title = stringResource(R.string.profile_title),
+                        // The explainer ends on "link an account". Without a way to do it
+                        // this screen told a guest what to do and then gave them nowhere to
+                        // do it — the one screen they would go to in order to do it.
+                        action = {
+                            Button(onClick = onAccount) {
+                                Text(stringResource(R.string.auth_link_title))
+                            }
+                        },
                     )
                 }
                 return@ScreenBackground
             }
-            Column(
-                modifier = Modifier
+            Box(
+                Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                    .padding(padding),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                PlayerAvatar(profile.avatarId, profile.displayName, size = 96.dp)
-                Text(
-                    profile.displayName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    "@${profile.username}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (profile.isGuest) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Text(
-                            stringResource(R.string.auth_guest_badge),
-                            Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-
-                Row(
-                    Modifier
+                Column(
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 620.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        .widthIn(max = 620.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    StatTile(stringResource(R.string.profile_rating), profile.rating.toString(), Modifier.weight(1f))
-                    StatTile(stringResource(R.string.profile_games), profile.totalGames.toString(), Modifier.weight(1f))
-                    StatTile(stringResource(R.string.profile_wins), profile.wins.toString(), Modifier.weight(1f))
+                    ProfileIdentity(profile)
+                    ProfileStatsCard(profile)
+                    SubmitButton(
+                        text = stringResource(R.string.profile_edit_title),
+                        onClick = onEdit,
+                    )
+                    // The leaderboard and the friend list used to be buttons on the home screen.
+                    // They belong to the player, so they hang off the player's own screen.
+                    SecondarySubmitButton(
+                        text = stringResource(R.string.leaderboard_title),
+                        onClick = onLeaderboard,
+                    )
+                    SecondarySubmitButton(
+                        text = stringResource(R.string.friends_title),
+                        onClick = onFriends,
+                    )
+                    SecondarySubmitButton(
+                        text = stringResource(R.string.account_title),
+                        onClick = onAccount,
+                    )
                 }
-
-                ProfileDetailCard(profile)
-
-                SubmitButton(
-                    text = stringResource(R.string.profile_edit_title),
-                    onClick = onEdit,
-                    modifier = Modifier.widthIn(max = 620.dp),
-                )
-                // The leaderboard and the friend list used to be buttons on the home screen.
-                // They belong to the player, so they hang off the player's own screen.
-                SecondarySubmitButton(
-                    text = stringResource(R.string.leaderboard_title),
-                    onClick = onLeaderboard,
-                    modifier = Modifier.widthIn(max = 620.dp),
-                )
-                SecondarySubmitButton(
-                    text = stringResource(R.string.friends_title),
-                    onClick = onFriends,
-                    modifier = Modifier.widthIn(max = 620.dp),
-                )
-                SecondarySubmitButton(
-                    text = stringResource(R.string.account_title),
-                    onClick = onAccount,
-                    modifier = Modifier.widthIn(max = 620.dp),
-                )
             }
         }
+    }
+}
+
+/**
+ * Another player's page: the same record, none of the controls that belong to its owner.
+ *
+ * Deliberately a second screen rather than [ProfileScreen] behind an `isOwner` flag. Only the
+ * record is common; everything below it is the opposite of the other screen's — one offers the
+ * ways into your own things, the other offers a relationship — so one screen would have been a
+ * shared header over two bodies of conditionals. Splitting them also turns the rule that
+ * matters into a structural fact: there is no branch here that can draw "Edit profile", so no
+ * later change to a flag can put the owner's controls on a stranger's page. [ProfileIdentity]
+ * and [ProfileStatsCard] are the part that is genuinely shared, and they are shared.
+ */
+@Composable
+fun PlayerProfileRoute(
+    onBack: () -> Unit,
+    viewModel: PlayerProfileViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PlayerProfileScreen(
+        state = state,
+        onBack = onBack,
+        onSendRequest = viewModel::sendRequest,
+        onAccept = viewModel::accept,
+        onUnblock = viewModel::unblock,
+        onRetry = viewModel::retry,
+    )
+}
+
+@Composable
+private fun PlayerProfileScreen(
+    state: PlayerProfileUiState,
+    onBack: () -> Unit,
+    onSendRequest: () -> Unit,
+    onAccept: () -> Unit,
+    onUnblock: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    // The player's own name once it is known: a bar reading "Player profile" above a page with
+    // their name on it says nothing the page does not already say.
+    val title = state.profile?.username ?: stringResource(R.string.profile_player_title)
+    Scaffold(topBar = { ScreenTopBar(title, onBack) }) { padding ->
+        ScreenBackground {
+            val profile = state.profile
+            if (profile == null) {
+                if (state.isLoading) {
+                    LoadingState(Modifier.padding(padding))
+                } else {
+                    ErrorState(
+                        message = (state.error ?: AppError.UNKNOWN.message).asString(),
+                        onRetry = onRetry,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+                return@ScreenBackground
+            }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 620.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    ProfileIdentity(profile)
+                    ProfileStatsCard(profile)
+                    FriendAction(state, onSendRequest, onAccept, onUnblock)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The one thing a player can do about someone else, saying what is actually true rather than
+ * always offering to send.
+ *
+ * Absent on your own page and for a guest: a friendship needs two durable identities, and a
+ * button that could only ever fail is worse than the sentence explaining why it is missing.
+ * Declining a request and removing or blocking a friend stay on the friends screen — this page
+ * moves a relationship forward, it does not administer it.
+ */
+@Composable
+private fun FriendAction(
+    state: PlayerProfileUiState,
+    onSendRequest: () -> Unit,
+    onAccept: () -> Unit,
+    onUnblock: () -> Unit,
+) {
+    if (state.isSelf) return
+    if (state.requiresAccount) {
+        RelationshipNote(stringResource(R.string.friends_requires_account))
+        return
+    }
+    when (state.status) {
+        FriendshipStatus.NONE -> SubmitButton(
+            text = stringResource(R.string.friends_add),
+            onClick = onSendRequest,
+            isSubmitting = state.isBusy,
+            leadingIcon = Icons.Rounded.PersonAdd,
+        )
+
+        FriendshipStatus.REQUEST_RECEIVED -> SubmitButton(
+            text = stringResource(R.string.friends_accept),
+            onClick = onAccept,
+            isSubmitting = state.isBusy,
+            leadingIcon = Icons.Rounded.Check,
+        )
+
+        FriendshipStatus.REQUEST_SENT ->
+            RelationshipNote(stringResource(R.string.friends_request_pending))
+
+        FriendshipStatus.FRIENDS -> RelationshipNote(
+            text = stringResource(R.string.friends_already_friends),
+            color = MaterialTheme.colorScheme.primary,
+        )
+
+        FriendshipStatus.BLOCKED -> SecondarySubmitButton(
+            text = stringResource(R.string.friends_unblock),
+            onClick = onUnblock,
+            isSubmitting = state.isBusy,
+        )
+    }
+    state.message?.let { FormMessage(it) }
+}
+
+/** A relationship with nothing to press says so in words, never as a disabled button. */
+@Composable
+private fun RelationshipNote(
+    text: String,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = color,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -207,7 +364,6 @@ fun EditProfileScreen(
     state: ProfileEditState,
     onBack: () -> Unit,
     onUsername: (String) -> Unit,
-    onDisplayName: (String) -> Unit,
     onAvatar: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
@@ -230,20 +386,12 @@ fun EditProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     UsernameField(state, onUsername)
-                    OutlinedTextField(
-                        value = state.displayName,
-                        onValueChange = onDisplayName,
-                        label = { Text(stringResource(R.string.profile_display_name_label)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                     Text(
                         stringResource(R.string.profile_avatar_label),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    AvatarPicker(state.avatarId, state.displayName, onAvatar)
+                    AvatarPicker(state.avatarId, state.username.value, onAvatar)
                     SubmitButton(
                         text = stringResource(R.string.action_save),
                         onClick = onSubmit,
@@ -346,57 +494,150 @@ private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit)
     }
 }
 
+/** Name and account kind on one line, so the record below starts near the top. */
 @Composable
-private fun ProfileDetailCard(profile: UserProfile) {
+private fun ProfileIdentity(profile: UserProfile) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PlayerAvatar(profile.avatarId, profile.username, size = 64.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                profile.username,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            if (profile.isGuest) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Text(
+                        stringResource(R.string.auth_guest_badge),
+                        Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The whole record in one card: the three headline numbers, then the rest as a two-column
+ * table of label/value rows.
+ *
+ * Rows rather than a grid of small tiles because a row can wrap a long label — "Niederlagen",
+ * "Победная серия" — onto a second line and stay readable, where a tile narrow enough to fit
+ * eight of them would have to break the word. That is what keeps this legible at large font
+ * scales instead of merely small.
+ */
+@Composable
+private fun ProfileStatsCard(profile: UserProfile) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 620.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
         ),
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            DetailRow(stringResource(R.string.profile_highest_rating), profile.highestRating.toString())
-            DetailRow(stringResource(R.string.profile_losses), profile.losses.toString())
-            DetailRow(stringResource(R.string.profile_draws), profile.draws.toString())
-            DetailRow(stringResource(R.string.profile_win_streak), profile.currentWinStreak.toString())
-            DetailRow(stringResource(R.string.profile_best_streak), profile.bestWinStreak.toString())
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                StatTile(
+                    label = stringResource(R.string.profile_rating),
+                    value = profile.rating.toString(),
+                    modifier = Modifier.weight(1f),
+                )
+                StatTile(
+                    label = stringResource(R.string.profile_games),
+                    value = profile.totalGames.toString(),
+                    modifier = Modifier.weight(1f),
+                )
+                StatTile(
+                    label = stringResource(R.string.profile_wins),
+                    value = profile.wins.toString(),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DetailRowPair(
+                leftLabel = stringResource(R.string.profile_losses),
+                leftValue = profile.losses.toString(),
+                rightLabel = stringResource(R.string.profile_draws),
+                rightValue = profile.draws.toString(),
+            )
+            DetailRowPair(
+                leftLabel = stringResource(R.string.profile_win_streak),
+                leftValue = profile.currentWinStreak.toString(),
+                rightLabel = stringResource(R.string.profile_best_streak),
+                rightValue = profile.bestWinStreak.toString(),
+            )
+            // Five statistics leave one without a partner. Letting it span both columns reads
+            // as a summary line rather than a gap, and the peak rating earns that spot.
+            DetailRow(
+                stringResource(R.string.profile_highest_rating),
+                profile.highestRating.toString(),
+            )
             if (profile.createdAt > 0L) {
-                DetailRow(
-                    label = stringResource(R.string.profile_member_since, formatDate(profile.createdAt)),
-                    value = "",
+                Text(
+                    stringResource(R.string.profile_member_since, formatDate(profile.createdAt)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
 }
 
+/** Two statistics side by side, each keeping its value pinned to the end of its own half. */
 @Composable
-private fun DetailRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, fontWeight = FontWeight.Bold)
+private fun DetailRowPair(
+    leftLabel: String,
+    leftValue: String,
+    rightLabel: String,
+    rightValue: String,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        DetailRow(leftLabel, leftValue, Modifier.weight(1f))
+        DetailRow(rightLabel, rightValue, Modifier.weight(1f))
     }
 }
 
 @Composable
+private fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The label absorbs the slack so the value lands on the end edge whatever its width.
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** The three numbers a player looks for first, so they carry the weight the table does not. */
+@Composable
 private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier, shape = RoundedCornerShape(20.dp)) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-            Text(
-                label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

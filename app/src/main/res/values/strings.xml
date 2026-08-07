@@ -20,8 +20,6 @@
 
     <!-- Shared states -->
     <string name="state_loading">Loading…</string>
-    <string name="state_offline_title">No internet connection</string>
-    <string name="state_offline_message">Online features need a connection. Local games keep working.</string>
     <string name="state_empty_title">Nothing here yet</string>
     <string name="state_error_title">Something went wrong</string>
 
@@ -99,7 +97,6 @@
     <!-- Profile -->
     <string name="profile_title">Profile</string>
     <string name="profile_edit_title">Edit profile</string>
-    <string name="profile_display_name_label">Display name</string>
     <string name="profile_avatar_label">Avatar</string>
     <string name="profile_rating">Rating</string>
     <string name="profile_highest_rating">Best rating</string>
@@ -110,11 +107,13 @@
     <string name="profile_win_streak">Win streak</string>
     <string name="profile_best_streak">Best streak</string>
     <string name="profile_member_since">Member since %1$s</string>
+    <string name="profile_player_title">Player profile</string>
 
     <!-- Account management -->
     <string name="account_title">Account</string>
     <string name="account_delete_title">Delete account</string>
     <string name="account_delete_warning">This permanently deletes your profile, stats, friends and rating. Purchases cannot be restored afterwards. This cannot be undone.</string>
+    <string name="account_delete_reauth_explainer">Before your account is removed you will be asked to confirm your sign-in.</string>
     <string name="account_delete_confirm_label">Type %1$s to confirm</string>
     <string name="account_delete_action">Delete my account permanently</string>
     <string name="account_delete_success">Your account has been deleted.</string>
@@ -129,15 +128,15 @@
     <string name="tutorial_finish">Start playing</string>
 
     <string name="tutorial_step_select_title">Select your pawn</string>
-    <string name="tutorial_step_select_message">Tap your blue pawn to see where it can go.</string>
+    <string name="tutorial_step_select_message">Tap your blue pawn. The green dots that appear are every square it may move to this turn.</string>
     <string name="tutorial_step_move_title">Make a move</string>
-    <string name="tutorial_step_move_message">Tap a highlighted square to move one step.</string>
+    <string name="tutorial_step_move_message">A pawn moves one square at a time — up, down, left or right, never diagonally. Tap the highlighted square.</string>
     <string name="tutorial_step_jump_title">Jump your rival</string>
-    <string name="tutorial_step_jump_message">When you stand face to face, you can jump straight over your rival.</string>
+    <string name="tutorial_step_jump_message">Standing nose to nose, you may leap over your rival and land on the square behind them. That counts as your move, like any other.</string>
     <string name="tutorial_step_blocked_title">A wall can never trap</string>
-    <string name="tutorial_step_blocked_message">Try this wall. It is rejected because it would close the last path.</string>
+    <string name="tutorial_step_blocked_message">Now try to seal your rival in. The rules refuse it — a wall may never take away a player’s last route to their goal, so nobody can be trapped.</string>
     <string name="tutorial_step_win_title">Win the game</string>
-    <string name="tutorial_step_win_message">Reach the far side to win. Move onto the last row.</string>
+    <string name="tutorial_step_win_message">Your goal is the far row; your rival’s is the row you started on. Step onto the last row and the match is yours.</string>
     <string name="tutorial_hint_wrong_move">Not that one. Follow the highlighted hint.</string>
 
     <!-- Online rooms -->
@@ -152,7 +151,6 @@
     -->
     <string name="room_error_password_too_short" tools:ignore="PluralsCandidate">The room password must be at least %1$d characters.</string>
     <string name="room_error_name_too_long">That room name is too long.</string>
-    <string name="room_error_no_opponent">No opponent was found. Try creating a room instead.</string>
     <string name="room_error_ranked_requires_account">Ranked matches need an account. Link yours to play ranked.</string>
 
     <string name="online_title">Play Online</string>
@@ -161,19 +159,10 @@
     <string name="online_browse_rooms">Open rooms</string>
     <string name="online_quick_match">Quick match</string>
     <string name="online_quick_match_searching">Looking for an opponent…</string>
-    <string name="online_rejoin_match">Return to your match</string>
-    <string name="online_rejoin_explainer">You have a match in progress.</string>
 
     <string name="room_name_label">Room name</string>
     <string name="room_name_placeholder">Optional</string>
-    <string name="room_visibility_label">Who can join</string>
-    <string name="room_visibility_public">Anyone</string>
-    <string name="room_visibility_private">Code only</string>
-    <string name="room_visibility_friends">Friends</string>
-    <string name="room_ranked_label">Ranked match</string>
-    <string name="room_ranked_description">Ranked matches change your rating.</string>
     <string name="room_turn_duration_label">Time per move</string>
-    <string name="room_total_duration_label">Time per player</string>
     <string name="room_duration_unlimited">Unlimited</string>
     <string name="room_duration_minutes">%1$d min</string>
     <string name="room_duration_seconds">%1$d s</string>
@@ -185,10 +174,6 @@
     <string name="room_close">Close room</string>
 
     <string name="room_browser_empty">No open rooms right now. Create one and wait for a rival.</string>
-    <string name="room_browser_filter_all">All</string>
-    <string name="room_browser_filter_ranked">Ranked</string>
-    <string name="room_browser_filter_casual">Casual</string>
-    <string name="room_browser_filter_fast">Fast</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Password protected</string>
@@ -197,7 +182,6 @@
     <string name="game_resign_confirm_title">Resign the match?</string>
     <string name="game_resign_confirm_message">Your rival wins and, in a ranked match, your rating drops.</string>
     <string name="game_opponent_left">Your rival has disconnected. They have a moment to return.</string>
-    <string name="game_claim_win">Claim the win</string>
     <string name="game_reconnecting">Reconnecting…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">Your turn</string>
@@ -214,6 +198,7 @@
     <string name="leaderboard_your_rank">Your position</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Sign in to appear on the leaderboard.</string>
+    <string name="leaderboard_guest_not_ranked">Guests are not ranked. Link an account to take your place on the leaderboard.</string>
     <!-- A terse two-number badge in a table row, not a sentence; plurals would not fit. -->
     <string name="leaderboard_record" tools:ignore="PluralsCandidate">%1$d W · %2$d played</string>
     <string name="cd_leaderboard_row">Rank %1$d, %2$s, rating %3$d</string>
@@ -237,6 +222,7 @@
     <string name="game_history_pawn_label">Pawn</string>
     <string name="game_exit_title">Leave the game?</string>
     <string name="game_exit_message">The current game will end. Are you sure you want to leave?</string>
+    <string name="game_exit_online_message">Leaving forfeits the match. Your rival wins and, in a ranked match, your rating drops.</string>
     <string name="game_exit_keep_playing">Keep Playing</string>
     <string name="game_exit_confirm">Leave Game</string>
     <string name="game_place_wall">Place Wall</string>
@@ -256,9 +242,9 @@
     <string name="game_online_match">Online game</string>
     <string name="game_vs_ai">%1$s AI</string>
     <string name="game_player_blue">Blue</string>
-    <string name="game_player_orange">Orange</string>
+    <string name="game_player_red">Red</string>
     <string name="game_turn_blue">Blue player\'s turn</string>
-    <string name="game_turn_orange">Orange player\'s turn</string>
+    <string name="game_turn_red">Red player’s turn</string>
     <string name="game_turn_opponent">Opponent\'s turn</string>
     <string name="game_turn_yours">Your turn · %1$s</string>
     <string name="winner_reached_goal">%1$s player reached the goal edge.</string>
@@ -270,13 +256,19 @@
     <!-- Winner -->
     <string name="winner_victory">Victory!</string>
     <string name="winner_ai_won">AI won this time</string>
+    <string name="winner_rival_won">Your rival won</string>
     <string name="winner_retry_hint">Try again with a new strategy.</string>
+    <string name="winner_rival_left">Your rival left the match.</string>
+    <string name="winner_turn_clock_ran_out">The move clock ran out.</string>
     <string name="winner_play_again">Play Again</string>
+    <string name="winner_rematch">Rematch</string>
+    <string name="winner_rematch_waiting">Waiting for your rival to answer…</string>
+    <string name="winner_rematch_declined">Your rival turned down the rematch.</string>
+    <string name="winner_another_game">Another game</string>
     <string name="winner_main_menu">Main Menu</string>
 
     <!-- Settings and statistics -->
     <string name="settings_language">Language</string>
-    <string name="settings_language_device">Use device language</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
@@ -335,28 +327,34 @@
     <string name="friends_online">Online</string>
     <string name="friends_offline">Offline</string>
     <string name="friends_requires_account">Friends need an account. Link yours to add players.</string>
+    <string name="friends_invite_waiting">Waiting for %1$s…</string>
+    <string name="friends_request_pending">Friend request sent</string>
+    <string name="friends_already_friends">You are friends</string>
 
     <string name="invites_title">Game invitations</string>
     <string name="invites_from">%1$s invited you to a match.</string>
+    <string name="requests_rematch_from">%1$s wants a rematch.</string>
     <string name="invites_join">Join</string>
     <string name="invites_dismiss">Dismiss</string>
 
     <!-- Accessibility -->
     <string name="cd_board">Game board, 9 by 9 squares</string>
     <string name="cd_avatar">Profile picture</string>
+    <string name="cd_open_profile">Open profile</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="tutorial_step_wall_vertical_title">Place a vertical wall</string>
-    <string name="tutorial_step_wall_vertical_message">Vertical walls sit between two columns. Tap the highlighted slot to cut off your rival\'s sideways step.</string>
+    <string name="tutorial_step_wall_vertical_message">You hold ten walls. A vertical wall drops into the channel between two columns and spans two rows — it takes away a sideways step without slowing the run down the board.</string>
     <string name="tutorial_step_wall_horizontal_title">Place a horizontal wall</string>
-    <string name="tutorial_step_wall_horizontal_message">Horizontal walls sit between two rows. Tap the highlighted slot to block your rival\'s way forward.</string>
+    <string name="tutorial_step_wall_horizontal_message">A horizontal wall sits between two rows. Placed in front of your rival it costs them moves: the same piece, turned, does a completely different job.</string>
     <string name="tutorial_step_correct">Correct. Tap Next to continue.</string>
     <string name="menu_play">Play</string>
     <string name="menu_online">Online</string>
     <string name="menu_more">More</string>
     <string name="play_vs_bot">Against the bot</string>
     <string name="play_local">Two players, one device</string>
-    <string name="play_custom_start">Start custom game</string>
-    <string name="online_play_with_friend">Play with a friend</string>
     <string name="store_remove_ads">Remove ads</string>
     <string name="more_about_version">Version %1$s</string>
+    <string name="error_not_friends">You can only invite friends.</string>
+    <string name="paint_label">Your colour</string>
+    <string name="online_quick_match_hint">Press it and wait — you are paired with the waiting player whose rating is closest to yours.</string>
 </resources>

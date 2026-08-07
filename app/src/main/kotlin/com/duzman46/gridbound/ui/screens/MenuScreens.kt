@@ -8,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,10 +32,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppLanguage
-import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.components.AdBanner
 import com.duzman46.gridbound.ui.components.KoridorMark
@@ -49,8 +48,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.duzman46.gridbound.BuildConfig
 import com.duzman46.gridbound.ui.components.home.HomeChoice
 import com.duzman46.gridbound.ui.components.home.HomeSheet
+import com.duzman46.gridbound.ui.components.home.HomeTopBar
+import com.duzman46.gridbound.ui.components.home.HomeWordmark
 import com.duzman46.gridbound.ui.components.home.SheetAction
-import com.duzman46.gridbound.ui.components.home.SheetChoice
 import com.duzman46.gridbound.ui.components.home.SheetDivider
 import com.duzman46.gridbound.ui.components.home.SheetLink
 import com.duzman46.gridbound.ui.components.home.SheetVersion
@@ -82,6 +82,12 @@ fun SplashScreen(onFinished: () -> Unit) {
                     stringResource(R.string.app_name).uppercase(),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Black,
+                    // Explicit, and that is the whole fix: this Text is not inside a Surface,
+                    // so it inherited LocalContentColor's default of black and was drawn in
+                    // black on a near-black ground. The wordmark was there the whole time and
+                    // could not be read.
+                    color = MaterialTheme.colorScheme.onBackground,
+                    letterSpacing = 0.18.em,
                 )
             }
         }
@@ -91,10 +97,15 @@ fun SplashScreen(onFinished: () -> Unit) {
 /**
  * The home screen.
  *
- * Four choices and nothing else. Everything the app can do used to be a button here, which
- * made the first screen a directory rather than a way in; each of these opens a sheet holding
- * the handful of things that belong under it. Settings, language and the player's own profile
- * are small marks on the board panel, not entries in the list.
+ * One way in and the four destinations a player asks for by name: learn it, see the table,
+ * change something, everything else. Everything the app can do used to be a button here,
+ * which made the first screen a directory; the rest now lives behind "More". Friends,
+ * language and the player's own profile are small marks in a row of their own, not entries in
+ * the list — they are people and preferences, not ways to start a game.
+ *
+ * Read top to bottom the screen is: who you are and who you know, the name of the game, the
+ * game itself, then how to start one. The panel in the middle holds nothing but artwork, which
+ * is the only arrangement in which all of the artwork can be seen.
  */
 @Composable
 fun MainMenuScreen(
@@ -102,11 +113,7 @@ fun MainMenuScreen(
     language: AppLanguage,
     adsRemoved: Boolean,
     onLanguage: (AppLanguage) -> Unit,
-    onPlayBot: (Difficulty) -> Unit,
-    onPlayLocal: () -> Unit,
-    onQuickMatch: () -> Unit,
-    onCreateRoom: () -> Unit,
-    onJoinRoom: () -> Unit,
+    onPlay: () -> Unit,
     onFriends: () -> Unit,
     onLeaderboard: () -> Unit,
     onProfile: () -> Unit,
@@ -117,11 +124,9 @@ fun MainMenuScreen(
     onRestorePurchases: () -> Unit,
     onOpenUrl: (String) -> Unit,
     showAdBanner: Boolean,
-    defaultDifficulty: Difficulty,
 ) {
     var openSheet by rememberSaveable { mutableStateOf(HomeMenu.NONE) }
     var languagePickerOpen by remember { mutableStateOf(false) }
-    var customDifficulty by rememberSaveable { mutableStateOf(defaultDifficulty) }
     val dismiss = { openSheet = HomeMenu.NONE }
 
     if (languagePickerOpen) {
@@ -135,52 +140,12 @@ fun MainMenuScreen(
         )
     }
 
-    when (openSheet) {
-        HomeMenu.NONE -> Unit
-
-        HomeMenu.PLAY -> HomeSheet(stringResource(R.string.menu_play), dismiss) {
-            SheetAction(stringResource(R.string.play_vs_bot), GlyphKind.VS_BOT, {
-                dismiss(); onPlayBot(defaultDifficulty)
-            }, emphasised = true)
-            SheetAction(stringResource(R.string.play_local), GlyphKind.FRIENDS, {
-                dismiss(); onPlayLocal()
-            })
-            SheetDivider()
-            // The custom game is the same bot match with the settings that used to be a
-            // whole screen of their own, folded in where they are actually chosen.
-            SheetChoice(
-                label = stringResource(R.string.difficulty_title),
-                options = Difficulty.entries,
-                selected = customDifficulty,
-                optionLabel = { it.label() },
-                onSelect = { customDifficulty = it },
-            )
-            SheetAction(stringResource(R.string.play_custom_start), GlyphKind.SETTINGS, {
-                dismiss(); onPlayBot(customDifficulty)
-            })
-        }
-
-        HomeMenu.ONLINE -> HomeSheet(stringResource(R.string.menu_online), dismiss) {
-            SheetAction(stringResource(R.string.online_quick_match), GlyphKind.QUICK_PLAY, {
-                dismiss(); onQuickMatch()
-            }, emphasised = true)
-            SheetAction(stringResource(R.string.online_create_room), GlyphKind.CREATE_ROOM, {
-                dismiss(); onCreateRoom()
-            })
-            SheetAction(stringResource(R.string.online_join_by_code), GlyphKind.JOIN_ROOM, {
-                dismiss(); onJoinRoom()
-            })
-            SheetAction(stringResource(R.string.online_play_with_friend), GlyphKind.FRIENDS, {
-                dismiss(); onFriends()
-            })
-            SheetDivider()
-            SheetLink(stringResource(R.string.leaderboard_title), onClick = { dismiss(); onLeaderboard() })
-        }
-
-        HomeMenu.MORE -> HomeSheet(stringResource(R.string.menu_more), dismiss) {
-            SheetAction(stringResource(R.string.menu_tutorial), GlyphKind.TUTORIAL, {
-                dismiss(); onTutorial()
-            })
+    if (openSheet == HomeMenu.MORE) {
+        HomeSheet(stringResource(R.string.menu_more), dismiss) {
+            // No friends entry here. "More" is where the things nobody looks for by name go,
+            // and friends is a mark in the row at the top of the screen — one destination
+            // reachable twice from one screen teaches the player that neither route is real.
+            //
             // Hidden once bought: an upgrade you already own is not an offer.
             if (!adsRemoved) {
                 SheetAction(stringResource(R.string.store_remove_ads), GlyphKind.REMOVE_ADS, {
@@ -205,7 +170,6 @@ fun MainMenuScreen(
             if (termsUrl.isNotBlank()) {
                 SheetLink(stringResource(R.string.account_terms_of_service), onClick = { onOpenUrl(termsUrl) })
             }
-            // Not a link: the version is here to be read, not tapped.
             SheetVersion(stringResource(R.string.more_about_version, BuildConfig.VERSION_NAME))
         }
     }
@@ -228,20 +192,33 @@ fun MainMenuScreen(
                         .padding(horizontal = Dimens.ScreenPadding),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Spacer(Modifier.height(Dimens.SpaceLg))
-                    BoardShowcase(
+                    Spacer(Modifier.height(Dimens.SpaceMd))
+                    HomeTopBar(
                         session = session,
                         language = language,
-                        onProfile = onProfile,
-                        onLanguage = { languagePickerOpen = true },
+                        onFriends = onFriends,
                         onSettings = onSettings,
+                        onLanguage = { languagePickerOpen = true },
+                        onProfile = onProfile,
                     )
+                    Spacer(Modifier.height(Dimens.SpaceLg))
+                    // Tight to the panel, loose from the row above it: the wordmark belongs to
+                    // the picture it introduces, and equal gaps on both sides would leave it
+                    // floating between two things it has nothing to do with.
+                    HomeWordmark()
+                    Spacer(Modifier.height(Dimens.SpaceSm))
+                    BoardShowcase()
                     Spacer(Modifier.height(Dimens.SpaceXl))
-                    PlaySlab(stringResource(R.string.menu_play), onClick = { openSheet = HomeMenu.PLAY })
+                    PlaySlab(stringResource(R.string.menu_play), onClick = onPlay)
                     Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeChoice(stringResource(R.string.menu_online), GlyphKind.ONLINE, onClick = { openSheet = HomeMenu.ONLINE })
+                    // Learning the game and seeing where you stand are the two things a
+                    // player looks for by name. Buried in a sheet they were never found, and
+                    // the screen had nothing under the slab but empty ground.
+                    HomeChoice(stringResource(R.string.menu_tutorial), GlyphKind.TUTORIAL, onClick = onTutorial)
                     Spacer(Modifier.height(Dimens.SpaceMd))
-                    HomeChoice(stringResource(R.string.profile_title), GlyphKind.PROFILE, onClick = onProfile)
+                    HomeChoice(stringResource(R.string.leaderboard_title), GlyphKind.LEADERBOARD, onClick = onLeaderboard)
+                    Spacer(Modifier.height(Dimens.SpaceMd))
+                    HomeChoice(stringResource(R.string.game_settings), GlyphKind.SETTINGS, onClick = onSettings)
                     Spacer(Modifier.height(Dimens.SpaceMd))
                     HomeChoice(stringResource(R.string.menu_more), GlyphKind.MORE, onClick = { openSheet = HomeMenu.MORE })
                     Spacer(Modifier.height(Dimens.SpaceXl))
@@ -252,11 +229,4 @@ fun MainMenuScreen(
 }
 
 /** Which sheet is showing. Saved, so a rotation does not close it. */
-private enum class HomeMenu { NONE, PLAY, ONLINE, MORE }
-
-@Composable
-private fun Difficulty.label(): String = when (this) {
-    Difficulty.EASY -> stringResource(R.string.difficulty_easy)
-    Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
-    Difficulty.HARD -> stringResource(R.string.difficulty_hard)
-}
+private enum class HomeMenu { NONE, MORE }

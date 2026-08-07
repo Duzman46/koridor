@@ -13,8 +13,6 @@
     <string name="action_skip">छोड़ें</string>
 
     <string name="state_loading">लोड हो रहा है…</string>
-    <string name="state_offline_title">इंटरनेट कनेक्शन नहीं है</string>
-    <string name="state_offline_message">ऑनलाइन सुविधाओं के लिए कनेक्शन ज़रूरी है। स्थानीय खेल चलते रहेंगे।</string>
     <string name="state_empty_title">यहाँ अभी कुछ नहीं है</string>
     <string name="state_error_title">कुछ गड़बड़ हो गई</string>
 
@@ -85,7 +83,6 @@
 
     <string name="profile_title">प्रोफ़ाइल</string>
     <string name="profile_edit_title">प्रोफ़ाइल संपादित करें</string>
-    <string name="profile_display_name_label">दिखने वाला नाम</string>
     <string name="profile_avatar_label">अवतार</string>
     <string name="profile_rating">रेटिंग</string>
     <string name="profile_highest_rating">सर्वश्रेष्ठ रेटिंग</string>
@@ -96,10 +93,12 @@
     <string name="profile_win_streak">मौजूदा लगातार जीत</string>
     <string name="profile_best_streak">सर्वश्रेष्ठ लगातार जीत</string>
     <string name="profile_member_since">%1$s से सदस्य</string>
+    <string name="profile_player_title">खिलाड़ी प्रोफ़ाइल</string>
 
     <string name="account_title">खाता</string>
     <string name="account_delete_title">खाता हटाएँ</string>
     <string name="account_delete_warning">इससे आपकी प्रोफ़ाइल, आँकड़े, दोस्त और रेटिंग स्थायी रूप से हट जाएँगे। इसके बाद ख़रीदारी बहाल नहीं की जा सकेगी। यह कार्रवाई वापस नहीं ली जा सकती।</string>
+    <string name="account_delete_reauth_explainer">आपका खाता हटाने से पहले आपसे साइन-इन की पुष्टि करने को कहा जाएगा।</string>
     <string name="account_delete_confirm_label">पुष्टि के लिए %1$s टाइप करें</string>
     <string name="account_delete_action">मेरा खाता स्थायी रूप से हटाएँ</string>
     <string name="account_delete_success">आपका खाता हटा दिया गया है।</string>
@@ -130,7 +129,6 @@
     <string name="room_error_password_wrong">कमरे का पासवर्ड ग़लत है।</string>
     <string name="room_error_password_too_short">कमरे का पासवर्ड कम से कम %1$d वर्णों का होना चाहिए।</string>
     <string name="room_error_name_too_long">कमरे का नाम बहुत लंबा है।</string>
-    <string name="room_error_no_opponent">कोई प्रतिद्वंद्वी नहीं मिला। इसके बजाय एक कमरा बनाकर देखें।</string>
     <string name="room_error_ranked_requires_account">रैंक मैच के लिए खाता ज़रूरी है। रैंक में खेलने के लिए अपना खाता जोड़ें।</string>
 
     <string name="online_title">ऑनलाइन खेलें</string>
@@ -139,19 +137,10 @@
     <string name="online_browse_rooms">खुले कमरे</string>
     <string name="online_quick_match">त्वरित मैच</string>
     <string name="online_quick_match_searching">प्रतिद्वंद्वी खोजा जा रहा है…</string>
-    <string name="online_rejoin_match">अपने मैच में लौटें</string>
-    <string name="online_rejoin_explainer">आपका एक मैच चल रहा है।</string>
 
     <string name="room_name_label">कमरे का नाम</string>
     <string name="room_name_placeholder">वैकल्पिक</string>
-    <string name="room_visibility_label">कौन जुड़ सकता है</string>
-    <string name="room_visibility_public">कोई भी</string>
-    <string name="room_visibility_private">सिर्फ़ कोड से</string>
-    <string name="room_visibility_friends">दोस्त</string>
-    <string name="room_ranked_label">रैंक मैच</string>
-    <string name="room_ranked_description">रैंक मैच आपकी रेटिंग बदलते हैं।</string>
     <string name="room_turn_duration_label">प्रति चाल समय</string>
-    <string name="room_total_duration_label">प्रति खिलाड़ी समय</string>
     <string name="room_duration_unlimited">असीमित</string>
     <string name="room_duration_minutes">%1$d मि.</string>
     <string name="room_duration_seconds">%1$d से.</string>
@@ -163,10 +152,6 @@
     <string name="room_close">कमरा बंद करें</string>
 
     <string name="room_browser_empty">अभी कोई कमरा खुला नहीं है। एक बनाएँ और प्रतिद्वंद्वी का इंतज़ार करें।</string>
-    <string name="room_browser_filter_all">सभी</string>
-    <string name="room_browser_filter_ranked">रैंक</string>
-    <string name="room_browser_filter_casual">सामान्य</string>
-    <string name="room_browser_filter_fast">तेज़</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">पासवर्ड से सुरक्षित</string>
@@ -175,7 +160,6 @@
     <string name="game_resign_confirm_title">मैच में हार मान लें?</string>
     <string name="game_resign_confirm_message">आपका प्रतिद्वंद्वी जीत जाएगा और रैंक मैच में आपकी रेटिंग घट जाएगी।</string>
     <string name="game_opponent_left">आपके प्रतिद्वंद्वी का कनेक्शन टूट गया। उनके पास लौटने के लिए थोड़ा समय है।</string>
-    <string name="game_claim_win">जीत का दावा करें</string>
     <string name="game_reconnecting">फिर से कनेक्ट हो रहा है…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
     <string name="game_your_turn">आपकी बारी</string>
@@ -191,6 +175,7 @@
     <string name="leaderboard_your_rank">आपकी स्थिति</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">लीडरबोर्ड में दिखने के लिए साइन इन करें।</string>
+    <string name="leaderboard_guest_not_ranked">मेहमानों की रैंकिंग नहीं होती। लीडरबोर्ड में जगह पाने के लिए खाता लिंक करें।</string>
     <string name="leaderboard_record">%1$d जीत · %2$d मैच</string>
     <string name="cd_leaderboard_row">रैंक %1$d, %2$s, रेटिंग %3$d</string>
 
@@ -211,6 +196,7 @@
     <string name="game_history_pawn_label">गोटी</string>
     <string name="game_exit_title">खेल से बाहर जाएँ?</string>
     <string name="game_exit_message">मौजूदा खेल ख़त्म हो जाएगा। क्या आप वाक़ई बाहर जाना चाहते हैं?</string>
+    <string name="game_exit_online_message">बाहर जाना मैच छोड़ना है। आपका प्रतिद्वंद्वी जीत जाएगा और रैंक मैच में आपकी रेटिंग घट जाएगी।</string>
     <string name="game_exit_keep_playing">खेलते रहें</string>
     <string name="game_exit_confirm">बाहर जाएँ</string>
     <string name="game_place_wall">दीवार लगाएँ</string>
@@ -230,9 +216,9 @@
     <string name="game_online_match">ऑनलाइन मैच</string>
     <string name="game_vs_ai">%1$s AI</string>
     <string name="game_player_blue">नीला</string>
-    <string name="game_player_orange">नारंगी</string>
+    <string name="game_player_red">लाल</string>
     <string name="game_turn_blue">नीले खिलाड़ी की बारी</string>
-    <string name="game_turn_orange">नारंगी खिलाड़ी की बारी</string>
+    <string name="game_turn_red">लाल खिलाड़ी की बारी</string>
     <string name="game_turn_opponent">प्रतिद्वंद्वी की बारी</string>
     <string name="game_turn_yours">आपकी बारी · %1$s</string>
     <string name="winner_reached_goal">%1$s खिलाड़ी लक्ष्य किनारे तक पहुँच गया।</string>
@@ -243,12 +229,18 @@
 
     <string name="winner_victory">जीत!</string>
     <string name="winner_ai_won">इस बार AI जीत गया</string>
+    <string name="winner_rival_won">आपका प्रतिद्वंद्वी जीत गया</string>
     <string name="winner_retry_hint">नई रणनीति के साथ फिर कोशिश करें।</string>
+    <string name="winner_rival_left">आपका प्रतिद्वंद्वी मैच छोड़ गया।</string>
+    <string name="winner_turn_clock_ran_out">चाल का समय ख़त्म हो गया।</string>
     <string name="winner_play_again">फिर खेलें</string>
+    <string name="winner_rematch">फिर से मुक़ाबला</string>
+    <string name="winner_rematch_waiting">प्रतिद्वंद्वी के जवाब का इंतज़ार…</string>
+    <string name="winner_rematch_declined">आपके प्रतिद्वंद्वी ने फिर से मुक़ाबला करने से मना कर दिया।</string>
+    <string name="winner_another_game">दूसरा खेल</string>
     <string name="winner_main_menu">मुख्य मेन्यू</string>
 
     <string name="settings_language">भाषा</string>
-    <string name="settings_language_device">डिवाइस की भाषा उपयोग करें</string>
     <string name="settings_appearance">रूप</string>
     <string name="settings_theme_system">सिस्टम</string>
     <string name="settings_theme_light">हल्का</string>
@@ -305,14 +297,19 @@
     <string name="friends_online">ऑनलाइन</string>
     <string name="friends_offline">ऑफ़लाइन</string>
     <string name="friends_requires_account">दोस्तों के लिए खाता ज़रूरी है। खिलाड़ी जोड़ने के लिए अपना खाता जोड़ें।</string>
+    <string name="friends_invite_waiting">%1$s की प्रतीक्षा…</string>
+    <string name="friends_request_pending">मित्रता अनुरोध भेजा गया</string>
+    <string name="friends_already_friends">आप दोस्त हैं</string>
 
     <string name="invites_title">खेल के न्योते</string>
     <string name="invites_from">%1$s ने आपको मैच के लिए बुलाया है।</string>
+    <string name="requests_rematch_from">%1$s फिर से मुक़ाबला चाहता है।</string>
     <string name="invites_join">जुड़ें</string>
     <string name="invites_dismiss">हटाएँ</string>
 
     <string name="cd_board">गेम बोर्ड, 9 गुणा 9 ख़ाने</string>
     <string name="cd_avatar">प्रोफ़ाइल तस्वीर</string>
+    <string name="cd_open_profile">प्रोफ़ाइल खोलें</string>
     <string name="menu_tutorial">ट्यूटोरियल</string>
     <string name="tutorial_step_wall_vertical_title">खड़ी दीवार रखें</string>
     <string name="tutorial_step_wall_vertical_message">खड़ी दीवारें दो स्तंभों के बीच बैठती हैं। प्रतिद्वंद्वी का बगल का कदम रोकने के लिए चिह्नित खाँचे पर टैप करें।</string>
@@ -324,8 +321,9 @@
     <string name="menu_more">और</string>
     <string name="play_vs_bot">बॉट के विरुद्ध</string>
     <string name="play_local">एक डिवाइस, दो खिलाड़ी</string>
-    <string name="play_custom_start">कस्टम खेल शुरू करें</string>
-    <string name="online_play_with_friend">मित्र के साथ खेलें</string>
     <string name="store_remove_ads">विज्ञापन हटाएँ</string>
     <string name="more_about_version">संस्करण %1$s</string>
+    <string name="error_not_friends">आप केवल मित्रों को आमंत्रित कर सकते हैं।</string>
+    <string name="paint_label">आपका रंग</string>
+    <string name="online_quick_match_hint">दबाएं और प्रतीक्षा करें — प्रतीक्षा कर रहे खिलाड़ियों में से आपकी रेटिंग के सबसे नज़दीकी से मिलान होगा।</string>
 </resources>

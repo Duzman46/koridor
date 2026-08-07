@@ -38,7 +38,8 @@ data class LeaderboardUiState(
     val ownStanding: OwnStanding? = null,
     val isOwnStandingLoading: Boolean = false,
     val ownStandingError: UiText? = null,
-    val isSignedIn: Boolean = false,
+    /** True while the player holds no place on the board because they have not linked one. */
+    val isGuest: Boolean = false,
 ) {
     val current: LeaderboardTabState
         get() = tabs[selectedScope] ?: LeaderboardTabState()
@@ -61,7 +62,7 @@ class LeaderboardViewModel @Inject constructor(
     private var friendIds: Set<String> = emptySet()
 
     private val _uiState = MutableStateFlow(
-        LeaderboardUiState(isSignedIn = sessionManager.state.value.canUseSocialFeatures),
+        LeaderboardUiState(isGuest = sessionManager.state.value.isGuest),
     )
     val uiState: StateFlow<LeaderboardUiState> = _uiState.asStateFlow()
 
@@ -137,8 +138,13 @@ class LeaderboardViewModel @Inject constructor(
         }
     }
 
+    /**
+     * A guest is skipped rather than asked and refused: they hold no place on the board, so
+     * there is no position to fetch and nothing an error message would be true about.
+     */
     private fun refreshOwnStanding() {
-        val userId = sessionManager.state.value.user?.userId ?: return
+        val session = sessionManager.state.value
+        val userId = session.user?.userId?.takeUnless { session.isGuest } ?: return
         _uiState.update { it.copy(isOwnStandingLoading = true, ownStandingError = null) }
         viewModelScope.launch {
             when (val result = repository.loadOwnStanding(userId)) {

@@ -29,7 +29,6 @@ class ProfileCodec @Inject constructor() {
             userId = userId,
             username = username,
             normalizedUsername = snapshot.string(Keys.NORMALIZED_USERNAME, username.lowercase()),
-            displayName = snapshot.string(Keys.DISPLAY_NAME, username),
             avatarId = snapshot.string(Keys.AVATAR_ID, Constants.Profile.DEFAULT_AVATAR_ID),
             accountType = enumValueOrDefault(
                 snapshot.stringOrNull(Keys.ACCOUNT_TYPE),
@@ -64,7 +63,6 @@ class ProfileCodec @Inject constructor() {
     fun encodeNewProfile(profile: UserProfile): Map<String, Any> = mapOf(
         Keys.USERNAME to profile.username,
         Keys.NORMALIZED_USERNAME to profile.normalizedUsername,
-        Keys.DISPLAY_NAME to profile.displayName,
         Keys.AVATAR_ID to profile.avatarId,
         Keys.ACCOUNT_TYPE to profile.accountType.name,
         Keys.CREATED_AT to profile.createdAt,
@@ -85,7 +83,6 @@ class ProfileCodec @Inject constructor() {
     object Keys {
         const val USERNAME = "username"
         const val NORMALIZED_USERNAME = "normalizedUsername"
-        const val DISPLAY_NAME = "displayName"
         const val AVATAR_ID = "avatarId"
         const val ACCOUNT_TYPE = "accountType"
         const val CREATED_AT = "createdAt"
@@ -97,6 +94,13 @@ class ProfileCodec @Inject constructor() {
         const val LOSSES = "losses"
         const val DRAWS = "draws"
         const val RATING = "rating"
+
+        /**
+         * The leaderboard's ordering key: the same number as [RATING], but written only for
+         * an account that has been linked. See RtdbLeaderboardRepository for why the board is
+         * ordered by a second copy of a number it already has.
+         */
+        const val LEADERBOARD_RATING = "leaderboardRating"
         const val HIGHEST_RATING = "highestRating"
         const val CURRENT_WIN_STREAK = "currentWinStreak"
         const val BEST_WIN_STREAK = "bestWinStreak"

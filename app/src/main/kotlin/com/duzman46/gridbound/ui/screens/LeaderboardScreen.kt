@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,12 +60,14 @@ private val VISIBLE_SCOPES = listOf(
 @Composable
 fun LeaderboardRoute(
     onBack: () -> Unit,
+    onOpenProfile: (String) -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LeaderboardScreen(
         state = state,
         onBack = onBack,
+        onOpenProfile = onOpenProfile,
         onSelectScope = viewModel::selectScope,
         onLoadMore = viewModel::loadMore,
         onRetry = viewModel::retry,
@@ -75,6 +78,7 @@ fun LeaderboardRoute(
 private fun LeaderboardScreen(
     state: LeaderboardUiState,
     onBack: () -> Unit,
+    onOpenProfile: (String) -> Unit,
     onSelectScope: (LeaderboardScope) -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
@@ -105,7 +109,7 @@ private fun LeaderboardScreen(
                         ErrorState(tab.error.asString(), onRetry)
 
                     tab.isEmpty -> EmptyState(state.selectedScope.emptyMessage())
-                    else -> LeaderboardList(state, onLoadMore)
+                    else -> LeaderboardList(state, onOpenProfile, onLoadMore)
                 }
             }
         }
@@ -113,7 +117,11 @@ private fun LeaderboardScreen(
 }
 
 @Composable
-private fun LeaderboardList(state: LeaderboardUiState, onLoadMore: () -> Unit) {
+private fun LeaderboardList(
+    state: LeaderboardUiState,
+    onOpenProfile: (String) -> Unit,
+    onLoadMore: () -> Unit,
+) {
     val tab = state.current
     val listState = rememberLazyListState()
     // Fetch the next page a few rows before the end so scrolling stays smooth.
@@ -134,7 +142,11 @@ private fun LeaderboardList(state: LeaderboardUiState, onLoadMore: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         items(tab.entries, key = LeaderboardEntry::userId) { entry ->
-            LeaderboardRow(entry, highlighted = entry.userId == state.ownStanding?.entry?.userId)
+            LeaderboardRow(
+                entry = entry,
+                highlighted = entry.userId == state.ownStanding?.entry?.userId,
+                onClick = { onOpenProfile(entry.userId) },
+            )
         }
         if (tab.isAppending) {
             item {
@@ -146,11 +158,21 @@ private fun LeaderboardList(state: LeaderboardUiState, onLoadMore: () -> Unit) {
     }
 }
 
+/**
+ * A standing on the table, and — in the list, where the name belongs to someone else — the way
+ * to that player's page.
+ *
+ * The tap lives on the inner row rather than on the [Surface] so the ripple is clipped to the
+ * rounded shape instead of washing over a rectangle behind it. A null [onClick] is the pinned
+ * own-standing bar: reading your own record is what the profile screen is for, and a row that
+ * led you to yourself would be the one row on the table that goes nowhere new.
+ */
 @Composable
 private fun LeaderboardRow(
     entry: LeaderboardEntry,
     highlighted: Boolean,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     val description = stringResource(
         R.string.cd_leaderboard_row,
@@ -158,6 +180,7 @@ private fun LeaderboardRow(
         entry.username,
         entry.rating,
     )
+    val openLabel = stringResource(R.string.cd_open_profile)
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -171,7 +194,15 @@ private fun LeaderboardRow(
         },
     ) {
         Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier
+                .then(
+                    if (onClick == null) {
+                        Modifier
+                    } else {
+                        Modifier.clickable(onClickLabel = openLabel, onClick = onClick)
+                    },
+                )
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -210,6 +241,10 @@ private fun LeaderboardRow(
 
 /**
  * The player's own row, pinned so it stays visible however far the list is scrolled.
+ *
+ * With no row to pin, the bar says why there is none. A guest is told the particular reason —
+ * an anonymous account is rated but never ranked — because "sign in" reads as an instruction
+ * they have already followed.
  */
 @Composable
 private fun OwnStandingBar(state: LeaderboardUiState) {
@@ -239,7 +274,13 @@ private fun OwnStandingBar(state: LeaderboardUiState) {
                 }
 
                 else -> Text(
-                    stringResource(R.string.leaderboard_sign_in_required),
+                    stringResource(
+                        if (state.isGuest) {
+                            R.string.leaderboard_guest_not_ranked
+                        } else {
+                            R.string.leaderboard_sign_in_required
+                        },
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

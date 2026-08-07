@@ -1,7 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.auth.domain.AccountType
 import com.duzman46.gridbound.presentation.account.AccountUiState
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.ui.components.FormMessage
@@ -81,6 +81,10 @@ fun AccountScreen(
     }
     if (deleteRequested) {
         DeleteAccountDialog(
+            // Only an email account has a secret the app can ask for. A Google account
+            // proves itself through the account picker, and a guest has nothing to prove.
+            password = state.password.takeIf { session.user?.accountType == AccountType.EMAIL },
+            onPassword = onPassword,
             onConfirm = {
                 deleteRequested = false
                 onDeleteAccount()
@@ -91,12 +95,27 @@ fun AccountScreen(
 
     Scaffold(topBar = { ScreenTopBar(stringResource(R.string.account_title), onBack) }) { padding ->
         ScreenBackground {
-            Box(
+            Column(
                 Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentAlignment = Alignment.TopCenter,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // Outside the scroll on purpose. Every action here is a card away from the
+                // top of the page and ends with a dialog closing over wherever the player
+                // had scrolled to; an answer written at one end of a page the player is
+                // reading the other end of is how a refused deletion came to look like a
+                // button that does nothing.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 620.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    state.error?.let { FormMessage(it) }
+                    state.info?.let { FormMessage(it, isError = false) }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -175,9 +194,6 @@ fun AccountScreen(
                             )
                         }
                     }
-
-                    state.error?.let { FormMessage(it) }
-                    state.info?.let { FormMessage(it, isError = false) }
                 }
             }
         }
@@ -242,9 +258,22 @@ private fun LinkAccountCard(
 /**
  * Deletion asks the player to type a confirmation word, so an irreversible action cannot be
  * triggered by a stray tap.
+ *
+ * It also warns that the sign-in will be checked, because Firebase refuses to remove a
+ * credential on a session that has been open for a while. That check happens before anything
+ * is erased, and the account picker or password prompt it produces is a great deal less
+ * alarming when the dialog has already said it is coming.
+ *
+ * @param password the current field value for an account that has one to give, null when the
+ *   account proves itself some other way.
  */
 @Composable
-private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun DeleteAccountDialog(
+    password: String?,
+    onPassword: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val keyword = stringResource(R.string.action_delete).uppercase()
     var typed by remember { mutableStateOf("") }
     AlertDialog(
@@ -253,6 +282,11 @@ private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.account_delete_warning))
+                Text(
+                    stringResource(R.string.account_delete_reauth_explainer),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 OutlinedTextField(
                     value = typed,
                     onValueChange = { typed = it },
@@ -260,12 +294,27 @@ private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (password != null) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = onPassword,
+                        label = { Text(stringResource(R.string.auth_password_label)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = typed.trim().equals(keyword, ignoreCase = true),
+                enabled = typed.trim().equals(keyword, ignoreCase = true) &&
+                    (password == null || password.isNotEmpty()),
             ) {
                 Text(
                     stringResource(R.string.action_delete),

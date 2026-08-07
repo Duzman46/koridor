@@ -58,7 +58,6 @@ class MainActivity : ComponentActivity() {
                         session = session,
                         language = settings.language,
                         onLanguage = { language -> viewModel.setLanguage(this@MainActivity, language) },
-                        quickPlayDifficulty = settings.difficulty,
                         monetization = monetization,
                         billing = billing,
                         onBuy = { entitlement -> viewModel.buy(this@MainActivity, entitlement) },

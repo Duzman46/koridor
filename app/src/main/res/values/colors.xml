@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Mirrors LightColors.background in theme/GridboundTheme.kt. -->
+<!-- Must equal LightColors.background in theme/GridboundTheme.kt, or the hand-off from
+     the launch window to Compose flashes. -->
 <resources>
-    <color name="window_background">#FFF5FBF7</color>
+    <color name="window_background">#FFEDF5F0</color>
 </resources>

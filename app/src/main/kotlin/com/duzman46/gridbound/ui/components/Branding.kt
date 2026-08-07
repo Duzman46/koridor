@@ -10,75 +10,67 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 
 /**
- * The app mark: a three-by-three board with two walls dropped into the channels and a pawn
- * that has to find its way past them.
+ * The app mark: a pawn standing in a corridor.
  *
- * Deliberately the same composition as the launcher icon, so the thing on the home screen and
- * the thing at the top of the menu are recognisably one object. Drawn rather than shipped as
- * an asset: it costs nothing in the APK and it follows the theme into dark mode, which a
- * baked PNG of a dark tile could not do on a light menu.
+ * The same drawing as the launcher icon, on the same 108-unit canvas and with the same
+ * coordinates — see res/drawable/ic_launcher_foreground.xml. That was previously only an
+ * aspiration in a comment: the icon was a 3x3 board with two pawns and amber walls, the mark
+ * was a 3x3 board with one pawn and green walls, and the player met both back to back on
+ * every cold start. Two drawings of the same thing read as neither.
+ *
+ * Drawn rather than shipped as an asset so it follows the theme: the launcher plate is fixed
+ * jade, but in the app the mark sits on whichever ground the theme is using.
  */
 @Composable
 fun KoridorMark(
     modifier: Modifier = Modifier,
     // Taken as parameters rather than read inside, so the mark can be placed on a surface
     // that is not the theme's — on a dark well, theme-primary walls would disappear.
-    tile: Color = MaterialTheme.colorScheme.surfaceVariant,
-    accent: Color = MaterialTheme.colorScheme.primary,
+    wall: Color = MaterialTheme.colorScheme.primary,
+    pawn: Color = MaterialTheme.colorScheme.onBackground,
 ) {
     Canvas(modifier) {
         val side = size.minDimension
+        val unit = side / CANVAS
         val origin = Offset((size.width - side) / 2f, (size.height - side) / 2f)
 
-        // Same 0.24 channel-to-tile ratio the real board uses.
-        val cell = side / (3f + 0.24f * 2f)
-        val gap = cell * 0.24f
-        val step = cell + gap
-        val radius = CornerRadius(cell * 0.18f)
+        fun at(x: Float, y: Float) = origin + Offset(x * unit, y * unit)
+        fun span(value: Float) = value * unit
 
-        repeat(3) { row ->
-            repeat(3) { column ->
-                drawRoundRect(
-                    color = tile,
-                    topLeft = origin + Offset(column * step, row * step),
-                    size = Size(cell, cell),
-                    cornerRadius = radius,
-                )
-            }
+        /** A capsule between two corners, the way the vector's arc pairs describe one. */
+        fun capsule(left: Float, top: Float, right: Float, bottom: Float, color: Color) {
+            val width = span(right - left)
+            val height = span(bottom - top)
+            drawRoundRect(
+                color = color,
+                topLeft = at(left, top),
+                size = Size(width, height),
+                cornerRadius = CornerRadius(minOf(width, height) / 2f),
+            )
         }
 
-        val thickness = gap * 0.74f
-        val wallSpan = cell * 2f + gap
-        val wallRadius = CornerRadius(thickness / 2f)
+        // The two corridor walls.
+        capsule(27f, 26f, 35f, 82f, wall)
+        capsule(73f, 26f, 81f, 82f, wall)
 
-        // Horizontal wall under the top-left pair — the one blocking the pawn's way forward.
-        drawRoundRect(
-            color = accent,
-            topLeft = origin + Offset(0f, cell + (gap - thickness) / 2f),
-            size = Size(wallSpan, thickness),
-            cornerRadius = wallRadius,
-        )
-        // Vertical wall beside the bottom-right pair, so both orientations are in the mark.
-        drawRoundRect(
-            color = accent,
-            topLeft = origin + Offset(cell + (gap - thickness) / 2f, step),
-            size = Size(thickness, wallSpan),
-            cornerRadius = wallRadius,
-        )
-
-        drawPawnMark(
-            center = origin + Offset(cell / 2f, cell / 2f),
-            unit = cell,
-            color = accent,
-        )
+        // The pawn: head, collar, narrow neck, flared base.
+        drawCircle(pawn, span(11f), at(54f, 42f))
+        capsule(48f, 54f, 60f, 60f, pawn)
+        capsule(49.5f, 57f, 58.5f, 72f, pawn)
+        capsule(36f, 67f, 72f, 81f, pawn)
     }
 }
+
+/** The adaptive-icon canvas the mark is authored on, shared with the launcher vectors. */
+private const val CANVAS = 108f
 
 /**
  * A pawn reduced to what still reads at 24 dp: a domed head over a flared base.
  *
- * Shared with the home screen's glyph family, so the pawn in the app mark, the pawn on the
- * "quick play" button and the pawn on the tutorial icon are all the same drawing.
+ * Shared with the home screen's glyph family and the profile crest, so the pawn on the
+ * "quick play" button, the tutorial icon and the crest are all the same drawing. Kept
+ * separate from [KoridorMark] because that one is authored on the launcher's 108-unit
+ * canvas, and a glyph is placed by its centre at whatever size the caller has.
  */
 internal fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPawnMark(
     center: Offset,

@@ -29,6 +29,15 @@ object Dimens {
     val ScreenPadding = 20.dp
 
     /**
+     * How far below the top of the window anything overlaying a whole screen has to begin.
+     *
+     * Material's small top app bar is 64 dp tall and keeps the back button inside it, so this
+     * is the height of the strip an overlay has to leave alone: covering it would take away
+     * the one control that gets a player out of the screen they are on.
+     */
+    val TopBarClearance = 64.dp
+
+    /**
      * Corner radius, as a hierarchy rather than one value everywhere.
      *
      * The home screen reads as a set of physical pieces because the radius tells you what
@@ -50,23 +59,21 @@ object Dimens {
     val RadiusXl = 28.dp
 
     /** Home screen control heights. Minimums, never fixed — long labels must be able to grow. */
-    val SlabHeight = 68.dp
     val RoomHeight = 56.dp
     val ChipHeight = 44.dp
     val CrestHeight = 44.dp
 
+    /** How far a block sinks when pressed. The travel is the feedback; there is no ripple. */
+    val PressTravel = 2.dp
+    val BorderStrong = 1.5.dp
+    val Hairline = 1.dp
+
     /** Hand-drawn glyph sizes, by how loud the control is. */
-    val GlyphSm = 22.dp
     val GlyphMd = 24.dp
     val GlyphLg = 26.dp
 
-    /** The one oversized element on a screen, if any. */
-    val ButtonHeightLarge = 60.dp
-    val ButtonHeight = 52.dp
-
     /** Icon inside a button or a menu tile. */
     val IconSm = 20.dp
-    val IconMd = 24.dp
 
     /** Menu content never stretches past this, so tablets do not get a 900 dp button. */
     val MenuMaxWidth = 460.dp

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The mark: a pawn standing in a corridor.
+
+  The old icon was a 3x3 board with two pawns and two walls — five ideas at 48 pixels, which
+  is four too many. At launcher size that collapsed into speckle. This is the game's name
+  drawn literally: two wall bars, and the piece that has to get past them.
+
+  Everything sits inside the 66dp safe circle of the 108dp adaptive canvas, so no launcher
+  mask — circle, squircle or teardrop — can clip a bar or clip the pawn's base.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- The corridor walls, in the brand mint. -->
+    <path
+        android:fillColor="#FF16E9A0"
+        android:pathData="M27,30 A4,4 0 0 1 35,30 L35,78 A4,4 0 0 1 27,78 Z" />
+    <path
+        android:fillColor="#FF16E9A0"
+        android:pathData="M73,30 A4,4 0 0 1 81,30 L81,78 A4,4 0 0 1 73,78 Z" />
+
+    <!-- The pawn: head, collar, narrow neck, flared base. The neck is visibly thinner than
+         the head, or at 48 pixels the three shapes merge into one blob. -->
+    <path
+        android:fillColor="#FFEAFFF6"
+        android:pathData="M43,42 A11,11 0 1 1 65,42 A11,11 0 1 1 43,42 Z" />
+    <path
+        android:fillColor="#FFEAFFF6"
+        android:pathData="M48,54 L60,54 A3,3 0 0 1 60,60 L48,60 A3,3 0 0 1 48,54 Z" />
+    <path
+        android:fillColor="#FFEAFFF6"
+        android:pathData="M49.5,61.5 A4.5,4.5 0 0 1 58.5,61.5 L58.5,67.5 A4.5,4.5 0 0 1 49.5,67.5 Z" />
+    <path
+        android:fillColor="#FFEAFFF6"
+        android:pathData="M43,67 L65,67 A7,7 0 0 1 65,81 L43,81 A7,7 0 0 1 43,67 Z" />
+</vector>

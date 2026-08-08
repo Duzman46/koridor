@@ -305,12 +305,14 @@ Round 7's list, re-checked against the code rather than assumed. One is new.
    room sweep and the pairing backstop. The back-fill only runs on a minute that rated nothing;
    the invite collector and the weekly prune share a minute that took on no report at all.
    Anything added to a rated report costs three per run at that ceiling.
-7. **Google Analytics is in the build and undeclared.** Unchanged: `firebase-analytics` is a
-   dependency and `app/google-services.json` is present, so default event collection is on
-   although the app sends no event of its own. `docs/DATA_SAFETY.md` §6 states the two options —
-   keep it and widen two rows of the §5 table, or drop the dependency. **One has to be chosen
-   before the form is filled in.** Crashlytics is not part of that choice: it is used, and §5
-   declares it either way.
+7. **Google Analytics is in the build and now declared.** The owner chose on 2026-08-08 to keep
+   it: a game nobody has statistics for is a game whose problems cannot be found.
+   `docs/DATA_SAFETY.md` §5 carries *Analitik* on the app-activity and device-identifier rows and
+   §6 records the decision. The published privacy pages already described it. What is *not* done,
+   and is written there rather than here as a blocker: Analytics is not wired to the UMP consent
+   result, so an EEA player who refuses ad personalisation still has default Analytics collection.
+   Correct declaration is what Play asks for and that is in place; consent mode is the next step
+   if an EEA audience materialises.
 8. **`functions/src/index.ts` is five jobs behind `worker/`.** Re-checked by grep: it has no
    board-index back-fill, does not keep an unnamed account off either board, collects no invites,
    prunes no weekly rows, does not check the board's wall arithmetic before rating — and writes

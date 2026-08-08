@@ -3,7 +3,9 @@
 ## Automated release protections
 
 - Release builds use R8 code optimization and resource shrinking.
-- Only Turkish and English resources are packaged; Play’s app bundle creates device-specific splits.
+- All ten shipped languages are in the base APK. `localeFilters` strips every other language from
+  the bundle, and Play's per-language split is switched off on purpose — the in-app language
+  picker has to have something to switch to.
 - Development builds always use Google’s official test banner and interstitial IDs.
 - Release builds do not request ads unless real AdMob IDs are supplied.
 - Premium is a one-time, non-consumable Play product with ID `remove_ads`.
@@ -19,9 +21,21 @@
 
 When `keystore.properties` is missing, `bundleRelease` intentionally creates an unsigned AAB suitable only for verification.
 
-## Verification command
+## Verification commands
 
-`./gradlew :app:testDebugUnitTest :app:lintDebug :app:bundleRelease`
+The app, lint on the variant that actually ships, and the release binary:
+
+`./gradlew :app:test :app:lintRelease :app:bundleRelease`
+
+`lintRelease` rather than `lintDebug`: the shrinker, the manifest placeholders and the resource
+set differ between the two, so a debug-only lint says nothing about what is uploaded.
+
+The server halves are not part of that build and have to be run where they live:
+
+`cd rules-tests && npm test` — the security rules, against the database emulator.
+`cd worker && npm test && npm run test:e2e` — the scheduled worker, unit and end to end.
+
+Both need a JDK 21 or newer first on `PATH`; the Firebase CLI refuses anything older.
 
 ## Play Console checklist
 

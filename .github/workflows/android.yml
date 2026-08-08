@@ -36,11 +36,17 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
+      # The release variant, because it is the one that ships and it is the one that breaks
+      # differently: R8 removed a class Room looks up by name and the app died before
+      # onCreate, which a debug-only run cannot see. Neither monetization.properties nor
+      # keystore.properties is in the repository, so this builds against Google's test ad
+      # units and produces an unsigned APK — which is exactly what is wanted from a check
+      # that is about the shrinker rather than about the artefact.
       - name: Verify project
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --stacktrace
+        run: ./gradlew :app:test :app:lintRelease :app:assembleRelease --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: gridbound-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: gridbound-release-apk-unsigned
+          path: app/build/outputs/apk/release/*.apk

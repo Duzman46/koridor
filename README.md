@@ -164,17 +164,18 @@ firebase deploy --only database
 > oluşturma, oda açma ve arkadaşlık çalışmaz.
 
 **Sunucuyu yayınla.** Puanı, haftalık tabloyu, oda temizliğini, eşleştirme yedeğini, tüm
-zamanlar tablosunun dizinini ve hiçbir telefonun bulmasına izin verilmeyen davet kayıtlarının
-toplanmasını, hiçbir oyuncunun elinde olmayan bir taraf yazar. Depoda bunun iki uygulaması var
-ve **yalnızca biri yayınlanır**:
+zamanlar tablosunun dizinini, hiçbir telefonun bulmasına izin verilmeyen davet kayıtlarının
+toplanmasını ve silinmiş hesapların haftalık tablodan kaldırılmasını, hiçbir oyuncunun elinde
+olmayan bir taraf yazar. Depoda bunun iki uygulaması var ve **yalnızca biri yayınlanır**:
 
 - [`worker/`](worker/README.md) — dakikada bir çalışan, zamanlanmış bir Cloudflare Worker.
   Yayınlanan sürüm budur: ücretsiz planda çalışır, kart istemez ve dışarıya açık bir adresi
   yoktur. Kurulum adımları kendi README'sinde.
 - `functions/` — aynı işin Cloud Functions karşılığı, her şeyi Firebase içinde tutmak
-  isteyenler için. **Blaze (kullandıkça öde) planı** gerektirir. Worker'ın son üç turda
-  eklenen işleri burada **yok**: tablo dizininin geriye dönük doldurulması, adı verilmemiş
-  hesabın tablodan uzak tutulması ve ölü davet kayıtlarının toplanması.
+  isteyenler için. **Blaze (kullandıkça öde) planı** gerektirir. Worker'ın son turlarda eklenen
+  işleri burada **yok**: tablo dizininin geriye dönük doldurulması, adı verilmemiş hesabın
+  tablodan uzak tutulması, ölü davet kayıtlarının toplanması, silinmiş bir hesabın haftalık
+  tablo satırlarının kaldırılması ve puanlamadan önce tahtanın duvar aritmetiğinin denetlenmesi.
 
 İkisi de aynı maç raporlarını okur; ikisini birden yayınlama.
 

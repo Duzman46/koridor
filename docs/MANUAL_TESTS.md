@@ -1,6 +1,6 @@
 # Koridor — Manuel Test Senaryoları
 
-Otomatik testler saf mantığı kapsar (240 JVM testi, 192 güvenlik kuralı testi). Bu belge,
+Otomatik testler saf mantığı kapsar (281 JVM testi, 201 güvenlik kuralı testi). Bu belge,
 **yalnızca gerçek cihazda doğrulanabilecek** senaryoları listeler: ağ davranışı, iki cihaz
 arası eşzamanlılık, sistem diyalogları ve görsel yerleşim.
 
@@ -478,3 +478,15 @@ ortaya çıkar:
 ### H3. Loglama sızıntısı kontrolü
 1. Release derlemesini çalıştırırken `adb logcat | grep Koridor`
 2. **Beklenen:** Yalnızca `operation failed: ExceptionType` biçiminde satırlar; **e-posta, token, oda kodu veya stack trace yok**.
+
+### H4. Dokunsal geri bildirim — VIBRATE izni kaldırıldıktan sonra
+Uygulama `android.permission.VIBRATE` istemiyor: tek dokunsal geri bildirim Compose'un
+`LocalHapticFeedback`'i, yani `View.performHapticFeedback` — titreşimi sistem kendi kimliğiyle
+verir. Bu, bir derlemeden anlaşılamayacak tek varsayım, o yüzden bir kez elde doğrulanmalı.
+1. Cihaz ayarlarında dokunsal geri bildirim açık olsun (Ses ve titreşim → Dokunma geri bildirimi).
+2. Oyun ekranında bir duvarı basılı tutup yerleştir.
+3. **Beklenen:** Duvar yerleşirken kısa bir titreşim hissedilir.
+4. Hissedilmiyorsa: `app/src/main/AndroidManifest.xml` içine `<uses-permission
+   android:name="android.permission.VIBRATE" />` satırını geri koy ve gizlilik metinlerindeki
+   izin cümlesini de geri al — dört dosya: `docs/PRIVACY_POLICY_EN.md`,
+   `docs/PRIVACY_POLICY_TR.md`, `public/privacy.html`, `public/gizlilik.html`.

@@ -75,8 +75,8 @@ app that reaches another player.
 
 ## Permissions
 
-Internet and network state, for online matches, ads and purchase checks. Vibration, for game
-feedback. The app does not ask for camera, microphone, contacts or storage permission.
+Internet and network state, for online matches, ads and purchase checks. That is the whole
+list. The app does not ask for camera, microphone, contacts, location or storage permission.
 
 ## Service providers
 

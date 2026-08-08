@@ -84,7 +84,7 @@ class StrengthTest {
      * The narrowest bar in the file, and for runtime rather than for want of confidence. The frozen
      * engine re-validates every wall candidate twice per node and runs an A* inside a sort
      * comparator, so one of its moves costs more than a whole EXPERT search and this single match is
-     * most of [SUITE_BUDGET_MILLIS]. Eight openings buys a bar that survives an opening flipping
+     * most of the file's runtime. Eight openings buys a bar that survives an opening flipping
      * outright — already more slack than the nine-games-of-ten it replaces — and still leaves the
      * file room to run on a machine that is building the release at the same time.
      */
@@ -269,7 +269,15 @@ class StrengthTest {
         const val MAX_FALSE_POSITIVE = 0.05
 
         const val SAFETY_NET_MILLIS = 5_000L
-        const val SUITE_BUDGET_MILLIS = 45_000L
+
+        /**
+         * The deterministic size of this file, with room for one more match and no more.
+         *
+         * Set from the measured figure plus about a fifth. Tight enough that adding a match makes
+         * somebody choose deliberately between the coverage and the cost of the default test run,
+         * which is the decision this guard exists to force.
+         */
+        const val MAX_SUITE_PLIES = 10_000
 
         const val TIMED_POSITIONS = 20
         const val TIMED_POSITIONS_SEED = 20260809L
@@ -397,20 +405,34 @@ class StrengthTest {
         }
 
         /**
-         * The file's own runtime, asserted as a class fixture rather than as a test.
+         * How much play this file does, asserted as a class fixture rather than as a test.
          *
          * A test method cannot measure the file it is in — whichever one ran first would pay for
-         * every cached match and the rest would measure nothing. This runs once, after everything,
-         * and reports the figure whether it passes or not.
+         * every cached match and the rest would measure nothing. This runs once, after everything.
+         *
+         * The measure is plies, not milliseconds. It was milliseconds, and it failed on a machine
+         * that happened to be running a release build at the same time: 60 s where an idle run
+         * takes 28. Every engine here is driven by a node cap against a stopped clock precisely so
+         * that a busy machine cannot change a result — asserting the one quantity a busy machine
+         * *does* change handed the file a way to go red for a reason unrelated to the code, which
+         * is the failure this whole design exists to rule out.
+         *
+         * Plies are deterministic: same seeds, same book, same engines, same games. The number
+         * moves when somebody adds an opening or a match, which is the growth worth catching.
+         *
+         * What it does not catch, said here rather than left to be discovered: raising a node cap
+         * makes every ply cost more without making one more ply. Whoever raises one is editing
+         * this file and will see the elapsed time printed beside the count.
          */
         @AfterClass
         @JvmStatic
-        fun assertSuiteFinishesUnderBudget() {
+        fun assertSuiteDoesNotGrow() {
             val elapsed = (System.nanoTime() - startedAtNanos) / NANOS_TO_MILLIS
-            println("strength suite: $elapsed ms")
+            val plies = allMatches.sumOf { match -> match.games.sumOf { it.plies } }
+            println("strength suite: $plies plies in $elapsed ms")
             assertTrue(
-                "the strength suite took $elapsed ms against a $SUITE_BUDGET_MILLIS ms budget",
-                elapsed < SUITE_BUDGET_MILLIS,
+                "the strength suite played $plies plies against a budget of $MAX_SUITE_PLIES",
+                plies <= MAX_SUITE_PLIES,
             )
         }
     }

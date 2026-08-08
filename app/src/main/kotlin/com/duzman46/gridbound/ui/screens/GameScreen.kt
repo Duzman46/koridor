@@ -105,6 +105,7 @@ fun GameRoute(
     onSettings: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onWinner: (PlayerId, GameUiState) -> Unit,
+    onCompletedMatchExit: (onFinished: () -> Unit) -> Unit,
     viewModel: GameViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -132,7 +133,21 @@ fun GameRoute(
         },
         onSettings = onSettings,
         onOpenProfile = onOpenProfile,
-        onRestart = viewModel::restart,
+        // Restarting throws a match away and starts another — the same departure "play again"
+        // makes from the victory screen, so it earns the same ad.
+        //
+        // Not on an untouched board, and that guard is load-bearing rather than tidy: with every
+        // frequency gate gone this is the one ad trigger a player can press repeatedly without
+        // leaving the screen, and ten taps would otherwise be ten ads. AdMob calls that invalid
+        // traffic and closes accounts over it. A board with no moves on it is not a match anyone
+        // is abandoning.
+        onRestart = {
+            if (state.boardState.history.isEmpty()) {
+                viewModel.restart()
+            } else {
+                onCompletedMatchExit { viewModel.restart() }
+            }
+        },
         onUndo = viewModel::undo,
         onTileTap = viewModel::onTileTapped,
         onWallTap = viewModel::onWallTapped,

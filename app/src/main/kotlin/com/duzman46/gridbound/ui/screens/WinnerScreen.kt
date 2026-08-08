@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -80,6 +81,11 @@ fun WinnerRoute(
 ) {
     val rematch by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.accepted.collect(onRematchAccepted) }
+    // Back here means "I am done with this match", which is what Home means, so it goes the same
+    // way. Left to the navigator it popped the stack on its own and landed the player back on the
+    // difficulty screen — behind the match, past the ad, and on a screen they had already left.
+    // Every way out of a finished match now runs through one of the three the screen offers.
+    BackHandler(onBack = onHome)
     WinnerScreen(
         winner = winner,
         mode = mode,

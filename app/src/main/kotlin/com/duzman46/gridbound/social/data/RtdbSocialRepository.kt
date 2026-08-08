@@ -11,10 +11,12 @@ import com.duzman46.gridbound.data.firebase.snapshotFlow
 import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
 import com.duzman46.gridbound.social.domain.FriendshipRules
 import com.duzman46.gridbound.social.domain.FriendshipStatus
+import com.duzman46.gridbound.social.domain.FriendshipUpdate
 import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.PresenceState
 import com.duzman46.gridbound.social.domain.RequestKind
@@ -142,17 +144,21 @@ class RtdbSocialRepository @Inject constructor(
             val update = FriendshipRules.apply(action, mine, FriendshipStatus.NONE)
                 ?: return@dbCall Outcome.Failure(AppError.UNKNOWN)
 
-            val now = System.currentTimeMillis()
-            // Both halves in one update: the pair can never be left disagreeing.
-            val payload = buildMap<String, Any?> {
-                putAll(statusPayload(userId, otherUserId, update.mine, now))
-                putAll(statusPayload(otherUserId, userId, update.theirs, now))
-                // Blocking also withdraws any invitations already in flight.
-                if (update.mine == FriendshipStatus.BLOCKED) {
-                    put("${Constants.Social.INVITES_PATH}/$userId/$otherUserId", null)
-                }
+            val writes = FriendshipWrites.of(
+                action = action,
+                update = update,
+                userId = userId,
+                otherUserId = otherUserId,
+                now = System.currentTimeMillis(),
+            )
+            firebase.database.reference.updateChildren(writes.atomic).await()
+            // Best effort, and for the same reason deleteSocialData writes the other player's
+            // rows one at a time: a player who has us blocked refuses this one, and it must
+            // not be able to take the block we have just written down with it.
+            if (writes.mirror.isNotEmpty()) {
+                runCatching { firebase.database.reference.updateChildren(writes.mirror).await() }
+                    .onFailure { AppLog.warn("friendship-mirror", it) }
             }
-            firebase.database.reference.updateChildren(payload).await()
             Outcome.Success(Unit)
         }
     }
@@ -220,6 +226,31 @@ class RtdbSocialRepository @Inject constructor(
             Outcome.Success(Unit)
         }
 
+    override suspend fun reportPlayer(
+        reporterId: String,
+        subjectId: String,
+        reason: ContentReportReason,
+        roomCode: String,
+    ): Outcome<Unit> = dbCall("report-player") {
+        if (reporterId.isBlank() || reporterId == subjectId || subjectId.isBlank()) {
+            return@dbCall Outcome.Failure(AppError.UNKNOWN)
+        }
+        // The server stamps it. A report is evidence, and a phone that dated its own would be
+        // deciding when the thing it is reporting happened.
+        firebase.database
+            .getReference(Constants.Social.CONTENT_REPORTS_PATH)
+            .child(subjectId)
+            .child(reporterId)
+            .setValue(
+                buildMap {
+                    put(Keys.REASON, reason.name)
+                    put(Keys.CREATED_AT, ServerValue.TIMESTAMP)
+                    if (roomCode.isNotBlank()) put(Keys.ROOM_CODE, roomCode)
+                },
+            ).await()
+        Outcome.Success(Unit)
+    }
+
     override fun startPresence(userId: String) {
         if (!firebase.isConfigured || userId.isBlank()) return
         val reference = presenceRef(userId)
@@ -249,6 +280,27 @@ class RtdbSocialRepository @Inject constructor(
      * Realtime Database only ever flows downwards. Asking for the parent asks for a
      * permission nobody was granted, and in a single atomic update it took everything else
      * down with it — which is why an account's friendships and invitations outlived it.
+     *
+     * ## The one thing this cannot reach
+     *
+     * The friend list is what names the other players, so every game invitation this account
+     * sent is here: friendship is exactly what the rules charge for one, so an invitation and
+     * a friendship always come as a pair. A rematch is charged for differently — the finished
+     * match is the licence, and the two need never have been friends — so
+     * `invites/{opponent}/{me}` can exist with nothing on this side pointing at it.
+     *
+     * Nothing this account is allowed to read would find it. `invites/$recipient` is readable
+     * by that recipient alone, there is no rule below it that opens a single entry to the
+     * player who wrote it, and no index of "who did I ask". The write is permitted — the rules
+     * let a sender take back their own entry sight unseen — but only by naming the recipient,
+     * and that name is the part that cannot be recovered. Reading them off the rooms this
+     * account played is not the answer either: a room and an invitation are kept for different
+     * lengths of time by different rules, so the overlap is a coincidence rather than a
+     * guarantee, and a swept room leaves an entry nobody can name at all.
+     *
+     * So the promise is kept by the one writer that needs no permission from anybody:
+     * `collectDeadInvites` in `worker/src/sweep.ts` clears every entry whose sender no longer
+     * has a profile, along with every entry that has expired.
      */
     override suspend fun deleteSocialData(userId: String): Outcome<Unit> =
         dbCall("delete-social-data") {
@@ -285,25 +337,6 @@ class RtdbSocialRepository @Inject constructor(
                 .awaitSnapshot().getValue(String::class.java),
             FriendshipStatus.NONE,
         )
-
-    private fun statusPayload(
-        owner: String,
-        other: String,
-        status: FriendshipStatus,
-        now: Long,
-    ): Map<String, Any?> {
-        val base = "${Constants.Social.FRIENDSHIPS_PATH}/$owner/$other"
-        // NONE is stored as absence rather than a value, so a cleared relationship leaves
-        // nothing behind to read or pay for.
-        return if (status == FriendshipStatus.NONE) {
-            mapOf(base to null)
-        } else {
-            mapOf(
-                "$base/${Keys.STATUS}" to status.name,
-                "$base/${Keys.UPDATED_AT}" to now,
-            )
-        }
-    }
 
     private suspend fun writeRequest(
         kind: RequestKind,
@@ -375,9 +408,10 @@ class RtdbSocialRepository @Inject constructor(
         }
     }
 
-    private object Keys {
+    internal object Keys {
         const val STATUS = "status"
         const val UPDATED_AT = "updatedAt"
+        const val REASON = "reason"
         const val ONLINE = "online"
         const val LAST_SEEN = "lastSeen"
         const val KIND = "kind"
@@ -387,5 +421,74 @@ class RtdbSocialRepository @Inject constructor(
         const val PLAYED_ROOM_CODE = "playedRoomCode"
         const val CREATED_AT = "createdAt"
         const val EXPIRES_AT = "expiresAt"
+    }
+}
+
+/**
+ * The rows one friendship action turns into, split by what is allowed to be refused.
+ *
+ * @param atomic must land together or not at all.
+ * @param mirror the other player's copy, sent on its own and permitted to fail. Empty unless
+ *   the action is a block.
+ */
+internal data class FriendshipWrite(
+    val atomic: Map<String, Any?>,
+    val mirror: Map<String, Any?>,
+)
+
+/**
+ * Turns a settled [FriendshipUpdate] into the paths that record it.
+ *
+ * Every action but one travels as a single all-or-nothing update, and deliberately so: a
+ * request aimed at somebody who has blocked you is refused on *their* row, and having that
+ * refusal take the whole update with it is what keeps a block from being detectable.
+ *
+ * Blocking is the exception, because clearing the other player's row is precisely the write
+ * their own block refuses. Sent together, being blocked first was all it took to make somebody
+ * unblockable: the update failed whole, and the one row that actually stops them reaching you
+ * — your own — was never written. So the block goes on its own, and their copy follows as a
+ * best-effort mirror, exactly as `deleteSocialData` already treats the same rows.
+ */
+internal object FriendshipWrites {
+
+    fun of(
+        action: FriendshipAction,
+        update: FriendshipUpdate,
+        userId: String,
+        otherUserId: String,
+        now: Long,
+    ): FriendshipWrite {
+        val blocking = action == FriendshipAction.BLOCK
+        val theirs = statusPayload(otherUserId, userId, update.theirs, now)
+        return FriendshipWrite(
+            atomic = buildMap {
+                putAll(statusPayload(userId, otherUserId, update.mine, now))
+                if (!blocking) putAll(theirs)
+                // Blocking also withdraws any invitation already in flight.
+                if (update.mine == FriendshipStatus.BLOCKED) {
+                    put("${Constants.Social.INVITES_PATH}/$userId/$otherUserId", null)
+                }
+            },
+            mirror = if (blocking) theirs else emptyMap(),
+        )
+    }
+
+    private fun statusPayload(
+        owner: String,
+        other: String,
+        status: FriendshipStatus,
+        now: Long,
+    ): Map<String, Any?> {
+        val base = "${Constants.Social.FRIENDSHIPS_PATH}/$owner/$other"
+        // NONE is stored as absence rather than a value, so a cleared relationship leaves
+        // nothing behind to read or pay for.
+        return if (status == FriendshipStatus.NONE) {
+            mapOf(base to null)
+        } else {
+            mapOf(
+                "$base/${RtdbSocialRepository.Keys.STATUS}" to status.name,
+                "$base/${RtdbSocialRepository.Keys.UPDATED_AT}" to now,
+            )
+        }
     }
 }

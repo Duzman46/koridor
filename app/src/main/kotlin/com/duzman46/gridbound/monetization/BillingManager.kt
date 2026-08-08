@@ -32,6 +32,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +50,34 @@ data class BillingState(
     fun owns(entitlement: Entitlement): Boolean = entitlement in entitlements
 
     val hasPending: Boolean get() = pendingPurchases.isNotEmpty()
+}
+
+/**
+ * What handing [BillingManager] an account id has to set in motion.
+ *
+ * Extracted because getting it wrong is invisible: the entitlements the app acts on come from
+ * one reader and nothing else feeds them, so a call that quietly starts none leaves a player
+ * who has paid looking at ads for the rest of the process, with the purchase sitting correctly
+ * on disk the whole time.
+ */
+internal data class AccountSwitch(
+    val restartsReader: Boolean,
+    val migratesGuestPurchases: Boolean,
+) {
+    companion object {
+        /**
+         * @param reading whether a reader is already running. This, rather than the id having
+         *   moved, is what decides: the first call of every process carries null, and judging
+         *   it against a field that also starts null read as "nothing changed" — so a launch
+         *   that went straight into guest play never started a reader at all.
+         */
+        fun of(reading: Boolean, current: String?, next: String?): AccountSwitch = AccountSwitch(
+            restartsReader = !reading || current != next,
+            // A guest who has just linked keeps whatever they bought as a guest. Only on a
+            // genuine change: the first call of a process has moved nothing to carry over.
+            migratesGuestPurchases = reading && current == null && next != null,
+        )
+    }
 }
 
 /**
@@ -77,6 +106,18 @@ class BillingManager @Inject constructor(
     private var accountId: String? = null
 
     /**
+     * Reads the bucket [accountId] names into [BillingState.entitlements].
+     *
+     * Null means nothing is reading it, which is a different thing from "reading the guest
+     * bucket" and is the whole of what went wrong: the field it used to be judged by starts
+     * null too, so the first call — always null, from a session that is still loading — was
+     * taken for "no change" and returned before starting anything. A process that then went
+     * on to guest play never started a reader at all, and every purchase Play reported was
+     * written to disk and read back by nobody. A player who had paid got the ads back.
+     */
+    private var entitlementJob: Job? = null
+
+    /**
      * Tokens already turned into entitlements in this process. Play redelivers purchases on
      * every query, and this stops one being counted twice within a session; the durable
      * guarantee is the write-once receipt node the verifier uses.
@@ -93,13 +134,21 @@ class BillingManager @Inject constructor(
 
     /** Called whenever the signed-in account changes, including on sign-out. */
     fun onAccountChanged(newAccountId: String?) {
-        if (accountId == newAccountId) return
-        val previous = accountId
+        val switch = AccountSwitch.of(
+            reading = entitlementJob != null,
+            current = accountId,
+            next = newAccountId,
+        )
+        if (!switch.restartsReader) return
         accountId = newAccountId
         redeemedTokens.clear()
-        scope.launch {
-            // A guest who has just linked keeps whatever they bought as a guest.
-            if (previous == null && newAccountId != null) {
+        // One reader at a time. Left running, the reader for the account before this one would
+        // keep writing its own bucket into the state on every write to the store — DataStore
+        // hands every collector the whole of it — and after two account changes whichever of
+        // the three woke last would decide what this player owns.
+        entitlementJob?.cancel()
+        entitlementJob = scope.launch {
+            if (switch.migratesGuestPurchases && newAccountId != null) {
                 entitlementStore.migrateGuestPurchases(newAccountId)
             }
             entitlementStore.observe(newAccountId).collect { owned ->

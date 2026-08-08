@@ -274,6 +274,14 @@ class FriendsViewModel @Inject constructor(
                 .catch { _uiState.update { state -> state.copy(hostedInvite = null) } }
                 .collect { room ->
                     when {
+                        // The room being deleted is the ending a waiting room actually has:
+                        // the sweep removes it rather than marking it, and until that arrived
+                        // as an event this panel went on naming a friend it was no longer
+                        // holding a seat for.
+                        room == null -> _uiState.update {
+                            it.copy(hostedInvite = null, message = AppError.ROOM_NOT_FOUND.message)
+                        }
+
                         room.status.isPlayable && room.playerCount == 2 -> {
                             _events.emit(FriendsEvent.OpenGame(session))
                             hostedInviteJob?.cancel()

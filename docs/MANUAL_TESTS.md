@@ -1,6 +1,6 @@
 # Koridor — Manuel Test Senaryoları
 
-Otomatik testler saf mantığı kapsar (237 JVM testi, 156 güvenlik kuralı testi). Bu belge,
+Otomatik testler saf mantığı kapsar (240 JVM testi, 192 güvenlik kuralı testi). Bu belge,
 **yalnızca gerçek cihazda doğrulanabilecek** senaryoları listeler: ağ davranışı, iki cihaz
 arası eşzamanlılık, sistem diyalogları ve görsel yerleşim.
 
@@ -8,17 +8,24 @@ Her senaryonun sonunda beklenen davranış yazılıdır. Bir madde geçmezse, ha
 başarısız olduğu not edilmelidir.
 
 **Ön koşullar:** `firebase.properties`, `monetization.properties`, `app.properties` ve
-`keystore.properties` doldurulmuş; `firebase deploy --only database,functions` yapılmış olmalı.
+`keystore.properties` doldurulmuş; `firebase deploy --only database` yapılmış ve `worker/`
+yayınlanmış olmalı. `functions/` **yayınlanmaz** — aynı işin ikinci uygulamasıdır ve worker'ın
+son turlarda eklenen işlerini içermez; ayrıntı için `README.md`.
 
 ---
 
 ## A. Çevrim içi maç — iki gerçek cihaz
 
 ### A1. Oda oluşturma ve kodla katılma
-1. Cihaz 1: Çevrim İçi Oyna → Oda oluştur → oda adı gir, dereceli açık → Oda oluştur
+1. Cihaz 1: Çevrim İçi Oyna → Oda oluştur → oda adı gir, dereceli açık.
+   **Renk kontrolüne dokunmayın**, yalnızca hangi rengin seçili göründüğünü not edin: renk
+   form açılırken çekilir, dolayısıyla her seferinde mavi olmaz. → Oda oluştur
 2. Cihaz 1: 6 karakterli kod görünmeli, bekleme ekranı açılmalı
 3. Cihaz 2: Çevrim İçi Oyna → Kodla katıl → kodu gir → Katıl
-4. **Beklenen:** İki cihazda da tahta açılır; Cihaz 1 (mavi) başlar, Cihaz 2 tahtayı ters çevrilmiş görür.
+4. **Beklenen:** İki cihazda da tahta açılır. Cihaz 1'in piyonu 1. adımda seçili görünen
+   renktedir; mavi olan başlar ve karşı taraf tahtayı ters çevrilmiş görür.
+5. Formu tekrar açıp not ettiğinizin tersine dokunun → **Beklenen:** dokunulan renk seçili
+   hâle gelir, diğeri bırakılır ve oluşturulan odada Cihaz 1 o renktedir.
 
 ### A2. Açık odalar listesinden katılma
 1. Cihaz 1: Oda oluştur (her oda listelenir; artık seçilecek bir görünürlük yok)
@@ -135,8 +142,22 @@ Süresi biten tur maçı kendisi bitirir; kimsenin bir şeye basması gerekmez.
 ### C1b. Misafir liderlik tablosunda görünmemeli (kritik)
 1. Misafirken **Liderlik Tablosu** → Genel ve Haftalık sekmelerini aç
 2. **Beklenen:** Kendi adın hiçbir sekmede yok; alttaki çubuk sıra yerine "Misafirler liderlik tablosunda yer almaz" der. Tablo yine de okunabilir.
-3. Ayarlar → Hesap → Google ile bağla → uygulamayı kapatıp aç → Liderlik Tablosu
-4. **Beklenen:** Artık tablodasın ve puanın misafirken taşıdığın puanla aynı.
+3. Ayarlar → Hesap → Google ile bağla → kullanıcı adı ekranı gelir, bir ad seç
+4. **Beklenen:** Artık tablodasın; **seçtiğin adla** ve misafirken taşıdığın puanla.
+
+### C1c. Adı verilmemiş hesap tabloya çıkmamalı (kritik)
+Bağlanmak hesabı gerçek yapar; ad vermek bir form sonra gelir. Tabloya yazma eskiden bağlanma
+anındaydı, yani aradaki saniyelerde oyuncu herkese açık tabloda `guest_######` olarak
+duruyordu — ve uygulama o anda kapatılırsa orada kalıyordu. Artık tablodaki yeri ad belirler.
+1. Misafir olarak gir, birkaç maç oyna
+2. Ayarlar → Hesap → **E-posta ile bağla** → kullanıcı adı ekranı gelir
+3. **Ad yazmadan uygulamayı tamamen kapat** (son kullanılanlar listesinden kaydır)
+4. **En az iki dakika bekle.** Bu bekleme testin parçasıdır: tabloya çıkarabilecek ikinci el
+   dakikada bir çalışan sunucudur ve asıl sınav odur
+5. İkinci cihazda (ya da misafir olarak) **Liderlik Tablosu → Genel**, listeyi sonuna kadar aç
+6. **Beklenen:** `guest_` ile başlayan hiçbir ad yok
+7. Birinci cihazda uygulamayı aç → **Beklenen:** doğrudan kullanıcı adı ekranı gelir; bir ad ver
+8. Liderlik Tablosu → **Beklenen:** yeni ad tabloda, misafirken taşıdığın puanla
 
 ### C2. Google girişini iptal etme
 1. Karşılama ekranı → Google ile devam et → hesap seçiciyi **geri tuşuyla kapat**
@@ -195,6 +216,23 @@ anlatmasıdır.
    misafirin puanını değil
 8. Uçak modunu açıp 3–6. adımları tekrarla → **Beklenen:** "Bu hesaba geçilemedi. Misafir
    ilerlemen artık yok…" hatası ekranda **kalır**; başka bir ekrana atılmazsın
+
+### C9. Arkadaş olmayan bir rakibe gönderilmiş rövanş isteğinin silinmesi (kritik)
+Silme, karşı tarafların düğümlerini arkadaş listesini gezerek bulur. Rövanş isteği ise
+arkadaşlık değil biten maç karşılığında gönderilir, yani listede olmayan birine de gidebilir —
+ve bir davet kutusunu yalnızca sahibi okuyabildiği için giden hesap onu bulamaz. Bu senaryo,
+kaydı sunucunun topladığını doğrular. Sonucu uygulamadan görülemez; **Firebase Console →
+Realtime Database** gerekir.
+1. Cihaz 1 ve 2'de birbiriyle **arkadaş olmayan** iki hesapla giriş yap
+2. Aralarında çevrim içi bir maç oyna ve bitir
+3. Cihaz 1: kazanan/kaybeden ekranında **Rövanş** iste. Cihaz 2'de üstte çubuk belirmeli —
+   **cevaplama**
+4. Console → `invites/<cihaz 2'nin uid'si>/<cihaz 1'in uid'si>` → **Beklenen:** kayıt duruyor
+5. Cihaz 1: Ayarlar → Hesap → **Hesabı sil**
+6. **En çok iki dakika bekle** (sunucu dakikada bir çalışır ve bu iş sıranın sonundadır)
+7. Console → aynı yol → **Beklenen:** kayıt **yok**; `invites/<cihaz 2'nin uid'si>` düğümü
+   başka kaydı kalmadıysa tamamen kaybolmuş olmalı
+8. Cihaz 2'de uygulamayı aç → **Beklenen:** silinen oyuncudan gelen bir çubuk yok
 
 ---
 
@@ -297,6 +335,27 @@ kadar** sürebilir. Erken bakıp "gelmedi" demek bu senaryonun tek tuzağıdır.
 10. Profil ekranını varsayılan yazı tipi ölçeğiyle aç → **Beklenen:** dört düğme kaydırmadan
     görünür ve "Son oyunlar" başlığı ekranın alt ucundan görünür — bölümün düğmelerin
     *altında* durmasının tek sebebi budur
+
+### D9. Bildirme ve engelleme
+Play'in kullanıcı içeriği yükümlülüğünün karşılığı. Yazdığı görülen iki alan var — kullanıcı
+adı ve oda adı — ve ikisinin de bir bildirme yolu olmak zorunda. Bildirimi hiçbir istemci
+okuyamaz, dolayısıyla doğrulaması veritabanı konsolundan yapılır.
+
+1. Cihaz 2 ile bir maç oyna, maç sırasında rakibin adına dokun → profil açılır
+2. **Beklenen:** sayfada "Bildir" ve "Engelle" düğmeleri var
+3. "Bildir" → **Beklenen:** dört gerekçe listelenir, yazılacak bir alan yoktur
+4. Bir gerekçe seç → **Beklenen:** "Teşekkürler. Bildirimin gönderildi." yazar
+5. Konsolda `contentReports/{bildirilenin uid}/{bildirenin uid}` → **Beklenen:** gerekçe ve
+   sunucu zaman damgası duruyor
+6. Cihaz 2'de aynı profili aç → **Beklenen:** bildirimden hiçbir iz yok, bir bildirim aldığı
+   hiçbir yerde yazmıyor
+7. Cihaz 1: "Engelle" → onayla → Cihaz 2'den oyuna davet et → **Beklenen:** davet gitmiyor
+8. Cihaz 2: Cihaz 1'i **o da** engellesin (Arkadaşlar → ara → Engelle) → **Beklenen:** engel
+   uygulanır, hata çıkmaz; "Engellenenler" bölümünde görünür
+9. Çevrim İçi Oyna → açık odalar listesindeki bir odanın yanındaki bayrak → **Beklenen:** aynı
+   liste açılır, seçince bildirilen kişi odayı açan oyuncudur
+10. Misafir olarak gir, bir oyuncunun profilini aç → **Beklenen:** "Bildir" var, "Engelle" yok
+    ve arkadaşlığın hesap gerektirdiği yazıyor
 
 ---
 

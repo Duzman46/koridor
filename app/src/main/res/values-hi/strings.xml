@@ -337,6 +337,15 @@
     <string name="friends_request_pending">मित्रता अनुरोध भेजा गया</string>
     <string name="friends_already_friends">आप दोस्त हैं</string>
 
+    <string name="report_action">रिपोर्ट करें</string>
+    <string name="report_title">%1$s की रिपोर्ट करें</string>
+    <string name="report_message">बताएं कि क्या गलत है। रिपोर्ट डेवलपर तक जाती है और दूसरे खिलाड़ी को नहीं दिखाई जाती।</string>
+    <string name="report_reason_name">आपत्तिजनक उपयोगकर्ता नाम</string>
+    <string name="report_reason_room_name">आपत्तिजनक कक्ष नाम</string>
+    <string name="report_reason_cheating">धोखाधड़ी</string>
+    <string name="report_reason_other">कुछ और</string>
+    <string name="report_sent">धन्यवाद। आपकी रिपोर्ट भेज दी गई है।</string>
+
     <string name="invites_title">खेल के न्योते</string>
     <string name="invites_from">%1$s ने आपको मैच के लिए बुलाया है।</string>
     <string name="requests_rematch_from">%1$s फिर से मुक़ाबला चाहता है।</string>

@@ -18,6 +18,7 @@ import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
 import com.duzman46.gridbound.social.domain.PlayerRequest
@@ -271,6 +272,9 @@ class FakeSocialRepository : SocialRepository {
     val presenceCleared = mutableListOf<String>()
     val deletedUserIds = mutableListOf<String>()
 
+    /** Who was reported, why, and in which room. */
+    val reports = mutableListOf<Triple<String, ContentReportReason, String>>()
+
     override fun observeFriendships(userId: String): Flow<List<Friend>> = flowOf(emptyList())
     override fun observeRequests(userId: String): Flow<List<PlayerRequest>> = flowOf(emptyList())
     override fun observePresence(userIds: Set<String>): Flow<Map<String, PresenceState>> =
@@ -310,6 +314,16 @@ class FakeSocialRepository : SocialRepository {
 
     override suspend fun clearRequest(recipientId: String, senderId: String): Outcome<Unit> =
         Outcome.Success(Unit)
+
+    override suspend fun reportPlayer(
+        reporterId: String,
+        subjectId: String,
+        reason: ContentReportReason,
+        roomCode: String,
+    ): Outcome<Unit> {
+        reports += Triple(subjectId, reason, roomCode)
+        return Outcome.Success(Unit)
+    }
 
     override fun startPresence(userId: String) {
         presenceStarted += userId

@@ -337,6 +337,15 @@
     <string name="friends_request_pending">Freundschaftsanfrage gesendet</string>
     <string name="friends_already_friends">Ihr seid Freunde</string>
 
+    <string name="report_action">Melden</string>
+    <string name="report_title">%1$s melden</string>
+    <string name="report_message">Sag uns, was nicht stimmt. Meldungen gehen an den Entwickler und werden dem anderen Spieler nicht gezeigt.</string>
+    <string name="report_reason_name">Anstößiger Benutzername</string>
+    <string name="report_reason_room_name">Anstößiger Raumname</string>
+    <string name="report_reason_cheating">Betrug</string>
+    <string name="report_reason_other">Etwas anderes</string>
+    <string name="report_sent">Danke. Deine Meldung wurde gesendet.</string>
+
     <string name="invites_title">Spieleinladungen</string>
     <string name="invites_from">%1$s hat dich zu einer Partie eingeladen.</string>
     <string name="requests_rematch_from">%1$s will eine Revanche.</string>

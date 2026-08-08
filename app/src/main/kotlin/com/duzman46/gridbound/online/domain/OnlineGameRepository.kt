@@ -2,6 +2,7 @@ package com.duzman46.gridbound.online.domain
 
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.game.models.GameAction
+import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
@@ -14,6 +15,26 @@ interface OnlineGameRepository {
     val isConfigured: Boolean
 
     suspend fun createRoom(configuration: RoomConfiguration): OnlineLobbyResult
+
+    /**
+     * Opens — or walks into — the one room the match just played is entitled to a rerun in.
+     *
+     * Both players are offered the rematch button and both may press it in the same second, so
+     * the room cannot be a fresh code each time: two rooms means two invitations crossing, each
+     * player accepting the other's, and the pair split across a board apiece with an absent
+     * rival and a clock running down. The code is derived from the finished match instead, so
+     * both devices aim at one node, whichever of them gets there first hosts, and the other
+     * takes the free seat.
+     *
+     * @param playedSeat the seat held in the match just finished. It is given up here — blue
+     *   opens, and a rematch that returned the first move to whoever asked for it would be a
+     *   rematch on better terms than the match itself.
+     */
+    suspend fun rematchRoom(
+        playedRoomCode: String,
+        opponentUserId: String,
+        playedSeat: PlayerId,
+    ): OnlineLobbyResult
 
     /** @param password required only when the room is protected. */
     suspend fun joinRoom(roomCode: String, password: String = ""): OnlineLobbyResult
@@ -46,7 +67,15 @@ interface OnlineGameRepository {
      */
     suspend fun closeIdleMatches(userId: String): Outcome<Unit>
 
-    fun observeRoom(roomCode: String): Flow<OnlineRoom>
+    /**
+     * The room as it stands, and every change to it. Null once the room is not there any more.
+     *
+     * A deletion used to be dropped rather than delivered, which is the one ending a room
+     * waiting for an opponent actually has: the sweep removes such a room outright rather than
+     * marking it, so every panel waiting on one waited forever, showing a code nobody could
+     * join and offering no hint that anything had happened.
+     */
+    fun observeRoom(roomCode: String): Flow<OnlineRoom?>
 
     /**
      * Sends a move. Returns false when the room moved on underneath us, which means the

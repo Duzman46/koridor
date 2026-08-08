@@ -55,6 +55,7 @@ tamamen Firebase Authentication'a devredilmiştir.
 | Veri | Amaç | Nerede | Başkaları görür mü |
 |---|---|---|---|
 | Puan (rating), en yüksek puan | Eşleştirme ve liderlik tablosu | `users/{uid}` | Evet |
+| Haftalık liderlik satırı (kullanıcı adı, avatar, puan, galibiyet, maç sayısı kopyası) | Haftalık tablonun tek sorguda okunabilmesi | `leaderboards/weekly/{hafta}/{uid}` | **Evet** — giriş yapmış her oyuncu okuyabilir; yalnızca sunucu yazar |
 | Galibiyet / mağlubiyet / beraberlik / maç sayısı | İstatistik, liderlik tablosu | `users/{uid}` | Evet |
 | Galibiyet serisi | Profil | `users/{uid}` | Evet |
 | Öğretici tamamlandı bilgisi | Öğreticinin tekrar gösterilmemesi | `users/{uid}` + cihaz | Hayır |
@@ -72,6 +73,7 @@ tamamen Firebase Authentication'a devredilmiştir.
 | Engelleme kayıtları | Engellemenin uygulanması | `friendships/{uid}/{other}` | **Hayır** (engellenen kişi bunu göremez) |
 | Oyun davetleri | Davet gönderme | `invites/{alıcı}/{gönderen}` | Yalnızca alıcı |
 | Çevrim içi durumu | Arkadaşın müsait olup olmadığı | `presence/{uid}` | Yalnızca giriş yapmış kullanıcılar |
+| İçerik bildirimi (bildiren UID, kategori, oda kodu) | Kullanıcı adı veya oda adı hakkındaki şikâyetin geliştiriciye ulaşması | `contentReports/{bildirilen}/{bildiren}` | **Hayır** — hiçbir istemci okuyamaz, bildirilen oyuncu da göremez ve silemez |
 
 **Presence yalnızca `online: true/false` içerir.** Konum, IP, cihaz kimliği veya "en son
 görülme" zamanı başka oyunculara gösterilmez.
@@ -109,11 +111,10 @@ Aşağıdakiler **kesinlikle toplanmaz**:
 - Maç içinde serbest metin. Çevrim içi maçta gönderilebilen tek şey kapalı bir listeden
   seçilen hazır ifadeler ve emojilerdir; oyuncunun maç sırasında yazdığı hiçbir metin
   cihazdan çıkmaz. Veritabanı kuralları listedeki anahtarlar dışında hiçbir değeri kabul
-  etmez. Bu liste, uygulamayı Play'in kullanıcı içeriği (UGC) yükümlülükleri — moderasyon,
-  şikâyet ve engelleme altyapısı — kapsamına sokmayan tasarımdır ve serbest metne
-  genişletilmemelidir. Oyuncunun yazıp başkalarının görebildiği yalnızca iki alan vardır:
-  **kullanıcı adı** ve **oda adı**. İkisi de §2.1 ve §2.2'de listelenir, §5'te beyan edilir ve
-  bu madde onları kapsamaz.
+  etmez ve bu liste serbest metne genişletilmemelidir. Oyuncunun yazıp başkalarının
+  görebildiği yalnızca iki alan vardır: **kullanıcı adı** ve **oda adı**. İkisi de §2.1 ve
+  §2.2'de listelenir, §5'te beyan edilir, bu madde onları kapsamaz — ve Play'in kullanıcı
+  içeriği yükümlülüğünü doğuran da onlardır (bkz. §5, "Kullanıcı içeriği ve şikâyet yolu").
 
 ---
 
@@ -146,16 +147,29 @@ Uygulama içi yol: **Ayarlar → Hesap → Hesabı sil**
 Kullanıcı onay olarak "SİL" (dilin karşılığı) yazmak zorundadır. Onaylandığında sırayla:
 
 1. Arkadaşlık kayıtları hem kullanıcıdan hem **karşı tarafların listelerinden** silinir
-2. Bekleyen davetler silinir
+2. Bekleyen davetler silinir — hem kullanıcının kendi kutusundakiler hem de arkadaş
+   listesindeki oyunculara gönderdikleri
 3. Presence kaydı silinir
 4. Kullanıcı adı rezervasyonu (`usernames/{normalized}`) serbest bırakılır
 5. Özel veriler (`usersPrivate/{uid}` — e-posta) silinir
 6. Genel profil (`users/{uid}`) silinir
 7. Firebase Authentication hesabı silinir
 8. Cihazdaki öğretici ve misafir durumu sıfırlanır
+9. Haftalık liderlik tablosundaki satırlar sunucu tarafından silinir (§4.3)
 
 Bu sıralama zorunludur: kimlik silindikten sonra veritabanı kuralları o yazma işlemlerine
 artık izin vermez.
+
+2. adımın tek istisnası rövanş istekleridir. Rövanş, arkadaşlık değil biten maç karşılığında
+gönderilir; yani arkadaş olmayan bir rakibin kutusunda da bulunabilir. Bir davet kutusunu
+kurallar gereği yalnızca sahibi okuyabilir — hiçbir derinlikte değil — dolayısıyla giden hesabın
+o kaydı bulmasının bir yolu yoktur. Kaydı, silme işleminden sonraki taramada sunucu siler
+(§4.3); gönderenin profili artık bulunmadığı için süresi dolmasa bile toplanır.
+
+9. adım da aynı nedenle sunucunun işidir. `leaderboards` düğümüne hiçbir istemcinin yazma
+kuralı yoktur — tablo, oyuncuların düzenleyemeyeceği bir kayıt olduğu için böyledir — dolayısıyla
+giden hesap kendi satırını kaldıramaz. Satır, kullanıcı adının herkese açık bir kopyasıdır ve
+"kalıcı olarak sil" onu da kapsamak zorundadır; silen el, admin kimliğini taşıyan taramadır.
 
 ### 4.2 Silme sonrası kalan veriler
 
@@ -164,6 +178,8 @@ artık izin vermez.
 | `matchResults/{matchId}` | Kalır, ancak yalnızca UID içerir | Rakibin maç geçmişinin bütünlüğü; UID artık hiçbir profile bağlı değildir (anonimleşir) |
 | `recentMatches/{uid}` | Kalır (en fazla 10 satır) | Bu düğüme hiçbir istemcinin yazma kuralı yoktur — silmek de bir yazmadır — ve silme hakkı vermek, kaybı sildirmenin yolu olurdu. Kalan satırlar zaten herkese açıktı: rakibin kullanıcı adı, sonuç, tarih. Profil gittiği için uygulamadan erişilemez |
 | Silinen oyuncunun adı, rakiplerinin `recentMatches` satırlarında | Kalır | Ad, maç kaydedilirken kopyalanır; rakibin kendi geçmişi silinen hesabın malı değildir |
+| `leaderboards/weekly/{hafta}/{uid}` | **Kalmaz** | Kullanıcı adının herkese açık bir kopyasıdır; silinen hesabın satırını sunucu taraması kaldırır (§4.3) |
+| `contentReports/{bildirilen}/{bildiren}` | Kalır | Bir şikâyet, hakkında olduğu hesabın malı değildir; hiçbir istemci okuyamaz |
 | `purchaseTokens/{hash}` | Kalır (hash) | Aynı satın almanın başka hesaba aktarılmasını engeller; kişisel veri içermez |
 | Google Play satın alma kaydı | Google'da kalır | Google Play'in kendi politikası; uygulama kontrolünde değildir |
 | AdMob reklam verileri | Google'da kalır | Google reklam ayarlarından yönetilir |
@@ -174,7 +190,15 @@ artık izin vermez.
 - Oynanan odalar **24 saat** sonra silinir
 - Maç içi hazır mesajlar odanın içinde durur; odayla birlikte silinir, ayrı bir saklama
   süreleri yoktur
-- Oyun davetleri **10 dakika** sonra geçersiz olur
+- Oyun davetleri ve rövanş istekleri **10 dakika** sonra geçersiz olur; süresi dolan kayıtlar
+  sunucu tarafından ayrıca silinir
+- Silinmiş bir hesabın başka bir oyuncunun kutusunda bıraktığı davet, süresi dolmasa bile
+  aynı taramada silinir: gönderenin artık profili yoktur
+- Haftalık liderlik tablosu yalnızca **içinde bulunulan haftayı ve bir öncekini** tutar; daha
+  eskisi bütünüyle silinir. Uygulama zaten yalnızca içinde bulunulan haftayı okur, bir önceki
+  ise saati geri kalmış bir cihaz için bırakılır
+- Yaşayan haftada, profili artık bulunmayan bir hesabın satırı da silinir; bu, silinen bir
+  hesabın adının herkese açık bir tabloda kalmamasını sağlayan tek yoldur
 
 Bu temizliği dakikada bir çalışan `worker/src/sweep.ts` yapar. `recentMatches` bunun dışındadır
 ve süreyle değil sayıyla sınırlanır: her oyuncu için yalnızca son 10 maç tutulur, on birinci maç
@@ -210,18 +234,36 @@ Aşağıdaki tablo forma doğrudan aktarılabilir.
 | Veriler bağımsız bir güvenlik incelemesinden geçti mi? | Hayır | Böyle bir inceleme yapılmadı |
 | Aile Politikası kapsamında mı? | Hedef kitleye göre belirlenmeli | 13 yaş altına özel hedefleme yapılmıyor |
 
-### Maç içi mesajlar neden "kullanıcı içeriği" değildir
+### Kullanıcı içeriği ve şikâyet yolu
 
-Gönderilebilecek her şey uygulamada sabit bir listedir: sekiz hazır ifade ve altı emoji.
-Veritabanına yazılan değer bu listenin anahtarlarından biridir ve kurallar başka hiçbir değeri
-kabul etmez, dolayısıyla oyuncunun **yazdığı** bir içerik hiçbir zaman ortaya çıkmaz. Bu yüzden
-Play'in kullanıcı içeriği barındıran uygulamalardan istediği moderasyon, şikâyet ve engelleme
-altyapısı gerekmez. Buna karşılık form yine de yukarıdaki satırla beyan edilir: eksik beyan bir
-politika ihlali, fazladan beyan değildir.
+Uygulamanın bir oyuncunun yazdığını başka oyunculara gösterdiği **iki** alan vardır ve Play'in
+kullanıcı içeriği yükümlülüğünü doğuran da bu ikisidir:
 
-Oyuncunun kendi savunması da uygulamanın içindedir: **Ayarlar → Oyun deneyimi → Maç mesajları**
-kapatıldığında ne mesaj gelir ne de gönderilebilir. Aynı anahtar, maç sırasında mesaj
-seçicisinin altındaki "Mesajları kapat" bağlantısıyla da kapatılabilir.
+- **kullanıcı adı** — liderlik tablosunda, profilde, maç sırasında tahtada ve rakiplerin son
+  oyunlar satırlarında görünür; 3-16 karakter, yalnızca `[A-Za-z0-9_]`
+- **oda adı** — herkese açık oda listesinde görünür; en fazla 32 karakter, serbest metin
+
+Karşılığında uygulamada üç şey vardır:
+
+1. **Bildirme.** Her oyuncu profilinde bir **Bildir** düğmesi vardır — liderlik tablosundan,
+   son oyunlar satırından ve maç sırasında rakibe dokunarak ulaşılır. Oda listesinde her satırın
+   yanında aynı işi yapan bir bayrak simgesi bulunur. Gerekçe kapalı bir listeden seçilir;
+   serbest metin alanı yoktur. Kayıt `contentReports/{bildirilen}/{bildiren}` altına yazılır;
+   hiçbir istemci onu okuyamaz, bildirilen oyuncu göremez ve silemez. Misafirler de bildirebilir:
+   bir şeyi görmek için hesap gerekmez.
+2. **Engelleme.** Aynı profil sayfasından ve arkadaşlar ekranından. Engellenen oyuncu davet
+   gönderemez, arkadaşlık isteği yazamaz ve engellendiğini öğrenemez.
+3. **Moderasyon.** Bildirimler veritabanı konsolundan okunur; gereken hesabın kullanıcı adı
+   `users/{uid}/username` üzerinden değiştirilebilir veya `accountStatus` ile askıya alınabilir.
+
+**Maç içi mesajlar bu kapsamın dışındadır.** Gönderilebilecek her şey sabit bir listedir: sekiz
+hazır ifade ve altı emoji. Veritabanına yazılan değer bu listenin anahtarlarından biridir ve
+kurallar başka hiçbir değeri kabul etmez, dolayısıyla oyuncunun **yazdığı** bir içerik oradan
+hiçbir zaman çıkmaz. Form yine de yukarıdaki satırla beyan eder: eksik beyan bir politika
+ihlali, fazladan beyan değildir. Oyuncunun kendi savunması da uygulamanın içindedir:
+**Ayarlar → Oyun deneyimi → Maç mesajları** kapatıldığında ne mesaj gelir ne de gönderilebilir.
+Aynı anahtar, maç sırasında mesaj seçicisinin altındaki "Mesajları kapat" bağlantısıyla da
+kapatılabilir.
 
 ### "Paylaşılır" işaretlenen tek kalem
 
@@ -237,20 +279,19 @@ değerler boşken ilgili bağlantıyı **gizler**, hatalı bir adrese yönlendir
 
 | Alan | Dosya | Şu anki durum |
 |---|---|---|
-| Gizlilik Politikası URL'si | `app.properties` → `KORIDOR_PRIVACY_POLICY_URL` | **Boş — doldurulmalı** |
+| Gizlilik Politikası URL'si | `app.properties` → `KORIDOR_PRIVACY_POLICY_URL` | Dolu: `https://gridbound-duzman46.web.app/privacy` |
 | Kullanım Koşulları URL'si | `app.properties` → `KORIDOR_TERMS_URL` | **Boş — doldurulmalı** |
 
-Gizlilik politikası metninin Türkçe ve İngilizce taslakları `docs/PRIVACY_POLICY_TR.md` ve
-`docs/PRIVACY_POLICY_EN.md` dosyalarındadır; bu belgedeki tablolarla uyumlu hâle getirilip
-herkese açık bir adreste yayımlanmalıdır. Play Console, gizlilik politikası URL'si olmadan
-yayına izin vermez.
+Gizlilik politikası dört dosyada durur ve dördü birlikte değiştirilir: yayımlanan sayfalar
+`public/privacy.html` ve `public/gizlilik.html` (Firebase Hosting, `cleanUrls` sayesinde
+`/privacy` ve `/gizlilik`), aynı metnin markdown karşılıkları `docs/PRIVACY_POLICY_EN.md` ve
+`docs/PRIVACY_POLICY_TR.md`. Dördü de bu belgenin §1, §2, §4 ve §5 tablolarından türetilmiştir:
+hesap açma, kullanıcı adı, profil, arkadaşlık ve engelleme, liderlik tabloları, son maçlar,
+maç içi hazır mesajlar, bildirme yolu, Crashlytics ve Analytics, hepsi geçer. Geliştirici
+iletişim adresi (`furkanduzman46@gmail.com`, mağaza sayfasındakiyle aynı) sayfanın sonundadır.
 
-**Bu iki taslak şu anda uygulamanın gerisindedir** ve olduğu gibi yayımlanamaz. Yalnızca
-anonim çevrim içi oyunu anlatıyorlar; şunlardan hiçbiri geçmiyor: e-posta ve Google ile
-hesap açma, kullanıcı adı, profil, arkadaşlık ve engelleme, liderlik tablosu, profildeki son
-maçlar, maç içi hazır mesajlar, Crashlytics ve Analytics. "Uygulama kullanıcıdan ad, e-posta
-veya telefon numarası istemez" cümlesi artık **doğru değildir**. Yayın öncesi ikisi de bu
-belgenin §1, §2 ve §5 tablolarına göre yeniden yazılmalıdır.
+**Bu belge değiştiğinde o dört dosya da değişmelidir.** Play incelemesinin fiilen okuduğu tek
+şey yayımlanan sayfadır ve formla çelişmesi tek başına ret sebebidir.
 
 ### Karar verilmesi gereken: Google Analytics for Firebase
 

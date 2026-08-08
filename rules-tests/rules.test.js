@@ -312,6 +312,16 @@ describe("server bookkeeping", () => {
     await assertFails(db.ref("maintenance/boardIndexBackfill/cursor").get());
     await assertFails(db.ref("maintenance/boardIndexBackfill/cursor").set(""));
   });
+
+  it("and the invite collector's, along with anything else kept beside them", async () => {
+    // The same treatment for the second walk, asked of the subtree rather than of the path,
+    // so a third note added later is closed by this test before it is written.
+    const db = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(db.ref("maintenance/inviteSweep/cursor").get());
+    await assertFails(db.ref("maintenance/inviteSweep/cursor").set(""));
+    await assertFails(db.ref("maintenance").get());
+    await assertFails(db.ref("maintenance").set({ anything: true }));
+  });
 });
 
 describe("private data", () => {
@@ -412,6 +422,28 @@ describe("friendships", () => {
     await db.ref(`friendships/${ALICE}/${BOB}`).set({ status: "FRIENDS", updatedAt: 1 });
     const bob = testEnv.authenticatedContext(BOB).database();
     await assertFails(bob.ref(`friendships/${ALICE}`).get());
+  });
+
+  it("lets a player who has been blocked block back", async () => {
+    // Clearing the other player's row is exactly the write their own block refuses, and a
+    // multi-path update is all-or-nothing — so sending both halves together meant being
+    // blocked first was all it took to make somebody unblockable. The block that matters is
+    // the one row on the blocker's own node, and that row has to land on its own.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`friendships/${BOB}/${ALICE}`).set({
+        status: "BLOCKED",
+        updatedAt: 1,
+      });
+    });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`friendships/${BOB}/${ALICE}`).remove());
+    await assertSucceeds(
+      alice.ref().update({
+        [`friendships/${ALICE}/${BOB}/status`]: "BLOCKED",
+        [`friendships/${ALICE}/${BOB}/updatedAt`]: 2,
+        [`invites/${ALICE}/${BOB}`]: null,
+      }),
+    );
   });
 });
 
@@ -732,6 +764,63 @@ describe("erasing an account", () => {
     await seedEntangledPlayers();
     const bob = testEnv.authenticatedContext(BOB).database();
     await assertFails(bob.ref(`presence/${ALICE}`).remove());
+  });
+
+  // The entry the erasure above cannot reach, and why the worker collects it instead.
+  //
+  // Every game invitation this account sent is found by walking its friend list, because
+  // friendship is exactly what the rules charge for one: the invitation and the friendship
+  // always come as a pair. A rematch is charged for differently — the finished match is the
+  // licence, and the two need never have been friends — so `invites/{opponent}/{me}` can
+  // exist with nothing on this side of the database pointing at it.
+  //
+  // The three below are the whole problem. The write is permitted, the read that would find
+  // it is not at any depth, and nobody else may do it on the account's behalf.
+
+  const CAROL = "carol-uid";
+
+  /** A rematch ALICE sent CAROL off a match they played, having never been friends. */
+  async function seedRematchToAStranger() {
+    await seedProfile(ALICE, "alice");
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`invites/${CAROL}/${ALICE}`).set({
+        kind: "REMATCH",
+        fromUserId: ALICE,
+        fromUsername: "alice",
+        roomCode: "NEWRM1",
+        playedRoomCode: "PLAYED",
+        createdAt: 1,
+        expiresAt: 2,
+      });
+    });
+  }
+
+  it("lets the sender take back an entry sight unseen, friendship or none", async () => {
+    await seedRematchToAStranger();
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    // No friendship row exists in either direction, so the erasure's walk never names CAROL.
+    await assertSucceeds(alice.ref(`invites/${CAROL}/${ALICE}`).remove());
+  });
+
+  it("but never lets them find out where they sent one", async () => {
+    await seedRematchToAStranger();
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    // Read permission is granted at invites/$recipient to that recipient alone, and nothing
+    // below it opens a single entry to the player who wrote it. These three refusals together
+    // are why no client can enumerate what it has to erase — so the collector is
+    // collectDeadInvites in worker/src/sweep.ts, which holds a credential these rules do not
+    // answer to.
+    await assertFails(alice.ref("invites").get());
+    await assertFails(alice.ref(`invites/${CAROL}`).get());
+    await assertFails(alice.ref(`invites/${CAROL}/${ALICE}`).get());
+  });
+
+  it("refuses a third party collecting an entry between two other players", async () => {
+    // The other half of why it cannot be a phone: the job cannot be handed to the opponent's
+    // device either, and by the time anyone notices, the account that wrote it is gone.
+    await seedRematchToAStranger();
+    const stranger = testEnv.authenticatedContext(BOB).database();
+    await assertFails(stranger.ref(`invites/${CAROL}/${ALICE}`).remove());
   });
 });
 
@@ -1788,6 +1877,500 @@ describe("the move clock decides on its own", () => {
         },
       }),
     );
+  });
+});
+
+describe("the terms a room was opened under", () => {
+  // The move clock and the ranked flag are what the room is played for, and every rule that
+  // settles a match reads them back off the room as it now stands. So a write that could
+  // restate either is a write that decides the match after the fact: shrink the rival's clock
+  // in the same breath as a move and the timeout claim two seconds later is honest arithmetic;
+  // clear the flag while conceding and the loss was never rated.
+
+  /** BOB is on the clock in a ranked room with two minutes a move, and has just moved. */
+  function playing(overrides = {}) {
+    return {
+      hostUserId: ALICE,
+      guestUserId: BOB,
+      status: "IN_PROGRESS",
+      currentTurnUserId: ALICE,
+      version: 4,
+      winnerUserId: "",
+      endReason: "",
+      createdAt: 1,
+      lastMoveAt: Date.now() - 1_000,
+      ranked: true,
+      visibility: "PUBLIC",
+      turnDurationSeconds: 120,
+      browseKey: "PUBLIC_IN_PROGRESS",
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 5,
+        players: {
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  /** ALICE steps forward and hands the turn to BOB. */
+  function moved(room, overrides = {}) {
+    return {
+      ...room,
+      version: room.version + 1,
+      lastMoveAt: Date.now(),
+      currentTurnUserId: BOB,
+      board: {
+        ...room.board,
+        currentPlayer: "PLAYER_TWO",
+        turnNumber: room.board.turnNumber + 1,
+        players: {
+          ...room.board.players,
+          PLAYER_ONE: { row: 6, column: 4, wallsRemaining: 10 },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  function conceded(room, winner, reason, overrides = {}) {
+    return {
+      ...room,
+      status: "FINISHED",
+      winnerUserId: winner,
+      endReason: reason,
+      currentTurnUserId: "",
+      version: room.version + 1,
+      browseKey: "PUBLIC_FINISHED",
+      ...overrides,
+    };
+  }
+
+  async function seed(room) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("rooms/TRM001").set(room);
+    });
+  }
+
+  it("takes a move that leaves the clock alone", async () => {
+    const room = playing();
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("rooms/TRM001").set(moved(room)));
+  });
+
+  it("refuses a move that shortens the rival's clock", async () => {
+    // The whole match in one write: a legal move that also cuts two minutes to one second,
+    // after which the mover's own timeout claim is arithmetic the rules agree with.
+    const room = playing();
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("rooms/TRM001").set(moved(room, { turnDurationSeconds: 1 })));
+  });
+
+  it("refuses a joiner who shortens the clock on the way in", async () => {
+    // The same trick one move earlier, and available to the guest before the host has played
+    // at all.
+    const waiting = playing({
+      guestUserId: "",
+      status: "WAITING",
+      version: 0,
+      lastMoveAt: 1,
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 1,
+        players: {
+          PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 0, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(waiting);
+    const bob = testEnv.authenticatedContext(BOB).database();
+    const join = {
+      ...waiting,
+      guestUserId: BOB,
+      status: "IN_PROGRESS",
+      lastMoveAt: Date.now(),
+      browseKey: "PUBLIC_IN_PROGRESS",
+    };
+    await assertFails(bob.ref("rooms/TRM001").set({ ...join, turnDurationSeconds: 1 }));
+    await assertSucceeds(bob.ref("rooms/TRM001").set(join));
+  });
+
+  it("refuses a timeout claim that also clears the ranked flag", async () => {
+    // Written by the loser, which is the arm a modified client would use to stop ever losing
+    // rating again: run the clock out, concede, and file the game as a casual one.
+    const room = playing({ lastMoveAt: Date.now() - 121_000, currentTurnUserId: BOB });
+    await seed(room);
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertFails(
+      bob.ref("rooms/TRM001").set(conceded(room, ALICE, "TIMEOUT", { ranked: false })),
+    );
+    await assertSucceeds(bob.ref("rooms/TRM001").set(conceded(room, ALICE, "TIMEOUT")));
+  });
+
+  it("refuses a resignation that also clears the ranked flag", async () => {
+    const room = playing();
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/TRM001").set(conceded(room, BOB, "RESIGNATION", { ranked: false })),
+    );
+    await assertSucceeds(alice.ref("rooms/TRM001").set(conceded(room, BOB, "RESIGNATION")));
+  });
+
+  it("refuses a finish that promotes a casual match to a rated one", async () => {
+    // The other direction, and the one that takes rating off a player who was told the game
+    // did not count — which is every match with a guest in it.
+    const room = playing({
+      ranked: false,
+      lastMoveAt: Date.now() - 121_000,
+      currentTurnUserId: BOB,
+    });
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/TRM001").set(conceded(room, ALICE, "TIMEOUT", { ranked: true })),
+    );
+    await assertSucceeds(alice.ref("rooms/TRM001").set(conceded(room, ALICE, "TIMEOUT")));
+  });
+});
+
+describe("a win has to be walked to", () => {
+  // A normal win used to be checked against one coordinate: the winning pawn standing on its
+  // goal row. Nothing said where it had come from, so the first move of a match could put it
+  // there — and the worker deliberately re-derives nothing, because it trusts these rules to
+  // have proved it. The board a winning write leaves behind has to be one move away from the
+  // board it found.
+
+  /** ALICE hosts from seat one and is to move, with her pawn `row` squares from home. */
+  function playing(row, overrides = {}) {
+    return {
+      hostUserId: ALICE,
+      guestUserId: BOB,
+      status: "IN_PROGRESS",
+      currentTurnUserId: ALICE,
+      version: 4,
+      winnerUserId: "",
+      endReason: "",
+      createdAt: 1,
+      lastMoveAt: Date.now() - 1_000,
+      ranked: true,
+      visibility: "PUBLIC",
+      turnDurationSeconds: 60,
+      browseKey: "PUBLIC_IN_PROGRESS",
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 5,
+        players: {
+          PLAYER_ONE: { row, column: 4, wallsRemaining: 8 },
+          PLAYER_TWO: { row: 4, column: 4, wallsRemaining: 7 },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  /** ALICE's pawn lands on row zero, wherever it started. */
+  function won(room, seatOne) {
+    return {
+      ...room,
+      status: "FINISHED",
+      endReason: "NORMAL",
+      currentTurnUserId: "",
+      winnerUserId: ALICE,
+      version: room.version + 1,
+      lastMoveAt: Date.now(),
+      browseKey: "PUBLIC_FINISHED",
+      board: {
+        ...room.board,
+        status: "PLAYER_ONE_WON",
+        players: { ...room.board.players, PLAYER_ONE: { ...seatOne, row: 0 } },
+      },
+    };
+  }
+
+  /** ALICE takes an ordinary turn, leaving the board however `board` says. */
+  function moved(room, board) {
+    return {
+      ...room,
+      version: room.version + 1,
+      lastMoveAt: Date.now(),
+      currentTurnUserId: BOB,
+      board: {
+        ...room.board,
+        currentPlayer: "PLAYER_TWO",
+        turnNumber: room.board.turnNumber + 1,
+        players: { ...room.board.players, ...board },
+      },
+    };
+  }
+
+  async function seed(room) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("rooms/WIN001").set(room);
+    });
+  }
+
+  it("takes the last step onto the goal row", async () => {
+    const room = playing(1);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      alice.ref("rooms/WIN001").set(won(room, { column: 4, wallsRemaining: 8 })),
+    );
+  });
+
+  it("takes the jump over a rival standing in the way", async () => {
+    const room = playing(2);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      alice.ref("rooms/WIN001").set(won(room, { column: 4, wallsRemaining: 8 })),
+    );
+  });
+
+  it("takes the diagonal a blocked jump falls back to", async () => {
+    const room = playing(1);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      alice.ref("rooms/WIN001").set(won(room, { column: 3, wallsRemaining: 8 })),
+    );
+  });
+
+  it("refuses a pawn that teleports to the goal row", async () => {
+    // The whole defect in one write: a pawn on its own back rank declaring the match won on
+    // the first turn it gets.
+    const room = playing(8);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(won(room, { column: 4, wallsRemaining: 8 })),
+    );
+  });
+
+  it("refuses a win from three squares out", async () => {
+    // Two is the whole reach: a step, a straight jump, or the diagonal. Three is a teleport
+    // with better manners.
+    const room = playing(3);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(won(room, { column: 4, wallsRemaining: 8 })),
+    );
+  });
+
+  it("refuses a diagonal from two squares out", async () => {
+    const room = playing(2);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(won(room, { column: 3, wallsRemaining: 8 })),
+    );
+  });
+
+  it("refuses a winning move that also refills the winner's walls", async () => {
+    const room = playing(1);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(won(room, { column: 4, wallsRemaining: 10 })),
+    );
+  });
+
+  it("refuses a winning move that also moves the rival's pawn", async () => {
+    const room = playing(1);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    const forged = won(room, { column: 4, wallsRemaining: 8 });
+    forged.board.players.PLAYER_TWO = { row: 0, column: 0, wallsRemaining: 0 };
+    await assertFails(alice.ref("rooms/WIN001").set(forged));
+  });
+
+  it("refuses the seat that is not on the clock winning", async () => {
+    const room = playing(4, {
+      currentTurnUserId: BOB,
+      board: {
+        currentPlayer: "PLAYER_TWO",
+        status: "IN_PROGRESS",
+        turnNumber: 5,
+        players: {
+          PLAYER_ONE: { row: 1, column: 4, wallsRemaining: 8 },
+          PLAYER_TWO: { row: 4, column: 4, wallsRemaining: 7 },
+        },
+      },
+    });
+    await seed(room);
+    const bob = testEnv.authenticatedContext(BOB).database();
+    const forged = won(room, { column: 4, wallsRemaining: 8 });
+    await assertFails(bob.ref("rooms/WIN001").set(forged));
+  });
+
+  it("takes an ordinary step and an ordinary wall", async () => {
+    const room = playing(5);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 4, column: 4, wallsRemaining: 8 },
+      })),
+    );
+    await seed(room);
+    await assertSucceeds(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 5, column: 4, wallsRemaining: 7 },
+      })),
+    );
+  });
+
+  it("refuses a move that refills the mover's wall supply", async () => {
+    const room = playing(5);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 4, column: 4, wallsRemaining: 10 },
+      })),
+    );
+  });
+
+  it("refuses a move that empties the rival's wall supply", async () => {
+    const room = playing(5);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 4, column: 4, wallsRemaining: 8 },
+        PLAYER_TWO: { row: 4, column: 4, wallsRemaining: 0 },
+      })),
+    );
+  });
+
+  it("refuses a move that walks the mover's pawn across the board", async () => {
+    const room = playing(5);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 1, column: 4, wallsRemaining: 8 },
+      })),
+    );
+  });
+
+  it("refuses a wall paid for with a step", async () => {
+    // A turn is one thing or the other. Doing both is two turns for the price of one.
+    const room = playing(5);
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 4, column: 4, wallsRemaining: 7 },
+      })),
+    );
+  });
+
+  it("refuses a pawn stepped off the board", async () => {
+    const room = playing(0, {
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 5,
+        players: {
+          PLAYER_ONE: { row: 0, column: 0, wallsRemaining: 8 },
+          PLAYER_TWO: { row: 4, column: 4, wallsRemaining: 7 },
+        },
+      },
+    });
+    await seed(room);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref("rooms/WIN001").set(moved(room, {
+        PLAYER_ONE: { row: 0, column: -1, wallsRemaining: 8 },
+      })),
+    );
+  });
+});
+
+describe("reporting a player", () => {
+  // The app shows two things one player typed to players who have never met them: the
+  // username and the room name. Play requires a way to report either, and a report is worth
+  // nothing if the account being reported can see it or delete it — so this node is written
+  // by anybody signed in, about somebody else, and read by nobody at all.
+
+  function report(overrides = {}) {
+    return { reason: "OFFENSIVE_NAME", createdAt: SERVER_TIME, ...overrides };
+  }
+
+  it("lets a signed-in player report somebody else", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref(`contentReports/${BOB}/${ALICE}`).set(report()));
+  });
+
+  it("takes a report about a room name, with the room it was seen in", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(
+      alice.ref(`contentReports/${BOB}/${ALICE}`).set(
+        report({ reason: "OFFENSIVE_ROOM_NAME", roomCode: "AB3D5F" }),
+      ),
+    );
+  });
+
+  it("refuses a report filed under somebody else's name", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`contentReports/${BOB}/${BOB}`).set(report()));
+  });
+
+  it("refuses reporting yourself", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`contentReports/${ALICE}/${ALICE}`).set(report()));
+  });
+
+  it("refuses an anonymous report", async () => {
+    const anonymous = testEnv.unauthenticatedContext().database();
+    await assertFails(anonymous.ref(`contentReports/${BOB}/${ALICE}`).set(report()));
+  });
+
+  it("refuses a reason outside the vocabulary", async () => {
+    // The same argument as the canned messages: a reason nobody chose from a list is free
+    // text, and free text about another player is the thing this node exists to avoid.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`contentReports/${BOB}/${ALICE}`).set(report({ reason: "he is a dog" })));
+  });
+
+  it("refuses a field beside the ones a report has", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref(`contentReports/${BOB}/${ALICE}`).set(report({ note: "hello" })),
+    );
+    await assertFails(alice.ref(`contentReports/${BOB}/${ALICE}/note`).set("hello"));
+  });
+
+  it("refuses a stamp the phone chose", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(
+      alice.ref(`contentReports/${BOB}/${ALICE}`).set(report({ createdAt: 1 })),
+    );
+  });
+
+  it("refuses withdrawing a report once it is filed", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice.ref(`contentReports/${BOB}/${ALICE}`).set(report());
+    await assertFails(alice.ref(`contentReports/${BOB}/${ALICE}`).remove());
+  });
+
+  it("refuses everyone reading them, the reporter included", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice.ref(`contentReports/${BOB}/${ALICE}`).set(report());
+    await assertFails(alice.ref(`contentReports/${BOB}/${ALICE}`).get());
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertFails(bob.ref(`contentReports/${BOB}`).get());
   });
 });
 

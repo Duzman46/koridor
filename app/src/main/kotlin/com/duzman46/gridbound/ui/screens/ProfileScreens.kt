@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,8 +33,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,12 +62,14 @@ import com.duzman46.gridbound.presentation.profile.ProfileEditState
 import com.duzman46.gridbound.presentation.profile.RecentGamesState
 import com.duzman46.gridbound.presentation.profile.RecentGamesViewModel
 import com.duzman46.gridbound.profile.domain.UserProfile
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.ui.components.AvatarPalette
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.GateTopBar
 import com.duzman46.gridbound.ui.components.RecentGamesCard
+import com.duzman46.gridbound.ui.components.ReportDialog
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
@@ -241,6 +248,8 @@ fun PlayerProfileRoute(
         onSendRequest = viewModel::sendRequest,
         onAccept = viewModel::accept,
         onUnblock = viewModel::unblock,
+        onBlock = viewModel::block,
+        onReport = viewModel::report,
         onRetry = viewModel::retry,
     )
 }
@@ -253,6 +262,8 @@ private fun PlayerProfileScreen(
     onSendRequest: () -> Unit,
     onAccept: () -> Unit,
     onUnblock: () -> Unit,
+    onBlock: () -> Unit,
+    onReport: (ContentReportReason) -> Unit,
     onRetry: () -> Unit,
 ) {
     // The player's own name once it is known: a bar reading "Player profile" above a page with
@@ -290,6 +301,7 @@ private fun PlayerProfileScreen(
                     ProfileIdentity(profile)
                     ProfileStatsCard(profile)
                     FriendAction(state, onSendRequest, onAccept, onUnblock)
+                    SafetyActions(state, onBlock, onReport)
                     RecentGamesCard(recentGames)
                 }
             }
@@ -348,6 +360,78 @@ private fun FriendAction(
         )
     }
     state.message?.let { FormMessage(it) }
+}
+
+/**
+ * The two things a player can do about content somebody else typed.
+ *
+ * They live here because this is the page every route to another player ends on — the
+ * opponent chip on the board, a leaderboard row, a line in a recent-games list — and until
+ * now the page offered exactly one control, "Add friend", to somebody who had arrived at it
+ * because of a name they wanted to do something about. Blocking existed only behind retyping
+ * the exact username into the friends search, and reporting did not exist at all.
+ *
+ * Reporting is offered to a guest as well, because seeing something does not require an
+ * account and Play's obligation is not to signed-in players only. Blocking is not: it is a
+ * relationship, and a guest has no durable identity to hang one on.
+ */
+@Composable
+private fun SafetyActions(
+    state: PlayerProfileUiState,
+    onBlock: () -> Unit,
+    onReport: (ContentReportReason) -> Unit,
+) {
+    if (state.isSelf) return
+    var reporting by remember { mutableStateOf(false) }
+    var confirmingBlock by remember { mutableStateOf(false) }
+    val name = state.profile?.username.orEmpty()
+
+    if (reporting) {
+        ReportDialog(
+            subject = name,
+            onDismiss = { reporting = false },
+            onReport = { reason ->
+                reporting = false
+                onReport(reason)
+            },
+        )
+    }
+    if (confirmingBlock) {
+        AlertDialog(
+            onDismissRequest = { confirmingBlock = false },
+            title = { Text(stringResource(R.string.friends_block)) },
+            text = { Text(stringResource(R.string.friends_block_confirm, name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmingBlock = false
+                    onBlock()
+                }) { Text(stringResource(R.string.friends_block)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingBlock = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SecondarySubmitButton(
+            text = stringResource(R.string.report_action),
+            onClick = { reporting = true },
+            modifier = Modifier.weight(1f),
+        )
+        if (!state.requiresAccount && state.status != FriendshipStatus.BLOCKED) {
+            SecondarySubmitButton(
+                text = stringResource(R.string.friends_block),
+                onClick = { confirmingBlock = true },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
 }
 
 /** A relationship with nothing to press says so in words, never as a disabled button. */

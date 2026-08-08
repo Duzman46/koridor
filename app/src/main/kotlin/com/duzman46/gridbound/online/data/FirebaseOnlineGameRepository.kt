@@ -63,9 +63,13 @@ class FirebaseOnlineGameRepository @Inject constructor(
             // Drawn once, outside the retry loop: a host who left the colour to chance is
             // choosing a seat, not re-rolling it every time a room code collides.
             val hostSeat = configuration.hostSeat ?: PlayerId.entries.random(random)
+            // The server's clock, not this handset's. `expiresAt` is the one stamp a phone
+            // chooses that anything else reads, and a phone half an hour slow publishes a room
+            // that is already expired: invisible in every honest browser, deleted by the sweep
+            // inside a minute, and the host left watching a waiting panel that never ends.
+            val now = serverNow()
             repeat(Constants.Online.MAX_ROOM_CREATE_ATTEMPTS) {
                 val roomCode = RoomCredentials.generateCode(random)
-                val now = System.currentTimeMillis()
                 // The password hash has to exist before the room, because the join rule
                 // reads it and a room without its secret would be unjoinable.
                 val hash = RoomCredentials.hashPassword(roomCode, configuration.password)
@@ -85,6 +89,42 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 if (hash != null) runCatching { secretRef(roomCode).removeValue().await() }
             }
             OnlineLobbyResult.Failure(AppError.ROOM_CODE_UNAVAILABLE)
+        }
+    }
+
+    override suspend fun rematchRoom(
+        playedRoomCode: String,
+        opponentUserId: String,
+        playedSeat: PlayerId,
+    ): OnlineLobbyResult = lobbyCall {
+        val userId = requireUserId()
+        val code = RoomCredentials.rematchCode(playedRoomCode, userId, opponentUserId)
+        val host = profileRepository.loadProfile(userId).successOrNull
+        val configuration = RoomConfiguration(
+            // Private, so a rematch never turns up in the public browser for a stranger to
+            // walk into ahead of the player it was opened for.
+            visibility = RoomVisibility.PRIVATE,
+            // Read off the match just played rather than defaulted: a rerun is played for
+            // exactly what the first game was, and a guest's result cannot move a rating.
+            ranked = codec.decode(
+                playedRoomCode,
+                roomRef(playedRoomCode).awaitSnapshot().value,
+            )?.ranked == true,
+            hostSeat = playedSeat.opponent,
+        )
+        val now = serverNow()
+        val opened = roomRef(code).runTransactionSuspend { current ->
+            if (current.value != null) return@runTransactionSuspend Transaction.abort()
+            current.value =
+                codec.encodeNewRoom(configuration, host, userId, playedSeat.opponent, now)
+            Transaction.success(current)
+        }
+        if (opened) {
+            OnlineLobbyResult.Success(OnlineSession(code, userId, playedSeat.opponent))
+        } else {
+            // The other player asked first and this is their room. Taking the free seat in it
+            // is the same answer their invitation would have given, one tap earlier.
+            seat(code, userId, "")
         }
     }
 
@@ -283,8 +323,10 @@ class FirebaseOnlineGameRepository @Inject constructor(
             Outcome.Success(Unit)
         }
 
-    override fun observeRoom(roomCode: String): Flow<OnlineRoom> =
-        roomRef(roomCode).snapshotFlow().mapNotNull { codec.decode(roomCode, it.value) }
+    override fun observeRoom(roomCode: String): Flow<OnlineRoom?> =
+        // Mapped rather than filtered: a deleted room arrives as a snapshot with no value, and
+        // dropping it left every waiting panel listening to a room that no longer exists.
+        roomRef(roomCode).snapshotFlow().map { codec.decode(roomCode, it.value) }
 
     override suspend fun submitAction(
         session: OnlineSession,
@@ -430,41 +472,53 @@ class FirebaseOnlineGameRepository @Inject constructor(
             return OnlineLobbyResult.Failure(AppError.ROOM_PASSWORD_WRONG)
         }
 
-        var joined = false
-        val committed = roomRef(roomCode).runTransactionSuspend { current ->
-            val room = decodeMutable(roomCode, current)
-                ?: return@runTransactionSuspend Transaction.abort()
-            if (room.status != OnlineRoomStatus.WAITING || !room.guestUserId.isNullOrBlank()) {
-                return@runTransactionSuspend Transaction.abort()
+        // Set once the handler has decided the seat is takeable, which is what tells a server
+        // refusal apart from an abort: the write only ever reaches the server with this set,
+        // so a failure after it is the rules turning the write down — and the only rule a join
+        // can fail on once the seat was free is the password.
+        var offered = false
+        val committed = runCatching {
+            roomRef(roomCode).runTransactionSuspend { current ->
+                val room = decodeMutable(roomCode, current)
+                    ?: return@runTransactionSuspend Transaction.abort()
+                if (room.status != OnlineRoomStatus.WAITING ||
+                    !room.guestUserId.isNullOrBlank()
+                ) {
+                    return@runTransactionSuspend Transaction.abort()
+                }
+                val now = System.currentTimeMillis()
+                current.child(RoomCodec.Keys.GUEST_USER_ID).value = userId
+                current.child(RoomCodec.Keys.STATUS).value = OnlineRoomStatus.IN_PROGRESS.name
+                // Seat one opens, and until this moment it may have been the empty seat: a
+                // host who chose red has been waiting for the player who takes the first turn.
+                current.child(RoomCodec.Keys.CURRENT_TURN_USER_ID).value =
+                    if (room.hostSeat == PlayerId.PLAYER_ONE) room.hostUserId else userId
+                // Server-stamped for the same reason as a move: this starts the opening
+                // player's clock, and the joiner's handset must not be able to shorten it.
+                current.child(RoomCodec.Keys.LAST_MOVE_AT).value = ServerValue.TIMESTAMP
+                current.child(RoomCodec.Keys.EXPIRES_AT).value =
+                    now + Constants.Online.ROOM_EXPIRY_MILLIS
+                current.child(RoomCodec.Keys.BROWSE_KEY).value =
+                    codec.browseKey(room.visibility, OnlineRoomStatus.IN_PROGRESS)
+                if (room.requiresPassword) {
+                    current.child(RoomCodec.Keys.PASSWORD_ATTEMPT).value = providedHash
+                }
+                offered = true
+                Transaction.success(current)
             }
-            val now = System.currentTimeMillis()
-            current.child(RoomCodec.Keys.GUEST_USER_ID).value = userId
-            current.child(RoomCodec.Keys.STATUS).value = OnlineRoomStatus.IN_PROGRESS.name
-            // Seat one opens, and until this moment it may have been the empty seat: a host
-            // who chose red has been waiting for the player who now takes the first turn.
-            current.child(RoomCodec.Keys.CURRENT_TURN_USER_ID).value =
-                if (room.hostSeat == PlayerId.PLAYER_ONE) room.hostUserId else userId
-            // Server-stamped for the same reason as a move: this starts the opening player's
-            // clock, and the joiner's handset must not be able to shorten it.
-            current.child(RoomCodec.Keys.LAST_MOVE_AT).value = ServerValue.TIMESTAMP
-            current.child(RoomCodec.Keys.EXPIRES_AT).value =
-                now + Constants.Online.ROOM_EXPIRY_MILLIS
-            current.child(RoomCodec.Keys.BROWSE_KEY).value =
-                codec.browseKey(room.visibility, OnlineRoomStatus.IN_PROGRESS)
-            if (room.requiresPassword) {
-                current.child(RoomCodec.Keys.PASSWORD_ATTEMPT).value = providedHash
-            }
-            joined = true
-            Transaction.success(current)
+        }.getOrElse { error ->
+            // A rules refusal arrives as an exception rather than as `committed == false` —
+            // the Realtime Database reports only a handler's own abort that way — so letting
+            // it unwind turned every mistyped room password into "something went wrong".
+            if (error is FirebaseNetworkException) throw error
+            AppLog.warn("join-room", error)
+            false
         }
-        return if (committed && joined) {
+        val refusal = joinRefusal(committed, offered, existing.requiresPassword)
+        return if (refusal == null) {
             OnlineLobbyResult.Success(OnlineSession(roomCode, userId, existing.hostSeat.opponent))
-        } else if (existing.requiresPassword) {
-            // The rules reject a join whose supplied hash does not match the stored secret,
-            // so a refused commit on a protected room means a wrong password.
-            OnlineLobbyResult.Failure(AppError.ROOM_PASSWORD_WRONG)
         } else {
-            OnlineLobbyResult.Failure(AppError.ROOM_FULL)
+            OnlineLobbyResult.Failure(refusal)
         }
     }
 
@@ -519,6 +573,26 @@ class FirebaseOnlineGameRepository @Inject constructor(
             ?: firebase.auth.signInAnonymously().await().user?.uid
             ?: error("anonymous sign-in produced no user")
 
+    /**
+     * Now, as the server reckons it.
+     *
+     * Firebase keeps the difference between the two clocks on `/.info/serverTimeOffset` over
+     * the same connection the rooms are read on, so this is a cached local read rather than a
+     * round trip, and it answers immediately even offline — with whatever the last connection
+     * established, which is the best answer there is. Falls back to the handset's own clock,
+     * because a room opened with a slightly wrong window beats no room at all.
+     */
+    private suspend fun serverNow(): Long {
+        val offset = runCatching {
+            firebase.database
+                .getReference(Constants.Online.SERVER_TIME_OFFSET_PATH)
+                .snapshotFlow()
+                .first()
+                .getValue(Long::class.java)
+        }.getOrNull() ?: 0L
+        return System.currentTimeMillis() + offset
+    }
+
     private fun roomsRef(): DatabaseReference =
         firebase.database.getReference(Constants.Online.ROOMS_PATH)
 
@@ -554,4 +628,29 @@ class FirebaseOnlineGameRepository @Inject constructor(
             )
         }
     }
+}
+
+/**
+ * Why a join did not happen, or null when it did.
+ *
+ * The three answers turn on two different failures that used to look the same. A transaction
+ * whose handler stood down reports itself honestly as "not committed"; one the server refused
+ * arrives as an exception, and letting that unwind reported every mistyped room password as
+ * "something went wrong". Telling them apart is [offered]: the write only ever reaches the
+ * server once the handler has decided the seat is takeable, so a failure after that is the
+ * rules turning it down — and the only rule a join can still fail on is the password.
+ *
+ * @param offered whether the transaction handler filled the seat in rather than aborting.
+ */
+internal fun joinRefusal(
+    committed: Boolean,
+    offered: Boolean,
+    requiresPassword: Boolean,
+): AppError? = when {
+    committed && offered -> null
+    offered && requiresPassword -> AppError.ROOM_PASSWORD_WRONG
+    // The handler stood down: the room went, or somebody took the seat between the read and
+    // the write. Neither is a wrong password, which is what a protected room used to say to a
+    // player whose room had simply filled up.
+    else -> AppError.ROOM_FULL
 }

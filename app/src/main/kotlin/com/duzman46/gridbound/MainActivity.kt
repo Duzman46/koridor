@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
                         billing = billing,
                         onBuy = { entitlement -> viewModel.buy(this@MainActivity, entitlement) },
                         onRestorePurchases = viewModel::restorePurchases,
+                        onDismissBillingMessage = viewModel::dismissBillingMessage,
                         onPrivacyOptions = { viewModel.showPrivacyOptions(this@MainActivity) },
                         onCompletedMatchExit = { onFinished ->
                             viewModel.showInterstitialAfterCompletedMatch(this@MainActivity, onFinished)

@@ -110,6 +110,24 @@ object FriendshipRules {
     fun canInvite(mine: FriendshipStatus): Boolean = mine == FriendshipStatus.FRIENDS
 }
 
+/**
+ * Why one player is reporting another.
+ *
+ * A closed list rather than a box to type in, for the same reason the in-match messages are a
+ * closed list: free text about another player is itself content nobody is moderating, and the
+ * operator does not need a paragraph to act — they need the account and the category.
+ *
+ * The two fields a player can type and a stranger can read are the username and the room name,
+ * so both have a reason of their own. Cheating is the third thing players actually report, and
+ * the fourth is there because a list of three would send everything else nowhere.
+ */
+enum class ContentReportReason {
+    OFFENSIVE_NAME,
+    OFFENSIVE_ROOM_NAME,
+    CHEATING,
+    OTHER,
+}
+
 /** A row in the friends list. */
 data class Friend(
     val userId: String,

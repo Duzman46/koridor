@@ -487,3 +487,211 @@ Round 4's list is unchanged except where noted.
     `docs/MANUAL_TESTS.md` A6 (messages), C8 (the hand-over) and D8 (recent games). C8 in
     particular cannot be replaced by anything a build can prove: the failure it exists for only
     appears once the guest session is old enough for Firebase to refuse to delete it.
+
+---
+
+# Round 6 — the two entries that were still open
+
+Both were carried on round 5's list. One is a public listing that begins a form too early; the
+other is a row an erasure is not allowed to see, let alone delete. Neither needed a
+`database.rules.json` change — and for the second, the rules being what they are *is* the
+finding, so it is written out below rather than summarised.
+
+## Verified green
+
+- [x] `./gradlew.bat :app:test :app:lintRelease :app:assembleRelease` — **240 JVM tests** in 27
+      classes, no failures, no skips. `lintRelease`: **0 errors, 4 warnings**, the same four
+      pre-existing ones rounds 4 and 5 recorded — `enableOnBackInvokedCallback` and `localeConfig`
+      as `UnusedAttribute`, a newer-Gradle notice, and `ObsoleteSdkInt` on `mipmap-anydpi-v26`.
+      `assembleRelease` completes through R8.
+- [x] `rules-tests` — **four new tests**, pinning what a departing account may and may not do
+      with the request channel. The suite stood at 156 when this round began and at **192 in 25
+      suites** when it ended, all passing: somebody else's rules work landed in the same two
+      files while this one was finishing. See the note below before reading that number as this
+      round's.
+- [x] `worker` — 9 unit, **70 end-to-end**, up from 55.
+
+## A second engineer was in `database.rules.json` at the same time
+
+Recorded because the number above is otherwise misleading, and because the next reader needs to
+know this round did not review it. `database.rules.json` and `rules-tests/rules.test.js` were
+both written to by something other than this round's work while it was running: a new
+`contentReports` node, a much stricter `rooms/$code` write rule that validates the move itself,
+and three new suites — "the terms a room was opened under", "a win has to be walked to" and
+"reporting a player".
+
+- [x] **The two pieces of work do not touch.** Checked node by node rather than by reading the
+      diff: `invites`, `maintenance`, `users`, `usernames`, `usersPrivate`, `friendships`,
+      `presence`, `recentMatches`, `matchResults`, `leaderboards` and `matchmaking` are all
+      byte-identical to `HEAD`. Everything this round depends on — the request channel's read
+      and write rules, the maintenance subtree the two walks keep their cursors in, and
+      `leaderboardRating` — is untouched. The other work is confined to `rooms` and the node it
+      added. This round changed no rule at all.
+- [x] **The whole rules suite was re-run on the merged file** and is green at 192. The four
+      tests this round added are still there and still passing, and the worker's end-to-end run
+      is unaffected either way: it holds the service-account credential and the rules do not
+      apply to it.
+- [ ] **Not reviewed here:** the `rooms` rule and `contentReports`. They belong to whoever wrote
+      them, and the app-side half of a reporting feature had not appeared in `app/src` when this
+      round finished.
+
+## 1. A guest who links an account is no longer listed under the name the app invented
+
+**The choice, and why.** Round 3 named the two options and round 5 took the first: navigate to
+the naming gate on link. That was right and it stays, but it can only close the part of the
+window a player sits and watches. `claimBoardRating` still ran inside `ensureProfile`, so the
+listing began with the credential and ended with the form — and an app killed between the two
+left the player on the all-time board as `guest_######` until they came back. Round 5 wrote that
+window down as "the length of one form"; it is the length of one form *only if the form is
+filled in*, and nothing makes anyone fill it in.
+
+So the claim moved to the name. A profile with no name of its own has no business on a public
+board, and that is true however it arrived at one — which is the test that also settles the
+kill-the-app case, because there is no moment at which an unnamed account has been claimed onto
+anything. It is claimed when `changeUsername` succeeds, and on any later sign-in.
+
+- [x] **`RtdbUserProfileRepository`.** `claimBoardRating` takes a user id, reads the profile
+      once, and writes nothing unless the account is real *and* carries a name its owner typed.
+      Both facts and the rating come off one snapshot, as late as possible, because the rules
+      insist the copy equals the number it mirrors. It is called from `changeUsername` — the
+      moment a name stops being invented — and still from `ensureProfile`, which is what takes an
+      established account onto the board on a new handset. The call in `createProfile` is gone
+      rather than guarded: every profile is created under a name that method invents, so it could
+      only ever have been refused by the test it would now have to pass.
+- [x] **`UserProfile.hasChosenName`.** The question both the entry gate and the board claim turn
+      on, in one place instead of two. `SessionManager` was already computing it inline for
+      `usernameChosen` and now reads it from the profile, so a change to what counts as a
+      generated name cannot move one of them without the other. `ProfileNameTest` pins it,
+      including that casing is not a way round it.
+- [x] **`worker/src/sweep.ts` holds the same rule, and had to.** This is the half that would have
+      undone the other within sixty seconds: `backfillBoardIndex` took on any non-guest profile
+      that was missing the sort key, which is exactly what a freshly linked account looks like. It
+      now asks `holdsBoardPlace`, and so do the rated-match writes — a phone is not the only thing
+      that can put a name on a table. The predicate refuses a guest and refuses a generated name,
+      and admits a profile already carrying the key whatever its name: taking somebody off a board
+      they are on is a worse answer than a name that lags a rating by one match, and this is not
+      the right hand to be making that decision with.
+- [x] **The weekly board goes with it.** It carries the username as data rather than ordering by
+      an index, so a row written for an unnamed account publishes the invented name directly. Same
+      predicate, same line of the argument, sharper form.
+- [x] **Five end-to-end checks.** An account wearing a generated name is rated like any other and
+      its rating moves, but that rating does not put it in the all-time index and writes it no
+      weekly row — and the walk takes it on at the rating it earned by the lap after it has a
+      name.
+
+## 2. Erasure now reaches the invites it could not see — read the rules finding first
+
+**What the rules say, checked against the emulator rather than reasoned about.**
+
+- `invites/$recipient` grants `.read` to `auth.uid == $recipient` and nothing below it grants any
+  read to anybody else. So a sender may not read the tree, may not read a channel, and may not
+  even read the single entry they wrote themselves — they cannot find out whether it is still
+  there. Those three refusals are now three assertions in one test.
+- `invites/$recipient/$sender` grants `.write` to `auth.uid == $sender && !newData.exists()`. So
+  the sender *may* delete their own entry, sight unseen — but only by naming the recipient.
+- Nobody else may delete it. A third party is refused, so the job cannot be handed to the
+  opponent's phone either.
+
+The gap follows from those three. An erasure walks the friend list, because that is the only
+enumeration of other players a phone has, and every *game invitation* is on it: friendship is
+exactly what the rules charge for one, so the invitation and the friendship always come as a
+pair. A *rematch* is charged for differently — the finished match is the licence — so
+`invites/{opponent}/{me}` can exist with nothing on the deleting player's side pointing at it.
+The write is permitted and the name is unrecoverable.
+
+**Reading the opponents off the rooms instead was considered and rejected.** A client may query
+`rooms` by `hostUserId` or `guestUserId` equal to its own uid, so it could name every opponent
+whose room still exists — which today is every live entry, because a room outlives an invitation
+by a wide margin. But that is an overlap between two retention policies that were set
+independently and neither of which mentions the other, so it is a coincidence rather than a
+guarantee, and it still cannot name an entry whose room has been swept. A mechanism that looks
+like a promise and is arithmetic is worse than no mechanism.
+
+- [x] **`collectDeadInvites`, the sixth worker job.** It walks `invites` by recipient key with a
+      stored cursor, exactly as the board back-fill walks the profiles, and clears two things:
+      every entry that has expired — the same stamp `PlayerRequest.isExpired` already judges it
+      by, so it removes only what players have stopped seeing — and every live entry whose sender
+      no longer has a profile, which is the erased account's. The second is the promise; the first
+      is why the channel stops growing at all, because until now nothing collected an expired
+      entry either.
+- [x] **Bounded, and honest about where.** One read per live entry whose sender it is unsure
+      about, capped at ten a lap, taken furthest-from-expiry first — without an order the cap
+      would fall on the same entries every lap once the tree fits one page, and whoever sorted
+      eleventh would never be asked about. Anything the cap skips is collected on its stamp within
+      the ten minutes it had left regardless.
+- [x] **It runs on a minute that took on no report at all**, which is stricter than the
+      back-fill's gate and deliberately so. An unranked report costs eight subrequests without
+      ever adding to `rated`, so three of those plus the rooms, the queue and the back-fill already
+      stand at forty-four of the free plan's fifty, and thirteen more would not fit. Nothing is
+      waiting on this job: every entry it collects is one no client would have shown.
+- [x] **Ten end-to-end checks.** The erased account's rematch goes; an expired entry goes; a live
+      entry from an account that still exists stays; a channel with nothing left in it stops
+      existing; a second run finds nothing; and a tree larger than one page is walked to the end
+      with the cursor advancing and then wrapping — the same silent failure the board index had,
+      where a cursor that does not move re-reads one page for ever and reports a clean run.
+- [x] **`database.rules.json` is unchanged.** Tightening the entry's `.validate` so a forged
+      `expiresAt` could not outlive its TTL was the obvious alternative to the sender check, and
+      it is the wrong trade on the round before publishing: the rule would have to compare a
+      client stamp against `now`, and a handset whose clock runs fast would have its invitations
+      refused outright. The worker asks about the profile instead, which no clock can be wrong
+      about.
+
+## Documentation brought level
+
+- [x] `docs/DATA_SAFETY.md` §4.1 said "pending invites are deleted" without qualification. It now
+      says which ones the client deletes, states the rematch exception and why the rules make it
+      one, and points at §4.3. §4.3 said invitations "become invalid" after ten minutes, which was
+      true and was not the same as being deleted; the rows are now actually collected, and the
+      erased account's are collected whether or not they have expired.
+- [x] `worker/README.md` gained step 6 and the reasoning behind it, and its account of the board
+      index now names both profiles that never get one rather than only the guest.
+- [x] `README.md` lists the collection among what the server writes, and says plainly which of
+      the worker's jobs `functions/` does not have — the list is now three long.
+- [x] `docs/MANUAL_TESTS.md` gained **C1c**, the kill-the-app-before-naming case, and **C9**, the
+      rematch to a non-friend followed by a deletion. C9 is checked in the Firebase console
+      because the row it is about is invisible from the app by design, which is the whole reason
+      it survived five rounds. Its preconditions also stopped telling the tester to deploy
+      `functions/`, which rounds 4 and 5 established is the wrong half to deploy.
+
+## Still open — read before shipping
+
+Round 5's list, re-checked rather than assumed. Its items 1 and 2 are the two above; item 1 is
+closed, and round 5's note that the remaining window "is not zero" no longer applies — no hand
+the app or the server uses puts an unnamed account on a board at any moment, and there is no
+longer a state the app can be killed in that leaves one there.
+
+What the rules would still *permit* is a different question, and the answer is written here
+rather than acted on. `leaderboardRating` is owner-writable for a non-guest profile whose value
+equals the rating, and it asks nothing about the name — so a modified client could list itself
+under `guest_######`. That is nobody's gain but their own exposure, and the cost of closing it
+is a regex in `database.rules.json` on the round before publishing, against a rule whose only
+enforcement failure mode would be refusing honest players a place they had earned. Both boards
+already leave unnamed accounts out at the point the row is written, which is where
+`RtdbLeaderboardRepository` argues the exclusion belongs.
+
+1. **`recentMatches` has no sweep.** Unchanged from round 5. A deleted account's history rows
+   stay, and so does the deleted player's name inside their opponents' rows; both are stated in
+   `docs/DATA_SAFETY.md` §4.2. The clean fix is a seventh worker job walking `recentMatches` for
+   uids with no profile — which is now the same shape as `collectDeadInvites` and could be
+   written against it, but it is a new job on the round before publishing, and unlike the invites
+   these rows hold only what was already public and were declared as remaining.
+2. **`RtdbUserProfileRepository.releaseUsername` can leak one row.** Unchanged from round 5.
+3. **A message never appears on a phone whose clock is fast.** Unchanged from round 5. Note that
+   this round deliberately declined to add a second dependency on a client clock for the same
+   reason.
+4. **The worst worker run still sits at 47 of the 50 subrequests the free plan allows.** Unchanged
+   from round 5: the new job cannot run on that minute, and the worst minute it *can* run on
+   stands at thirty-three — thirty-nine if three reports were claimed out from under it by an
+   overlapping run, which costs a read each without counting as handled. The warning is the same
+   one: anything added to a rated report costs three per run at that ceiling.
+5. **Google Analytics is in the build and undeclared.** Unchanged from round 5.
+6. **The privacy policy drafts are behind the app.** Unchanged from round 5.
+7. **`functions/src/index.ts` is three jobs behind `worker/`.** Widened from round 5's item 8: it
+   has no board-index back-fill, it does not keep an unnamed account off either board, and it
+   collects no invites. It is not what is deployed and `README.md` now says so in those words;
+   deploying it instead of `worker/` reintroduces every one of them.
+8. **`docs/store/` still holds the previous artwork.** Unchanged from round 4.
+9. **Not verifiable here:** no device is attached, and the emulator is not the deployed database.
+   `docs/MANUAL_TESTS.md` C1c and C9 are this round's two scenarios and neither can be signed off
+   from a build — C1c because the thing it tests is what happens while the app is *not* running,
+   and C9 because the row it is about cannot be seen from inside the app at all.

@@ -337,6 +337,15 @@
     <string name="friends_request_pending">Permintaan pertemanan terkirim</string>
     <string name="friends_already_friends">Kalian berteman</string>
 
+    <string name="report_action">Laporkan</string>
+    <string name="report_title">Laporkan %1$s</string>
+    <string name="report_message">Beri tahu kami masalahnya. Laporan dikirim ke pengembang dan tidak ditampilkan kepada pemain lain.</string>
+    <string name="report_reason_name">Nama pengguna yang menyinggung</string>
+    <string name="report_reason_room_name">Nama ruangan yang menyinggung</string>
+    <string name="report_reason_cheating">Curang</string>
+    <string name="report_reason_other">Hal lain</string>
+    <string name="report_sent">Terima kasih. Laporanmu telah dikirim.</string>
+
     <string name="invites_title">Undangan bermain</string>
     <string name="invites_from">%1$s mengundangmu bertanding.</string>
     <string name="requests_rematch_from">%1$s ingin tanding ulang.</string>

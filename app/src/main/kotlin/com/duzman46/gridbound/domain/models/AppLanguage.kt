@@ -33,6 +33,15 @@ enum class AppLanguage(val tag: String, val endonym: String) {
 
     val followsDevice: Boolean get() = this == SYSTEM
 
+    /**
+     * The language half of [tag], which is all a device reports through
+     * `Locale.getLanguage()`.
+     *
+     * Only [PORTUGUESE_BRAZIL] has a second half, and it is the reason this exists: a phone
+     * set to Português (Brasil) answers "pt", never "pt-BR".
+     */
+    val subtag: String get() = tag.substringBefore('-')
+
     companion object {
         /**
          * What the picker offers: real languages only.
@@ -54,10 +63,22 @@ enum class AppLanguage(val tag: String, val endonym: String) {
          * Only [SYSTEM] needs resolving. A device set to a language the app does not ship
          * falls back to English, which is what the resource system does anyway — so the tick
          * lands on the language the player is really reading.
+         *
+         * The whole tag is tried first and the language on its own second, because the two
+         * places a device tag comes from disagree: Android reports the language alone, so a
+         * Brazilian phone says "pt" while the entry that serves it is tagged "pt-BR". Matching
+         * only whole tags sent every one of those phones to English — on screen, in a picker
+         * sitting above Portuguese text. Falling back on the language is also exactly what the
+         * resource system does, which is what makes the tick honest rather than merely kinder.
          */
-        fun resolve(stored: AppLanguage, deviceTag: String?): AppLanguage = when {
-            !stored.followsDevice -> stored
-            else -> selectable.firstOrNull { it.tag.equals(deviceTag, ignoreCase = true) }
+        fun resolve(stored: AppLanguage, deviceTag: String?): AppLanguage {
+            if (!stored.followsDevice) return stored
+            val device = deviceTag.orEmpty()
+            if (device.isEmpty()) return ENGLISH
+            return selectable.firstOrNull { it.tag.equals(device, ignoreCase = true) }
+                ?: selectable.firstOrNull {
+                    it.subtag.equals(device.substringBefore('-'), ignoreCase = true)
+                }
                 ?: ENGLISH
         }
     }

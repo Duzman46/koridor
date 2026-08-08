@@ -185,7 +185,7 @@ private fun FriendsScreen(
 
                     if (state.invites.isNotEmpty()) {
                         section(invitesLabel)
-                        items(state.invites, key = PlayerRequest::fromUserId) { invite ->
+                        items(state.invites, key = FriendsRowKey::invite) { invite ->
                             InviteRow(
                                 invite = invite,
                                 onJoin = { onJoinInvite(invite.roomCode) },
@@ -196,7 +196,7 @@ private fun FriendsScreen(
 
                     if (state.incomingRequests.isNotEmpty()) {
                         section(incomingLabel)
-                        items(state.incomingRequests, key = Friend::userId) { friend ->
+                        items(state.incomingRequests, key = FriendsRowKey::friend) { friend ->
                             FriendRow(friend, online = false) {
                                 ActionButton(stringResource(R.string.friends_accept), Icons.Rounded.Check) {
                                     viewModel.accept(friend.userId)
@@ -210,7 +210,7 @@ private fun FriendsScreen(
 
                     if (state.onlineFriends.isNotEmpty()) {
                         section(onlineLabel)
-                        items(state.onlineFriends, key = Friend::userId) { friend ->
+                        items(state.onlineFriends, key = FriendsRowKey::friend) { friend ->
                             FriendRow(friend, online = true) {
                                 FriendMenu(friend, viewModel) { confirming = it }
                             }
@@ -219,7 +219,7 @@ private fun FriendsScreen(
 
                     if (state.offlineFriends.isNotEmpty()) {
                         section(offlineLabel)
-                        items(state.offlineFriends, key = Friend::userId) { friend ->
+                        items(state.offlineFriends, key = FriendsRowKey::friend) { friend ->
                             FriendRow(friend, online = false) {
                                 FriendMenu(friend, viewModel) { confirming = it }
                             }
@@ -228,7 +228,7 @@ private fun FriendsScreen(
 
                     if (state.outgoingRequests.isNotEmpty()) {
                         section(outgoingLabel)
-                        items(state.outgoingRequests, key = Friend::userId) { friend ->
+                        items(state.outgoingRequests, key = FriendsRowKey::friend) { friend ->
                             FriendRow(friend, online = false) {
                                 ActionButton(
                                     stringResource(R.string.friends_cancel_request),
@@ -240,7 +240,7 @@ private fun FriendsScreen(
 
                     if (state.blocked.isNotEmpty()) {
                         section(blockedLabel)
-                        items(state.blocked, key = Friend::userId) { friend ->
+                        items(state.blocked, key = FriendsRowKey::friend) { friend ->
                             FriendRow(friend, online = false) {
                                 ActionButton(stringResource(R.string.friends_unblock), Icons.Rounded.Check) {
                                     viewModel.unblock(friend.userId)
@@ -582,3 +582,22 @@ private data class PendingConfirmation(
     val confirmLabel: String,
     val onConfirm: () -> Unit,
 )
+
+/**
+ * What identifies a row in the friends list.
+ *
+ * A LazyColumn keys every one of its `items` blocks into one space, and an invitation and a
+ * friendship are two different rows about the same player — necessarily so, because the rules
+ * charge friendship for a game invitation, so an invitation cannot exist without one. Keying
+ * both on the raw user id meant the second of the two was a duplicate key, and Compose answers
+ * a duplicate key by throwing out of the measure pass: one friend inviting another took the
+ * whole app down, on the very screen the invitation is answered from.
+ *
+ * The friend rows share a space of their own safely, because the sections that hold them are a
+ * partition of one status field and nobody is in two of them.
+ */
+internal object FriendsRowKey {
+    fun invite(request: PlayerRequest): String = "invite:${request.fromUserId}"
+
+    fun friend(friend: Friend): String = "friend:${friend.userId}"
+}

@@ -12,13 +12,15 @@ import {
 /**
  * Everything the server does, once a minute.
  *
- * Four jobs: rate the matches players have reported — and record every one of them in both
+ * Six jobs: rate the matches players have reported — and record every one of them in both
  * players' histories — clear away rooms nobody played out, pair whoever the phones left
- * waiting in the matchmaking list, and keep the all-time board's index complete. The first two
- * used to be Cloud Functions — one triggered by a database write, one by a schedule — and both
- * are now polled instead, because a worker cannot subscribe to database events. Polling is the
- * lesser evil here: it needs no endpoint open to the internet, and a report that arrives while
- * a run is already going is simply picked up by the next one.
+ * waiting in the matchmaking list, keep the all-time board's index complete, collect the
+ * request-channel entries no client can reach, and clear the weekly board of the rows and the
+ * weeks nothing stands behind. The first two used to be Cloud Functions — one
+ * triggered by a database write, one by a schedule — and both are now polled instead, because
+ * a worker cannot subscribe to database events. Polling is the lesser evil here: it needs no
+ * endpoint open to the internet, and a report that arrives while a run is already going is
+ * simply picked up by the next one.
  */
 
 /**
@@ -81,6 +83,47 @@ export const MAX_BACKFILL_PROFILES_PER_RUN = 40;
  */
 const BACKFILL_CURSOR_PATH = "maintenance/boardIndexBackfill/cursor";
 
+/** invites/{recipient}/{sender} — the live request channel both players listen on. */
+const INVITES_PATH = "invites";
+
+/** How far through the request channel the collector has walked. See [BACKFILL_CURSOR_PATH]. */
+const INVITE_CURSOR_PATH = "maintenance/inviteSweep/cursor";
+
+/**
+ * Recipients examined per lap. One query and one update however many come back.
+ *
+ * Exported so the end-to-end test can seed past it: a walk that fits in one page never runs
+ * the half of this job that moves the cursor.
+ */
+export const MAX_INVITE_RECIPIENTS_PER_RUN = 50;
+
+/**
+ * How many senders one lap will look up the existence of.
+ *
+ * Only entries that have *not* expired cost anything here — the rest are already collected on
+ * their stamp alone — so this is a cap on live entries whose sender might have deleted their
+ * account since, which in a healthy database is a handful at a time. Ten keeps the whole job
+ * inside thirteen subrequests: the cursor, the page, these, and the update.
+ */
+const MAX_INVITE_SENDER_CHECKS_PER_RUN = 10;
+
+/** leaderboards/weekly/{week}/{uid} — the denormalised table the weekly board is read from. */
+const WEEKLY_BOARD_PATH = "leaderboards/weekly";
+
+/** How far through this week's board the prune has walked. See [BACKFILL_CURSOR_PATH]. */
+const WEEKLY_CURSOR_PATH = "maintenance/weeklyBoardSweep/cursor";
+
+/**
+ * How many weekly rows one lap looks up the owner of.
+ *
+ * One read each, and it carries the same cap as [MAX_INVITE_SENDER_CHECKS_PER_RUN] for the
+ * same reason: a board of any size is covered in a few minutes of laps rather than in one run
+ * that cannot afford itself.
+ */
+const MAX_BOARD_ROW_CHECKS_PER_RUN = 10;
+
+const WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000;
+
 /** recentMatches/{uid}/{matchId} — the short history shown on a player's profile. */
 const RECENT_MATCHES_PATH = "recentMatches";
 
@@ -101,15 +144,26 @@ const DEFAULT_AVATAR = "avatar_01";
  * that lives on one handset until it is uninstalled.
  *
  * Such a player is rated, because a match is rated without asking who played it, but they are
- * kept off both leaderboards — see [weeklyUpdates] and [playerUpdates], and [backfillBoardIndex]
- * for the profiles that were already here before either of those wrote anything. A guest's match
- * is meant to be casual and so never reaches [applyRating] at all; the check is here because the
- * flag that makes it casual is set by a phone, and the boards are this worker's to protect.
+ * kept off both leaderboards — see [holdsBoardPlace]. A guest's match is meant to be casual and
+ * so never reaches [applyRating] at all; the check is here because the flag that makes it casual
+ * is set by a phone, and the boards are this worker's to protect.
  */
 const GUEST_ACCOUNT_TYPE = "GUEST";
+
+/**
+ * The shape of every name the app hands out by itself: `guest_483920` today, `player_a1b2c3`
+ * from the scheme before it, either with a digit appended after a collision. `UsernameRules`
+ * on the phone holds the same expression and matches it against the same trimmed, lower-cased
+ * form.
+ */
+const GENERATED_NAME = /^(?:guest|player)_[a-z0-9]{1,10}$/;
 const EXPIRED_ROOM_GRACE_MILLIS = 60 * 60 * 1000;
 const ROOM_EXPIRY_MILLIS = 24 * 60 * 60 * 1000;
 const DEFAULT_TURN_SECONDS = 60;
+
+/** Squares a side, and walls each. Both halves of the arithmetic in [boardFlaw]. */
+const BOARD_SIZE = 9;
+const WALLS_PER_PLAYER = 10;
 
 /** Excludes 0/O and 1/I, exactly as Constants.Online.ROOM_CODE_ALPHABET does. */
 const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -140,8 +194,8 @@ interface PlayerRecord {
   bestWinStreak: number;
   username: string;
   avatarId: string;
-  /** An anonymous account. Earns a rating like anyone else, but holds no place on a board. */
-  isGuest: boolean;
+  /** Whether a public board may carry a row for this account. See [holdsBoardPlace]. */
+  onBoards: boolean;
 }
 
 interface WeeklyRecord {
@@ -179,6 +233,16 @@ export interface QueueEntry {
   queuedAt: number;
 }
 
+/**
+ * One entry on the request channel, as invites/{recipient}/{sender} holds it.
+ *
+ * Only the field [collectDeadInvites] judges an entry by. The rest — who is asking, which room,
+ * what kind of question — is the recipient's business and none of this worker's.
+ */
+interface Invite {
+  expiresAt?: number;
+}
+
 export interface SweepResult {
   rated: number;
   unranked: number;
@@ -189,6 +253,8 @@ export interface SweepResult {
   queuePaired: number;
   queueDropped: number;
   boardIndexed: number;
+  invitesCollected: number;
+  boardRowsRemoved: number;
 }
 
 export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
@@ -202,6 +268,8 @@ export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
     queuePaired: 0,
     queueDropped: 0,
     boardIndexed: 0,
+    invitesCollected: 0,
+    boardRowsRemoved: 0,
   };
   await rateReportedMatches(db, now, result);
   await expireRooms(db, now, result);
@@ -210,6 +278,16 @@ export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
   // subrequests a run gets, so a full [MAX_REPORTS_PER_RUN] of them leaves no room for
   // anything else — and of everything here this is the one job with nobody waiting on it.
   if (result.rated === 0) await backfillBoardIndex(db, result);
+  // Tighter still, because these two are the only jobs that spend a read on a row they are
+  // unsure about: they run on a minute that took on no report at all. An unranked report costs
+  // eight subrequests without adding to `rated`, so three of those plus the rooms, the queue
+  // and the backfill already stand at forty-four of the fifty, and their thirteen and fifteen
+  // would not fit. Nothing is waiting on either — every entry the first collects is one no
+  // client would show, and every row the second takes down belongs to nobody at all.
+  if (result.rated + result.unranked + result.rejected === 0) {
+    await collectDeadInvites(db, now, result);
+    await pruneWeeklyBoards(db, now, result);
+  }
   return result;
 }
 
@@ -275,11 +353,15 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
     return "participants do not match the room";
   }
   if (room.ranked !== report.ranked) return "ranked flag does not match the room";
-  // The room's own write rules already proved the outcome is legitimate: a normal win is
-  // checked against the final board, a timeout against the server clock, and a resignation
-  // can only ever be filed against oneself. Re-derive nothing; just insist they agree.
+  // The room's own write rules bound every step the outcome was reached by: how far a pawn
+  // may travel in one turn, what a wall costs, when a clock has run out, and that a
+  // resignation can only ever be filed against oneself. What they cannot do is count, so the
+  // one part of the board no rule holds is checked here instead — see [boardFlaw].
   if ((room.winnerUserId ?? "") !== report.winnerUid) return "winner does not match the room";
   if ((room.endReason ?? "") !== report.endReason) return "end reason does not match the room";
+  const board = room.board as Record<string, unknown> | undefined;
+  const flaw = boardFlaw(board);
+  if (flaw) return flaw;
   if (report.endReason === "NORMAL") {
     // The board only ever names a seat, and the host is not always seat one: choosing red
     // puts them in seat two. A room written before seats existed carries no hostSeat, which
@@ -287,7 +369,6 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
     const hostInSeatTwo = room.hostSeat === "PLAYER_TWO";
     const seatOneUid = hostInSeatTwo ? report.guestUid : report.hostUid;
     const seatTwoUid = hostInSeatTwo ? report.hostUid : report.guestUid;
-    const board = room.board as { status?: string } | undefined;
     const expected =
       board?.status === "PLAYER_ONE_WON"
         ? seatOneUid
@@ -298,6 +379,46 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
     if (report.winnerUid !== expected) return "winner does not match the board";
   }
   return "ok";
+}
+
+/**
+ * What is wrong with the board the match ended on, or null when nothing is.
+ *
+ * The write rules can compare a field against the value it held a moment ago, which is how
+ * every pawn step and every wall paid for is bounded. What they cannot do is count children,
+ * so `board/walls` is the one part of the board no rule can hold: a modified client may lay
+ * walls it never paid for, or sweep the rival's off the board, and no rule will say a word.
+ *
+ * The arithmetic is what says it. Ten walls each and one spent per wall placed means the two
+ * supplies and the walls standing on the board are a conserved twenty, in every position that
+ * any sequence of legal turns can produce. A board where they are not is a board that was
+ * never played, and a match played on one moves nobody's rating.
+ */
+function boardFlaw(board: Record<string, unknown> | undefined): string | null {
+  const seats = board?.players as Record<string, Record<string, unknown>> | undefined;
+  const one = seats?.PLAYER_ONE;
+  const two = seats?.PLAYER_TWO;
+  if (!one || !two) return "the board does not name both seats";
+  for (const seat of [one, two]) {
+    if (!onBoard(seat.row) || !onBoard(seat.column)) return "a pawn stands off the board";
+  }
+  const held = [one.wallsRemaining, two.wallsRemaining];
+  if (!held.every((walls) => onBoard(walls, WALLS_PER_PLAYER))) {
+    return "a wall supply is not a number of walls";
+  }
+  // Absent means none were ever placed: an empty list is not stored at all.
+  const placed = board?.walls;
+  const standing = placed == null ? 0 : Object.keys(placed as object).length;
+  if (Number(held[0]) + Number(held[1]) + standing !== 2 * WALLS_PER_PLAYER) {
+    return "the walls on the board do not add up to the ones paid for";
+  }
+  return null;
+}
+
+function onBoard(value: unknown, limit: number = BOARD_SIZE - 1): boolean {
+  return (
+    typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= limit
+  );
 }
 
 async function applyRating(
@@ -513,14 +634,12 @@ async function pairWaitingPlayers(
     }
   }
 
-  for (const [[hostUid, host], [guestUid, guest]] of closestPairs(
-    waiting,
-    MAX_QUEUE_PAIRS_PER_RUN
-  )) {
+  for (const pair of closestPairs(waiting, MAX_QUEUE_PAIRS_PER_RUN)) {
+    const [[guestUid, guest], [hostUid, host]] = asThePhonesWouldHaveIt(pair);
     const code = await freeRoomCode(db, guestUid, guest.queuedAt);
-    // No code left after several tries means a room already sits where this pair would go,
-    // which is a phone that paired them a moment ago. Leaving them is the right answer: the
-    // entries they no longer need are cleared by their own clients or by staleness.
+    // No code means a room already sits where this pair would go, which is a phone that
+    // paired them a moment ago. Leaving them is the right answer: the entries they no longer
+    // need are cleared by their own clients or by staleness.
     if (!code) continue;
     updates[`rooms/${code}`] = pairedRoom(hostUid, host, guestUid, guest, now);
     updates[`matchmaking/${hostUid}`] = null;
@@ -548,6 +667,33 @@ function isLive(entry: QueueEntry | null, now: number): boolean {
  * already spoken for is the greedy closest-first match. Exported because the ordering is the
  * whole point of pairing on rating at all, and it is worth being able to check directly.
  */
+/**
+ * The same two players, turned the way a phone would have arranged them: the one being
+ * claimed first, the one doing the claiming second.
+ *
+ * The handsets settle this between themselves with no server in the loop, so the arrangement
+ * has to be a fact about the entries: `MatchmakingRules.opens` gives the room to whoever
+ * queued later — the device that has just looked — and names it after the other one, because
+ * the room is the lock two devices going for the same person both aim at. [closestPairs]
+ * hands its pairs back in rating order, which is unrelated, so about half of them arrive the
+ * wrong way up. Deriving the room code from that half asks whether a room stands at a code no
+ * phone would ever have used, and the check that exists to find a pairing the clients already
+ * made quietly finds nothing and writes a second room for the same two people.
+ *
+ * Exported for the same reason [closestPairs] is: it is a claim about what the phones do, and
+ * the only place it can be checked is against them.
+ */
+export function asThePhonesWouldHaveIt(
+  pair: [[string, QueueEntry], [string, QueueEntry]]
+): [[string, QueueEntry], [string, QueueEntry]] {
+  const [one, two] = pair;
+  const claimedFirst =
+    one[1].queuedAt !== two[1].queuedAt
+      ? one[1].queuedAt < two[1].queuedAt
+      : one[0] < two[0];
+  return claimedFirst ? [one, two] : [two, one];
+}
+
 export function closestPairs(
   waiting: Array<[string, QueueEntry]>,
   limit: number
@@ -573,22 +719,38 @@ export function closestPairs(
 }
 
 /**
- * A room code nothing occupies, or null if the first few are all taken.
+ * The one room code this pairing may use, or null because something already occupies it.
  *
- * The first candidate is deliberately the one a phone would have used for this player, so a
- * pairing the client had already half made is found rather than written over. The salt only
- * moves if that code is busy, which in practice means it is busy with exactly that pairing.
+ * There is exactly one candidate, and no salt behind it. The code is the lock on claiming a
+ * player — two devices going for the same person aim at one node and the transaction there
+ * lets one of them through — and a lock only works where everybody computes the same one, so
+ * a room already standing at it is not a collision to be worked around: it is the pairing,
+ * written by a handset a moment ago, and the right answer is to leave the two of them in it.
+ * Salting past it would write a second room for the same two players, which is the whole
+ * thing this check exists to prevent. The phones have no salt either, for the same reason: a
+ * device whose transaction finds the node taken simply keeps waiting.
  */
 async function freeRoomCode(
   db: Rtdb,
-  guestUid: string,
+  claimedUid: string,
   queuedAt: number
 ): Promise<string | null> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const code = await roomCode(`koridor:queue:${guestUid}:${queuedAt}${"+".repeat(attempt)}`);
-    if ((await db.get(`rooms/${code}`)) === null) return code;
-  }
-  return null;
+  const code = await meetingCode(claimedUid, queuedAt);
+  return (await db.get(`rooms/${code}`)) === null ? code : null;
+}
+
+/** The seed `RoomCredentials.meetingCode` folds on the phone, character for character. */
+const QUEUE_SEED = (claimedUid: string, queuedAt: number): string =>
+  `koridor:queue:${claimedUid}:${queuedAt}`;
+
+/**
+ * The room a phone would have opened for the pairing that claimed [claimedUid].
+ *
+ * Exported so the end-to-end can put a room exactly where a client's own pairing would have
+ * left one, which is the only way to exercise the check [freeRoomCode] exists for.
+ */
+export async function meetingCode(claimedUid: string, queuedAt: number): Promise<string> {
+  return roomCode(QUEUE_SEED(claimedUid, queuedAt));
 }
 
 /** Folds a seed into the room alphabet, the same way RoomCredentials.meetingCode does. */
@@ -695,8 +857,11 @@ async function backfillBoardIndex(db: Rtdb, result: SweepResult): Promise<void> 
   for (const [uid, value] of rows) {
     // `startAt` is inclusive, so the row the last lap finished on comes back again.
     if (!value || uid === cursor) continue;
-    if (value.accountType === GUEST_ACCOUNT_TYPE) continue;
     if (typeof value.leaderboardRating === "number") continue;
+    // An account still wearing the name the app invented is not late to the board, it is not
+    // due on it — see [holdsBoardPlace]. It is taken on by the lap after it has a name, which
+    // is the whole reason this walk keeps going round rather than stopping when it runs out.
+    if (!holdsBoardPlace(value)) continue;
     updates[`users/${uid}/leaderboardRating`] = numberOr(value.rating, STARTING_RATING);
     result.boardIndexed += 1;
   }
@@ -715,6 +880,180 @@ async function backfillBoardIndex(db: Rtdb, result: SweepResult): Promise<void> 
   await db.update(updates);
 }
 
+/**
+ * Clears request-channel entries that no client will ever show, a page of the tree at a time.
+ *
+ * ## Why this cannot be the phones' job
+ *
+ * `invites/{recipient}/{sender}` is written by the sender and read by nobody else: the rules
+ * grant `.read` at `invites/$recipient` to that recipient alone, and permission only ever flows
+ * downwards, so the sender cannot list a channel, cannot read the single row they themselves
+ * wrote, and cannot find out whether it is still there. They *may* delete it — the rule admits
+ * `auth.uid == $sender && !newData.exists()` — but only by naming the recipient, and there is
+ * nothing they are allowed to read that enumerates who that was.
+ *
+ * That is what leaves an erased account behind. An erasure walks the friend list and cleans the
+ * other side of every relationship on it, which is every game invitation, because friendship is
+ * what the rules charge for one. A rematch is charged for differently — the finished match is
+ * the licence, and the two players need never have been friends — so `invites/{opponent}/{uid}`
+ * is a row the deleting player cannot name and no other client is allowed to touch. "Delete
+ * permanently" has to mean it, so the hand that keeps that promise is this one: it holds the
+ * admin credential, so the read the rules refuse everybody costs it nothing.
+ *
+ * ## What counts as dead
+ *
+ * Two things, and the first is the ordinary one. An entry carries the moment it stops being
+ * offered, and every client already filters on it — `PlayerRequest.isExpired` — so collecting
+ * on the same stamp removes exactly what players have already stopped seeing. Nothing here has
+ * to reason about clocks: the entry and the recipient are judged by the same number.
+ *
+ * The second is the promise. A live entry whose sender no longer has a profile belongs to an
+ * account that has been erased, and it holds that account's uid and the name it played under.
+ * It is the only case worth spending a read on, it is the only case a forged expiry could hide
+ * behind for ever, and it is capped at [MAX_INVITE_SENDER_CHECKS_PER_RUN] a lap.
+ *
+ * The walk is by recipient key with a stored cursor, exactly as [backfillBoardIndex] walks the
+ * profiles. It converges: an empty parent does not exist in this database, so once a lap has
+ * been round, `invites` holds only channels with something live in them — which is a page.
+ */
+async function collectDeadInvites(
+  db: Rtdb,
+  now: number,
+  result: SweepResult
+): Promise<void> {
+  const cursor = (await db.get<string>(INVITE_CURSOR_PATH)) ?? "";
+  const page = await db.get<Record<string, Record<string, Invite | null> | null>>(INVITES_PATH, {
+    orderBy: '"$key"',
+    limitToFirst: String(MAX_INVITE_RECIPIENTS_PER_RUN),
+    // See [backfillBoardIndex]: no cursor is the start of the tree, and no key names that.
+    ...(cursor ? { startAt: JSON.stringify(cursor) } : {}),
+  });
+  const rows = Object.entries(page ?? {});
+
+  const updates: Record<string, unknown> = {};
+  const live: Array<{ recipient: string; sender: string; expiresAt: number }> = [];
+  for (const [recipient, channel] of rows) {
+    if (!channel) continue;
+    for (const [sender, invite] of Object.entries(channel)) {
+      if (!invite) continue;
+      // An entry with no usable stamp is one no client can decide about either, and the rules
+      // have required a numeric one since the channel existed. Treated as long dead.
+      if (typeof invite.expiresAt !== "number" || invite.expiresAt <= now) {
+        updates[`${INVITES_PATH}/${recipient}/${sender}`] = null;
+        result.invitesCollected += 1;
+      } else {
+        live.push({ recipient, sender, expiresAt: invite.expiresAt });
+      }
+    }
+  }
+
+  // Furthest from expiring first, so that a cap which bites falls on the entries that were
+  // about to be collected on their stamp anyway. Without an order it would fall on the same
+  // ones every lap: once the tree fits a page the cursor stops moving, and whoever sorted
+  // eleventh would never be asked about at all.
+  const senders = [
+    ...new Set(
+      [...live].sort((a, b) => b.expiresAt - a.expiresAt).map((entry) => entry.sender)
+    ),
+  ].slice(0, MAX_INVITE_SENDER_CHECKS_PER_RUN);
+  // The name is asked for rather than the node, because it is the field the entry copied and
+  // every profile the rules will accept carries one. Missing means there is no profile left.
+  const erased = new Set(
+    (
+      await Promise.all(
+        senders.map(async (uid) =>
+          (await db.get<unknown>(`users/${uid}/username`)) === null ? uid : null
+        )
+      )
+    ).filter((uid): uid is string => uid !== null)
+  );
+  for (const { recipient, sender } of live) {
+    if (!erased.has(sender)) continue;
+    updates[`${INVITES_PATH}/${recipient}/${sender}`] = null;
+    result.invitesCollected += 1;
+  }
+
+  // See [backfillBoardIndex] for both halves of this: a short page is the end of the tree, and
+  // the cursor is the highest key that came back rather than the last one a parser handed over.
+  const exhausted = rows.length < MAX_INVITE_RECIPIENTS_PER_RUN;
+  updates[INVITE_CURSOR_PATH] = exhausted
+    ? ""
+    : rows.reduce((highest, [recipient]) => (recipient > highest ? recipient : highest), "");
+  await db.update(updates);
+}
+
+/**
+ * Clears the weekly board of the rows nothing stands behind and of the weeks nothing reads.
+ *
+ * Every row on that board is a copy of somebody's username — see [weeklyUpdates] for why it
+ * is denormalised — and `leaderboards` is writable by no client at all. So an account being
+ * deleted takes its profile, its name reservation and its friendships with it and leaves its
+ * name standing on a table every signed-in player can read, with nothing anywhere able to
+ * take it down. That is the same shape as the request channel, and it has the same answer:
+ * the hand holding the admin credential is the only one that can keep the promise "delete
+ * permanently" makes.
+ *
+ * Two things go, for two different reasons. A week the app has stopped asking for goes whole:
+ * the client only ever reads the week it is in, so everything before last week is a public
+ * copy of a name being kept for nobody. Last week is spared because a handset whose clock
+ * lags an hour over a Sunday midnight is still asking for it. Inside the week that is live, a
+ * row whose account no longer has a profile goes on its own — capped at
+ * [MAX_BOARD_ROW_CHECKS_PER_RUN] a lap and walked by key with a stored cursor, exactly as
+ * [backfillBoardIndex] walks the profiles, so a board of any size is covered in a few minutes
+ * rather than in one run that cannot afford itself.
+ */
+async function pruneWeeklyBoards(
+  db: Rtdb,
+  now: number,
+  result: SweepResult
+): Promise<void> {
+  // Keys only: the weeks are asked for, not the tables under them, and a board with a
+  // thousand rows on it would otherwise arrive whole just to be counted.
+  const weeks = await db.get<Record<string, unknown>>(WEEKLY_BOARD_PATH, { shallow: "true" });
+  if (!weeks) return;
+  const live = weekKey(now);
+  const previous = weekKey(now - WEEK_MILLIS);
+
+  const updates: Record<string, unknown> = {};
+  for (const week of Object.keys(weeks)) {
+    if (week === live || week === previous) continue;
+    const rows = await db.get<Record<string, unknown>>(`${WEEKLY_BOARD_PATH}/${week}`, {
+      shallow: "true",
+    });
+    updates[`${WEEKLY_BOARD_PATH}/${week}`] = null;
+    result.boardRowsRemoved += Object.keys(rows ?? {}).length;
+  }
+
+  const cursor = (await db.get<string>(WEEKLY_CURSOR_PATH)) ?? "";
+  const page = await db.get<Record<string, unknown>>(`${WEEKLY_BOARD_PATH}/${live}`, {
+    orderBy: '"$key"',
+    limitToFirst: String(MAX_BOARD_ROW_CHECKS_PER_RUN),
+    // See [backfillBoardIndex]: no cursor is the start of the tree, and no key names that.
+    ...(cursor ? { startAt: JSON.stringify(cursor) } : {}),
+  });
+  const listed = Object.keys(page ?? {});
+  // The name is asked for rather than the node, for the same reason [collectDeadInvites] asks
+  // for it: every profile the rules will accept carries one, so missing means none is left.
+  const erased = await Promise.all(
+    listed.map(async (uid) =>
+      (await db.get<unknown>(`users/${uid}/username`)) === null ? uid : null
+    )
+  );
+  for (const uid of erased) {
+    if (uid === null) continue;
+    updates[`${WEEKLY_BOARD_PATH}/${live}/${uid}`] = null;
+    result.boardRowsRemoved += 1;
+  }
+
+  // See [backfillBoardIndex] for both halves of this: a short page is the end of the tree, and
+  // the cursor is the highest key that came back rather than the last one a parser handed over.
+  const exhausted = listed.length < MAX_BOARD_ROW_CHECKS_PER_RUN;
+  updates[WEEKLY_CURSOR_PATH] = exhausted
+    ? ""
+    : listed.reduce((highest, uid) => (uid > highest ? uid : highest), "");
+  await db.update(updates);
+}
+
 function scoreFor(report: MatchReport, uid: string): MatchScore {
   if (!report.winnerUid) return SCORE_DRAW;
   return report.winnerUid === uid ? SCORE_WIN : SCORE_LOSS;
@@ -724,6 +1063,27 @@ function mirror(score: MatchScore): MatchScore {
   if (score === SCORE_WIN) return SCORE_LOSS;
   if (score === SCORE_LOSS) return SCORE_WIN;
   return SCORE_DRAW;
+}
+
+/**
+ * Whether a public board may carry a row for the profile `value` describes.
+ *
+ * Two profiles are refused. An anonymous one, always: a table of the best players is meant to
+ * list players, and an account that lasts until the handset is wiped is not one of them. And
+ * one still wearing the name the app handed out — because a name nobody chose is a name nobody
+ * meant to publish, and that is true however the account arrived at it. Linking a credential
+ * makes an account real several seconds before its owner finishes the form that names it, and
+ * those seconds used to be spent on the all-time board as `guest_######`.
+ *
+ * An account already carrying the board's sort key keeps it either way. Taking somebody off a
+ * table they are on is a worse answer than a name that lags a rating by one match, and nothing
+ * here is the right hand to be making that decision with: the phone is where a name is chosen.
+ */
+function holdsBoardPlace(value: Record<string, unknown>): boolean {
+  if (value.accountType === GUEST_ACCOUNT_TYPE) return false;
+  if (typeof value.leaderboardRating === "number") return true;
+  const username = typeof value.username === "string" ? value.username.trim().toLowerCase() : "";
+  return username !== "" && !GENERATED_NAME.test(username);
 }
 
 function playerUpdates(
@@ -738,9 +1098,10 @@ function playerUpdates(
   return {
     [`users/${uid}/rating`]: rating,
     // The all-time board is ordered by this second copy rather than by the rating itself, so
-    // that a guest — who never gets one written — has no place in the index to be read out of.
-    // It is written here, level with the rating, because the two are shown as one row.
-    ...(record.isGuest ? {} : { [`users/${uid}/leaderboardRating`]: rating }),
+    // that a profile with no place on the board — see [holdsBoardPlace] — has no place in the
+    // index to be read out of. It is written here, level with the rating, because the two are
+    // shown as one row.
+    ...(record.onBoards ? { [`users/${uid}/leaderboardRating`]: rating } : {}),
     [`users/${uid}/highestRating`]: Math.max(record.highestRating, rating),
     [`users/${uid}/totalGames`]: record.totalGames + 1,
     [`users/${uid}/wins`]: record.wins + (won ? 1 : 0),
@@ -755,9 +1116,11 @@ function playerUpdates(
  * The weekly board is denormalised: it carries the name and avatar so a page of fifty rows
  * costs one query instead of fifty profile reads.
  *
- * A guest gets no row. Nothing under `leaderboards` is writable by a client, so this is the
- * only hand that ever writes there and refusing here is refusing outright: there is no row to
- * be filtered out of a query, cached by a phone, or found by a modified one.
+ * A profile with no place on a board — see [holdsBoardPlace] — gets no row. Nothing under
+ * `leaderboards` is writable by a client, so this is the only hand that ever writes there and
+ * refusing here is refusing outright: there is no row to be filtered out of a query, cached by
+ * a phone, or found by a modified one. The name this table would carry is the very thing that
+ * disqualifies half of them, which is the sharpest form the argument takes.
  */
 function weeklyUpdates(
   week: string,
@@ -767,7 +1130,7 @@ function weeklyUpdates(
   rating: number,
   score: MatchScore
 ): Record<string, unknown> {
-  if (record.isGuest) return {};
+  if (!record.onBoards) return {};
   const base = `leaderboards/weekly/${week}/${uid}`;
   return {
     [`${base}/username`]: record.username,
@@ -791,7 +1154,7 @@ async function readRecord(db: Rtdb, uid: string): Promise<PlayerRecord> {
     bestWinStreak: numberOr(value.bestWinStreak, 0),
     username: typeof value.username === "string" ? value.username : "",
     avatarId: typeof value.avatarId === "string" ? value.avatarId : DEFAULT_AVATAR,
-    isGuest: value.accountType === GUEST_ACCOUNT_TYPE,
+    onBoards: holdsBoardPlace(value),
   };
 }
 

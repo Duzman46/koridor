@@ -343,6 +343,15 @@
     <string name="friends_request_pending">Запрос в друзья отправлен</string>
     <string name="friends_already_friends">Вы друзья</string>
 
+    <string name="report_action">Пожаловаться</string>
+    <string name="report_title">Пожаловаться на %1$s</string>
+    <string name="report_message">Укажите, что не так. Жалобы получает разработчик, другому игроку они не показываются.</string>
+    <string name="report_reason_name">Оскорбительное имя</string>
+    <string name="report_reason_room_name">Оскорбительное название комнаты</string>
+    <string name="report_reason_cheating">Читерство</string>
+    <string name="report_reason_other">Другое</string>
+    <string name="report_sent">Спасибо. Ваша жалоба отправлена.</string>
+
     <string name="invites_title">Приглашения в игру</string>
     <string name="invites_from">%1$s приглашает вас на матч.</string>
     <string name="requests_rematch_from">%1$s хочет реванш.</string>

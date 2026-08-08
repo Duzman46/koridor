@@ -10,8 +10,6 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineSession
-import com.duzman46.gridbound.online.model.RoomConfiguration
-import com.duzman46.gridbound.online.model.RoomVisibility
 import com.duzman46.gridbound.session.SessionManager
 import com.duzman46.gridbound.social.domain.RequestKind
 import com.duzman46.gridbound.social.domain.SocialRepository
@@ -96,15 +94,11 @@ class RematchViewModel @Inject constructor(
         if (playedRoomCode.isBlank() || opponentUserId.isBlank()) return
         _uiState.update { it.copy(isBusy = true, message = null) }
         viewModelScope.launch {
-            // Private, so a rematch never turns up in the public room browser for a stranger
-            // to walk into ahead of the player it was opened for. Everything else is the
-            // standard game: this is a rerun, not a chance to change the terms.
-            val created = onlineRepository.createRoom(
-                RoomConfiguration(
-                    visibility = RoomVisibility.PRIVATE,
-                    hostSeat = seat.opponent,
-                ),
-            )
+            // One room per finished match, not one per tap: both players see this button and
+            // both may press it at once, and a code apiece would put the two of them on
+            // separate boards waiting for each other. Whichever device gets there first opens
+            // it; the other walks straight into the seat it left.
+            val created = onlineRepository.rematchRoom(playedRoomCode, opponentUserId, seat)
             if (created is OnlineLobbyResult.Failure) {
                 _uiState.update { it.copy(isBusy = false, message = created.error.message) }
                 return@launch
@@ -145,7 +139,7 @@ class RematchViewModel @Inject constructor(
                         // Guarded on `pending` as well as cancelled below, because the room
                         // republishes itself on every move: an answer announced twice would
                         // be a second navigation queued behind the interstitial.
-                        if (!room.status.isPlayable || pending == null) return@collect
+                        if (room?.status?.isPlayable != true || pending == null) return@collect
                         // Handed over: the room is in play and is no longer ours to close.
                         pending = null
                         _accepted.tryEmit(session)

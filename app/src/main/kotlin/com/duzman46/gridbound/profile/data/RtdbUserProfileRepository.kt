@@ -58,7 +58,7 @@ class RtdbUserProfileRepository @Inject constructor(
                     ),
                 ).await()
                 storePrivateEmail(user)
-                claimBoardRating(user)
+                claimBoardRating(user.userId)
                 return@dbCall Outcome.Success(
                     existing.copy(
                         lastLoginAt = now,
@@ -98,6 +98,10 @@ class RtdbUserProfileRepository @Inject constructor(
             }
             writeUsername(userId, desired, normalized)
             releaseUsername(userId, previous)
+            // The moment the account has a name of its own is the moment it is allowed on the
+            // board, and for a player who has just linked a credential it is this line that
+            // puts them there. See [claimBoardRating].
+            claimBoardRating(userId)
             Outcome.Success(desired)
         }
     }
@@ -143,7 +147,9 @@ class RtdbUserProfileRepository @Inject constructor(
             )
             userRef(user.userId).setValue(codec.encodeNewProfile(profile)).await()
             storePrivateEmail(user)
-            claimBoardRating(user)
+            // No board claim here. Every profile is created under a name this method invented,
+            // and [claimBoardRating] would refuse it; the claim belongs to changeUsername,
+            // which is where a name stops being invented.
             return Outcome.Success(profile)
         }
         AppLog.warn("create-profile-username-exhausted")
@@ -186,27 +192,37 @@ class RtdbUserProfileRepository @Inject constructor(
     }
 
     /**
-     * Puts a linked account into the leaderboard index, with whatever rating it already holds.
+     * Puts a named account into the leaderboard index, with whatever rating it already holds.
      *
      * This is the whole of how a guest gets onto the board once they stop being one: the key
-     * the board is ordered by is written here and nowhere else on the device, so the day they
-     * link a credential is the day they appear — carrying the rating they played for, because
-     * the value is read back off the profile rather than assumed to be the starting one.
+     * the board is ordered by is written here and nowhere else on the device, carrying the
+     * rating they played for, because the value is read back off the profile rather than
+     * assumed to be the starting one.
      *
-     * Best-effort on purpose. The rules insist the copy equals the rating it mirrors, so a
-     * rated match landing in the moment between the read and the write is refused; that must
-     * cost a sign-in nothing, and it costs nothing, because the next sign-in writes it again
-     * and the server writes it after every rated match in between.
+     * ## Why linking is not the moment
+     *
+     * It used to be. A credential makes an account real, `ensureProfile` runs, and the claim
+     * went with it — several seconds before its owner reaches the form that names it. In that
+     * window they were on the all-time board as `guest_######`, a name nobody chose and nobody
+     * meant to publish, and killing the app there left them on it indefinitely. Navigating to
+     * the naming gate on link closes the part a player sits and watches; it cannot close the
+     * part where the app is not running. So the claim waits for the name instead: a profile
+     * with no name of its own has no business on a public board, however it arrived at one,
+     * and `worker/src/sweep.ts` holds the same rule so that no other hand puts them there.
+     *
+     * Both facts are read from one snapshot, as late as possible, because the rules insist the
+     * copy equals the rating it mirrors.
+     *
+     * Best-effort on purpose. A rated match landing in the moment between the read and the
+     * write is refused; that must cost a sign-in nothing, and it costs nothing, because the
+     * next sign-in writes it again and the server writes it after every rated match in between.
      */
-    private suspend fun claimBoardRating(user: AuthUser) {
-        if (user.accountType.isGuest) return
+    private suspend fun claimBoardRating(userId: String) {
         runCatching {
-            val rating = userRef(user.userId).child(ProfileCodec.Keys.RATING)
-                .awaitSnapshot().getValue(Int::class.java)
-            if (rating != null) {
-                userRef(user.userId).child(ProfileCodec.Keys.LEADERBOARD_RATING)
-                    .setValue(rating).await()
-            }
+            val profile = codec.decode(userRef(userId).awaitSnapshot()) ?: return@runCatching
+            if (profile.isGuest || !profile.hasChosenName) return@runCatching
+            userRef(userId).child(ProfileCodec.Keys.LEADERBOARD_RATING)
+                .setValue(profile.rating).await()
         }.onFailure { AppLog.warn("claim-board-rating", it) }
     }
 

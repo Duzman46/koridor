@@ -129,10 +129,13 @@ private fun WinnerScreen(
     )
     // On a shared handset both players are here and one of them has won. Anywhere else the
     // person holding the phone is one of the seats, so the screen has a side to take.
-    val lost = mode != GameMode.LOCAL_TWO_PLAYER && winner != localPlayer
+    val lost = didLose(mode, winner, localPlayer)
     ScreenBackground {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Confetti(progress)
+            // The celebration is for the player who won it. Confetti and a gold trophy over
+            // "the move clock ran out" congratulated the loser in the same frame as the
+            // sentence telling them they had lost.
+            if (!lost) Confetti(progress)
             Card(
                 Modifier.fillMaxWidth().widthIn(max = 500.dp).padding(20.dp),
                 shape = RoundedCornerShape(32.dp),
@@ -145,10 +148,16 @@ private fun WinnerScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Icon(
-                        Icons.Rounded.EmojiEvents,
+                        if (lost) Icons.Rounded.SportsEsports else Icons.Rounded.EmojiEvents,
                         contentDescription = null,
-                        modifier = Modifier.size(92.dp).scale(glow),
-                        tint = MaterialTheme.colorScheme.secondary,
+                        // Still, and in the surface's own ink: a trophy pulsing above a defeat
+                        // is the artwork arguing with the words underneath it.
+                        modifier = Modifier.size(92.dp).scale(if (lost) 1f else glow),
+                        tint = if (lost) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.secondary
+                        },
                     )
                     Text(
                         when {
@@ -253,6 +262,16 @@ private fun ColumnScope.RematchControls(
         Text(stringResource(R.string.winner_another_game), Modifier.padding(start = 8.dp))
     }
 }
+
+/**
+ * Whether the player holding the phone is the one who was beaten.
+ *
+ * On a shared handset both players are looking at the same screen and one of them has won, so
+ * there is no side to take. Everywhere else there is, and it decides the artwork as well as
+ * the words: this screen is reached by the winner and the loser alike.
+ */
+internal fun didLose(mode: GameMode, winner: PlayerId, localPlayer: PlayerId): Boolean =
+    mode != GameMode.LOCAL_TWO_PLAYER && winner != localPlayer
 
 @Composable
 private fun Confetti(progress: Float) {

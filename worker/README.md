@@ -24,7 +24,26 @@ Once a minute the worker:
    that belongs on the all-time board and is not yet in its index onto it;
 6. on a run that took on no report at all, walks a page of the request channel and clears
    every entry that has expired, along with every live one whose sender no longer has a
-   profile.
+   profile;
+7. on that same run, drops the weekly boards nobody reads any more and takes down the rows of
+   accounts that no longer have a profile.
+
+Step 1 also refuses a board no sequence of legal turns could produce. The room's own write rules
+bound every step — how far a pawn travels in a turn, what a wall costs, when a clock has run
+out — but Realtime Database rules cannot count children, so `board/walls` is the one part of the
+board they cannot hold at all. Arithmetic holds it instead: ten walls each and one spent per
+wall placed makes twenty a conserved total in every reachable position, and a match played on a
+board where it is not conserved moves nobody's rating. It costs no read, because the room was
+already fetched to check the outcome against.
+
+Step 7 is here for the same reason step 6 is. Every row on the weekly board carries a copy of a
+username — that is what makes a page of fifty rows one query instead of fifty profile reads —
+and nothing under `leaderboards` is writable by any client, so a player deleting their account
+cannot take their own name off it and neither can anybody else. The hand holding the admin
+credential is the only one that can, and "delete permanently" has to mean it. The finished weeks
+go for a plainer reason: the app only ever reads the week it is in, so anything before last week
+is a public copy of a name being kept for nobody. Both halves are capped low per lap because
+this shares its minute with step 6, which is already the most expensive job on it.
 
 Step 2 is here rather than on the phones because the history sits on a public profile: a list
 a device writes is a list a device edits, and nothing in the database could tell a real loss

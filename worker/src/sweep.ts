@@ -114,13 +114,17 @@ const WEEKLY_BOARD_PATH = "leaderboards/weekly";
 const WEEKLY_CURSOR_PATH = "maintenance/weeklyBoardSweep/cursor";
 
 /**
- * How many weekly rows one lap looks up the owner of.
+ * How many weekly rows one lap looks up the owner of, and how many finished weeks it counts
+ * before dropping them.
  *
- * One read each, and it carries the same cap as [MAX_INVITE_SENDER_CHECKS_PER_RUN] for the
- * same reason: a board of any size is covered in a few minutes of laps rather than in one run
- * that cannot afford itself.
+ * One read each, and both are small because this job shares its minute with the invite
+ * collector, which is already the most expensive thing on it. Five and two put the pair at
+ * about forty-nine of the free plan's fifty on the worst minute either can run at all — and a
+ * board of any size is still covered in a few minutes of laps, while stale weeks arrive at
+ * one a week.
  */
-const MAX_BOARD_ROW_CHECKS_PER_RUN = 10;
+const MAX_BOARD_ROW_CHECKS_PER_RUN = 5;
+const MAX_FINISHED_WEEKS_PER_RUN = 2;
 
 const WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000;
 
@@ -281,9 +285,10 @@ export async function sweep(db: Rtdb, now: number): Promise<SweepResult> {
   // Tighter still, because these two are the only jobs that spend a read on a row they are
   // unsure about: they run on a minute that took on no report at all. An unranked report costs
   // eight subrequests without adding to `rated`, so three of those plus the rooms, the queue
-  // and the backfill already stand at forty-four of the fifty, and their thirteen and fifteen
-  // would not fit. Nothing is waiting on either — every entry the first collects is one no
-  // client would show, and every row the second takes down belongs to nobody at all.
+  // and the backfill already stand at forty-four of the fifty, and neither would fit. They
+  // share the minute they do get, which is why the second one's caps are as low as they are.
+  // Nothing is waiting on either — every entry the first collects is one no client would show,
+  // and every row the second takes down belongs to nobody at all.
   if (result.rated + result.unranked + result.rejected === 0) {
     await collectDeadInvites(db, now, result);
     await pruneWeeklyBoards(db, now, result);
@@ -997,10 +1002,11 @@ async function collectDeadInvites(
  * the client only ever reads the week it is in, so everything before last week is a public
  * copy of a name being kept for nobody. Last week is spared because a handset whose clock
  * lags an hour over a Sunday midnight is still asking for it. Inside the week that is live, a
- * row whose account no longer has a profile goes on its own — capped at
- * [MAX_BOARD_ROW_CHECKS_PER_RUN] a lap and walked by key with a stored cursor, exactly as
- * [backfillBoardIndex] walks the profiles, so a board of any size is covered in a few minutes
- * rather than in one run that cannot afford itself.
+ * row whose account no longer has a profile goes on its own — walked by key with a stored
+ * cursor, exactly as [backfillBoardIndex] walks the profiles.
+ *
+ * Both halves are capped per lap, and low: this shares its minute with [collectDeadInvites],
+ * which is already the most expensive job on it.
  */
 async function pruneWeeklyBoards(
   db: Rtdb,
@@ -1015,8 +1021,12 @@ async function pruneWeeklyBoards(
   const previous = weekKey(now - WEEK_MILLIS);
 
   const updates: Record<string, unknown> = {};
-  for (const week of Object.keys(weeks)) {
-    if (week === live || week === previous) continue;
+  // Oldest first, so a cap that bites leaves the newest — the one closest to still being read.
+  const finished = Object.keys(weeks)
+    .filter((week) => week !== live && week !== previous)
+    .sort()
+    .slice(0, MAX_FINISHED_WEEKS_PER_RUN);
+  for (const week of finished) {
     const rows = await db.get<Record<string, unknown>>(`${WEEKLY_BOARD_PATH}/${week}`, {
       shallow: "true",
     });

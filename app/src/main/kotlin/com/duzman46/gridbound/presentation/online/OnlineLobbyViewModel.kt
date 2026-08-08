@@ -12,7 +12,6 @@ import com.duzman46.gridbound.online.domain.OnlineGameRepository
 import com.duzman46.gridbound.online.model.MatchmakingState
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineRoom
-import com.duzman46.gridbound.online.model.OnlineRoomStatus
 import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.online.model.RoomBrowserFilter
 import com.duzman46.gridbound.online.model.RoomConfiguration

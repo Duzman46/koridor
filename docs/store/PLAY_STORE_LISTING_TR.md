@@ -16,19 +16,25 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 
 ÖZELLİKLER
 
-- Arkadaşlarınla oda kodu kullanarak çevrimiçi oyun
+- Puanına yakın bir rakiple hızlı eşleşme ya da oda açıp kodu paylaşma
+- Puanlı maçlar, tüm zamanlar tablosu ve haftalık tablo
+- Arkadaşlar: istek gönderme, oyuna davet ve maç bitince rövanş
+- Maç sırasında hazır ifadeler ve emoji — serbest metinli sohbet yok
+- Bir oyuncuyu profilinden ya da oda listesinden bildirme ve engelleme
 - Aynı cihazda iki oyuncu
 - Üç yapay zekâ seviyesi: Kolay, Orta ve Zor
 - Her online oyuncunun kendi tarafını altta gördüğü akıllı tahta yönü
-- Belirgin hamle sırası ışığı ve yanlış çıkışı önleyen onay ekranı
+- Belirgin hamle sırası ışığı ve çevrimiçi maçtan çıkmadan önce uyarı — çıkmak maçı kaybettirir
 - 9×9 dinamik oyun tahtası
 - Resmî atlama ve çapraz atlama mekanikleri
-- Türkçe ve İngilizce dil desteği
-- Açık, koyu ve dinamik renk temaları
+- On dil: İngilizce, Türkçe, İspanyolca, Portekizce (Brezilya), Almanca, Fransızca, Rusça, Arapça, Endonezce ve Hintçe
+- Açık ve koyu tema; varsayılan olarak sistemi izler
 - Telefon ve tablet desteği
 - Sesler, titreşimler ve akıcı animasyonlar
 - Hamle geçmişi, yeniden başlatma ve geri alma
-- Cihazda tutulan oyun istatistikleri
+- Cihazda ve herkese açık profilinde tutulan oyun istatistikleri
+
+Çevrimiçi oynamak için bir hesap — e-posta ya da Google girişi — ve diğer oyuncuların göreceği bir kullanıcı adı gerekir. Çevrimdışı olan her şey hesapsız çalışır.
 
 Ücretsiz sürüm ana menüde banner ve tamamlanan her maçtan sonra geçiş reklamı gösterebilir. Tek seferlik Premium “Reklamları Kaldır” satın alımı reklamları kalıcı olarak kapatır. Oyun sırasında reklam gösterilmez.
 
@@ -37,4 +43,9 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 ## İletişim ve gizlilik
 
 - Destek e-postası: `furkanduzman46@gmail.com`
-- Gizlilik politikası: `https://gridbound-duzman46.web.app/privacy/`
+- Gizlilik politikası: `https://gridbound-duzman46.web.app/privacy`
+
+Gizlilik politikası adresinin **sonunda eğik çizgi yok**. Hosting bunu `cleanUrls` ile sunar ve
+`https://gridbound-duzman46.web.app/privacy/` 404 döndürür — bu tek başına ret sebebidir, çünkü
+politika adresi bir incelemecinin her zaman açtığı tek bağlantıdır. Değer `app.properties`
+içindekiyle bire bir aynı olmalı; uygulamanın kendisi de oraya bağlanır.

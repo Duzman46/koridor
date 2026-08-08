@@ -2602,3 +2602,142 @@ describe("what a player is allowed to say", () => {
     await assertFails(alice.ref("rooms/CHAT01").set(forged));
   });
 });
+
+describe("the weekly leaderboard", () => {
+  // The one public table whose rows are copies rather than the thing itself. Every row
+  // carries a username, which is what makes a page of fifty one query instead of fifty
+  // profile reads — and is also why nothing under `leaderboards` may be written by a
+  // client: a row a device could write is a row a device could invent, and a row a device
+  // could delete is a losing week nobody has to keep. Both halves rest on rules that had
+  // no test at all, including the one `worker/src/sweep.ts` exists to compensate for.
+  const WEEK = "2026-W32";
+
+  async function seedWeek(rows) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`leaderboards/weekly/${WEEK}`).set(rows);
+    });
+  }
+
+  function row(username, rating) {
+    return { username, avatarId: "avatar_01", rating, wins: 3, totalGames: 5 };
+  }
+
+  it("lets a signed-in player read the week with the query the app issues", async () => {
+    // RtdbLeaderboardRepository.loadRankedPage, exactly: the live week ordered by rating,
+    // one page plus the row that says whether there is another. An ordered read is the
+    // shape that has to be admitted — the rooms node taught this suite that a rule which
+    // passes a plain read can still refuse the only read the app performs.
+    await seedWeek({ [ALICE]: row("alice", 1200), [BOB]: row("bob", 1100) });
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertSucceeds(
+      bob.ref(`leaderboards/weekly/${WEEK}`).orderByChild("rating").limitToLast(51).get(),
+    );
+  });
+
+  it("refuses an unauthenticated read", async () => {
+    await seedWeek({ [ALICE]: row("alice", 1200) });
+    const anonymous = testEnv.unauthenticatedContext().database();
+    await assertFails(anonymous.ref(`leaderboards/weekly/${WEEK}`).get());
+  });
+
+  it("refuses a player writing themselves onto it", async () => {
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`leaderboards/weekly/${WEEK}/${ALICE}`).set(row("alice", 4000)));
+  });
+
+  it("refuses a player taking their own row down", async () => {
+    // The refusal the sixth and seventh worker jobs are built around. Deleting an account
+    // writes only what a client may write, and this is not one of those things — so the
+    // name of somebody who has left stands on a public table until the hand holding the
+    // admin credential takes it off. A rule loosened to let the client do it here would
+    // also let a player drop the week they played badly.
+    await seedWeek({ [ALICE]: row("alice", 900) });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`leaderboards/weekly/${WEEK}/${ALICE}`).remove());
+  });
+
+  it("refuses rewriting the week whole, or the tree above it", async () => {
+    await seedWeek({ [ALICE]: row("alice", 900) });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    const rewritten = { [ALICE]: row("alice", 4000) };
+    await assertFails(alice.ref(`leaderboards/weekly/${WEEK}`).set(rewritten));
+    await assertFails(alice.ref("leaderboards/weekly").set({}));
+    await assertFails(alice.ref("leaderboards").set({}));
+  });
+
+  it("refuses enumerating the weeks", async () => {
+    // A week is asked for by name, because the app only ever shows the one it is in.
+    // Reading the tree would hand over every name that has ever been on the board.
+    await seedWeek({ [ALICE]: row("alice", 900) });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref("leaderboards/weekly").get());
+    await assertFails(alice.ref("leaderboards").get());
+  });
+});
+
+describe("the entitlement ledger", () => {
+  it("keeps revocations out of the reach of the account they revoke", async () => {
+    // Written and read by the purchase check alone. A device that could read it would know
+    // when it had been caught; one that could write it would grant itself the product, or
+    // clear the record of having lost it.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertFails(alice.ref(`entitlementRevocations/${ALICE}`).get());
+    await assertFails(alice.ref(`entitlementRevocations/${ALICE}`).set({ reason: "none" }));
+    await assertFails(alice.ref("entitlementRevocations").get());
+  });
+});
+
+describe("a room's password hash", () => {
+  // Unreadable by everyone — "private data" already pins that — so the join rule compares
+  // the attempt against it inside the rules instead. What had no test is the other side:
+  // who is allowed to put a hash there, and who is allowed to replace one.
+  const CODE = "SEC001";
+
+  async function seedRoomHostedBy(uid) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`rooms/${CODE}`).set({
+        hostUserId: uid,
+        guestUserId: "",
+        status: "WAITING",
+        currentTurnUserId: uid,
+        version: 0,
+        winnerUserId: "",
+        createdAt: 1,
+        lastMoveAt: 1,
+        ranked: true,
+        visibility: "PUBLIC",
+        requiresPassword: true,
+        turnDurationSeconds: 60,
+        board: {
+          currentPlayer: "PLAYER_ONE",
+          status: "IN_PROGRESS",
+          turnNumber: 1,
+          players: {
+            PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+            PLAYER_TWO: { row: 0, column: 4, wallsRemaining: 10 },
+          },
+        },
+      });
+    });
+  }
+
+  it("lets the host set it for the room they opened", async () => {
+    await seedRoomHostedBy(ALICE);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref(`roomSecrets/${CODE}`).set({ passwordHash: "hash-1" }));
+  });
+
+  it("refuses anyone else replacing it while the room stands", async () => {
+    // The whole of the protection. A stranger who could overwrite the hash would set one
+    // they know and walk into a room they were never given the password to — and the host
+    // would never see it, because nobody may read this node at all.
+    await seedRoomHostedBy(ALICE);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice.ref(`roomSecrets/${CODE}`).set({ passwordHash: "hash-1" });
+
+    const bob = testEnv.authenticatedContext(BOB).database();
+    await assertFails(bob.ref(`roomSecrets/${CODE}`).set({ passwordHash: "hash-2" }));
+    await assertFails(bob.ref(`roomSecrets/${CODE}/passwordHash`).set("hash-2"));
+    await assertFails(bob.ref(`roomSecrets/${CODE}`).remove());
+  });
+});

@@ -78,8 +78,8 @@ metin alanı yoktur.
 
 ## İzinler
 
-Çevrim içi maçlar, reklamlar ve satın alma denetimi için internet ve ağ durumu. Oyun geri
-bildirimi için titreşim. Uygulama kamera, mikrofon, rehber veya depolama izni istemez.
+Çevrim içi maçlar, reklamlar ve satın alma denetimi için internet ve ağ durumu. Listenin
+tamamı bu. Uygulama kamera, mikrofon, rehber, konum veya depolama izni istemez.
 
 ## Servis sağlayıcılar
 

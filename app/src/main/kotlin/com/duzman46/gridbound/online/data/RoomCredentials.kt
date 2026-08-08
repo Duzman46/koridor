@@ -56,9 +56,30 @@ object RoomCredentials {
      * [queuedAt] is folded in so that queueing again never aims at the room a previous
      * attempt left behind.
      */
-    fun meetingCode(userId: String, queuedAt: Long): String {
+    fun meetingCode(userId: String, queuedAt: Long): String =
+        fold("koridor:queue:$userId:$queuedAt")
+
+    /**
+     * The one room a finished match may be replayed in.
+     *
+     * Both players are offered the rematch and both may take it in the same second, so a code
+     * drawn afresh means two rooms and two invitations crossing — each player accepting the
+     * other's, and the pair split across a board apiece opposite a rival who never arrives,
+     * until two clocks run out and two results neither of them played are filed. Derived from
+     * the match instead: both devices compute this, both aim at the one node, and the
+     * transaction there settles which of them hosts. The other takes the free seat.
+     *
+     * The two user ids are folded in sorted order, because the two ends have to agree and
+     * neither of them knows which of the pair the other calls "me".
+     */
+    fun rematchCode(playedRoomCode: String, userId: String, opponentUserId: String): String {
+        val pair = listOf(userId, opponentUserId).sorted()
+        return fold("koridor:rematch:$playedRoomCode:${pair[0]}:${pair[1]}")
+    }
+
+    private fun fold(seed: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
-            .digest("koridor:queue:$userId:$queuedAt".toByteArray(Charsets.UTF_8))
+            .digest(seed.toByteArray(Charsets.UTF_8))
         val alphabet = Constants.Online.ROOM_CODE_ALPHABET
         return buildString(Constants.Online.ROOM_CODE_LENGTH) {
             repeat(Constants.Online.ROOM_CODE_LENGTH) { index ->

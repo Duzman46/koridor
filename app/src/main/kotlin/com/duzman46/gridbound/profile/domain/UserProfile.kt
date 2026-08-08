@@ -2,6 +2,7 @@ package com.duzman46.gridbound.profile.domain
 
 import com.duzman46.gridbound.auth.domain.AccountType
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.core.UsernameRules
 
 enum class AccountStatus {
     ACTIVE,
@@ -43,6 +44,17 @@ data class UserProfile(
     val accountStatus: AccountStatus = AccountStatus.ACTIVE,
 ) {
     val isGuest: Boolean get() = accountType.isGuest
+
+    /**
+     * True when the name on this profile was typed by whoever owns it rather than handed out
+     * by the app.
+     *
+     * It is the only durable answer to "has this player ever named themselves?" — a device
+     * preference only knows about the install it is on, while the name travels with the
+     * account. See [UsernameRules.isGenerated] for what the app hands out, and for why
+     * mistaking a chosen name for a generated one is a small and self-correcting error.
+     */
+    val hasChosenName: Boolean get() = !UsernameRules.isGenerated(username)
 
     val winRate: Float
         get() {

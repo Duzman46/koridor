@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import { restDatabase } from "./db.js";
+import { weekKey } from "./elo.js";
 import {
   MAX_BACKFILL_PROFILES_PER_RUN,
+  MAX_INVITE_RECIPIENTS_PER_RUN,
   MAX_REPORTS_PER_RUN,
   MatchReport,
   QueueEntry,
   SweepResult,
+  asThePhonesWouldHaveIt,
   closestPairs,
+  meetingCode,
   sweep,
   verifyReport,
 } from "./sweep.js";
@@ -49,6 +53,18 @@ const LEGACY = "heidi-uid";
 const REGULAR_ONE = "ivan-uid";
 const REGULAR_TWO = "judy-uid";
 
+/** A guest who linked a credential a moment ago and has not been asked for a name yet. */
+const UNNAMED = "niaj-uid";
+
+/** An account that has been deleted, seen only through what it left in somebody's channel. */
+const ERASED = "olivia-uid";
+
+/** Two players the phones paired between one sweep and the next. */
+const PAIRED_ONE = "peggy-uid";
+const PAIRED_TWO = "quinn-uid";
+
+const WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000;
+
 const db = restDatabase("http://127.0.0.1:9000", async () => "owner", { ns: NAMESPACE });
 
 /** The account type is load-bearing here, so these are the values a real profile carries. */
@@ -69,6 +85,20 @@ function profile(username: string, accountType: "GOOGLE" | "GUEST" = "GOOGLE") {
     bestWinStreak: 0,
     accountStatus: "ACTIVE",
   };
+}
+
+/**
+ * The walls standing on the board, one for every wall the two supplies below have paid for.
+ *
+ * Seven of them, because the seats hold six and seven of their ten. The worker insists on
+ * that arithmetic, so a fixture that ignores it is a fixture no legal game could reach.
+ */
+function walls(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, index) => ({
+    row: index,
+    column: index,
+    orientation: index % 2 === 0 ? "HORIZONTAL" : "VERTICAL",
+  }));
 }
 
 function finishedRoom(overrides: Record<string, unknown> = {}) {
@@ -94,6 +124,7 @@ function finishedRoom(overrides: Record<string, unknown> = {}) {
         PLAYER_ONE: { row: 0, column: 4, wallsRemaining: 6 },
         PLAYER_TWO: { row: 5, column: 4, wallsRemaining: 7 },
       },
+      walls: walls(7),
     },
     ...overrides,
   };
@@ -115,6 +146,7 @@ function redHostRoom(winner: "PLAYER_ONE_WON" | "PLAYER_TWO_WON") {
         PLAYER_ONE: { row: winner === "PLAYER_ONE_WON" ? 0 : 5, column: 4, wallsRemaining: 6 },
         PLAYER_TWO: { row: winner === "PLAYER_TWO_WON" ? 8 : 5, column: 4, wallsRemaining: 7 },
       },
+      walls: walls(7),
     },
   });
 }
@@ -136,6 +168,19 @@ function report(overrides: Partial<MatchReport> & { roomCode: string }): MatchRe
 
 function queued(rating: number, queuedAt: number): QueueEntry {
   return { rating, ranked: true, queuedAt };
+}
+
+/** One entry on the request channel, in the shape a phone writes a rematch. */
+function invite(fromUserId: string, expiresAt: number): Record<string, unknown> {
+  return {
+    kind: "REMATCH",
+    fromUserId,
+    fromUsername: fromUserId.split("-")[0],
+    roomCode: "NEWRM1",
+    playedRoomCode: "PLAYED",
+    createdAt: expiresAt - 600_000,
+    expiresAt,
+  };
 }
 
 /** One player's history, exactly as a profile page reads it back. */
@@ -172,7 +217,12 @@ function check(label: string, passed: boolean) {
 }
 
 async function main(): Promise<void> {
-  const now = Date.now();
+  // A fixed instant rather than the wall clock. Everything below is written relative to it,
+  // and one job now reads it as well as writing by it — the weekly board keeps the week it is
+  // in and drops the ones before, so a script whose reports are dated one week and whose runs
+  // happen in another would delete the rows it is about to check.
+  const now = Date.UTC(2026, 7, 5, 12);
+  const week = weekKey(now);
 
   await db.set("", {
     users: { [HOST]: profile("alice"), [GUEST]: profile("bob") },
@@ -221,7 +271,6 @@ async function main(): Promise<void> {
   const weekly = await db.get<Record<string, Record<string, Record<string, number>>>>(
     "leaderboards/weekly"
   );
-  const week = weekly ? Object.keys(weekly)[0] : null;
 
   check("the honest matches were rated", first.rated === 2);
   check("the false report was refused", first.rejected === 1);
@@ -234,8 +283,11 @@ async function main(): Promise<void> {
   );
   check("the wins were recorded", winner?.wins === 2 && winner?.currentWinStreak === 2);
   check("the losses were recorded", loser?.losses === 2);
-  check("the weekly key is the ISO week of the report", week === "2026-W32");
-  check("the weekly board carries the winner", (week && weekly?.[week]?.[HOST]?.wins) === 2);
+  check(
+    "the weekly key is the ISO week of the report",
+    weekly !== null && Object.keys(weekly).length === 1 && Object.keys(weekly)[0] === week
+  );
+  check("the weekly board carries the winner", weekly?.[week]?.[HOST]?.wins === 2);
   check(
     "both players are in the index the all-time board is ordered by",
     winner?.leaderboardRating === winner?.rating &&
@@ -254,7 +306,7 @@ async function main(): Promise<void> {
   );
   check(
     "the weekly board is not padded with the refused or unranked match",
-    week !== null && Object.keys(weekly?.[week] ?? {}).length === 2
+    Object.keys(weekly?.[week] ?? {}).length === 2
   );
 
   // The history a profile page shows. Every part of it fails quietly if it is wrong: a list
@@ -300,14 +352,26 @@ async function main(): Promise<void> {
   // The matchmaking backstop. The phones pair each other and normally get there first; this
   // is the run that catches whoever they could not, and clears out the names nothing is
   // behind. Both halves fail silently in production: an unpaired player just keeps waiting.
+  //
+  // NEAR_ONE queued first and NEAR_TWO after them, so the pairing has to come out the way a
+  // phone would have written it: the later arrival hosts, and the room is named after the
+  // player they claimed.
   const matched = await db.get<Record<string, Record<string, unknown>>>("rooms", {
     orderBy: '"guestUserId"',
-    equalTo: `"${NEAR_TWO}"`,
+    equalTo: `"${NEAR_ONE}"`,
   });
   const room = matched ? Object.values(matched)[0] : undefined;
-  const seatOne = room?.hostSeat === "PLAYER_ONE" ? NEAR_ONE : NEAR_TWO;
+  const seatOne = room?.hostSeat === "PLAYER_ONE" ? NEAR_TWO : NEAR_ONE;
 
   check("the two closest-rated waiters were paired", first.queuePaired === 1);
+  check(
+    "and the later arrival hosts, exactly as the phone protocol has it",
+    room?.hostUserId === NEAR_TWO && room?.guestUserId === NEAR_ONE
+  );
+  check(
+    "so the room stands at the code a phone would have used",
+    matched !== null && Object.keys(matched)[0] === (await meetingCode(NEAR_ONE, now - 30_000))
+  );
   check("the stale entry was cleared", (await db.get(`matchmaking/${GHOST}`)) === null);
   check("and counted as dropped, not paired", first.queueDropped === 1);
   check(
@@ -319,8 +383,10 @@ async function main(): Promise<void> {
     "the distant rating was left waiting rather than paired with a leftover",
     (await db.get(`matchmaking/${DISTANT}`)) !== null
   );
-  check("the room holds both of them, already playing", room?.hostUserId === NEAR_ONE &&
-    room?.status === "IN_PROGRESS" && room?.version === 0);
+  check(
+    "the room holds both of them, already playing",
+    room?.status === "IN_PROGRESS" && room?.version === 0
+  );
   check("blue opens it, whichever of them drew blue", room?.currentTurnUserId === seatOne);
   check(
     "it is unlisted, unprotected and server-stamped",
@@ -342,6 +408,61 @@ async function main(): Promise<void> {
       ).map(([one, two]) => [one[0], two[0]])
     ) === JSON.stringify([["a", "c"], ["d", "b"]])
   );
+  check(
+    "and are then turned the way round the phones would have had them",
+    JSON.stringify(
+      asThePhonesWouldHaveIt([
+        ["later", queued(1000, 2)],
+        ["earlier", queued(1010, 1)],
+      ]).map(([uid]) => uid)
+    ) === JSON.stringify(["earlier", "later"])
+  );
+
+  // The pair the phones got to first. Their entries survive a round trip after the room is
+  // written, so a backstop that cannot see that room writes a second one naming the same two
+  // players — and it could not see it, because it asked about a code derived from the wrong
+  // member of the pair. Nothing about that is visible from either handset until the day one
+  // of them lands in the worker's room while the other is in the client's.
+  const claimedAt = now - 40_000;
+  const phoneRoom = await meetingCode(PAIRED_ONE, claimedAt);
+  await db.update({
+    [`matchmaking/${PAIRED_ONE}`]: queued(1200, claimedAt),
+    [`matchmaking/${PAIRED_TWO}`]: queued(1205, now - 35_000),
+    // Written by PAIRED_TWO's phone, which queued later and so does the claiming.
+    [`rooms/${phoneRoom}`]: {
+      ...finishedRoom({
+        hostUserId: PAIRED_TWO,
+        guestUserId: PAIRED_ONE,
+        status: "IN_PROGRESS",
+        winnerUserId: "",
+        endReason: "",
+        version: 0,
+      }),
+    },
+  });
+  const backstop = await sweep(db, now);
+  console.log("backstop  :", JSON.stringify(backstop));
+  const named = await db.get<Record<string, unknown>>("rooms", {
+    orderBy: '"guestUserId"',
+    equalTo: `"${PAIRED_ONE}"`,
+  });
+
+  check("a couple the phones already paired is not paired again", backstop.queuePaired === 0);
+  check(
+    "and no second room was written naming the two of them",
+    named !== null && Object.keys(named).length === 1 && phoneRoom in named
+  );
+  check(
+    "their places in the list are left for their own phones to give up",
+    (await db.get(`matchmaking/${PAIRED_ONE}`)) !== null &&
+      (await db.get(`matchmaking/${PAIRED_TWO}`)) !== null
+  );
+
+  await db.update({
+    [`matchmaking/${PAIRED_ONE}`]: null,
+    [`matchmaking/${PAIRED_TWO}`]: null,
+    [`rooms/${phoneRoom}`]: null,
+  });
 
   // The claim is the guard against a match being rated twice. Running again must be inert.
   const ratingAfterFirst = winner?.rating;
@@ -438,6 +559,55 @@ async function main(): Promise<void> {
   const fifth = await sweep(db, now);
   check("a later run finds nobody left to index", fifth.boardIndexed === 0);
 
+  // A guest who linked a credential a moment ago. The account is real — its type says so —
+  // and it is still wearing the name the app handed out, which nobody chose and nobody meant
+  // to publish. The phone now waits for the name before claiming a place on the board; both
+  // of the hands here have to wait with it, or the wait is over within the minute.
+  await db.update({
+    [`users/${UNNAMED}`]: profile("guest_483920"),
+    "rooms/NEW001": finishedRoom({
+      hostUserId: UNNAMED,
+      guestUserId: HOST,
+      winnerUserId: UNNAMED,
+    }),
+    "matchResults/NEW001-1": report({
+      roomCode: "NEW001",
+      hostUid: UNNAMED,
+      guestUid: HOST,
+      winnerUid: UNNAMED,
+      reportedBy: UNNAMED,
+    }),
+  });
+  const sixth = await sweep(db, now);
+  console.log("sixth run :", JSON.stringify(sixth));
+  const unnamed = await db.get<Record<string, number>>(`users/${UNNAMED}`);
+
+  check("an account wearing a name the app invented is rated like any other", sixth.rated === 1);
+  check("their rating moved with it", (unnamed?.rating ?? 0) > 1000);
+  check(
+    "but rating them did not put them in the all-time index",
+    unnamed?.leaderboardRating === undefined
+  );
+  check(
+    "and wrote them no weekly row either, which would have carried that name",
+    (await db.get(`leaderboards/weekly/${week}/${UNNAMED}`)) === null
+  );
+
+  // And then they finish the form the link sent them to.
+  await db.update({
+    [`users/${UNNAMED}/username`]: "niaj",
+    [`users/${UNNAMED}/normalizedUsername`]: "niaj",
+  });
+  const seventh = await sweep(db, now);
+  console.log("seventh   :", JSON.stringify(seventh));
+
+  check(
+    "the walk takes them on at the rating they earned, the lap after they have a name",
+    seventh.boardIndexed === 1 &&
+      (await db.get<number>(`users/${UNNAMED}/leaderboardRating`)) ===
+        (await db.get<number>(`users/${UNNAMED}/rating`))
+  );
+
   // A pair who keep playing. The cap is the only thing standing between a profile and a list
   // that grows for as long as the account exists, and it is invisible until it is missing:
   // eleven matches in a ten-match history look exactly like ten until somebody counts.
@@ -512,6 +682,163 @@ async function main(): Promise<void> {
   check(
     "the last profile in key order was not walked past",
     (await db.get<number>(`users/${crowd[crowd.length - 1]}/leaderboardRating`)) === 1000
+  );
+
+  // The request channel. A rematch goes to an opponent who need not be a friend, and the
+  // rules let nobody read `invites/{recipient}` but that recipient — so an erased account's
+  // entry sits in a channel its owner could not name on the way out and no other client is
+  // allowed to touch. This is the only hand that can collect it, and until it existed nothing
+  // collected an expired entry either.
+  await db.update({
+    // Nowhere near expiring, from an account with no profile left. The row a deletion left
+    // behind, and the reason this job exists rather than being left to the phones.
+    [`invites/${HOST}/${ERASED}`]: invite(ERASED, now + 600_000),
+    // Long past the moment every client stops offering it. Collected on its own stamp, which
+    // is the same number the recipient's app already judged it by.
+    [`invites/${GUEST}/${HOST}`]: invite(HOST, now - 1),
+    // A live question from an account that is still there. Must survive both tests.
+    [`invites/${REGULAR_ONE}/${REGULAR_TWO}`]: invite(REGULAR_TWO, now + 600_000),
+  });
+
+  const collecting = await sweep(db, now);
+  console.log("collecting:", JSON.stringify(collecting));
+
+  check(
+    "two dead entries were collected and one live one was not",
+    collecting.invitesCollected === 2
+  );
+  check(
+    "the erased account's rematch is gone from a channel it could never have read",
+    (await db.get(`invites/${HOST}/${ERASED}`)) === null
+  );
+  check(
+    "so is the entry every client had already stopped showing",
+    (await db.get(`invites/${GUEST}/${HOST}`)) === null
+  );
+  check(
+    "while the live question from an account that still exists was left alone",
+    (await db.get(`invites/${REGULAR_ONE}/${REGULAR_TWO}`)) !== null
+  );
+  check(
+    "and a channel with nothing left in it stops existing",
+    (await db.get(`invites/${HOST}`)) === null
+  );
+  check(
+    "a later run finds nothing left to collect",
+    (await sweep(db, now)).invitesCollected === 0
+  );
+
+  // More channels than one lap can carry. Same silent failure as the board index: a cursor
+  // that does not advance re-reads one page for ever, collects nothing after the first lap and
+  // reports a clean run every minute while the rest of the tree keeps whatever it was left.
+  const crowded: Record<string, unknown> = {};
+  for (let index = 0; index < MAX_INVITE_RECIPIENTS_PER_RUN + 5; index += 1) {
+    crowded[`invites/recipient-${String(index).padStart(3, "0")}-uid/${ERASED}`] = invite(
+      ERASED,
+      now - 1
+    );
+  }
+  await db.update(crowded);
+
+  let swept = 0;
+  const inviteTrail: string[] = [];
+  // Two laps, which is one more than a tree this size needs; where the cursor got to after
+  // each is the thing under test, so a walk that stopped advancing has to fail rather than
+  // spin.
+  for (let lap = 0; lap < 2; lap += 1) {
+    swept += (await sweep(db, now)).invitesCollected;
+    inviteTrail.push((await db.get<string>("maintenance/inviteSweep/cursor")) ?? "");
+  }
+  console.log(`channel walk: ${swept} collected, cursors ${JSON.stringify(inviteTrail)}`);
+
+  check(
+    "a walk longer than one page collects every channel on it",
+    swept === MAX_INVITE_RECIPIENTS_PER_RUN + 5
+  );
+  check(
+    "the first lap moved the cursor rather than claiming to have finished",
+    inviteTrail[0] !== ""
+  );
+  check(
+    "and the second reached the end of the tree, which is where it wraps",
+    inviteTrail[1] === ""
+  );
+  check(
+    "the one live entry survived every lap of it",
+    (await db.get(`invites/${REGULAR_ONE}/${REGULAR_TWO}`)) !== null
+  );
+
+  // A board no sequence of legal turns produces. The write rules bound how far a pawn travels
+  // and what a wall costs, but they cannot count children, so `board/walls` is the one part of
+  // a board that reaches this worker unchecked: eight walls standing where seven were paid
+  // for is a client that laid one it never had. Twenty is conserved or the match is not one.
+  await db.update({
+    "rooms/WALL01": finishedRoom({
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "PLAYER_ONE_WON",
+        turnNumber: 21,
+        players: {
+          PLAYER_ONE: { row: 0, column: 4, wallsRemaining: 6 },
+          PLAYER_TWO: { row: 5, column: 4, wallsRemaining: 7 },
+        },
+        walls: walls(8),
+      },
+    }),
+    "matchResults/WALL01-1": report({ roomCode: "WALL01" }),
+  });
+  const forged = await sweep(db, now);
+  console.log("forged    :", JSON.stringify(forged));
+
+  check(
+    "a board carrying a wall nobody paid for is refused",
+    forged.rejected === 1 && forged.rated === 0
+  );
+  check(
+    "and the report is marked refused rather than left to be tried again",
+    (await db.get<string>("matchResults/WALL01-1/state")) === "REJECTED"
+  );
+  check(
+    "an honest board is still read as one",
+    (await verifyReport(db, report({ roomCode: "GOOD01" }))) === "ok"
+  );
+
+  // The weekly board. Every row on it is a copy of a username, `leaderboards` is writable by
+  // no client at all, and account deletion writes only what a client may write — so a deleted
+  // player's name stands on a public table with nothing anywhere able to take it down. This
+  // is the hand that takes it down, and it is also what stops the board keeping every week
+  // that ever happened.
+  const stale = weekKey(now - 6 * WEEK_MILLIS);
+  await db.update({
+    [`leaderboards/weekly/${stale}/${HOST}`]: { username: "alice", rating: 1000, wins: 1 },
+    [`leaderboards/weekly/${stale}/${ERASED}`]: { username: "olivia", rating: 1000, wins: 1 },
+    [`leaderboards/weekly/${week}/${ERASED}`]: {
+      username: "olivia",
+      avatarId: "avatar_01",
+      rating: 1400,
+      wins: 9,
+      totalGames: 9,
+    },
+  });
+  const pruning = await sweep(db, now);
+  console.log("pruning   :", JSON.stringify(pruning));
+
+  check("three rows were taken off the weekly boards", pruning.boardRowsRemoved === 3);
+  check(
+    "the deleted account's name is off the table every signed-in player reads",
+    (await db.get(`leaderboards/weekly/${week}/${ERASED}`)) === null
+  );
+  check(
+    "a week the app has stopped asking for is not kept at all",
+    (await db.get(`leaderboards/weekly/${stale}`)) === null
+  );
+  check(
+    "while the live rows of accounts that still exist are untouched",
+    (await db.get<number>(`leaderboards/weekly/${week}/${HOST}/wins`)) === 2
+  );
+  check(
+    "a later run finds nothing left to take down",
+    (await sweep(db, now)).boardRowsRemoved === 0
   );
 
   const failed = checks.filter(([, passed]) => !passed);

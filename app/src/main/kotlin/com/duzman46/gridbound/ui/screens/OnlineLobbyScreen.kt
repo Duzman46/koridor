@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PersonAdd
@@ -47,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -75,12 +77,14 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.presentation.online.OnlineLobbyEvent
 import com.duzman46.gridbound.presentation.online.OnlineLobbyUiState
 import com.duzman46.gridbound.presentation.online.OnlineLobbyViewModel
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend as OnlineFriend
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
+import com.duzman46.gridbound.ui.components.ReportDialog
 import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.SectionCard
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
@@ -278,9 +282,12 @@ private fun LobbyContent(
             }
 
             else -> items(state.visibleRooms, key = OnlineRoom::roomId) { room ->
-                OpenRoomRow(room, enabled = !state.isBusy) {
-                    viewModel.joinListedRoom(room)
-                }
+                OpenRoomRow(
+                    room = room,
+                    enabled = !state.isBusy,
+                    onJoin = { viewModel.joinListedRoom(room) },
+                    onReport = { reason -> viewModel.reportRoom(room, reason) },
+                )
             }
         }
     }
@@ -445,9 +452,10 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
         modifier = Modifier.fillMaxWidth(),
     )
 
-    // The host picks a colour and with it a seat; the guest gets the other one. Random until
-    // touched, which is what the null means — a room opened without thinking about it does not
-    // hand the host the first move every time.
+    // The host picks a colour and with it a seat; the guest gets the other one. It arrives
+    // already drawn, so the swatch showing as chosen is the seat the room will be written
+    // with. It used to be drawn at write time and rendered here as blue meanwhile, which told
+    // every host who left it alone that they had blue and gave them red half the time.
     SeatPicker(
         selected = configuration.hostSeat ?: PlayerId.PLAYER_ONE,
         onSelect = viewModel::setHostSeat,
@@ -486,8 +494,31 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
     )
 }
 
+/**
+ * One listed room, and the two things there are to do about it.
+ *
+ * The report control is here because this is the only place the app shows a stranger something
+ * another player typed — the room name — with no route to that player's page to report it
+ * from. It is an icon rather than a button so it costs the row nothing when nobody needs it.
+ */
 @Composable
-private fun OpenRoomRow(room: OnlineRoom, enabled: Boolean, onJoin: () -> Unit) {
+private fun OpenRoomRow(
+    room: OnlineRoom,
+    enabled: Boolean,
+    onJoin: () -> Unit,
+    onReport: (ContentReportReason) -> Unit,
+) {
+    var reporting by remember { mutableStateOf(false) }
+    if (reporting) {
+        ReportDialog(
+            subject = room.roomName.ifBlank { room.hostName.ifBlank { room.roomCode } },
+            onDismiss = { reporting = false },
+            onReport = { reason ->
+                reporting = false
+                onReport(reason)
+            },
+        )
+    }
     Card(
         onClick = onJoin,
         enabled = enabled,
@@ -541,6 +572,14 @@ private fun OpenRoomRow(room: OnlineRoom, enabled: Boolean, onJoin: () -> Unit) 
                 Icon(
                     Icons.Rounded.Lock,
                     contentDescription = stringResource(R.string.room_locked),
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = { reporting = true }) {
+                Icon(
+                    Icons.Rounded.Flag,
+                    contentDescription = stringResource(R.string.report_action),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

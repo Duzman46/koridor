@@ -25,22 +25,53 @@
 <body>
 <p class="lang"><a href="/privacy.html">English</a></p>
 <h1>Koridor Gizlilik Politikası</h1>
-<p>Son güncelleme: 2 Ağustos 2026</p>
-<p>Koridor, çevrimdışı ve çevrimiçi oynanabilen bir strateji oyunudur.</p>
-<h2>Toplanan ve işlenen veriler</h2>
-<p>Çevrimiçi oyun seçildiğinde Firebase Authentication cihaz için rastgele bir anonim kullanıcı kimliği oluşturur. Oda kodu, anonim oyuncu kimlikleri, tahta durumu, hamle geçmişi ve zaman bilgileri oyunu eşzamanlamak ve oda üyeliği ile oyun sırasını doğrulamak için Firebase Realtime Database üzerinde işlenir.</p>
-<p>Oyun ayarları ile toplam oyun, galibiyet ve mağlubiyet gibi istatistikler yalnızca cihazda Android DataStore içinde saklanır.</p>
-<p>Ücretsiz sürümde Google AdMob reklam gösterebilir. Google bu amaçla reklam kimliği, IP adresi, yaklaşık konum, reklam etkileşimleri ve uygulama/cihaz tanılama bilgileri gibi verileri kendi politikalarına göre işleyebilir. Gerekli bölgelerde reklam isteğinden önce Google User Messaging Platform üzerinden izin veya gizlilik tercihi istenir. Kullanıcılar Ayarlar ekranındaki reklam gizliliği seçeneklerini yeniden açabilir.</p>
-<p>Premium “Reklamları Kaldır” ürünü Google Play üzerinden tek seferlik uygulama içi satın almadır. Ödeme bilgileri Google Play tarafından işlenir; Koridor ödeme kartı bilgilerini görmez veya saklamaz. Uygulama yalnızca ürün kimliği, satın alma durumu ve satın alma belirtecini sahipliği doğrulamak ve reklamları kapatmak için kullanır.</p>
+<p>Son güncelleme: 8 Ağustos 2026</p>
+<p>Koridor bir strateji oyunudur. Tek başına, bota karşı veya tek cihazda iki kişiyle, hesapsız ve tamamen çevrimdışı oynanabilir. Çevrim içi oynamak bir hesap gerektirir; aşağıdakiler orada geçerlidir.</p>
+
+<h2>Toplanan veriler</h2>
+<p><strong>Hesabınız.</strong> E-posta ile hesap açtığınızda bu adres Firebase Authentication'da ve yalnızca sizin okuyabildiğiniz özel bir kayıtta saklanır. Google ile girdiğinizde bunun yerine Google'ın hesabınız için döndürdüğü bilgi saklanır. Her iki durumda da bir <strong>kullanıcı adı</strong> seçmeniz istenir ve bu ad herkese açıktır: diğer oyuncular onu liderlik tablosunda, profilinizde, maç sırasında tahtada ve kendi son oyunlar listelerinde görür. Bir de <strong>avatar</strong> seçersiniz; avatar sabit bir kümeden uygulamanın içinde çizilir — hiçbir görsel yüklenmez.</p>
+<p>Misafir olarak oynamak hesap yerine cihaza ait anonim bir kimlik oluşturur. Misafirin adı üretilmiştir, hiçbir liderlik tablosunda listelenmez ve arkadaşlık, davet ve puanlı maç kullanamaz.</p>
+<p><strong>Nasıl oynadığınız.</strong> Puanınız, galibiyet, mağlubiyet ve beraberlik sayınız, galibiyet seriniz ve maç sayınız hesabınızla birlikte saklanır ve herkese açıktır. Her çevrim içi maç iki oyuncuyu adlandıran bir sonuç kaydı ve her iki oyuncunun kısa geçmişine birer satır yazar — rakibin kullanıcı adı, sonuç, tarih ve puan değişimi — ve bu satırları giriş yapmış her oyuncu okuyabilir.</p>
+<p><strong>Odalar ve maçlar.</strong> Bir oda; kodunu, yazdığınız isteğe bağlı oda adını, ayarları, tahtadaki durumu ve hamleleri maç sürdüğü sürece tutar. Maç sırasında sabit bir listeden seçilen hazır ifadeler ve emojiler gönderebilirsiniz; yazdığınız hiçbir metin karşı tarafa ulaşmaz.</p>
+<p><strong>Arkadaşlar.</strong> Arkadaşlıklar, arkadaşlık istekleri, engellemeler, oyun davetleri ve kaba bir çevrim içi/çevrim dışı bilgisi arkadaş listesinin çalışması için saklanır. Engelleme, engellenen kişiye hiçbir zaman gösterilmez. Durum yalnızca “çevrim içi” veya “çevrim dışı”dır — konum, adres veya son görülme zamanı değil.</p>
+<p><strong>Satın almalar.</strong> “Reklamları kaldır”, Google Play tarafından yürütülen tek seferlik bir uygulama içi üründür. Koridor kart, adres veya fatura bilgisini hiç görmez. Yalnızca satın alma token'ının bir özetini, sipariş kimliğini ve satın alma zamanını saklar; bu, sahipliği doğrulamak ve aynı satın almanın başka bir hesapta kullanılmasını engellemek içindir.</p>
+<p><strong>Reklamlar.</strong> Ücretsiz sürüm Google AdMob reklamları gösterir. Google; reklam kimliğinizi, IP adresinizi, yaklaşık konumunuzu, reklam etkileşimlerinizi ve cihaz tanılama bilgilerini kendi politikaları kapsamında işleyebilir. Gerekli olduğu yerlerde, herhangi bir reklam yüklenmeden önce Google User Messaging Platform üzerinden rızanız istenir; reklam gizlilik tercihlerinizi <strong>Ayarlar → Reklam gizlilik seçenekleri</strong>'nden yeniden açabilirsiniz. “Reklamları kaldır” satın alındığında reklamlar hiç yüklenmez.</p>
+<p><strong>Tanılama.</strong> Firebase Crashlytics, yayın derlemelerinden kilitlenmeleri ve işlenmiş hataları alır. Yanlarında giden tek şey exception tipi ve işlemi adlandıran sabit bir etikettir — asla kullanıcı adınız, e-postanız, bir oda kodu veya yazdığınız bir şey değil. Crashlytics ayrıca cihaz modelini, işletim sistemi sürümünü ve bir kurulum kimliğini toplar. Google Analytics for Firebase de bulunur ve varsayılan olaylarını toplar; uygulama kendi olayını hiç göndermez.</p>
+
+<h2>Hiçbir zaman toplanmayan veriler</h2>
+<p>Hiçbir çeşit konum bilgisi, rehber, telefon numarası, fotoğraf, video, ses, dosya, sağlık, finans veya biyometrik veri, SMS ve arama kaydı. Sizden gelen hiçbir görsel yüklenmez — avatarlar uygulamanın içinde sabit bir kümeden çizilir.</p>
+
+<h2>Başkalarının görebildiği içerik ve şikâyet yolu</h2>
+<p>Yazdığınız iki şey sizi tanımayan oyunculara gösterilir: <strong>kullanıcı adınız</strong> ve bir <strong>oda adı</strong>. İkisi de uygulama içinden şikâyet edilebilir.</p>
+<ul>
+<li>Bir oyuncunun profilini açın — liderlik tablosundan, son oyunlar satırından ya da maç sırasında rakibinize dokunarak — ve <strong>Bildir</strong>'i kullanın. Giriş yapmış oyuncular aynı sayfadan <strong>Engelle</strong> de diyebilir; bu, o oyuncunun sizi davet etmesini ve size istek göndermesini durdurur.</li>
+<li>Oda listesinde, bir odanın yanındaki bayrak simgesi odaya o adı veren oyuncuyu bildirir.</li>
+</ul>
+<p>Bir bildirim hesabı ve kategoriyi taşır ve yalnızca geliştirici tarafından okunur. Bildirilen oyuncuya asla gösterilmez ve onu silemez. Uygulamada başka bir oyuncuya ulaşan hiçbir serbest metin alanı yoktur.</p>
+
 <h2>İzinler</h2>
-<p>Uygulama çevrimiçi oyun, reklam ve satın alma doğrulaması için internet/ağ durumu; oyun geri bildirimi için titreşim iznini kullanır. Kamera, mikrofon, kişiler veya depolama izni istemez.</p>
-<h2>Veri paylaşımı ve hizmet sağlayıcılar</h2>
-<p>Koridor; Google Firebase Authentication, Firebase Realtime Database, Google AdMob, Google User Messaging Platform ve Google Play Billing hizmetlerini kullanır. Veriler reklam, çevrimiçi oyun, sahtekârlığı önleme, güvenlik ve ödeme işleme amaçlarıyla yalnızca bu hizmet sağlayıcıların koşulları kapsamında işlenir. Veriler tarafımızca satılmaz.</p>
-<h2>Saklama ve silme</h2>
-<p>Kullanıcı Android uygulama ayarlarından Koridor verilerini temizleyerek cihazda saklanan ayar, istatistik ve Premium önbelleğini silebilir. Satın alma sahipliği Google Play hesabında kalır ve “Satın Almayı Geri Yükle” ile yeniden doğrulanabilir. Uygulamanın kaldırılması yerel verileri siler. Bekleyen oda kapatıldığında oda verisi silinir; tamamlanan veya terk edilen çevrimiçi oda verileri operasyonel temizlik kapsamında silinebilir. Çevrimiçi verilerle ilgili silme talebi proje sahibine oda koduyla iletilebilir.</p>
+<p>Çevrim içi maçlar, reklamlar ve satın alma denetimi için internet ve ağ durumu. Oyun geri bildirimi için titreşim. Uygulama kamera, mikrofon, rehber veya depolama izni istemez.</p>
+
+<h2>Servis sağlayıcılar</h2>
+<p>Firebase Authentication, Firebase Realtime Database, Firebase Crashlytics, Google Analytics for Firebase, Google Play Billing, Google AdMob, Google User Messaging Platform, Android Credential Manager ve puanları hesaplayıp biten odaları temizleyen zamanlanmış bir Cloudflare Worker. Veriler; oyunun yürütülmesi, güvenlik, sahtekârlığın önlenmesi, ödeme ve reklamcılık için bu sağlayıcıların koşulları kapsamında işlenir. Koridor kullanıcı verisi satmaz.</p>
+
+<h2>Verilerin saklanması ve silinmesi</h2>
+<p>Hesabınızı uygulama içinden silebilirsiniz: <strong>Ayarlar → Hesap → Hesabı sil</strong>. Onay olarak bir kelime yazmanız istenir. Bu işlem kullanıcı adı rezervasyonunuzu serbest bırakır; özel kaydınızı, herkese açık profilinizi, iki taraftaki arkadaşlık ve engelleme kayıtlarınızı, davetlerinizi, çevrim içi durumunuzu, haftalık liderlik tablosundaki satırlarınızı ve Firebase Authentication hesabınızı siler.</p>
+<p>Bazı şeyler bundan sonra da kalır; nedenleri şunlardır:</p>
+<ul>
+<li>Maç sonuç kayıtları iki kullanıcı kimliğini tutar ki rakibin geçmişi eksilmesin. Artık hiçbir profile işaret etmezler.</li>
+<li>Rakiplerinizin kendi geçmiş satırları, oynadığınız kullanıcı adını tutar; oynadıkları bir maçın kaydı onlarındır.</li>
+<li>Kendi geçmiş satırlarınız veritabanında kalır ve profil gittikten sonra uygulamadan erişilemez. Bu düğüme hiçbir istemcinin yazma hakkı yoktur — bir yenilgiyi sildirebilmek, tam olarak sunucuya ait bir geçmişin engellemek için var olduğu şeydir.</li>
+<li>Bir satın alma token'ının özeti kalır; böylece aynı satın alma başka bir hesaba taşınamaz. Kişisel veri içermez.</li>
+<li>Google Play satın almanın kendi kaydını, Google da kendi reklam verisini tutar. İkisi de Google'ın politikalarına ve Google hesabı ayarlarınıza tabidir.</li>
+</ul>
+<p>Otomatik temizlik: rakip bekleyen bir oda 30 dakika, oynanmış bir oda 24 saat sonra silinir; davetler 10 dakikada geçersizleşir. Bir profilin geçmişi son on maçı tutar. Haftalık liderlik tablosu içinde bulunulan haftayı ve bir öncekini tutar.</p>
+<p>Uygulamayı kaldırmak cihazda saklanan her şeyi siler. Android ayarlarından uygulama verisini temizlemek de aynı şeyi yapar; hesabınızı silmez.</p>
+
 <h2>Çocukların gizliliği</h2>
-<p>Uygulama kullanıcıdan ad, e-posta veya telefon numarası istemez. Çocukların çevrimiçi oda kodlarını yalnızca tanıdıkları kişilerle paylaşması önerilir. Play Console’daki hedef kitle ve reklam ayarları yayımdan önce doğru yaş grubuna göre yapılandırılmalıdır.</p>
+<p>Koridor, e-posta ile hesap açtığınızda bir e-posta adresi, çevrim içi oynayabilmeniz için de bir kullanıcı adı ister. Gerçek ad, telefon numarası veya adres istemez. Çevrim içi oyun sizi başka oyuncularla karşılaştırır; oda kodlarını yalnızca tanıdığınız kişilerle paylaşın.</p>
+
 <h2>Değişiklikler ve iletişim</h2>
-<p>Politika değişirse güncel sürüm bu belgede ve uygulamanın mağaza sayfasında yayımlanır. Play Store yayını öncesinde bu politika halka açık bir HTTPS adresinde yayımlanacak ve geliştirici iletişim adresi buraya eklenecektir.</p>
+<p>Değişiklikler bu sayfada yayımlanır ve mağaza sayfasında belirtilir. Sorular, veri talepleri ve başka bir oyuncuyla ilgili bildirimler <a href="mailto:furkanduzman46@gmail.com">furkanduzman46@gmail.com</a> adresine gönderilebilir.</p>
 </body>
 </html>

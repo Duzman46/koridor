@@ -2,6 +2,7 @@ package com.duzman46.gridbound.presentation.online
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
@@ -17,11 +18,13 @@ import com.duzman46.gridbound.online.model.RoomBrowserFilter
 import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomTiming
 import com.duzman46.gridbound.session.SessionManager
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.social.domain.SocialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,6 +80,7 @@ class OnlineLobbyViewModel @Inject constructor(
     private val repository: OnlineGameRepository,
     private val socialRepository: SocialRepository,
     private val sessionManager: SessionManager,
+    random: Random,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -85,6 +89,12 @@ class OnlineLobbyViewModel @Inject constructor(
             canPlayRanked = sessionManager.state.value.canUseSocialFeatures,
             configuration = RoomConfiguration(
                 ranked = sessionManager.state.value.canUseSocialFeatures,
+                // Drawn here rather than left null for the repository to draw at write time.
+                // The picker has no way to show "undecided" — it renders a null seat exactly
+                // as it renders a chosen blue — so a host who never touched it was told they
+                // had blue and got red half the time, and one who did touch it saw nothing
+                // change. Deciding it up front is the same fair coin, shown honestly.
+                hostSeat = PlayerId.entries.random(random),
             ),
         ),
     )
@@ -159,6 +169,34 @@ class OnlineLobbyViewModel @Inject constructor(
 
     fun dismissPasswordPrompt() =
         _uiState.update { it.copy(passwordPromptCode = null, joinPassword = "") }
+
+    /**
+     * Tells the operator about a room name.
+     *
+     * The browser is the one place the app shows a stranger something another player typed
+     * with no route to that player's page, so the report has to start here. It names the host,
+     * because a room is gone within the hour and the account that named it is not.
+     */
+    fun reportRoom(room: OnlineRoom, reason: ContentReportReason) {
+        val ownId = sessionManager.state.value.user?.userId ?: return
+        if (room.hostUserId == ownId) return
+        viewModelScope.launch {
+            val result = socialRepository.reportPlayer(
+                reporterId = ownId,
+                subjectId = room.hostUserId,
+                reason = reason,
+                roomCode = room.roomCode,
+            )
+            _uiState.update {
+                it.copy(
+                    message = when (result) {
+                        is Outcome.Success -> UiText.Res(R.string.report_sent)
+                        is Outcome.Failure -> result.error.message
+                    },
+                )
+            }
+        }
+    }
 
     fun refreshOpenRooms() {
         _uiState.update { it.copy(isLoadingRooms = true) }
@@ -328,19 +366,28 @@ class OnlineLobbyViewModel @Inject constructor(
                 .catch { _uiState.update { state -> state.copy(waitingSession = null) } }
                 .collect { room ->
                     when {
+                        // A room waiting for an opponent has one ending nobody writes a status
+                        // for: the sweep removes it outright half an hour in. Until that
+                        // arrived as an event the panel went on offering a code that no longer
+                        // opened anything.
+                        room == null -> _uiState.update {
+                            it.copy(
+                                waitingSession = null,
+                                message = AppError.ROOM_NOT_FOUND.message,
+                            )
+                        }
+
                         room.status.isPlayable && room.playerCount == 2 -> {
                             _events.emit(OnlineLobbyEvent.OpenGame(session))
                             waitingJob?.cancel()
                         }
 
-                        room.status == OnlineRoomStatus.CANCELLED ||
-                            room.status == OnlineRoomStatus.EXPIRED ->
-                            _uiState.update {
-                                it.copy(
-                                    waitingSession = null,
-                                    message = AppError.ROOM_NOT_FOUND.message,
-                                )
-                            }
+                        room.status.isOver -> _uiState.update {
+                            it.copy(
+                                waitingSession = null,
+                                message = AppError.ROOM_NOT_FOUND.message,
+                            )
+                        }
 
                         else -> Unit
                     }

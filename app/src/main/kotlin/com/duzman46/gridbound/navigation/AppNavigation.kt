@@ -44,6 +44,7 @@ import com.duzman46.gridbound.presentation.profile.RecentGamesViewModel
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.session.SessionStatus
+import com.duzman46.gridbound.ui.components.BillingNotice
 import com.duzman46.gridbound.ui.components.RequestBar
 import com.duzman46.gridbound.ui.screens.AccountScreen
 import com.duzman46.gridbound.ui.screens.DifficultyScreen
@@ -136,6 +137,7 @@ fun AppNavigation(
     billing: BillingState,
     onBuy: (Entitlement) -> Unit,
     onRestorePurchases: () -> Unit,
+    onDismissBillingMessage: () -> Unit,
     onPrivacyOptions: () -> Unit,
     onCompletedMatchExit: (onFinished: () -> Unit) -> Unit,
 ) {
@@ -623,6 +625,8 @@ fun AppNavigation(
             },
             onOpenLobby = { roomCode -> navController.navigate(Routes.online(roomCode)) },
         )
+
+        BillingNotice(message = billing.message, onDismiss = onDismissBillingMessage)
     }
 }
 

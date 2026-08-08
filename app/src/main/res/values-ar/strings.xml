@@ -353,6 +353,15 @@
     <string name="friends_request_pending">تم إرسال طلب الصداقة</string>
     <string name="friends_already_friends">أنتما صديقان</string>
 
+    <string name="report_action">إبلاغ</string>
+    <string name="report_title">الإبلاغ عن %1$s</string>
+    <string name="report_message">أخبرنا بالمشكلة. تصل البلاغات إلى المطوّر ولا تُعرض على اللاعب الآخر.</string>
+    <string name="report_reason_name">اسم مستخدم مسيء</string>
+    <string name="report_reason_room_name">اسم غرفة مسيء</string>
+    <string name="report_reason_cheating">غش</string>
+    <string name="report_reason_other">شيء آخر</string>
+    <string name="report_sent">شكرًا لك. تم إرسال بلاغك.</string>
+
     <string name="invites_title">دعوات اللعب</string>
     <string name="invites_from">دعاك %1$s إلى مباراة.</string>
     <string name="requests_rematch_from">يريد %1$s إعادة المباراة.</string>

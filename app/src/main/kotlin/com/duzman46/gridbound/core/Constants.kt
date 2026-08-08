@@ -126,6 +126,14 @@ object Constants {
          */
         const val ROOM_BROWSER_REFRESH_MILLIS = 15_000L
 
+        /**
+         * How far this handset's clock is from the server's, in milliseconds.
+         *
+         * Firebase keeps it up to date over the connection the app already holds open, so
+         * reading it costs no round trip and answers even while offline.
+         */
+        const val SERVER_TIME_OFFSET_PATH = ".info/serverTimeOffset"
+
         /** matchmaking/{uid} — who is waiting to be paired, and at what rating. */
         const val MATCHMAKING_PATH = "matchmaking"
 
@@ -243,6 +251,16 @@ object Constants {
 
         /** presence/{userId} — maintained with onDisconnect. */
         const val PRESENCE_PATH = "presence"
+
+        /**
+         * contentReports/{subjectId}/{reporterId} — what one player says about another's
+         * username or room name.
+         *
+         * Write-only from a client's point of view: nobody may read it, so a report cannot be
+         * seen, answered or deleted by the account it names. The operator reads them out of
+         * the database console.
+         */
+        const val CONTENT_REPORTS_PATH = "contentReports"
 
         const val INVITE_TTL_MILLIS = 600_000L
         const val MAX_FRIENDS = 200

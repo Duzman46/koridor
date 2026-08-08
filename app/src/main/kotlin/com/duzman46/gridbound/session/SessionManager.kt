@@ -7,7 +7,6 @@ import com.duzman46.gridbound.auth.domain.AuthUser
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
-import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.di.ApplicationScope
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.profile.domain.UserProfile
@@ -149,8 +148,7 @@ class SessionManager @Inject constructor(
             // The local flag only knows about this install. A name that is not one the app
             // made up was typed by a person, so a reinstall or a second handset does not
             // demand that an established player name themselves a second time.
-            usernameChosen = nameChosen ||
-                profile?.username?.let { !UsernameRules.isGenerated(it) } == true,
+            usernameChosen = nameChosen || profile?.hasChosenName == true,
         )
     }.stateIn(
         scope = scope,

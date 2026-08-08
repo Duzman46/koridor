@@ -29,8 +29,8 @@ When `keystore.properties` is missing, `bundleRelease` intentionally creates an 
 2. Test through Play internal testing so Billing uses a licensed tester account.
 3. Finish a complete online game from both player perspectives, including red-side rotation, wall placement, disconnect, and winning move.
 4. Test leaving a game every way there is: back and the Home icon in AI and local two-player, where back returns to the previous screen and only the Home icon asks; back and the Home icon in an online match under way, where both must warn that leaving loses it; and back in an online room nobody has joined, which leaves at once because the seat still has to be released.
-5. Publish both privacy policies at a public HTTPS URL and add the developer contact email.
-6. Complete Data safety declarations for Firebase anonymous IDs/game state, AdMob advertising/diagnostics, and Play Billing purchase data.
+5. Deploy the privacy policy with `firebase deploy --only hosting`, then open the URL in `app.properties` and read the live page against `docs/DATA_SAFETY.md`. That page is the one artefact a reviewer fetches, and a contradiction between it and the Data safety form is on its own grounds for rejection.
+6. Complete the Data safety form from `docs/DATA_SAFETY.md` §5, which covers account data, game and social data, the user-generated content the app shows (username and room name), messages, purchases, diagnostics and the advertising ID.
 7. Complete target audience, ads, content rating, app access, and advertising ID declarations truthfully.
 8. Add store screenshots for phone and tablet, feature graphic, descriptions, support email, and privacy URL.
 9. Use Play pre-launch reports and resolve every crash, ANR, accessibility, and security warning before production rollout.

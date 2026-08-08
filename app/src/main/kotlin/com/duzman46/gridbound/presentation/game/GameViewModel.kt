@@ -454,7 +454,21 @@ class GameViewModel @Inject constructor(
                         )
                     }
                 }
-                .collect { room -> onRoomUpdate(session, room) }
+                .collect { room ->
+                    // Null is the room having been removed, which only the sweep does and only
+                    // to a room nobody played. Nothing is left to synchronise against.
+                    if (room == null) {
+                        _uiState.update {
+                            it.copy(
+                                isOnlineConnected = false,
+                                isOnlineSyncing = false,
+                                onlineMessage = UiText.Res(R.string.room_error_not_found),
+                            )
+                        }
+                    } else {
+                        onRoomUpdate(session, room)
+                    }
+                }
         }
     }
 

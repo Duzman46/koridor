@@ -163,15 +163,18 @@ firebase deploy --only database
 > **Önemli:** `firebase deploy --only database` **zorunludur**. Kurallar yayınlanmadan profil
 > oluşturma, oda açma ve arkadaşlık çalışmaz.
 
-**Sunucuyu yayınla.** Puanı, haftalık tabloyu, oda temizliğini, eşleştirme yedeğini ve tüm
-zamanlar tablosunun dizinini hiçbir oyuncunun elinde olmayan bir taraf yazar. Depoda bunun iki
-uygulaması var ve **yalnızca biri yayınlanır**:
+**Sunucuyu yayınla.** Puanı, haftalık tabloyu, oda temizliğini, eşleştirme yedeğini, tüm
+zamanlar tablosunun dizinini ve hiçbir telefonun bulmasına izin verilmeyen davet kayıtlarının
+toplanmasını, hiçbir oyuncunun elinde olmayan bir taraf yazar. Depoda bunun iki uygulaması var
+ve **yalnızca biri yayınlanır**:
 
 - [`worker/`](worker/README.md) — dakikada bir çalışan, zamanlanmış bir Cloudflare Worker.
   Yayınlanan sürüm budur: ücretsiz planda çalışır, kart istemez ve dışarıya açık bir adresi
   yoktur. Kurulum adımları kendi README'sinde.
 - `functions/` — aynı işin Cloud Functions karşılığı, her şeyi Firebase içinde tutmak
-  isteyenler için. **Blaze (kullandıkça öde) planı** gerektirir.
+  isteyenler için. **Blaze (kullandıkça öde) planı** gerektirir. Worker'ın son üç turda
+  eklenen işleri burada **yok**: tablo dizininin geriye dönük doldurulması, adı verilmemiş
+  hesabın tablodan uzak tutulması ve ölü davet kayıtlarının toplanması.
 
 İkisi de aynı maç raporlarını okur; ikisini birden yayınlama.
 

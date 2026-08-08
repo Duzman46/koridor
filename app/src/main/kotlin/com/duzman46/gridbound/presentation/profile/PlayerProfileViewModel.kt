@@ -3,12 +3,14 @@ package com.duzman46.gridbound.presentation.profile
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.duzman46.gridbound.session.SessionManager
+import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipAction
 import com.duzman46.gridbound.social.domain.FriendshipStatus
@@ -92,6 +94,33 @@ class PlayerProfileViewModel @Inject constructor(
     fun accept() = act(FriendshipAction.ACCEPT)
 
     fun unblock() = act(FriendshipAction.UNBLOCK)
+
+    fun block() = act(FriendshipAction.BLOCK)
+
+    /**
+     * Tells the operator about this player's name.
+     *
+     * Offered to anyone signed in, guests included: reporting is not a social feature, it is
+     * the answer to seeing something, and a player with no account still sees it. The page
+     * says so either way rather than pretending nothing was sent.
+     */
+    fun report(reason: ContentReportReason) {
+        val ownId = sessionManager.state.value.user?.userId ?: return
+        if (userId.isBlank() || userId == ownId || _uiState.value.isBusy) return
+        _uiState.update { it.copy(isBusy = true, message = null) }
+        viewModelScope.launch {
+            val result = socialRepository.reportPlayer(ownId, userId, reason)
+            _uiState.update {
+                it.copy(
+                    isBusy = false,
+                    message = when (result) {
+                        is Outcome.Success -> UiText.Res(R.string.report_sent)
+                        is Outcome.Failure -> result.error.message
+                    },
+                )
+            }
+        }
+    }
 
     private fun load() {
         if (userId.isBlank()) {

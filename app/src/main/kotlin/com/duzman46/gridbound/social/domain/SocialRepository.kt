@@ -74,6 +74,27 @@ interface SocialRepository {
     suspend fun clearRequest(recipientId: String, senderId: String): Outcome<Unit>
 
     /**
+     * Reports another player's content to the operator.
+     *
+     * The app shows two things one player typed to players who have never met them — the
+     * username and the room name — which is what Play means by user-generated content, and
+     * what obliges the app to carry a way of reporting it. It goes to a node no client can
+     * read, so the account being reported cannot see it, cannot answer it and cannot delete
+     * it; the operator reads them out of the database console.
+     *
+     * Keyed by the pair, so reporting the same player twice refreshes one row rather than
+     * filling the node with the same complaint.
+     *
+     * @param roomCode where the content was seen, when it was a room name. Empty otherwise.
+     */
+    suspend fun reportPlayer(
+        reporterId: String,
+        subjectId: String,
+        reason: ContentReportReason,
+        roomCode: String = "",
+    ): Outcome<Unit>
+
+    /**
      * Marks the player online and registers the disconnect handler that clears it, so a
      * crash or a dead network still leaves an accurate state behind.
      */

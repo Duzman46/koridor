@@ -102,7 +102,11 @@ Reklam gizlilik tercihleri uygulama içinden değiştirilebilir:
 
 Aşağıdakiler **kesinlikle toplanmaz**:
 
-- Konum bilgisi (hiçbir çeşidi)
+- Konum bilgisi — **uygulamanın kendisi tarafından**. Konum izni istenmez, konum API'si hiç
+  çağrılmaz, hiçbir konum değeri veritabanına yazılmaz. Buna karşılık AdMob, reklam sunarken
+  isteğin IP adresinden şehir düzeyinde bir konum türetebilir; §5 tablosu bunu "Yaklaşık konum"
+  olarak beyan eder. Beyan, Play formunun üçüncü taraf SDK'ları da kapsaması nedeniyle
+  gereklidir ve yayımlanan gizlilik sayfasıyla aynı şeyi söyler
 - Rehber, kişiler, telefon numarası
 - Fotoğraf, video, ses kaydı, dosya
 - Sağlık, finans veya biyometrik veri
@@ -214,6 +218,7 @@ Aşağıdaki tablo forma doğrudan aktarılabilir.
 
 | Form kategorisi | Veri türü | Toplanır | Paylaşılır | Zorunlu | Amaç |
 |---|---|---|---|---|---|
+| Konum | Yaklaşık konum (AdMob'un IP'den türettiği şehir düzeyi konum) | ✅ | ✅ | Hayır | Reklamcılık |
 | Kişisel bilgiler | E-posta adresi | ✅ | ❌ | Hayır | Hesap yönetimi |
 | Kişisel bilgiler | Kullanıcı kimlikleri | ✅ | ❌ | Evet | Hesap yönetimi, Uygulama işlevselliği |
 | Kişisel bilgiler | Ad (kullanıcı adı) | ✅ | ❌ | Evet | Uygulama işlevselliği |
@@ -265,10 +270,13 @@ ihlali, fazladan beyan değildir. Oyuncunun kendi savunması da uygulamanın iç
 Aynı anahtar, maç sırasında mesaj seçicisinin altındaki "Mesajları kapat" bağlantısıyla da
 kapatılabilir.
 
-### "Paylaşılır" işaretlenen tek kalem
+### "Paylaşılır" işaretlenen kalemler
 
-Reklam Kimliği, AdMob aracılığıyla Google ile paylaşılır. Bu paylaşım **kullanıcı rızasına
-bağlıdır** (UMP) ve Premium satın alındığında hiç gerçekleşmez.
+İkisi de AdMob'dan gelir ve ikisi de Google ile paylaşılır: **Reklam Kimliği** ve **yaklaşık
+konum**. Paylaşım **kullanıcı rızasına bağlıdır** (UMP) ve Premium satın alındığında hiç
+gerçekleşmez, çünkü o durumda reklam SDK'sı yüklenmez.
+
+Uygulamanın kendi yazdığı hiçbir veri paylaşılmaz.
 
 ---
 

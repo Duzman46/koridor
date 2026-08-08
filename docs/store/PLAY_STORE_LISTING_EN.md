@@ -2,7 +2,13 @@
 
 ## App name
 
-Koridor
+```
+Koridor: Wall & Path Strategy
+```
+
+29 of the 30 characters Play allows. The brand stays one word in every language — see the note
+at the foot of this file — and the rest is what the word does not say on its own to somebody who
+does not speak Turkish, plus the terms people actually search the store for.
 
 ## Short description
 
@@ -49,3 +55,19 @@ The privacy policy URL has **no trailing slash**. Hosting serves it through `cle
 `https://gridbound-duzman46.web.app/privacy/` answers 404 — which is a rejection on its own,
 because the policy URL is the one link a reviewer always opens. It must match the value in
 `app.properties` exactly, since that is what the app itself links to.
+
+## On the name
+
+The game this belongs to the family of is **Quoridor**, a trademark registered by Gigamic S.A.
+in 1997 for board games. That name is not available and must not appear in the title, the
+description, or the keywords — not even as "like Quoridor".
+
+**Koridor** is deliberately a different word, and it stays that word in every localised listing.
+Two reasons, and the second is the practical one:
+
+- A different name per language is a different app to anybody who hears about it by one of them.
+- The obvious English alternative, *Barricade*, is already the title of two Quoridor apps on
+  Play. Taking it would put this listing third in a search for a name it does not own.
+
+What English needs is not a different name but the sentence the Turkish word already says by
+itself, which is what the subtitle is for.

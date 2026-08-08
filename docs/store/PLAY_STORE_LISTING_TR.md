@@ -2,7 +2,11 @@
 
 ## Uygulama adı
 
-Koridor
+```
+Koridor: Duvar ve Yol Oyunu
+```
+
+Play'in verdiği 30 karakterin 27'si.
 
 ## Kısa açıklama
 

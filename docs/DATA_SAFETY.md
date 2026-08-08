@@ -217,13 +217,13 @@ Aşağıdaki tablo forma doğrudan aktarılabilir.
 | Kişisel bilgiler | E-posta adresi | ✅ | ❌ | Hayır | Hesap yönetimi |
 | Kişisel bilgiler | Kullanıcı kimlikleri | ✅ | ❌ | Evet | Hesap yönetimi, Uygulama işlevselliği |
 | Kişisel bilgiler | Ad (kullanıcı adı) | ✅ | ❌ | Evet | Uygulama işlevselliği |
-| Uygulama etkinliği | Uygulama içi eylemler (maç sonuçları, istatistikler, son maçlar) | ✅ | ❌ | Evet | Uygulama işlevselliği |
+| Uygulama etkinliği | Uygulama içi eylemler (maç sonuçları, istatistikler, son maçlar; ayrıca Analytics'in varsayılan oturum ve ekran olayları) | ✅ | ❌ | Evet | Uygulama işlevselliği, Analitik |
 | Uygulama etkinliği | Diğer kullanıcı tarafından oluşturulan içerik (oda adı) | ✅ | ❌ | Hayır | Uygulama işlevselliği |
 | Mesajlar | Diğer uygulama içi mesajlar (maç içi hazır ifadeler) | ✅ | ❌ | Hayır | Uygulama işlevselliği |
 | Finansal bilgiler | Satın alma geçmişi | ✅ | ❌ | Hayır | Uygulama işlevselliği |
 | Uygulama bilgileri ve performansı | Kilitlenme günlükleri | ✅ | ❌ | Hayır | Analitik, Uygulama işlevselliği |
 | Uygulama bilgileri ve performansı | Tanılama (non-fatal hatalar, cihaz/OS bilgisi) | ✅ | ❌ | Hayır | Analitik, Uygulama işlevselliği |
-| Cihaz veya diğer kimlikler | Cihaz veya diğer kimlikler (Reklam Kimliği) | ✅ | ✅ | Hayır | Reklamcılık |
+| Cihaz veya diğer kimlikler | Cihaz veya diğer kimlikler (Reklam Kimliği; Analytics ve Crashlytics kurulum kimlikleri) | ✅ | ✅ | Hayır | Reklamcılık, Analitik |
 
 ### Güvenlik uygulamaları — form yanıtları
 
@@ -293,19 +293,31 @@ iletişim adresi (`furkanduzman46@gmail.com`, mağaza sayfasındakiyle aynı) sa
 **Bu belge değiştiğinde o dört dosya da değişmelidir.** Play incelemesinin fiilen okuduğu tek
 şey yayımlanan sayfadır ve formla çelişmesi tek başına ret sebebidir.
 
-### Karar verilmesi gereken: Google Analytics for Firebase
+### Google Analytics for Firebase — kalıyor, beyan ediliyor
 
 `app/build.gradle.kts` `firebase-analytics` bağımlılığını taşır ve `google-services.json`
-varken otomatik olay toplama açıktır. Uygulama kendi olayını hiç göndermez, ancak SDK
-varsayılan olarak oturum, ilk açılış ve ekran görüntüleme olaylarını bir kurulum kimliğiyle
-birlikte toplar. İki seçenekten biri yayın öncesi seçilmelidir:
+varken otomatik olay toplama açıktır. Uygulama kendi olayını hiç göndermez — kodda tek bir
+`logEvent` çağrısı yoktur — ancak SDK varsayılan olarak oturum, ilk açılış ve ekran görüntüleme
+olaylarını bir kurulum kimliğiyle birlikte toplar.
 
-- **Kalsın.** §5 tablosuna "Uygulama etkinliği → Uygulama içi eylemler" satırının amacına
-  *Analitik* eklenir ve "Cihaz veya diğer kimlikler" satırı Analytics'i de kapsayacak biçimde
-  genişletilir.
-- **Çıkarılsın.** Bağımlılık kaldırılır ve §5 tablosu olduğu gibi kalır. Crashlytics
-  Analytics olmadan da çalışır; kaybedilen tek şey rapora iliştirilen "breadcrumb" olay
-  dökümü ve kilitlenme hızı uyarılarıdır.
+Sahibi 2026-08-08'de bunun kalmasına karar verdi. Gerekçe: yeni yayımlanan bir oyunda kaç kişi
+oynadığını, nereden geldiğini ve ertesi gün geri dönüp dönmediğini bilmemek, düzeltilecek şeyi
+seçememek demektir. §5 tablosu bu karara göre yazılmıştır ve iki satırı Analytics'i de
+kapsayacak biçimde okur:
+
+- **Uygulama etkinliği → Uygulama içi eylemler** — amaçlarına *Analitik* eklendi.
+- **Cihaz veya diğer kimlikler** — Reklam Kimliğinin yanına Analytics ve Crashlytics kurulum
+  kimlikleri de girer, amaçlarına *Analitik* eklendi. "Paylaşılır" işareti yalnızca Reklam
+  Kimliğinden gelir ve olduğu gibi kalır.
+
+Beyan edilmesi gereken başka bir satır yoktur: uygulama Analytics'e özel olay göndermediği için
+oraya oyuncunun yazdığı hiçbir şey ulaşmaz, ve konum API'si hiç çağrılmaz.
+
+**Açık kalan, engelleyici olmayan bir konu.** Reklam rızası UMP ile alınır; Analytics'in kendi
+rıza modu (Consent Mode) bağlanmamıştır, dolayısıyla AEA'daki bir oyuncu reklam kişiselleştirmesini
+reddettiğinde Analytics'in varsayılan toplaması devam eder. İlk yayın için Play'in istediği şey
+doğru beyandır ve o yapılmıştır; AEA'da ciddi bir kullanıcı kitlesi oluşursa
+`setConsent(ANALYTICS_STORAGE, ...)` çağrısını UMP sonucuna bağlamak doğru adımdır.
 
 Crashlytics'in beyanı bu karardan bağımsızdır: kilitlenme raporlaması kullanıldığı için
 §5'teki iki satır her hâlükârda beyan edilir.

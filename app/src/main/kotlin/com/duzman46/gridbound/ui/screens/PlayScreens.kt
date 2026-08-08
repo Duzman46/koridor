@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +43,6 @@ import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.home.GlyphKind
 import com.duzman46.gridbound.ui.components.home.HomeChoice
 import com.duzman46.gridbound.ui.components.home.PlaySlab
-import kotlin.random.Random
 
 /**
  * How you want to play.
@@ -74,22 +74,22 @@ fun PlayModeScreen(
  * Its own step rather than a row of chips inside a sheet: it is the only decision a player
  * makes before a solo match, so it gets the whole screen.
  *
- * All three carry equal weight. Difficulty is a preference, not a recommendation — filling
- * one of them made the screen look like it was steering the player towards the easy bot.
+ * All four carry equal weight. Difficulty is a preference, not a recommendation — filling one
+ * of them made the screen look like it was steering the player towards the easy bot.
  */
 @Composable
 fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> Unit) {
-    // Random by default, and settled once when the screen opens rather than on every
-    // recomposition — a colour that flickered while you were reading the difficulties would
-    // be worse than no choice at all.
-    var seat by rememberSaveable {
-        mutableStateOf(if (Random.nextBoolean()) PlayerId.PLAYER_ONE else PlayerId.PLAYER_TWO)
-    }
+    // Blue every time. It was random, which is right for a match against a stranger — nobody
+    // gets the first move by choosing it — and wrong here: there is no opponent to be fair to,
+    // and a solo player who never touches this control should get the same board every time
+    // rather than one that silently changes who opens.
+    var seat by rememberSaveable { mutableStateOf(PlayerId.PLAYER_ONE) }
     ModeColumn(stringResource(R.string.difficulty_title), onBack) {
         SeatPicker(selected = seat, onSelect = { seat = it })
         HomeChoice(stringResource(R.string.difficulty_easy), GlyphKind.QUICK_PLAY, onClick = { onSelected(Difficulty.EASY, seat) })
         HomeChoice(stringResource(R.string.difficulty_medium), GlyphKind.VS_BOT, onClick = { onSelected(Difficulty.MEDIUM, seat) })
         HomeChoice(stringResource(R.string.difficulty_hard), GlyphKind.LEADERBOARD, onClick = { onSelected(Difficulty.HARD, seat) })
+        HomeChoice(stringResource(R.string.difficulty_expert), GlyphKind.EXPERT, onClick = { onSelected(Difficulty.EXPERT, seat) })
     }
 }
 
@@ -159,7 +159,20 @@ private fun SeatSwatch(
     }
 }
 
-/** The shared frame: a title bar and one column of full-width choices. */
+/**
+ * The shared frame: a title bar and one column of full-width choices, held in the middle of
+ * the screen.
+ *
+ * Centred rather than stacked under the title bar. Three buttons pinned to the top of a phone
+ * screen leave the whole lower two-thirds empty and read as the top of a list that has more
+ * below it, which is exactly what this screen does not have.
+ *
+ * It still scrolls, and that is what the measured viewport is for: at the largest font sizes,
+ * or in a small window, the choices are taller than the screen and centring them would put the
+ * first one out of reach above the top edge. Giving the column the viewport as a *minimum*
+ * height means it centres whenever there is room and grows downward from the top when there
+ * is not.
+ */
 @Composable
 private fun ModeColumn(
     title: String,
@@ -168,21 +181,27 @@ private fun ModeColumn(
 ) {
     Scaffold(topBar = { ScreenTopBar(title, onBack) }) { padding ->
         ScreenBackground {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
+            BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+                // Read before the scroll modifier below makes the height unbounded, which is
+                // the whole reason this is measured rather than asked for with fillMaxHeight.
+                val viewport = maxHeight
                 Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = Dimens.MenuMaxWidth)
-                        .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceXl),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                    content = content,
-                )
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = Dimens.MenuMaxWidth)
+                            .heightIn(min = viewport)
+                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceXl),
+                        verticalArrangement = Arrangement.spacedBy(
+                            Dimens.SpaceMd,
+                            Alignment.CenterVertically,
+                        ),
+                        content = content,
+                    )
+                }
             }
         }
     }

@@ -219,6 +219,7 @@
     <string name="difficulty_easy">Mudah</string>
     <string name="difficulty_medium">Sedang</string>
     <string name="difficulty_hard">Sulit</string>
+    <string name="difficulty_expert">Ahli</string>
 
     <string name="game_turn">Giliran %1$d</string>
     <string name="game_home">Menu utama</string>
@@ -276,6 +277,7 @@
 
     <string name="settings_language">Bahasa</string>
     <string name="settings_appearance">Tampilan</string>
+    <string name="settings_store">Toko</string>
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Terang</string>
     <string name="settings_theme_dark">Gelap</string>
@@ -286,7 +288,6 @@
     <string name="settings_haptics_description">Getaran saat melangkah dan saat terjadi kesalahan.</string>
     <string name="settings_chat">Pesan pertandingan</string>
     <string name="settings_chat_description">Frasa tetap dan emoji dalam pertandingan daring.</string>
-    <string name="settings_default_ai">AI bawaan</string>
     <string name="settings_ad_privacy">Opsi privasi iklan</string>
 
     <string name="stats_career">Ringkasan karier</string>

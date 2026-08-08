@@ -262,7 +262,7 @@ fun AppNavigation(
                 MainMenuScreen(
                     session = session,
                     language = language,
-                    adsRemoved = billing.entitlements.contains(Entitlement.REMOVE_ADS),
+                    offersAdRemoval = billing.offersAdRemoval,
                     onLanguage = onLanguage,
                     onPlay = { navController.navigateFrom(entry, Routes.PLAY) },
                     onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
@@ -483,10 +483,17 @@ fun AppNavigation(
                 ),
             ) { entry ->
                 GameRoute(
+                    // Walking out of a board is a match ending, so it earns the same ad the
+                    // victory screen's exits do. It runs after the game screen has already
+                    // confirmed the departure and freed an online seat, never on the press
+                    // itself: an ad in front of a dialog the player has not answered is the
+                    // placement AdMob refuses and players uninstall over.
                     onHome = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                            launchSingleTop = true
+                        onCompletedMatchExit {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.HOME) { inclusive = false }
+                                launchSingleTop = true
+                            }
                         }
                     },
                     onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
@@ -596,10 +603,21 @@ fun AppNavigation(
                     onSound = viewModel::setSoundEnabled,
                     onHaptics = viewModel::setHapticsEnabled,
                     onMatchMessages = viewModel::setMatchMessagesEnabled,
-                    onDifficulty = viewModel::setDifficulty,
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     monetization = monetization,
                     onPrivacyOptions = onPrivacyOptions,
+                    offersAdRemoval = billing.offersAdRemoval,
+                    isGuest = session.isGuest,
+                    onRemoveAds = {
+                        // Same rule as the home sheet: a guest has no account for Play to
+                        // attach the purchase to, so it is the account screen they need first.
+                        if (session.isGuest) {
+                            navController.navigateFrom(entry, Routes.ACCOUNT)
+                        } else {
+                            onBuy(Entitlement.REMOVE_ADS)
+                        }
+                    },
+                    onRestorePurchases = onRestorePurchases,
                 )
             }
 

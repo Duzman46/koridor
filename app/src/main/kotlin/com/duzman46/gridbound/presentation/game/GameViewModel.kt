@@ -239,7 +239,7 @@ class GameViewModel @Inject constructor(
      * is only released.
      */
     fun leaveGame(onFinished: () -> Unit) {
-        aiJob?.cancel()
+        stopAiTurn()
         val session = onlineSession
         if (session == null) {
             onFinished()
@@ -263,7 +263,7 @@ class GameViewModel @Inject constructor(
             feedback(SoundEffect.ERROR)
             return
         }
-        aiJob?.cancel()
+        stopAiTurn()
         recordedWinner = null
         val prior = _uiState.value
         _uiState.value = GameUiState(
@@ -283,7 +283,7 @@ class GameViewModel @Inject constructor(
             feedback(SoundEffect.ERROR)
             return
         }
-        aiJob?.cancel()
+        stopAiTurn()
         val restored = gameManager.undo(undoSteps(_uiState.value.boardState)) ?: run {
             feedback(SoundEffect.ERROR)
             return
@@ -353,8 +353,21 @@ class GameViewModel @Inject constructor(
         feedback(if (lost) SoundEffect.LOSS else SoundEffect.WIN)
     }
 
-    private fun runAiTurn() {
+    /**
+     * Stops the bot thinking, as far as it can be stopped.
+     *
+     * Cancelling the job is only half of it: the search runs on `Dispatchers.Default` in a loop
+     * that never suspends, so cancellation has nothing to act on until it finishes. Without the
+     * second half, restarting a match against a thinking bot waits out the search nobody wants
+     * before the new one can start, and pressing again stacks them.
+     */
+    private fun stopAiTurn() {
         aiJob?.cancel()
+        aiEngineFactory.forDifficulty(difficulty).abandonSearch()
+    }
+
+    private fun runAiTurn() {
+        stopAiTurn()
         aiJob = viewModelScope.launch {
             _uiState.update { it.copy(isAiThinking = true, wallMode = false, validWalls = emptySet()) }
             val snapshot = gameManager.state

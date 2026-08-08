@@ -29,7 +29,7 @@ class AIActionGenerator @Inject constructor(
 
     fun strategicActions(
         state: BoardState,
-        maxWallCandidates: Int = Constants.Ai.HARD_MAX_WALL_CANDIDATES,
+        maxWallCandidates: Int,
     ): List<GameAction> = buildList {
         addAll(pawnActions(state))
         if (state.player(state.currentPlayer).wallsRemaining <= 0) return@buildList

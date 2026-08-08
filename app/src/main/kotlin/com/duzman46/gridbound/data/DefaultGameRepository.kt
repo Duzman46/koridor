@@ -47,9 +47,11 @@ class DefaultGameRepository @Inject constructor(
         val easyWins = intPreferencesKey(Constants.Data.KEY_EASY_WINS)
         val mediumWins = intPreferencesKey(Constants.Data.KEY_MEDIUM_WINS)
         val hardWins = intPreferencesKey(Constants.Data.KEY_HARD_WINS)
+        val expertWins = intPreferencesKey(Constants.Data.KEY_EXPERT_WINS)
         val easyLosses = intPreferencesKey(Constants.Data.KEY_EASY_LOSSES)
         val mediumLosses = intPreferencesKey(Constants.Data.KEY_MEDIUM_LOSSES)
         val hardLosses = intPreferencesKey(Constants.Data.KEY_HARD_LOSSES)
+        val expertLosses = intPreferencesKey(Constants.Data.KEY_EXPERT_LOSSES)
     }
 
     private val preferences: Flow<Preferences> = context.gridboundDataStore.data.catch { error ->
@@ -79,16 +81,8 @@ class DefaultGameRepository @Inject constructor(
             totalLosses = values[Keys.totalLosses] ?: 0,
             localGames = values[Keys.localGames] ?: 0,
             totalTurns = values[Keys.totalTurns] ?: 0,
-            winsByDifficulty = mapOf(
-                Difficulty.EASY to (values[Keys.easyWins] ?: 0),
-                Difficulty.MEDIUM to (values[Keys.mediumWins] ?: 0),
-                Difficulty.HARD to (values[Keys.hardWins] ?: 0),
-            ),
-            lossesByDifficulty = mapOf(
-                Difficulty.EASY to (values[Keys.easyLosses] ?: 0),
-                Difficulty.MEDIUM to (values[Keys.mediumLosses] ?: 0),
-                Difficulty.HARD to (values[Keys.hardLosses] ?: 0),
-            ),
+            winsByDifficulty = Difficulty.entries.associateWith { values[winKey(it)] ?: 0 },
+            lossesByDifficulty = Difficulty.entries.associateWith { values[lossKey(it)] ?: 0 },
         )
     }
 
@@ -150,12 +144,13 @@ class DefaultGameRepository @Inject constructor(
         Difficulty.EASY -> Keys.easyWins
         Difficulty.MEDIUM -> Keys.mediumWins
         Difficulty.HARD -> Keys.hardWins
+        Difficulty.EXPERT -> Keys.expertWins
     }
 
     private fun lossKey(difficulty: Difficulty): Preferences.Key<Int> = when (difficulty) {
         Difficulty.EASY -> Keys.easyLosses
         Difficulty.MEDIUM -> Keys.mediumLosses
         Difficulty.HARD -> Keys.hardLosses
+        Difficulty.EXPERT -> Keys.expertLosses
     }
-
 }

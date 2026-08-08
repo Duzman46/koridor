@@ -222,6 +222,7 @@
     <string name="difficulty_easy">Лёгкий</string>
     <string name="difficulty_medium">Средний</string>
     <string name="difficulty_hard">Сложный</string>
+    <string name="difficulty_expert">Эксперт</string>
 
     <string name="game_turn">Ход %1$d</string>
     <string name="game_home">Главное меню</string>
@@ -282,6 +283,7 @@
 
     <string name="settings_language">Язык</string>
     <string name="settings_appearance">Оформление</string>
+    <string name="settings_store">Магазин</string>
     <string name="settings_theme_system">Системная</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
@@ -292,7 +294,6 @@
     <string name="settings_haptics_description">Вибрация при ходах и ошибках.</string>
     <string name="settings_chat">Сообщения в матче</string>
     <string name="settings_chat_description">Готовые фразы и эмодзи в онлайн-матчах.</string>
-    <string name="settings_default_ai">ИИ по умолчанию</string>
     <string name="settings_ad_privacy">Настройки приватности рекламы</string>
 
     <string name="stats_career">Общий итог</string>

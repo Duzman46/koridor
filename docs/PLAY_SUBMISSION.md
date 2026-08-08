@@ -1,7 +1,7 @@
 # Play Console — yükleme sırası
 
 Bu belge, Play Console'da adım adım ne yapılacağını ve her alana tam olarak ne yazılacağını
-tutar. Sıra önemli: 4. adım 3. adımın çıktısına bağlı, 8. adım da 6. adımdan sonra yapılabilir.
+tutar. Sıra önemli: 7. adım 6. adımın çıktısına bağlı, 8. adım da 2. adımdan sonra işliyor.
 
 Beyanları geliştirici olarak **sen** yapıyorsun. Bu belge cevapları hazırlar; işaretlemeyi sen
 yaparsın, çünkü yanlış beyan geliştirici hesabının sorumluluğunda.
@@ -31,11 +31,47 @@ APK değil AAB yükleniyor; Play yeni uygulamalarda APK kabul etmiyor.
 
 ---
 
-## 1. Mağaza girişi
+## 1. Uygulamayı oluştur
+
+Play Console → **Tüm uygulamalar → Uygulama oluştur**.
+
+| Alan | Değer |
+|---|---|
+| Uygulama adı | `Koridor` |
+| Varsayılan dil | **İngilizce (en-US)** |
+| Uygulama mı, oyun mu | Oyun |
+| Ücretsiz mi, ücretli mi | **Ücretsiz** |
+
+Ücretsiz seçimi geri alınamaz — sonradan ücretliye çevrilemiyor. Koridor ücretsiz + uygulama içi
+satın alma modelinde, yani doğru olan bu.
+
+Varsayılan dil, **uygulamanın dili değil, mağaza sayfasının yedeği**. Uygulama kendi dilini
+cihazdan seçiyor ve on dil derlemenin içinde; buradaki alan yalnızca şunu belirliyor: birinin
+dilinde mağaza sayfası yoksa hangisini görecek. Türkçe seçilseydi, İspanyolca sayfa olmadığı için
+İspanya'daki bir kullanıcı Türkçe sayfa görürdü.
+
+Alttaki beyan kutuları (geliştirici programı politikaları, ABD ihracat yasaları) senin
+taahhüdün; okuyup sen işaretle.
+
+---
+
+## 2. Mağaza girişi
 
 Play Console → **Büyüme → Mağaza varlığı → Ana mağaza girişi**.
 
-Metinler `docs/store/PLAY_STORE_LISTING_TR.md` ve `..._EN.md` dosyalarında; oradan kopyalanır.
+Önce varsayılan dilde (İngilizce) doldur, sonra **Türkçe çeviri ekle**.
+
+Metinler `docs/store/PLAY_STORE_LISTING_EN.md` ve `..._TR.md` dosyalarında; oradan kopyalanır.
+
+| Sayfa | Başlık (Play'in sınırı 30 karakter) |
+|---|---|
+| İngilizce (varsayılan) | `Koridor: Wall & Path Strategy` |
+| Türkçe | `Koridor: Duvar ve Yol Oyunu` |
+
+İsim her dilde **Koridor** kalıyor. `Quoridor` Gigamic'in 1997'den tescilli markası ve
+kullanılamaz; İngilizcedeki bariz alternatif `Barricade` ise Play'de aynı nişte iki uygulamanın
+adı, yani sahip olmadığın bir isimde üçüncü sıraya düşersin. Gerekçenin tamamı
+`docs/store/PLAY_STORE_LISTING_EN.md` sonundaki notta.
 
 **İletişim bilgileri** bölümünde:
 
@@ -50,14 +86,16 @@ ve o dosya olmadan programatik alıcıların büyük kısmı envantere teklif ve
 **Görseller** — hangisinin kullanılacağı `docs/store/ASSET_NOTES.md` içinde yazılı:
 
 - Simge: `store-assets/play-icon-512.png`
-- Ekran görüntüleri: `docs/store/screenshots/` altındaki dördü (2026-08-08'de yayın
-  derlemesinden çekildi)
+- Ekran görüntüleri: `docs/store/screenshots/` altında iki set var. `-en` ile bitenler
+  İngilizce sayfaya, `-tr` ile bitenler Türkçe sayfaya. Kendi dilinde sayfası olmayan herkes
+  varsayılanın — yani İngilizce setin — görüntülerini görür. İkisi de 2026-08-08'de yayın
+  derlemesinden çekildi.
 - Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png` **eski** — eski amblemi ve eski
   paleti gösteriyor. Kullanmadan önce yenilenmeli.
 
 ---
 
-## 2. Uygulama içeriği — gizlilik ve veri silme
+## 3. Uygulama içeriği — gizlilik ve veri silme
 
 **Politika → Uygulama içeriği → Gizlilik politikası**:
 
@@ -79,7 +117,7 @@ silmiş biri için e-posta yolunu anlatıyor; Play ikincisini arıyor.
 
 ---
 
-## 3. Veri güvenliği formu
+## 4. Veri güvenliği formu
 
 Cevaplar `docs/DATA_SAFETY.md` §5 tablosundan birebir aktarılır. O belge kodun gerçekte ne
 topladığından türetildi ve yayımlanan gizlilik sayfasıyla aynı şeyi söylüyor — form ile sayfa
@@ -95,7 +133,7 @@ Analytics kararı: kalıyor ve beyan ediliyor — "Uygulama etkinliği → Uygul
 
 ---
 
-## 4. Kalan beyanlar
+## 5. Kalan beyanlar
 
 **Politika → Uygulama içeriği** altındaki diğer formlar. Doğruyu yaz; aşağısı hazırlık, cevap
 değil:
@@ -115,7 +153,7 @@ değil:
 
 ---
 
-## 5. Sürüm oluştur ve iç teste gönder
+## 6. Sürüm oluştur ve iç teste gönder
 
 **Test ve yayınlama → Test → İç test** ile başla, doğrudan üretime değil.
 
@@ -125,7 +163,7 @@ koşulur.
 
 ---
 
-## 6. Yükledikten sonra — App Signing (atlanırsa Google girişi kırılır)
+## 7. Yükledikten sonra — App Signing (atlanırsa Google girişi kırılır)
 
 **Test ve yayınlama → Kurulum → Uygulama bütünlüğü → Uygulama imzalama**.
 
@@ -144,11 +182,11 @@ Doğrulaması: iç test kanalından kur, karşılama ekranında Google düğmesi
 
 ---
 
-## 7. AdMob
+## 8. AdMob
 
 Yayınlandıktan sonra:
 
-- **AdMob → Uygulamalar → app-ads.txt**: 1. adımdaki web sitesi alanı dolduktan sonra AdMob
+- **AdMob → Uygulamalar → app-ads.txt**: 2. adımdaki web sitesi alanı dolduktan sonra AdMob
   siteyi tarıyor. İlk gün "bulunamadı" yazması normal.
 - **AdMob → Ayarlar → Test cihazları**: kendi telefonunu ekle. Hem yerleşimleri test
   reklamlarıyla görürsün hem de kendi canlı reklamına tıklayıp hesabı riske atmazsın.
@@ -160,7 +198,7 @@ Yayınlandıktan sonra:
 
 `docs/WORK_ORDER.md` sonundaki liste geçerliliğini koruyor. Yayın açısından bilinmesi gerekenler:
 
-- Öne çıkan görsel eski (1. adım).
+- Öne çıkan görsel eski (2. adım).
 - `recentMatches` için temizlik işi yok: silinen bir hesabın maç geçmişi satırları kalıyor ve
   bu `docs/DATA_SAFETY.md` §4.2'de beyan edilmiş durumda.
 - Worker en kötü dakikada ücretsiz planın 50 alt isteğinden 47'sini kullanıyor.

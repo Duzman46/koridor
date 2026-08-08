@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -29,6 +28,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Flag
@@ -68,6 +69,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -75,7 +78,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
@@ -89,12 +94,12 @@ import com.duzman46.gridbound.game.models.GameStatus
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.TurnRecord
 import com.duzman46.gridbound.game.models.WallOrientation
-import com.duzman46.gridbound.online.model.MatchChatEntry
 import com.duzman46.gridbound.online.model.MatchMessage
 import com.duzman46.gridbound.online.model.MatchMessageKind
 import com.duzman46.gridbound.presentation.game.GameEvent
 import com.duzman46.gridbound.presentation.game.GameUiState
 import com.duzman46.gridbound.presentation.game.GameViewModel
+import com.duzman46.gridbound.presentation.game.MatchChatBubble
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.game.GameBoard
 import kotlinx.coroutines.delay
@@ -157,7 +162,7 @@ fun GameRoute(
         onCancelWall = viewModel::cancelPendingWall,
         onResign = viewModel::resign,
         onSendMessage = viewModel::sendMessage,
-        onMuteMessages = viewModel::muteMatchMessages,
+        onToggleMute = viewModel::toggleMatchMute,
     )
 }
 
@@ -194,7 +199,7 @@ private fun GameScreen(
     onCancelWall: () -> Unit,
     onResign: () -> Unit,
     onSendMessage: (MatchMessage) -> Unit,
-    onMuteMessages: () -> Unit,
+    onToggleMute: () -> Unit,
 ) {
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
@@ -335,7 +340,7 @@ private fun GameScreen(
                         onOpenProfile = onOpenProfile,
                     )
                     OnlineClockBar(state, now)
-                    MatchChatBar(state, onSendMessage, onMuteMessages)
+                    MatchChatBar(state, onSendMessage, onToggleMute)
                 }
                 if (shared) {
                     SeatPanel(
@@ -487,47 +492,187 @@ private fun OnlineClockBar(state: GameUiState, now: Long) {
 private fun MatchChatBar(
     state: GameUiState,
     onSend: (MatchMessage) -> Unit,
-    onMute: () -> Unit,
+    onToggleMute: () -> Unit,
 ) {
     if (!state.showsMatchMessages) return
     var picking by remember { mutableStateOf(false) }
     if (picking) {
         MatchMessageSheet(
+            canSend = state.canSendMessage,
+            muted = state.matchMessagesMuted,
             onPick = {
                 picking = false
                 onSend(it)
             },
-            onMute = {
+            onToggleMute = {
                 picking = false
-                onMute()
+                onToggleMute()
             },
             onDismiss = { picking = false },
         )
     }
-    Row(
-        Modifier.fillMaxWidth().height(48.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+    MatchChatRow(
+        modifier = Modifier.fillMaxWidth().heightIn(min = chatRowHeight()),
+        rival = {
             ChatBubble(
-                entry = state.rivalMessage,
+                bubble = state.rivalBubble,
                 container = MaterialTheme.colorScheme.secondaryContainer,
-                showWords = true,
             )
-        }
-        // Only the glyph coming back, because you already know what you said. It keeps the
-        // rival's half of the row wide enough for a phrase that runs to four words.
-        ChatBubble(
-            entry = state.ownMessage,
-            container = MaterialTheme.colorScheme.surfaceVariant,
-            showWords = false,
+        },
+        own = {
+            ChatBubble(
+                bubble = state.ownBubble,
+                container = MaterialTheme.colorScheme.surfaceVariant,
+            )
+        },
+        action = {
+            IconButton(onClick = { picking = true }, enabled = state.canOpenMessages) {
+                Icon(
+                    imageVector = if (state.matchMessagesMuted) {
+                        Icons.AutoMirrored.Rounded.VolumeOff
+                    } else {
+                        Icons.Rounded.Mood
+                    },
+                    // The way in is also the only sign that a mute is on, so it says which it is.
+                    contentDescription = stringResource(
+                        if (state.matchMessagesMuted) R.string.chat_muted else R.string.chat_open,
+                    ),
+                )
+            }
+        },
+    )
+}
+
+/** Between the two bubbles, and between the near bubble and the way in. */
+private val CHAT_ROW_GAP = 8.dp
+
+/**
+ * The two bubbles and the way in, on one line: the rival's at the start, this player's at the
+ * end beside the button.
+ *
+ * The sides are the argument for laying it out by hand. What the rival said arrives on their
+ * side and what this player said stays on theirs, so a glance tells them apart without reading
+ * either — and that is the whole of what a [Row] with a weight each was buying. What it cost
+ * was the width: half the row apiece however little is in either half, when eight of the
+ * fourteen messages are phrases and the longest of them is "Bonne chance la prochaine fois".
+ * Half of a 360 dp handset holds about a third of that, so the common case — one seat talking,
+ * the other silent — ellipsized a phrase for want of space that was standing empty beside it.
+ *
+ * Each bubble is measured for what it asks for instead, and [chatBubbleWidths] decides what to
+ * do when both asks together will not fit. A bubble held under its ask wraps rather than losing
+ * its end, so this reports whatever height that takes; the caller's [chatRowHeight] floor is
+ * what keeps the row the same height full as empty.
+ */
+@Composable
+private fun MatchChatRow(
+    modifier: Modifier,
+    rival: @Composable () -> Unit,
+    own: @Composable () -> Unit,
+    action: @Composable () -> Unit,
+) {
+    Layout(contents = listOf(rival, own, action), modifier = modifier) { slots, constraints ->
+        val (rivalSlot, ownSlot, actionSlot) = slots
+        // A bubble with nothing to say emits nothing at all, so a slot can be empty; the gaps
+        // are counted from what is actually there rather than assumed.
+        val rivalAsks = rivalSlot.firstOrNull()
+        val ownAsks = ownSlot.firstOrNull()
+        val gap = CHAT_ROW_GAP.roundToPx()
+        val width = constraints.maxWidth
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val button = actionSlot.first().measure(loose)
+        val gaps = gap * listOfNotNull(rivalAsks, ownAsks).size
+        val (rivalWidth, ownWidth) = chatBubbleWidths(
+            available = (width - button.width - gaps).coerceAtLeast(0),
+            rivalAsk = rivalAsks?.maxIntrinsicWidth(constraints.maxHeight) ?: 0,
+            ownAsk = ownAsks?.maxIntrinsicWidth(constraints.maxHeight) ?: 0,
         )
-        IconButton(onClick = { picking = true }, enabled = state.canSendMessage) {
-            Icon(Icons.Rounded.Mood, contentDescription = stringResource(R.string.chat_open))
+        val rivalBubble = rivalAsks?.measure(loose.copy(maxWidth = rivalWidth))
+        val ownBubble = ownAsks?.measure(loose.copy(maxWidth = ownWidth))
+
+        val height = maxOf(button.height, rivalBubble?.height ?: 0, ownBubble?.height ?: 0)
+            .coerceAtLeast(constraints.minHeight)
+        layout(width, height) {
+            // placeRelative and not place: "their side" and "ours" are the start and the end of
+            // the row, which trade places in Arabic along with everything else on the screen.
+            rivalBubble?.placeRelative(0, (height - rivalBubble.height) / 2)
+            if (ownBubble != null) {
+                val start = width - button.width - gap - ownBubble.width
+                ownBubble.placeRelative(start, (height - ownBubble.height) / 2)
+            }
+            button.placeRelative(width - button.width, (height - button.height) / 2)
         }
     }
 }
+
+/**
+ * How wide each bubble is drawn, given the [available] width for the two of them and what each
+ * one asks for.
+ *
+ * A row that can hold both asks gives each of them exactly what it asked for. Only a side asking
+ * for more than its half can lose anything, and it loses it to a side that asked for less: a
+ * face beside a phrase keeps its own width — squeezing it any further would clip a glyph that
+ * has nowhere to wrap to — and the phrase takes the rest of the row. Two long phrases at once is
+ * the one case with no room to find, and half each is the fair answer to it.
+ *
+ * Pulled out of the measure policy so the widths can be asserted in a unit test rather than
+ * discovered on a phone, and against the one thing that is easy to get wrong here: the answer
+ * has to depend on what is in the row, which a pair of static weights cannot.
+ */
+internal fun chatBubbleWidths(available: Int, rivalAsk: Int, ownAsk: Int): Pair<Int, Int> {
+    if (available <= 0) return 0 to 0
+    val rival = rivalAsk.coerceIn(0, available)
+    val own = ownAsk.coerceIn(0, available)
+    if (rival + own <= available) return rival to own
+    val half = available / 2
+    return when {
+        rival <= half -> rival to available - rival
+        own <= half -> available - own to own
+        else -> half to available - half
+    }
+}
+
+/** How many lines a phrase may wrap onto before its end is given up as unreadable anyway. */
+private const val CHAT_BUBBLE_LINES = 2
+
+/** [ChatBubble]'s own vertical padding, which the row has to hold open on top of the text. */
+private val CHAT_BUBBLE_PADDING = 6.dp
+
+/** The send button's touch target: the one thing in the row that does not scale with type. */
+private val CHAT_ACTION_TOUCH_TARGET = 48.dp
+
+/**
+ * The height the message row holds open for the whole of a match, whatever is in it.
+ *
+ * The row is reserved rather than raised when a message arrives, and this is the number that
+ * reserves it: worked out from the type the bubbles are drawn with, so it already covers the
+ * tallest either seat can produce at the font scale in force. It was a flat 48 dp, which is the
+ * button's touch target and has nothing to do with text — at the largest accessibility scale a
+ * bubble is nearly twice that, and the parent clipped the words instead of showing them.
+ *
+ * A floor and not a measurement, in both directions. Upwards, because a reserve that turns out
+ * to be short must grow rather than cut a phrase off — the arithmetic here is about the styles
+ * this file draws with, and a floor is what survives being wrong about them. Downwards, because
+ * the board is measured out of what this row leaves: a row that grew when the first message
+ * landed would move every square under a thumb already on its way down.
+ */
+@Composable
+private fun chatRowHeight(): Dp {
+    val glyph = MaterialTheme.typography.titleMedium
+    val label = MaterialTheme.typography.labelLarge
+    return with(LocalDensity.current) {
+        // A style may state a size without stating a line height; none of them state neither.
+        chatRowHeight(
+            glyphLine = glyph.lineHeight.takeOrElse { glyph.fontSize }.toDp(),
+            labelLine = label.lineHeight.takeOrElse { label.fontSize }.toDp(),
+        )
+    }
+}
+
+/** Pulled out of the composable so the reserve can be asserted at font scales nobody tests on. */
+internal fun chatRowHeight(glyphLine: Dp, labelLine: Dp): Dp = maxOf(
+    CHAT_ACTION_TOUCH_TARGET,
+    maxOf(glyphLine, labelLine * CHAT_BUBBLE_LINES) + CHAT_BUBBLE_PADDING * 2,
+)
 
 /**
  * One message, shown for a few seconds and then gone.
@@ -540,10 +685,10 @@ private fun MatchChatBar(
  */
 @Composable
 private fun ChatBubble(
-    entry: MatchChatEntry?,
+    bubble: MatchChatBubble?,
     container: Color,
-    showWords: Boolean,
 ) {
+    val entry = bubble?.entry
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(entry?.userId, entry?.sentAt) {
         val remaining = entry?.let {
@@ -557,7 +702,7 @@ private fun ChatBubble(
     }
     // Faded rather than removed, so the message is still there to draw while it goes.
     val alpha by animateFloatAsState(if (visible) 1f else 0f, label = "chatBubbleAlpha")
-    if (entry == null || alpha == 0f) return
+    if (bubble == null || entry == null || alpha == 0f) return
 
     val label = stringResource(entry.message.labelRes)
     Surface(
@@ -568,17 +713,21 @@ private fun ChatBubble(
         },
     ) {
         Row(
-            Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            Modifier.padding(horizontal = 10.dp, vertical = CHAT_BUBBLE_PADDING),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(entry.message.glyph, style = MaterialTheme.typography.titleMedium)
-            if (showWords && entry.message.kind == MatchMessageKind.PHRASE) {
+            if (bubble.showsWords) {
                 Text(
                     label,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    // Wrapping is the answer to a phrase that will not fit on one line, and
+                    // ellipsis only to one that will not fit on [CHAT_BUBBLE_LINES] of them —
+                    // which needs both seats talking at once on a narrow screen. The row's
+                    // reserve is worked out from the same number; see [chatRowHeight].
+                    maxLines = CHAT_BUBBLE_LINES,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -595,14 +744,23 @@ private fun ChatBubble(
  * before choosing what to say would be asking the player about the implementation.
  *
  * The mute lives at the bottom of it, next to the thing being muted, because that is where
- * somebody is standing when a rival has said the same thing eleven times. It writes the same
- * setting the settings screen holds; there is no such thing as a mute for this match only.
+ * somebody is standing when a rival has said the same thing eleven times. It is a mute for
+ * this match and it is the same control that lifts it, which is why it reads as the state it
+ * is in rather than as an instruction. The permanent answer is the settings switch, and it
+ * stays there.
+ *
+ * [canSend] is false while the sheet has been opened for the mute alone — the connection has
+ * dropped under a muted player, or the match has ended with the mute still on. The vocabulary
+ * goes grey rather than away: what cannot be sent must not be offered, and a sheet that changes
+ * shape depending on the connection is a worse answer than one that says which half is closed.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MatchMessageSheet(
+    canSend: Boolean,
+    muted: Boolean,
     onPick: (MatchMessage) -> Unit,
-    onMute: () -> Unit,
+    onToggleMute: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(
@@ -634,6 +792,7 @@ private fun MatchMessageSheet(
                         IconButton(
                             onClick = { onPick(message) },
                             modifier = Modifier.semantics { contentDescription = label },
+                            enabled = canSend,
                         ) {
                             Text(message.glyph, style = MaterialTheme.typography.headlineSmall)
                         }
@@ -650,12 +809,25 @@ private fun MatchMessageSheet(
                         SuggestionChip(
                             onClick = { onPick(message) },
                             label = { Text(stringResource(message.labelRes)) },
+                            enabled = canSend,
                             icon = { Text(message.glyph) },
                         )
                     }
             }
-            TextButton(onClick = onMute, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(R.string.chat_mute))
+            TextButton(onClick = onToggleMute, modifier = Modifier.align(Alignment.End)) {
+                Icon(
+                    imageVector = if (muted) {
+                        Icons.AutoMirrored.Rounded.VolumeUp
+                    } else {
+                        Icons.AutoMirrored.Rounded.VolumeOff
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    stringResource(if (muted) R.string.chat_unmute else R.string.chat_mute),
+                    Modifier.padding(start = 8.dp),
+                )
             }
         }
     }

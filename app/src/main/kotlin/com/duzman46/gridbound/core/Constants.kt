@@ -347,8 +347,32 @@ object Constants {
          * re-authenticating behind it, and telling a player "that did not work" while it
          * quietly did is the worst answer available. Bounded, because the alternative to a
          * bound is a confirmation that never comes back.
+         *
+         * For handing over to another account, and nothing else. A wait that is only letting a
+         * flow catch up with a credential already in hand is a different question with a very
+         * different answer; see [SESSION_CATCHUP_TIMEOUT_MILLIS].
          */
         const val IDENTITY_SETTLE_TIMEOUT_MILLIS = 15_000L
+
+        /**
+         * How long the session flow is given to catch up with an identity that has already
+         * landed, before the work waiting on it goes ahead regardless.
+         *
+         * Deliberately nothing like [IDENTITY_SETTLE_TIMEOUT_MILLIS], because it is not waiting
+         * for the same thing. Nothing is in flight: the credential exists and has been read from
+         * the very source the session is built on, so all that is outstanding is a new ID token
+         * reaching a listener and a database connection inside this process. That is a
+         * propagation measured in milliseconds, and a second is already an order of magnitude of
+         * slack for a cold device.
+         *
+         * The bound is short for the player's sake rather than the flow's. The one caller on a
+         * critical path is the username gate, which by design has no back arrow, swallows system
+         * back and blocks its own submit for the duration — so every second of this is a second
+         * somebody is held behind a spinner on a screen with no way out. Running out is not a
+         * failure either: it means the write goes ahead against the identity that was read
+         * directly, which is the identity the wait was hoping to be shown.
+         */
+        const val SESSION_CATCHUP_TIMEOUT_MILLIS = 1_000L
     }
 
     object Billing {

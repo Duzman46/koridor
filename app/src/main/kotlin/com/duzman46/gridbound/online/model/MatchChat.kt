@@ -20,7 +20,8 @@ enum class MatchMessageKind {
  * reporting duties — an entire product built to service one text field. A fixed list carries
  * none of that. It is also the only shape in which nobody can be got at: there is no way to
  * arrange these values into an insult, so the worst anybody can do is repeat one, and the rate
- * limit in the database rules and the mute in settings answer that between them.
+ * limit in the database rules, the mute on the board and the setting behind it answer that
+ * between them.
  *
  * So: no free text, ever. Not a field "for friends only", not a list assembled at runtime, not
  * a username interpolated into a phrase. Anything one player types and another player reads is

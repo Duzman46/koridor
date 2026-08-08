@@ -93,6 +93,13 @@ sealed interface FriendsEvent {
  *
  * Presence is observed only for the players already on screen, so opening this screen costs
  * one listener per relationship rather than a subscription to everyone who is online.
+ *
+ * Every listener is caught where it is collected, as they are in every other online view model
+ * here. A database listener reports a refused read or a connection it has lost by throwing into
+ * its flow, and an exception that reaches [viewModelScope] is not an error state — it is the
+ * process. This screen subscribes three of them, so a rules deployment or a tunnel would close
+ * the app on a player looking at their friends. Caught, that half of the screen falls back to
+ * what it showed before the read landed, and the next change of session subscribes again.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -118,7 +125,7 @@ class FriendsViewModel @Inject constructor(
             if (userId == null || !session.canUseSocialFeatures) {
                 flowOf(emptyList())
             } else {
-                repository.observeFriendships(userId)
+                repository.observeFriendships(userId).catch { emit(emptyList()) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -131,16 +138,19 @@ class FriendsViewModel @Inject constructor(
             friendsFlow
                 .flatMapLatest { friends ->
                     repository.observePresence(friends.map(Friend::userId).toSet())
+                        .catch { emit(emptyMap()) }
                 }
                 .collect { presence -> _uiState.update { it.copy(presence = presence) } }
         }
         viewModelScope.launch {
             sessionManager.state
                 .flatMapLatest { session ->
-                    session.user?.userId
-                        ?.takeIf { session.canUseSocialFeatures }
-                        ?.let(repository::observeRequests)
-                        ?: flowOf(emptyList())
+                    val userId = session.user?.userId?.takeIf { session.canUseSocialFeatures }
+                    if (userId == null) {
+                        flowOf(emptyList())
+                    } else {
+                        repository.observeRequests(userId).catch { emit(emptyList()) }
+                    }
                 }
                 // The bar over the app answers a request the moment it arrives; this list is
                 // the standing record of what is still open, so only the asks belong in it.

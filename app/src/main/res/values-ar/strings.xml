@@ -195,7 +195,9 @@
     <string name="game_rival_turn">دور الخصم</string>
 
     <string name="chat_open">قل شيئًا</string>
-    <string name="chat_mute">إيقاف الرسائل</string>
+    <string name="chat_mute">كتم الصوت في هذه المباراة</string>
+    <string name="chat_unmute">إعادة تشغيل الرسائل</string>
+    <string name="chat_muted">الرسائل مكتومة في هذه المباراة</string>
     <string name="chat_good_luck">حظًا موفقًا</string>
     <string name="chat_nice_move">نقلة جميلة</string>
     <string name="chat_well_played">أحسنت اللعب</string>

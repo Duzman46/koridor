@@ -209,7 +209,9 @@
         database rules refuse anything outside it; see MatchMessage before adding to it.
     -->
     <string name="chat_open">Say something</string>
-    <string name="chat_mute">Turn messages off</string>
+    <string name="chat_mute">Mute for this match</string>
+    <string name="chat_unmute">Unmute for this match</string>
+    <string name="chat_muted">Messages muted for this match</string>
     <string name="chat_good_luck">Good luck</string>
     <string name="chat_nice_move">Nice move</string>
     <string name="chat_well_played">Well played</string>

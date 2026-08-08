@@ -217,6 +217,17 @@ interface WeeklyRecord {
  */
 interface RecentMatch {
   opponentName: string;
+  /**
+   * Who the opponent was, beside what they were called.
+   *
+   * The name alone is a caption; this is what makes the row a way of reaching them — their
+   * profile, and from there a friend request or a report. It is stored rather than looked up
+   * for the same reason the name is: drawing ten rows would otherwise cost ten reads.
+   *
+   * Absent on a row written before this field existed, which is why every reader has to treat
+   * it as optional rather than assume ten rows all carry one.
+   */
+  opponentUserId?: string;
   result: "WIN" | "LOSS" | "DRAW";
   playedAt: number;
   /**
@@ -457,13 +468,25 @@ async function applyRating(
       db,
       report.hostUid,
       matchId,
-      played(guest.username, hostScore, playedAt, rated.playerOne.newRating - host.rating)
+      played(
+        guest.username,
+        report.guestUid,
+        hostScore,
+        playedAt,
+        rated.playerOne.newRating - host.rating
+      )
     ),
     historyUpdates(
       db,
       report.guestUid,
       matchId,
-      played(host.username, guestScore, playedAt, rated.playerTwo.newRating - guest.rating)
+      played(
+        host.username,
+        report.hostUid,
+        guestScore,
+        playedAt,
+        rated.playerTwo.newRating - guest.rating
+      )
     ),
   ]);
 
@@ -506,12 +529,12 @@ async function recordCasualMatch(
   const hostScore = scoreFor(report, report.hostUid);
   const playedAt = report.reportedAt || now;
   const [hostHistory, guestHistory] = await Promise.all([
-    historyUpdates(db, report.hostUid, matchId, played(guestName, hostScore, playedAt, null)),
+    historyUpdates(db, report.hostUid, matchId, played(guestName, report.guestUid, hostScore, playedAt, null)),
     historyUpdates(
       db,
       report.guestUid,
       matchId,
-      played(hostName, mirror(hostScore), playedAt, null)
+      played(hostName, report.hostUid, mirror(hostScore), playedAt, null)
     ),
   ]);
   await db.update({ ...hostHistory, ...guestHistory });
@@ -560,12 +583,16 @@ async function historyUpdates(
 
 function played(
   opponentName: string,
+  opponentUserId: string,
   score: MatchScore,
   playedAt: number,
   ratingChange: number | null
 ): RecentMatch {
   return {
     opponentName,
+    // Omitted rather than written empty when the report does not name the opponent, so a
+    // reader's "is there someone to open here" is one question about presence and not two.
+    ...(opponentUserId ? { opponentUserId } : {}),
     result: score === SCORE_WIN ? "WIN" : score === SCORE_LOSS ? "LOSS" : "DRAW",
     playedAt,
     // See [RecentMatch.ratingChange]: a match nobody was rated on carries no number at all,

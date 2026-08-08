@@ -118,6 +118,11 @@ tablosu içinde bulunulan haftayı ve bir öncekini tutar.
 Uygulamayı kaldırmak cihazda saklanan her şeyi siler. Android ayarlarından uygulama verisini
 temizlemek de aynı şeyi yapar; hesabınızı silmez.
 
+**Uygulamayı zaten sildiyseniz.** Yeniden kurmanız gerekmez. furkanduzman46@gmail.com adresine,
+hesabı açtığınız e-posta adresinden yazın ya da oynadığınız kullanıcı adını bildirin ve hesabınızın
+silinmesini isteyin. Yukarıda anlatılan silme işlemi elle yapılır ve tamamlandığında size bildirilir.
+Talepler en geç 30 gün içinde yanıtlanır.
+
 ## Çocukların gizliliği
 
 Koridor, e-posta ile hesap açtığınızda bir e-posta adresi, çevrim içi oynayabilmeniz için de bir

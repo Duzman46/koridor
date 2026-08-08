@@ -114,6 +114,11 @@ ten matches. The weekly leaderboard keeps the current week and the one before it
 Uninstalling the app removes everything stored on the device. Clearing the app's storage from
 Android settings does the same without removing your account.
 
+**If you have already uninstalled the app.** You do not need to reinstall it. Write to
+furkanduzman46@gmail.com from the address the account was opened with, or give the username you
+played under, and ask for the account to be deleted. The same deletion described above is carried
+out by hand, and you are told when it is done. Requests are answered within 30 days.
+
 ## Children's privacy
 
 Koridor asks for an e-mail address when you create an account that way, and for a username

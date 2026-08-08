@@ -22,9 +22,9 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 - Maç sırasında hazır ifadeler ve emoji — serbest metinli sohbet yok
 - Bir oyuncuyu profilinden ya da oda listesinden bildirme ve engelleme
 - Aynı cihazda iki oyuncu
-- Üç yapay zekâ seviyesi: Kolay, Orta ve Zor
+- Dört yapay zekâ seviyesi: Kolay, Orta, Zor ve Uzman — Uzman birkaç hamle ileriyi hesaplar
 - Her online oyuncunun kendi tarafını altta gördüğü akıllı tahta yönü
-- Belirgin hamle sırası ışığı ve çevrimiçi maçtan çıkmadan önce uyarı — çıkmak maçı kaybettirir
+- Belirgin hamle sırası ışığı ve her modda oyundan çıkmadan önce uyarı — çevrim içi maçta çıkmak kaybettirir
 - 9×9 dinamik oyun tahtası
 - Resmî atlama ve çapraz atlama mekanikleri
 - On dil: İngilizce, Türkçe, İspanyolca, Portekizce (Brezilya), Almanca, Fransızca, Rusça, Arapça, Endonezce ve Hintçe
@@ -36,7 +36,7 @@ Piyonunu rakibin başladığı kenara ulaştırmaya çalışırken duvarlarını
 
 Çevrimiçi oynamak için bir hesap — e-posta ya da Google girişi — ve diğer oyuncuların göreceği bir kullanıcı adı gerekir. Çevrimdışı olan her şey hesapsız çalışır.
 
-Ücretsiz sürüm ana menüde banner ve tamamlanan her maçtan sonra geçiş reklamı gösterebilir. Tek seferlik Premium “Reklamları Kaldır” satın alımı reklamları kalıcı olarak kapatır. Oyun sırasında reklam gösterilmez.
+Ücretsiz sürüm ana menüde ve oyna ekranında banner, maç bittiğinde ya da maçtan çıkıldığında tam ekran reklam gösterebilir. Tek seferlik “Reklamları kaldır” satın alımı reklamları kalıcı olarak kapatır. Maç sırasında hiçbir reklam gösterilmez.
 
 Çevrimdışı modlar internet bağlantısı olmadan oynanabilir. Çevrimiçi oyun, reklam ve satın alma doğrulaması internet bağlantısı gerektirir. Ayrıntılar için mağaza sayfasındaki gizlilik politikasını inceleyin.
 

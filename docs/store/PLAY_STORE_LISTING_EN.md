@@ -22,7 +22,7 @@ FEATURES
 - Preset phrases and emoji during a match — there is no free-text chat
 - Report or block another player from their profile or from the room list
 - Two players on one device
-- Easy, Medium, and Hard AI opponents
+- Four AI opponents: Easy, Medium, Hard and Expert — Expert searches several moves ahead
 - Smart online orientation that keeps each player at the bottom
 - A clear turn beacon, and a warning before you leave an online match — leaving forfeits it
 - Dynamic 9×9 board
@@ -36,7 +36,7 @@ FEATURES
 
 Playing online needs an account — an e-mail address or Google sign-in — and a username other players will see. Everything offline works without one.
 
-The free version may show a banner on the main menu and an interstitial after every completed match. A one-time Premium “Remove Ads” purchase permanently disables ads. Ads are never shown during a match.
+The free version may show a banner on the main menu and on the play screen, and a full-screen ad when a match ends or you leave one. A one-time “Remove ads” purchase disables them permanently. No ad is ever shown during a match.
 
 Offline modes work without an internet connection. Online play, ads, and purchase verification require internet access. See the privacy policy on the store listing for details.
 

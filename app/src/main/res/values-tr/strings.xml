@@ -233,6 +233,7 @@
     <string name="difficulty_easy">Kolay</string>
     <string name="difficulty_medium">Orta</string>
     <string name="difficulty_hard">Zor</string>
+    <string name="difficulty_expert">Uzman</string>
 
     <!-- Oyun içi -->
     <string name="game_turn">Tur %1$d</string>
@@ -294,6 +295,7 @@
     <!-- Ayarlar ve istatistikler -->
     <string name="settings_language">Dil</string>
     <string name="settings_appearance">Görünüm</string>
+    <string name="settings_store">Mağaza</string>
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Açık</string>
     <string name="settings_theme_dark">Koyu</string>
@@ -304,7 +306,6 @@
     <string name="settings_haptics_description">Hamlelerde ve hatalarda titreşim.</string>
     <string name="settings_chat">Maç mesajları</string>
     <string name="settings_chat_description">Çevrim içi maçlarda hazır ifadeler ve emojiler.</string>
-    <string name="settings_default_ai">Varsayılan yapay zekâ</string>
     <string name="settings_ad_privacy">Reklam Gizlilik Seçenekleri</string>
 
     <string name="stats_career">Kariyer özeti</string>

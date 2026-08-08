@@ -164,6 +164,113 @@ owner's hosting is the owner's action, not an agent's.
 
 ---
 
+## Round 8 — settings, the play screen, leaving a game, ads, and a fourth bot
+
+### What the owner asked for, and what happened to it
+
+- [x] **The default-AI picker is gone from Settings.** With it went `SettingsViewModel.setDifficulty`,
+      which nothing else called, and `settings_default_ai` in all ten locales. The stored value
+      still exists and is still written by `GameViewModel` when a bot match starts — it is what
+      keys the per-difficulty statistics, and it was never a setting anyone needed to reach.
+- [x] **The language chips are about half the area.** Their own control rather than a restyled
+      `FilterChip`, because the height and the padding are the whole point and both are fixed
+      inside one. Still 36 dp and still spaced; what went is the padding around short names, which
+      is where a ten-entry list wastes its width.
+- [x] **Remove ads and Restore purchases are in Settings as well as in More.** Both screens now ask
+      one question — `BillingState.offersAdRemoval` — instead of writing the same negation twice.
+      That is the fix for what the owner actually asked to have verified: a player who has paid and
+      still finds the offer on the other screen reads it as their money having gone nowhere.
+      `AdRemovalOfferTest` pins it, including that a purchase Play is still holding as pending does
+      not withdraw the offer.
+- [x] **The three play modes sit in the middle of the screen.** The column takes the measured
+      viewport as a *minimum* height, so it centres when there is room and grows from the top when
+      a large font makes the choices taller than the screen — centring unconditionally would put
+      the first one out of reach above the top edge.
+- [x] **Back asks in every mode.** It used to ask only online. Online still says what it costs;
+      bot and hot-seat say the board is thrown away.
+- [x] **A bot match opens on blue.** It was random, which is right against a stranger and wrong
+      here: there is no opponent to be fair to, and a solo player who never touches the control
+      should not have the opener silently change under them.
+- [x] **A fourth tier, EXPERT.** See below.
+
+### Advertising
+
+- [x] A full-screen ad on **every** finished match in all three modes, and on leaving a match from
+      the board. It was every third match. The match counter is gone rather than set to one: with
+      the count at one it is a comparison that is always true and a stored integer nobody reads.
+- [x] A **one-minute floor** between two ads is all that is left. It exists for exactly one
+      sequence — match ends, ad on the way out, new match started and abandoned at once — which
+      would otherwise put two ads five seconds apart. Shorter than any real game, so it never costs
+      an ad anyone played for.
+- [x] The banner was already on the home screen; verified rather than changed.
+- [x] **`tools/app-ads.mjs`.** Without `app-ads.txt` a large part of programmatic demand does not
+      bid, so the slots still fill at the price nobody competed for. Generated rather than
+      committed because it carries the real publisher id, and gitignored. It only works once the
+      Play listing's Website field names the same domain — that half is the owner's.
+- [x] The AdMob ids in `monetization.properties` are the owner's own account, not Google's test
+      publisher. Checked, not assumed.
+
+### The EXPERT bot, and what happened to HARD
+
+Designed twice independently, judged against each other and against an audit of the existing
+engine; `docs/EXPERT_BOT_SPEC.md` is the result and the record. Three defects in the old `HardAI`
+were confirmed from the source, and they are why the owner said the top of the ladder played badly:
+
+1. **The move ordering was inverted.** Every wall sorted ahead of every non-winning pawn move, at
+   every node, on both sides, with ties going to walls. The straight advance is the best move in
+   most Quoridor positions; searching it eleventh is close to worst-case for alpha-beta.
+2. **The transposition cache was both useless and unsound.** Keyed on `BoardState.hashCode()`,
+   which covers the move history, so two identical positions reached by different orders never
+   shared a key — a structurally zero hit rate, paid for at every node. Meanwhile a fail-high
+   *bound* was filed and returned as an *exact* score, and the table was allocated inside the
+   depth loop so nothing survived between iterations.
+3. **The wall candidates were nearly all horizontal, and truncated in the wrong place.** A pawn
+   walking straight up a column produced horizontal candidates only, and the cap of ten was applied
+   after the opponent's path had been inserted first — so the bot's own defensive walls never
+   reached the search at all.
+
+- [x] **HARD and EXPERT are now one engine at two budgets**, and `HardAI.kt` is deleted. Two
+      evaluations are two chances for the ladder to invert under maintenance, which is the
+      complaint this started from. EASY and MEDIUM are untouched.
+- [x] **The evaluation counts plies, not steps.** `race = 2*dYou - 2*dMe + 1` puts whose turn it is
+      inside the number, so "a wall must cost the opponent two steps to be worth playing" is
+      arithmetic rather than a weight. The old `IMMEDIATE_THREAT_WEIGHT` — a turn-blind cliff of
+      2000 inside an evaluation whose other terms spanned 200 — is gone.
+- [x] **`FastBoard` is proven equal to the rules engine, not asserted to be.** Seven differential
+      tests over thousands of random positions against `MoveValidator`, `WallValidator` and
+      `AStarPathFinder`, plus a reversibility property test and an incremental-hash differential.
+      One review re-derived the wall geometry independently in Java and swept all 128x81x4 edges
+      and all 128x128 slot pairs: zero mismatches.
+- [x] **The chosen action is re-validated through `GameEngine`** with a pawn-move fallback, so a
+      divergence could cost strength and never legality.
+- [x] **Abandoning a search actually stops it.** `AIEngine.abandonSearch` sets a volatile flag
+      polled beside the deadline. Cancelling the coroutine never did anything — a search is a CPU
+      loop that never suspends — so restarting against a thinking bot used to wait out the search
+      nobody wanted, and pressing again stacked them. The restart button is also held while the bot
+      thinks, as undo already was.
+
+### The measurements, including the one that did not come out the way it was meant to
+
+- [x] **EXPERT beat the frozen old HARD 10-0**, zero adjudications, decided on the board.
+- [x] **The mirror match is exactly 6.0/12.** An engine against a copy of itself must score exactly
+      half; this is what proves the pairing is sound, and every other number is meaningless without
+      it. Deliberately breaking the pairing turned it red at 7.0/12.
+- [x] **Engines are driven by node count, not by a clock**, so the same seed gives the same result
+      on a loaded machine. Verified across four runs whose wall-clock times differed 4.4 times.
+- [x] **Significance is computed over openings, not games.** The two halves of a colour-swapped pair
+      are the same position with the colours exchanged and are not independent — which is exactly
+      why the mirror match is 6/12 by construction. Counting games overstated every p-value in the
+      file.
+- [ ] **At an equal node budget, EXPERT and HARD are not separable.** 57.8% over 32 openings,
+      p = 0.133. They are one engine and HARD's depth cap is most of what limits it. The ladder is
+      real at the *shipped* budgets — 3.5:1, where EXPERT scores 30 of 40 — and the test measures
+      that pair rather than the configuration shape. Stated here because the design document
+      predicted otherwise.
+- [ ] **A known blind spot in that test**, found by mutating it: raising `HARD_MAX_DEPTH` to
+      EXPERT's is caught, but swapping the wall-candidate constants between the tiers is not. Those
+      are worth about one opening in twenty, and a bar tight enough to see them would leave no
+      slack for a tuning pass.
+
 ## Still open
 
 Round 7's list, re-checked against the code rather than assumed. One is new.

@@ -49,6 +49,17 @@ data class BillingState(
 ) {
     fun owns(entitlement: Entitlement): Boolean = entitlement in entitlements
 
+    /**
+     * Whether ad removal is still something to offer.
+     *
+     * Asked in two places — the home sheet and the store card in Settings — and the two have
+     * to give the same answer. A player who has paid and still finds "Remove ads" on one of
+     * them has no way to tell whether their money arrived, and the obvious thing to do about
+     * it is pay again. One property rather than the same negation written out twice, so there
+     * is no second copy to drift.
+     */
+    val offersAdRemoval: Boolean get() = !owns(Entitlement.REMOVE_ADS)
+
     val hasPending: Boolean get() = pendingPurchases.isNotEmpty()
 }
 

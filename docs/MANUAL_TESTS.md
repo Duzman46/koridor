@@ -380,9 +380,54 @@ okuyamaz, dolayısıyla doğrulaması veritabanı konsolundan yapılır.
 1. Misafirken Mağaza'yı aç
 2. **Beklenen:** "Misafir olarak oynuyorsun… hesabını bağla" uyarısı görünür.
 
+### E6. Satın alınca teklifin iki ekrandan da kalkması (kritik)
+1. Reklamları kaldır'ı satın al
+2. **Beklenen:** Hem **Ayarlar → Mağaza** kartında hem **Daha fazla** sayfasında "Reklamları
+   kaldır" **kaybolur**; "Satın alımları geri yükle" ikisinde de kalır.
+3. Ana menüde alttaki banner reklam **kaybolur**; bir maç bitirip çık — **tam ekran reklam
+   çıkmaz**.
+
+### E7. Ayarlardan satın alma ve geri yükleme
+1. Ayarlar → Mağaza kartı
+2. **Beklenen:** Misafirsen "Reklamları kaldır" seni **Hesap** ekranına götürür (satın alma
+   diyaloğu açılmaz) ve altında misafir uyarısı yazar. Hesabın varsa Play diyaloğu açılır.
+3. **Satın alımları geri yükle** her iki durumda da çalışır ve sonucu bir bildirimle söyler.
+
 ### E5. Bekleyen satın alma
 1. Test hesabında "yavaş test kartı" (pending) ile satın al
 2. **Beklenen:** "Ödeme bekleniyor" gösterilir, ürün **açılmaz**, uygulama hata vermez. Ödeme onaylanınca otomatik açılır.
+
+---
+
+## E'. Reklam yerleşimi ve oyundan çıkış
+
+### E'1. Geri tuşu her modda sorar (kritik)
+1. **Bota karşı** bir maç başlat, birkaç hamle yap, **telefonun geri tuşuna** bas
+2. **Beklenen:** "Oyundan çıkılsın mı?" diyaloğu çıkar. **Vazgeç** dersen tahta olduğu gibi
+   durur — hamleler, duvarlar, sıra hiçbiri değişmez.
+3. Aynısını **aynı cihazda iki oyuncu** modunda tekrarla. Aynı diyalog çıkmalı.
+4. Aynısını **çevrim içi** maçta tekrarla. Bu sefer metin maçı kaybedeceğini söylemeli.
+5. Geri tuşunu **basılı tut** ve parmağını çekmeden bekle: tahta yerinden oynamamalı, yarım
+   kayıp geri gelmemeli.
+
+### E'2. Oyundan çıkınca reklam
+1. Reklamları kaldır **satın alınmamış** olsun
+2. Bir maç başlat → geri tuşu → **Çık**
+3. **Beklenen:** Tam ekran reklam çıkar, kapatınca ana menüye düşersin. Reklam yüklenmediyse
+   beklemeden ana menüye düşersin — takılıp kalmaz.
+4. Hemen yeni bir maç başlat ve yine çık: **arka arkaya ikinci reklam çıkmamalı** (bir dakika
+   içinde iki reklam gösterilmez).
+
+### E'3. Maç sonunda reklam — üç modda da
+1. **Bota karşı**, **aynı cihazda iki oyuncu** ve **çevrim içi** maçları sırayla bitir
+2. Her birinde kazanan ekranından **Ana menü** ya da **Tekrar oyna** ile çık
+3. **Beklenen:** Üçünde de tam ekran reklam çıkar (bir önceki reklamın üzerinden bir dakika
+   geçmişse).
+
+### E'4. Ana menüdeki banner
+1. Ana menüyü aç
+2. **Beklenen:** En altta banner reklam durur, menü butonlarının üstüne binmez, sistem
+   çubuklarıyla çakışmaz. Menü kaydırıldığında banner yerinde kalır.
 
 ---
 

@@ -21,7 +21,7 @@ class MediumAI @Inject constructor(
 
         val ownBefore = distance(state, playerId)
         val opponentBefore = distance(state, playerId.opponent)
-        val bestWall = actionGenerator.strategicActions(state, Constants.Ai.HARD_MAX_WALL_CANDIDATES * 2)
+        val bestWall = actionGenerator.strategicActions(state, Constants.Ai.MEDIUM_MAX_WALL_CANDIDATES)
             .filterIsInstance<GameAction.PlaceWall>()
             .mapNotNull { action ->
                 val next = successfulState(state, action) ?: return@mapNotNull null

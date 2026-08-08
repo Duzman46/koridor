@@ -218,6 +218,7 @@
     <string name="difficulty_easy">आसान</string>
     <string name="difficulty_medium">मध्यम</string>
     <string name="difficulty_hard">कठिन</string>
+    <string name="difficulty_expert">विशेषज्ञ</string>
 
     <string name="game_turn">बारी %1$d</string>
     <string name="game_home">मुख्य मेन्यू</string>
@@ -276,6 +277,7 @@
 
     <string name="settings_language">भाषा</string>
     <string name="settings_appearance">रूप</string>
+    <string name="settings_store">स्टोर</string>
     <string name="settings_theme_system">सिस्टम</string>
     <string name="settings_theme_light">हल्का</string>
     <string name="settings_theme_dark">गहरा</string>
@@ -286,7 +288,6 @@
     <string name="settings_haptics_description">चालों और ग़लतियों पर कंपन।</string>
     <string name="settings_chat">मैच के संदेश</string>
     <string name="settings_chat_description">ऑनलाइन मैचों में तय वाक्य और इमोजी।</string>
-    <string name="settings_default_ai">डिफ़ॉल्ट AI</string>
     <string name="settings_ad_privacy">विज्ञापन गोपनीयता विकल्प</string>
 
     <string name="stats_career">कुल सारांश</string>

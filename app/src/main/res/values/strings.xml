@@ -247,6 +247,7 @@
     <string name="difficulty_easy">Easy</string>
     <string name="difficulty_medium">Medium</string>
     <string name="difficulty_hard">Hard</string>
+    <string name="difficulty_expert">Expert</string>
 
     <!-- In game -->
     <string name="game_turn">Turn %1$d</string>
@@ -308,6 +309,7 @@
     <!-- Settings and statistics -->
     <string name="settings_language">Language</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_store">Store</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
@@ -318,7 +320,6 @@
     <string name="settings_haptics_description">Vibration for moves and errors.</string>
     <string name="settings_chat">Match messages</string>
     <string name="settings_chat_description">Fixed phrases and emoji in online matches.</string>
-    <string name="settings_default_ai">Default AI</string>
     <string name="settings_ad_privacy">Ad Privacy Options</string>
 
     <string name="stats_career">Career summary</string>

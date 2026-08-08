@@ -25,16 +25,133 @@ object Constants {
     }
 
     object Ai {
+        // ---- EASY / MEDIUM ----
         const val EASY_WALL_PROBABILITY = 0.22
-        const val HARD_MAX_DEPTH = 3
-        const val HARD_TIME_BUDGET_MILLIS = 850L
-        const val HARD_MAX_WALL_CANDIDATES = 10
-        const val TERMINAL_SCORE = 100_000
+        const val MEDIUM_MAX_WALL_CANDIDATES = 20
+        const val MEDIUM_WALL_THRESHOLD = 2
         const val OWN_DISTANCE_WEIGHT = 18
         const val OPPONENT_DISTANCE_WEIGHT = 20
-        const val WALL_COUNT_WEIGHT = 3
-        const val IMMEDIATE_THREAT_WEIGHT = 2_000
-        const val MEDIUM_WALL_THRESHOLD = 2
+
+        // ---- shared search engine (HARD and EXPERT) ----
+        const val SEARCH_WIN_SCORE = 1_000_000
+
+        /**
+         * A race the opponent provably cannot interfere with. Below a real mate, above any
+         * heuristic.
+         */
+        const val SEARCH_PROVEN_WIN_SCORE = 900_000
+        const val SEARCH_MATE_THRESHOLD = 800_000
+        const val SEARCH_EVAL_CLAMP = 60_000
+        const val SEARCH_MAX_PLY = 32
+
+        /**
+         * Poll the clock every 1024 nodes: ~9 ms of overshoot against a 1.2 s ceiling, and no
+         * syscall in the inner loop.
+         */
+        const val SEARCH_NODE_POLL_MASK = 1_023
+        const val SEARCH_ZOBRIST_SEED = 0x51D00DL
+
+        // ---- evaluation, measured in plies-to-goal ----
+        /** One ply of race advantage. One full step of shortest path is therefore 200. */
+        const val RACE_PLY_VALUE = 100
+        const val RACE_LINEAR_PLIES = 8
+        const val RACE_TAPER_DIVISOR = 2
+
+        /**
+         * A wall in hand, ~0.35 of a step: enough that a one-step wall is refused, not enough
+         * to hoard.
+         */
+        const val WALL_BASE_VALUE = 70
+
+        /**
+         * Wall difference beats wall count in the middlegame — holding more means getting the
+         * last word.
+         */
+        const val WALL_SURPLUS_VALUE = 90
+        const val WALL_SURPLUS_CAP = 3
+        const val WALL_LAST_VALUE = 40
+
+        /** Walls are worth less against a pawn that is nearly home, not merely "later". */
+        const val WALL_RELEVANCE_DISTANCE = 8
+        const val CENTRE_VALUE = 12
+        const val CENTRE_RELEVANCE_DISTANCE = 6
+
+        /**
+         * A pawn with one progress direction is in a corridor; one wall then costs it many
+         * steps.
+         */
+        const val FREEDOM_VALUE = 14
+
+        /**
+         * Two full steps of slack, which absorbs up to two tempi lost to pawn contact at the
+         * meeting point.
+         */
+        const val PROVEN_RACE_MARGIN = 5
+        const val RUN_RACE_MARGIN = 3
+
+        // ---- ordering ----
+        const val ORDER_WINNING_MOVE = 8_000_000
+        const val ORDER_TT_MOVE = 4_000_000
+        const val ORDER_KILLER_PRIMARY = 3_000_000
+        const val ORDER_KILLER_SECONDARY = 2_900_000
+        const val ORDER_PAWN_BASE = 1_000_000
+        const val ORDER_PAWN_DISTANCE_STEP = 1_000
+        const val ORDER_JUMP_BONUS = 5_000
+        const val ORDER_WALL_BASE = 100_000
+        const val ORDER_HISTORY_CAP = 900
+
+        // ---- wall candidate generation ----
+        const val WALL_PATH_EDGES_OPPONENT = 5
+        const val WALL_PATH_EDGES_OWN = 3
+
+        /**
+         * Above this ply a candidate is ordered by a static key: two BFS per candidate is
+         * unaffordable deeper.
+         */
+        const val WALL_SCORED_MAX_PLY = 2
+        const val STATIC_KEY_OPPONENT_PATH = 400
+        const val STATIC_KEY_TOUCHES_WALL = 200
+        const val STATIC_KEY_NEAR_OPPONENT = 100
+        const val STATIC_KEY_OWN_PATH = 150
+
+        // ---- late move reductions ----
+        const val LMR_MIN_DEPTH = 3
+        const val LMR_MIN_MOVE_INDEX = 4
+        const val LMR_SAFE_OPPONENT_DISTANCE = 2
+
+        // ---- EXPERT budget ----
+        /**
+         * Past this point a new iteration cannot finish; ~1 s of perceived latency keeps the
+         * opponent responsive.
+         */
+        const val EXPERT_SOFT_BUDGET_MILLIS = 700L
+
+        /**
+         * The tail: cold JIT on the first move, and a low-end handset three times slower than
+         * a mid-range one.
+         */
+        const val EXPERT_HARD_BUDGET_MILLIS = 1_200L
+        const val EXPERT_MAX_DEPTH = 20
+        const val EXPERT_ROOT_WALL_CANDIDATES = 16
+        const val EXPERT_SHALLOW_WALL_CANDIDATES = 10
+        const val EXPERT_DEEP_WALL_CANDIDATES = 6
+        const val EXPERT_TT_SIZE_LOG2 = 16
+
+        // ---- HARD budget: same engine, shallower ----
+        const val HARD_SOFT_BUDGET_MILLIS = 200L
+        const val HARD_HARD_BUDGET_MILLIS = 350L
+        const val HARD_MAX_DEPTH = 4
+        const val HARD_ROOT_WALL_CANDIDATES = 8
+        const val HARD_SHALLOW_WALL_CANDIDATES = 6
+        const val HARD_DEEP_WALL_CANDIDATES = 4
+        const val HARD_TT_SIZE_LOG2 = 14
+
+        // ---- adaptive spend ----
+        const val STABLE_ITERATIONS_TO_STOP = 3
+        const val STABLE_SCORE_WINDOW = 50
+
+        /** A reply that lands in 20 ms reads as careless from something labelled "Uzman". */
+        const val MIN_THINK_MILLIS = 150L
     }
 
     object Animation {
@@ -87,9 +204,11 @@ object Constants {
         const val KEY_EASY_WINS = "easy_wins"
         const val KEY_MEDIUM_WINS = "medium_wins"
         const val KEY_HARD_WINS = "hard_wins"
+        const val KEY_EXPERT_WINS = "expert_wins"
         const val KEY_EASY_LOSSES = "easy_losses"
         const val KEY_MEDIUM_LOSSES = "medium_losses"
         const val KEY_HARD_LOSSES = "hard_losses"
+        const val KEY_EXPERT_LOSSES = "expert_losses"
     }
 
     object Online {

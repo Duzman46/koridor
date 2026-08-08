@@ -15,11 +15,15 @@ monetization.properties
 firebase.properties
 app.properties
 google-services.json
+# Generated from monetization.properties by tools/app-ads.mjs; carries the real publisher id.
+public/app-ads.txt
 functions/node_modules/
 functions/lib/
 rules-tests/node_modules/
 rules-tests/package-lock.json
 firebase-debug.log
+# Upload cache rewritten by every `firebase deploy --only hosting`; nothing reads it but the CLI.
+.firebase/
 database-debug.log
 ui-debug.log
 worker/node_modules/

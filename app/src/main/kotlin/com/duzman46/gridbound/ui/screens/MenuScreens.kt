@@ -152,7 +152,7 @@ internal val HomeChrome: Dp =
 fun MainMenuScreen(
     session: SessionState,
     language: AppLanguage,
-    adsRemoved: Boolean,
+    offersAdRemoval: Boolean,
     onLanguage: (AppLanguage) -> Unit,
     onPlay: () -> Unit,
     onFriends: () -> Unit,
@@ -188,7 +188,7 @@ fun MainMenuScreen(
             // reachable twice from one screen teaches the player that neither route is real.
             //
             // Hidden once bought: an upgrade you already own is not an offer.
-            if (!adsRemoved) {
+            if (offersAdRemoval) {
                 SheetAction(stringResource(R.string.store_remove_ads), GlyphKind.REMOVE_ADS, {
                     dismiss(); onRemoveAds()
                 })

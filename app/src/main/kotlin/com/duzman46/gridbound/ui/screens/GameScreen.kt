@@ -184,14 +184,13 @@ private fun GameScreen(
     var showHistory by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showResignConfirmation by remember { mutableStateOf(false) }
-    // Only an online match stops back, and only because walking out of one cannot be undone:
-    // there is a person still sitting at the other side of it, and leaving files a resignation
-    // in their favour. A bot game and a shared handset are this player's own board and theirs
-    // to close, so back on them is simply back — asking first answered a question nobody had
-    // asked, and each of those refusals was a screen that appeared to leave and then did not.
-    //
-    // Every online match is intercepted, though, not only the ones with something to lose: the
-    // seat has to be handed back rather than walked away from, and [onExit] is what frees it.
+    // Back always asks, in every mode. It used to ask only online, on the reasoning that a bot
+    // game and a shared handset are the player's own board and theirs to close — but a board
+    // is a board however it was started, and a game thrown away by a back press aimed at
+    // something else is lost the same way whether or not anybody else was in it. Online is
+    // still the one that says what it costs: there is a person on the other end and leaving
+    // files a resignation in their favour, which is what [GameUiState.leavingForfeits] picks
+    // the wording for.
     //
     // The gesture is swallowed rather than previewed, which is the point of reaching for the
     // predictive handler on a screen that means to stay. A plain BackHandler lets the system
@@ -199,9 +198,9 @@ private fun GameScreen(
     // departure drawn and then refused, which is the half-swipe that slides back. Collecting
     // the progress and drawing nothing holds the board still, and abandoning the gesture
     // cancels this coroutine before the dialog is ever reached, so a half-swipe costs nothing.
-    PredictiveBackHandler(enabled = state.isOnline && !showExitConfirmation) { progress ->
+    PredictiveBackHandler(enabled = !showExitConfirmation) { progress ->
         progress.collect {}
-        if (state.leavingForfeits) showExitConfirmation = true else onExit()
+        showExitConfirmation = true
     }
 
     val clockRunning = state.isOnline && state.turnDeadlineAt != null &&
@@ -278,7 +277,11 @@ private fun GameScreen(
                         IconButton(onClick = onUndo, enabled = state.canUndo && !state.isAiThinking) {
                             Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.game_undo))
                         }
-                        IconButton(onClick = onRestart) {
+                        // Held while the bot thinks, exactly as undo is. Restarting mid-search
+                        // abandons a turn that is already running and starts another, and at the
+                        // expert tier that is a second of work per press — enough that a player
+                        // tapping an unresponsive-looking button decides the app has hung.
+                        IconButton(onClick = onRestart, enabled = !state.isAiThinking) {
                             Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.game_restart))
                         }
                     } else if (state.boardState.status == GameStatus.IN_PROGRESS) {
@@ -1018,4 +1021,5 @@ private fun Difficulty.label(): String = when (this) {
     Difficulty.EASY -> stringResource(R.string.difficulty_easy)
     Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
     Difficulty.HARD -> stringResource(R.string.difficulty_hard)
+    Difficulty.EXPERT -> stringResource(R.string.difficulty_expert)
 }

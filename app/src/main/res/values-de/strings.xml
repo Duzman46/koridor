@@ -218,6 +218,7 @@
     <string name="difficulty_easy">Leicht</string>
     <string name="difficulty_medium">Mittel</string>
     <string name="difficulty_hard">Schwer</string>
+    <string name="difficulty_expert">Experte</string>
 
     <string name="game_turn">Runde %1$d</string>
     <string name="game_home">Hauptmenü</string>
@@ -276,6 +277,7 @@
 
     <string name="settings_language">Sprache</string>
     <string name="settings_appearance">Darstellung</string>
+    <string name="settings_store">Shop</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>
@@ -286,7 +288,6 @@
     <string name="settings_haptics_description">Vibration bei Zügen und Fehlern.</string>
     <string name="settings_chat">Nachrichten im Match</string>
     <string name="settings_chat_description">Feste Sätze und Emojis in Online-Partien.</string>
-    <string name="settings_default_ai">Standard-KI</string>
     <string name="settings_ad_privacy">Datenschutzoptionen für Werbung</string>
 
     <string name="stats_career">Gesamtübersicht</string>

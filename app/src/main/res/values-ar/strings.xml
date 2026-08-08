@@ -230,6 +230,7 @@
     <string name="difficulty_easy">سهل</string>
     <string name="difficulty_medium">متوسط</string>
     <string name="difficulty_hard">صعب</string>
+    <string name="difficulty_expert">خبير</string>
 
     <string name="game_turn">الدور %1$d</string>
     <string name="game_home">القائمة الرئيسية</string>
@@ -292,6 +293,7 @@
 
     <string name="settings_language">اللغة</string>
     <string name="settings_appearance">المظهر</string>
+    <string name="settings_store">المتجر</string>
     <string name="settings_theme_system">النظام</string>
     <string name="settings_theme_light">فاتح</string>
     <string name="settings_theme_dark">داكن</string>
@@ -302,7 +304,6 @@
     <string name="settings_haptics_description">اهتزاز عند النقلات والأخطاء.</string>
     <string name="settings_chat">رسائل المباراة</string>
     <string name="settings_chat_description">عبارات ثابتة ورموز تعبيرية في المباريات عبر الإنترنت.</string>
-    <string name="settings_default_ai">الذكاء الاصطناعي الافتراضي</string>
     <string name="settings_ad_privacy">خيارات خصوصية الإعلانات</string>
 
     <string name="stats_career">ملخّص المسيرة</string>

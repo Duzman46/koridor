@@ -6,10 +6,15 @@ enum class GameMode {
     ONLINE,
 }
 
+/**
+ * How hard the bot plays. Declared weakest first — [Difficulty.entries] is the order they are
+ * offered in and the order statistics are listed in.
+ */
 enum class Difficulty {
     EASY,
     MEDIUM,
     HARD,
+    EXPERT,
 }
 
 enum class GameStatus {

@@ -6,6 +6,11 @@ import com.duzman46.gridbound.data.DefaultGameRepository
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.game.ai.AIActionGenerator
 import com.duzman46.gridbound.game.ai.EasyAI
+import com.duzman46.gridbound.game.ai.SearchAI
+import com.duzman46.gridbound.game.ai.search.SearchClock
+import com.duzman46.gridbound.game.ai.search.SearchConfig
+import com.duzman46.gridbound.game.engine.GameEngine
+import com.duzman46.gridbound.game.pathfinding.AStarPathFinder
 import com.duzman46.gridbound.leaderboard.data.RtdbLeaderboardRepository
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardRepository
 import com.duzman46.gridbound.match.data.RtdbMatchRepository
@@ -32,6 +37,18 @@ import kotlinx.coroutines.SupervisorJob
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ApplicationScope
+
+/**
+ * The two tiers that share `SearchAI`. Dagger ignores Kotlin default parameter values and cannot
+ * tell two `SearchConfig`s apart, so the distinction has to be carried by a qualifier.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ExpertEngine
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class HardEngine
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -85,4 +102,31 @@ object AiModule {
     @Provides
     fun provideEasyAI(actionGenerator: AIActionGenerator, random: Random): EasyAI =
         EasyAI(actionGenerator, random)
+
+    @Provides
+    fun provideSearchClock(): SearchClock = SearchClock.SYSTEM
+
+    /**
+     * Deliberately unscoped. `AIEngineFactory` is constructor-injected into `GameViewModel`, so
+     * this already yields one engine per screen and a fresh one per restart — and the searcher's
+     * tables are allocated on its first call, so a player who never selects the tier never pays
+     * for them.
+     */
+    @Provides
+    @ExpertEngine
+    fun provideExpertAI(
+        actionGenerator: AIActionGenerator,
+        gameEngine: GameEngine,
+        pathFinder: AStarPathFinder,
+        clock: SearchClock,
+    ): SearchAI = SearchAI(actionGenerator, gameEngine, pathFinder, SearchConfig.EXPERT, clock)
+
+    @Provides
+    @HardEngine
+    fun provideHardAI(
+        actionGenerator: AIActionGenerator,
+        gameEngine: GameEngine,
+        pathFinder: AStarPathFinder,
+        clock: SearchClock,
+    ): SearchAI = SearchAI(actionGenerator, gameEngine, pathFinder, SearchConfig.HARD, clock)
 }

@@ -92,15 +92,17 @@ class MonetizationManager @Inject constructor(
     }
 
     /**
-     * Shows a full-screen ad on the way out of a finished match, if one is due.
+     * Shows a full-screen ad on the way out of a match, if one is due.
      *
-     * Called only from the victory screen's "play again" and "home" buttons — the two points
-     * where the player is already changing screens. Never during a turn, and never while the
-     * board is on screen.
+     * Called from the victory screen's three exits and from confirming "leave the game" on the
+     * board — every point at which a match is over for this player and they are already
+     * changing screens. Never during a turn, and never while a board they are still playing on
+     * is in front of them.
      *
-     * Two gates have to open: enough matches since the last one, and enough elapsed time.
-     * The counter alone let a player who lost three quick games in a row meet an ad on every
-     * exit; the clock stops that without making the ad depend on how fast anyone plays.
+     * One gate: enough time since the last one. It used to also count matches and show an ad
+     * every third, which is why one gate is left — with the count at one, the counter is a
+     * comparison that is always true and a stored integer nobody reads.
+     *
      * [onFinished] runs in every path, so a missing or failed ad never strands the player.
      */
     @SuppressLint("UseKtx")
@@ -109,18 +111,14 @@ class MonetizationManager @Inject constructor(
             onFinished()
             return
         }
-        val completedSinceAd = preferences.getInt(COMPLETED_MATCHES_KEY, 0) + 1
         val sinceLastAd = System.currentTimeMillis() - preferences.getLong(LAST_INTERSTITIAL_AT_KEY, 0L)
         val ad = interstitialAd
-        val due = completedSinceAd >= MATCHES_PER_INTERSTITIAL && sinceLastAd >= MIN_INTERSTITIAL_GAP_MILLIS
-        if (!due || ad == null) {
-            preferences.edit().putInt(COMPLETED_MATCHES_KEY, completedSinceAd).apply()
+        if (sinceLastAd < MIN_INTERSTITIAL_GAP_MILLIS || ad == null) {
             if (ad == null) loadInterstitial()
             onFinished()
             return
         }
         preferences.edit()
-            .putInt(COMPLETED_MATCHES_KEY, 0)
             .putLong(LAST_INTERSTITIAL_AT_KEY, System.currentTimeMillis())
             .apply()
         interstitialShowing = true
@@ -183,16 +181,19 @@ class MonetizationManager @Inject constructor(
     }
 
     private companion object {
-        const val COMPLETED_MATCHES_KEY = "completed_matches_since_interstitial"
         const val LAST_INTERSTITIAL_AT_KEY = "last_interstitial_at"
 
         /**
-         * A full-screen ad every third finished match, and never twice inside three minutes.
-         * A game of Koridor runs a few minutes, so in practice this is roughly one ad per
-         * ten to fifteen minutes of play — enough to earn from, well short of the point
-         * where players uninstall or AdMob flags the placement.
+         * The floor between two full-screen ads.
+         *
+         * A match that is finished or abandoned is now an ad every time, which is what the
+         * owner asked for and is the placement AdMob considers natural — the player is leaving
+         * the board either way. This is only here to stop the one sequence that would put two
+         * ads a few seconds apart: a match ends, the player takes the ad on the way out of the
+         * victory screen, starts another and leaves it at once. A minute is longer than that
+         * sequence and far shorter than any real game, so it never costs an ad anyone played
+         * for.
          */
-        const val MATCHES_PER_INTERSTITIAL = 3
-        const val MIN_INTERSTITIAL_GAP_MILLIS = 180_000L
+        const val MIN_INTERSTITIAL_GAP_MILLIS = 60_000L
     }
 }

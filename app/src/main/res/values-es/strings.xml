@@ -220,6 +220,7 @@
     <string name="difficulty_easy">Fácil</string>
     <string name="difficulty_medium">Media</string>
     <string name="difficulty_hard">Difícil</string>
+    <string name="difficulty_expert">Experto</string>
 
     <string name="game_turn">Turno %1$d</string>
     <string name="game_home">Menú principal</string>
@@ -279,6 +280,7 @@
 
     <string name="settings_language">Idioma</string>
     <string name="settings_appearance">Apariencia</string>
+    <string name="settings_store">Tienda</string>
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
@@ -289,7 +291,6 @@
     <string name="settings_haptics_description">Vibración en movimientos y errores.</string>
     <string name="settings_chat">Mensajes de la partida</string>
     <string name="settings_chat_description">Frases fijas y emojis en las partidas en línea.</string>
-    <string name="settings_default_ai">IA predeterminada</string>
     <string name="settings_ad_privacy">Opciones de privacidad de anuncios</string>
 
     <string name="stats_career">Resumen de tu trayectoria</string>

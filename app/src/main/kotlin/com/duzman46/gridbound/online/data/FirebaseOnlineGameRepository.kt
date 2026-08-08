@@ -23,6 +23,7 @@ import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomEndReason
 import com.duzman46.gridbound.online.model.RoomVisibility
+import com.duzman46.gridbound.profile.data.ProfileCodec
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.google.firebase.FirebaseNetworkException
@@ -161,6 +162,15 @@ class FirebaseOnlineGameRepository @Inject constructor(
     private fun queueSession(ranked: Boolean): Flow<MatchmakingState> = flow {
         val userId = requireUserId()
         val profile = profileRepository.loadProfile(userId).successOrNull
+        // Read from the one node the rules compare the entry against, rather than taken off the
+        // profile above. The rule insists the rating written here equals users/{uid}/rating
+        // exactly, and the profile read is allowed to fail — it returns null on a slow or
+        // refused read, and the standing rating was then invented as 1000. That is correct for
+        // exactly as long as nobody has played a rated match; the moment a rating moves, every
+        // queue write on a failed profile read is refused by the rules, surfaces as a thrown
+        // DatabaseException, and reaches the player as "something went wrong" the instant they
+        // press. One extra read of one integer buys a number that cannot disagree.
+        val rating = ratingOf(userId, profile)
         val entry = queueRef().child(userId)
         // Registered before the entry is written, so a process that dies between the two
         // still leaves nothing behind: the server runs the removal either way.
@@ -171,7 +181,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
             // enough to be from a phone that never came back, and a player who is genuinely
             // still here would otherwise be left watching a list they are no longer in.
             while (true) {
-                val session = awaitPairing(userId, profile, ranked, takePlace(entry, profile, ranked))
+                val session = awaitPairing(userId, profile, ranked, takePlace(entry, rating, ranked))
                 if (session != null) {
                     emit(MatchmakingState.Paired(session))
                     return@flow
@@ -185,16 +195,40 @@ class FirebaseOnlineGameRepository @Inject constructor(
         }
     }
 
+    /**
+     * The rating the queue entry has to carry, which is whatever `users/{uid}/rating` holds.
+     *
+     * The profile is preferred when there is one, because it has already been read. Otherwise
+     * the single leaf is fetched, and only a player with no rating at all — nobody with a
+     * profile, which is everyone who can reach this screen — falls back to the starting value.
+     */
+    private suspend fun ratingOf(userId: String, profile: UserProfile?): Int {
+        // Fetched only when the profile read came back empty, because the profile carries the
+        // same number and this is a second round trip to say so.
+        val stored = if (profile != null) {
+            null
+        } else {
+            firebase.database.getReference(Constants.Backend.USERS_PATH)
+                .child(userId)
+                .child(ProfileCodec.Keys.RATING)
+                .awaitSnapshot()
+                // One number type in the database, so it comes back Long and is narrowed here
+                // rather than asking Firebase to convert on our behalf.
+                .getValue(Long::class.java)
+                ?.toInt()
+        }
+        return MatchmakingCodec.queueRating(profileRating = profile?.rating, storedRating = stored)
+    }
+
     /** Writes the entry and returns the stamp the server settled on. */
     private suspend fun takePlace(
         entry: DatabaseReference,
-        profile: UserProfile?,
+        rating: Int,
         ranked: Boolean,
     ): Long {
         entry.setValue(
             mapOf(
-                MatchmakingCodec.Keys.RATING to
-                    (profile?.rating ?: Constants.Backend.STARTING_RATING),
+                MatchmakingCodec.Keys.RATING to rating,
                 MatchmakingCodec.Keys.RANKED to ranked,
                 MatchmakingCodec.Keys.QUEUED_AT to ServerValue.TIMESTAMP,
             ),

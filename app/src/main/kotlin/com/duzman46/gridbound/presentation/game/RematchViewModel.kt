@@ -43,8 +43,15 @@ data class RematchUiState(
     val stage: RematchStage = RematchStage.IDLE,
     val isBusy: Boolean = false,
     /**
-     * False for a guest. A rematch travels on the request channel, which needs a real account
-     * at both ends, so there is no point offering one that could not be delivered.
+     * Whether there is an identity to send the question from — which is everybody who has just
+     * finished an online match, guests included.
+     *
+     * It used to be false for a guest, on the stated reasoning that a rematch "needs a real
+     * account at both ends". That was never what the rules said. `invites/$recipient/$sender`
+     * charges a friendship for a game invitation and nothing but a finished room the two of
+     * them played for a rematch, so a guest could always both send and receive one. Refusing to
+     * offer it took the most ordinary thing in the game — two people who have just played
+     * wanting to play again — away from exactly the players who had not signed up for anything.
      */
     val canAsk: Boolean = false,
     val message: UiText? = null,
@@ -67,7 +74,7 @@ class RematchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        RematchUiState(canAsk = sessionManager.state.value.canUseSocialFeatures),
+        RematchUiState(canAsk = sessionManager.state.value.user != null),
     )
     val uiState: StateFlow<RematchUiState> = _uiState.asStateFlow()
 

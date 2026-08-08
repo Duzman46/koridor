@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
@@ -247,11 +248,20 @@ class GameViewModel @Inject constructor(
         }
         val forfeits = _uiState.value.leavingForfeits
         viewModelScope.launch {
+            // Bounded, because [onFinished] is what takes the player off this screen and it is
+            // the only thing that does. The write goes through a Firebase transaction, and a
+            // transaction on a handset that has lost the network does not fail — it waits for a
+            // connection that may not come back. The player who asked to leave would sit on a
+            // board they had already left, indefinitely, with the door held by a promise. The
+            // seat is not abandoned by giving up on the wait: the server's onDisconnect handler
+            // and the ten-minute idle sweep both still close the room behind them.
             runCatching {
-                if (forfeits) {
-                    onlineRepository.resign(session)
-                } else {
-                    onlineRepository.leaveRoom(session)
+                withTimeout(LEAVE_TIMEOUT_MILLIS) {
+                    if (forfeits) {
+                        onlineRepository.resign(session)
+                    } else {
+                        onlineRepository.leaveRoom(session)
+                    }
                 }
             }
             onFinished()
@@ -745,6 +755,14 @@ class GameViewModel @Inject constructor(
     }
 
     private companion object {
+        /**
+         * How long leaving an online match waits for the server before going anyway.
+         *
+         * Long enough for a healthy write on a slow connection, short enough that a player who
+         * has just confirmed they want to leave is never held on the board they left.
+         */
+        const val LEAVE_TIMEOUT_MILLIS = 4_000L
+
         /** How long to wait before trying again when the server refuses an idle forfeit. */
         const val IDLE_FORFEIT_RETRY_MILLIS = 30_000L
 

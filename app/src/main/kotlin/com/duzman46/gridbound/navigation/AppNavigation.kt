@@ -297,6 +297,7 @@ fun AppNavigation(
                         )
                     },
                     onOnline = { navController.navigateFrom(entry, Routes.online()) },
+                    showAdBanner = monetization.adsAllowed,
                 )
             }
 
@@ -496,6 +497,7 @@ fun AppNavigation(
                             }
                         }
                     },
+                    onCompletedMatchExit = onCompletedMatchExit,
                     onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
                     onOpenProfile = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))
@@ -632,13 +634,31 @@ fun AppNavigation(
         // player wherever they are. See [RequestBar] for why it sits where it does.
         RequestBar(
             onOpenGame = { session ->
-                navController.navigate(
-                    Routes.onlineGame(session.roomCode, session.playerId, session.userId),
-                ) {
-                    // A match accepted from inside another one replaces it rather than
-                    // stacking a second board on top of the first.
-                    popUpTo(Routes.GAME) { inclusive = true }
-                    launchSingleTop = true
+                val open = {
+                    navController.navigate(
+                        Routes.onlineGame(session.roomCode, session.playerId, session.userId),
+                    ) {
+                        // A match accepted from inside another one replaces it rather than
+                        // stacking a second board on top of the first, and the same goes for the
+                        // finished match's victory screen.
+                        popUpTo(Routes.GAME) { inclusive = true }
+                        popUpTo(Routes.WINNER) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+                // Accepting a rematch is how the player who was *asked* leaves a finished match,
+                // and it is the only way out of one that did not pass through the ad. It is the
+                // same departure the winner screen's own buttons make, so it earns the same ad.
+                //
+                // Conditional, and that is the whole point of the check: the identical bar
+                // accepts an invitation from the home screen or the friends list, where nothing
+                // is being left and an ad would arrive in front of a player who has just asked
+                // to start playing.
+                val route = navController.currentDestination?.route
+                if (route == Routes.GAME || route == Routes.WINNER) {
+                    onCompletedMatchExit(open)
+                } else {
+                    open()
                 }
             },
             onOpenLobby = { roomCode -> navController.navigate(Routes.online(roomCode)) },

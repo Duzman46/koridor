@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -38,6 +39,7 @@ import com.duzman46.gridbound.game.board.SeatColors
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.ui.components.AdBanner
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.home.GlyphKind
@@ -60,8 +62,14 @@ fun PlayModeScreen(
     onVsBot: () -> Unit,
     onLocal: () -> Unit,
     onOnline: () -> Unit,
+    showAdBanner: Boolean,
 ) {
-    ModeColumn(stringResource(R.string.menu_play), onBack) {
+    // The second banner in the app, and the last. This screen and the home screen are the two a
+    // player passes through on the way to every match and neither is a board, so a strip at the
+    // bottom of them costs nobody a move. The difficulty screen deliberately has none: it sits
+    // between this one and the game, and three banners in three taps is what makes a game feel
+    // like it is selling something rather than being played.
+    ModeColumn(stringResource(R.string.menu_play), onBack, showAdBanner) {
         PlaySlab(stringResource(R.string.menu_online), onClick = onOnline, glyph = GlyphKind.ONLINE)
         HomeChoice(stringResource(R.string.play_vs_bot), GlyphKind.VS_BOT, onClick = onVsBot)
         HomeChoice(stringResource(R.string.play_local), GlyphKind.FRIENDS, onClick = onLocal)
@@ -177,9 +185,13 @@ private fun SeatSwatch(
 private fun ModeColumn(
     title: String,
     onBack: () -> Unit,
+    showAdBanner: Boolean = false,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(title, onBack) }) { padding ->
+    Scaffold(
+        topBar = { ScreenTopBar(title, onBack) },
+        bottomBar = { if (showAdBanner) AdBanner(Modifier.navigationBarsPadding()) },
+    ) { padding ->
         ScreenBackground {
             BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
                 // Read before the scroll modifier below makes the height unbounded, which is

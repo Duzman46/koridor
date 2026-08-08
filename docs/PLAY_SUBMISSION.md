@@ -3,8 +3,24 @@
 Bu belge, Play Console'da adım adım ne yapılacağını ve her alana tam olarak ne yazılacağını
 tutar. Sıra önemli: 7. adım 6. adımın çıktısına bağlı, 8. adım da 2. adımdan sonra işliyor.
 
-Beyanları geliştirici olarak **sen** yapıyorsun. Bu belge cevapları hazırlar; işaretlemeyi sen
-yaparsın, çünkü yanlış beyan geliştirici hesabının sorumluluğunda.
+Beyanları geliştirici olarak **sen** yapıyorsun. Bu belge cevapları hazırlar; yanlış beyan
+geliştirici hesabının sorumluluğunda.
+
+## Nerede kalındı — 2026-08-08
+
+1–7. adımlar tamamlandı ve on değişiklik incelemeye gönderildi; konsol "Değişiklikleriniz şu
+anda inceleniyor" diyor. Somut durum:
+
+| | |
+|---|---|
+| Uygulama | `Koridor: Wall & Path Strategy` / `Koridor: Duvar ve Yol Oyunu` |
+| Play uygulama kimliği | `4975646665764434612`, geliştirici `8806161756596118584` |
+| İç test | sürüm 5 (1.0.0) yayında, kanal etkin, `Koridor ic testi` listesi tanımlı |
+| Kategori | Oyun → Masa |
+| İmzalama | Play'in anahtarı Firebase'e eklendi (7. adım) |
+
+Kalanlar: inceleme sonucu; ardından **kapalı test** (12 test kullanıcısı, 14 gün) — kişisel
+geliştirici hesaplarında üretime geçmenin ön şartı; ve 8. adımdaki AdMob işleri.
 
 ---
 
@@ -90,8 +106,17 @@ ve o dosya olmadan programatik alıcıların büyük kısmı envantere teklif ve
   İngilizce sayfaya, `-tr` ile bitenler Türkçe sayfaya. Kendi dilinde sayfası olmayan herkes
   varsayılanın — yani İngilizce setin — görüntülerini görür. İkisi de 2026-08-08'de yayın
   derlemesinden çekildi.
-- Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png` **eski** — eski amblemi ve eski
-  paleti gösteriyor. Kullanmadan önce yenilenmeli.
+- Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png`. 2026-08-08'de yayın paletiyle
+  yeniden üretildi — koyu tahta, mavi ve kırmızı piyon, mint duvarlar, solda simgenin kendi
+  motifi. Üreten betik `docs/store/feature-graphic.py`; palet değişirse yeniden çalıştırılır.
+
+Telefon ekran görüntüleri 1080×2160, yani 1:2 — Play'in metninde yazan 9:16'dan uzun. Konsol
+bunu sorunsuz kabul ediyor; yalnızca "tanıtımdan yararlanma" için en az üç tanesinin 16:9 ya da
+9:16 olması isteniyor, bu da yayını engelleyen bir şey değil.
+
+Tablet ekran görüntüleri (7 ve 10 inç) formda yıldızlı görünüyor ama boş bırakılabiliyor:
+mağaza girişi onlarsız kaydedildi. Yokluklarının tek sonucu büyük ekran yüzeylerinde öne
+çıkmamak.
 
 ---
 
@@ -124,8 +149,14 @@ topladığından türetildi ve yayımlanan gizlilik sayfasıyla aynı şeyi söy
 arasındaki çelişki tek başına ret sebebi.
 
 Toplananlar özetle: e-posta, kullanıcı kimlikleri, kullanıcı adı, uygulama içi eylemler, oda
-adı, maç içi hazır mesajlar, satın alma geçmişi, kilitlenme günlükleri, tanılama, ve cihaz
-kimlikleri. **Paylaşılan tek kalem** Reklam Kimliği (AdMob).
+adı, maç içi hazır mesajlar, satın alma geçmişi, kilitlenme günlükleri, tanılama, cihaz
+kimlikleri ve yaklaşık konum. **Paylaşılan iki kalem** Reklam Kimliği ve yaklaşık konum;
+ikisi de AdMob'dan gelir.
+
+Yaklaşık konum, uygulamanın kendi topladığı bir şey değil: konum izni istenmez, konum API'si
+hiç çağrılmaz. AdMob reklam sunarken isteğin IP'sinden şehir düzeyinde konum türetir ve Play'in
+formu üçüncü taraf SDK'ları da kapsar. Yayımlanan gizlilik sayfası bunu zaten söylüyor;
+beyan etmemek, form ile sayfa arasında çelişki demek olurdu.
 
 Analytics kararı: kalıyor ve beyan ediliyor — "Uygulama etkinliği → Uygulama içi eylemler" ve
 "Cihaz veya diğer kimlikler" satırlarına **Analitik** amacı ekleniyor. Gerekçesi
@@ -149,7 +180,14 @@ değil:
 - **Uygulama erişimi:** tüm içerik giriş yapmadan erişilebilir değil; çevrim içi bölüm hesap
   istiyor. İncelemeci için misafir girişi yeterli — "Misafir olarak oyna" ile her şey açılıyor,
   test hesabı vermeye gerek yok. Bunu açıklama alanına yaz.
-- **Reklam kimliği:** Evet, kullanılıyor (AdMob).
+- **Reklam kimliği:** Evet, kullanılıyor (AdMob). Amaç olarak *Analiz* ve *Reklam veya
+  pazarlama* işaretlenir — veri güvenliği formundaki "Cihaz veya diğer kimlikler" satırıyla
+  aynı iki amaç. İkisinin çelişmemesi gerekiyor.
+- **Resmi kurum uygulamaları:** Hayır.
+- **Finans ile ilgili özellikler:** hiçbiri. Listedeki kalemler bankacılık, kredi, para
+  transferi, kripto ve yatırım; "reklamları kaldır" satın alması bunların hiçbiri değil,
+  dolayısıyla "Uygulamamda finans ile ilgili özellik sağlanmıyor" işaretlenir.
+- **Sağlık uygulamaları:** hiçbiri.
 
 ---
 
@@ -161,17 +199,35 @@ Sebebi: Play Billing yalnızca Play'den kurulmuş bir derlemede çalışıyor, y
 kaldır" satın alımını başka türlü sınayamıyorsun. `docs/MANUAL_TESTS.md` E bölümü bu adımda
 koşulur.
 
+**2026-08-08'de yapıldı.** Sürüm 5 (1.0.0) iç test kanalında yayında; kanal etkin ve
+`Koridor ic testi` listesi (`furkanduzman46@gmail.com`, `kolaydibos@gmail.com`) tanımlı.
+Sürüm notları en-US ve tr-TR için girildi.
+
+Sürüm notunda ve mağaza metinlerinde **`Quoridor` kelimesi geçmemeli** — ilk yazımda geçmişti ve
+gönderilmeden önce düzeltildi. Gerekçesi 2. adımdaki marka notu; kural yalnızca başlık ve
+açıklama için değil, sürüm notu dahil Play'e yazdığın her metin için geçerli.
+
 ---
 
 ## 7. Yükledikten sonra — App Signing (atlanırsa Google girişi kırılır)
 
 **Test ve yayınlama → Kurulum → Uygulama bütünlüğü → Uygulama imzalama**.
 
-Oradaki **App signing key** sertifikasının SHA-1'ini oku.
+**2026-08-08'de yapıldı.** Play'in imzalama anahtarı yükleme anahtarından farklı çıktı,
+dolayısıyla bu adım gerekliydi ve tamamlandı:
 
-- Yukarıdaki yükleme anahtarının SHA-1'i ile aynıysa yapacak bir şey yok.
-- Farklıysa: Firebase Console → `gridbound-duzman46` → Proje ayarları → Android uygulaman →
-  **Parmak izi ekle** ile hem SHA-1'i hem SHA-256'yı ekle.
+| | SHA-1 | SHA-256 |
+|---|---|---|
+| Yükleme anahtarı (senin `.jks`) | `BA:49:80:EE:36:DC:A6:31:7C:D3:E0:3A:B0:12:21:CB:05:60:75:18` | `21:4A:F2:…:DD:AB` |
+| **Play imzalama anahtarı** | `B7:E2:72:AA:55:CA:92:D8:BD:43:74:C6:F1:A9:BF:49:42:A8:E1:B0` | `70:A3:0C:51:58:F8:A0:FA:33:7B:C7:CD:21:52:FD:4B:64:80:20:2A:E1:2F:69:A7:30:59:ED:65:FA:12:A5:E7` |
+
+Alttaki satırın ikisi de Firebase'e (`gridbound-duzman46` → Proje ayarları → Android uygulaması
+→ Parmak izi ekle) eklendi. Anahtar değişmediği sürece bir daha yapılmayacak.
+
+Play ayrıca bir **kuantum sonrası** imzalama anahtarı da tutuyor (SHA-1
+`A0:9D:A7:F6:0E:E5:64:CF:06:67:0B:AD:43:C9:4B:E0:BE:28:E7:BD`). Kullanıcıya inen APK'yı imzalayan
+klasik anahtar olduğu için Firebase'e o eklenmedi; Google ileride dağıtımı ona çevirirse eklenmesi
+gerekir.
 
 Play uygulamayı kendi anahtarıyla yeniden imzalıyor, yani mağazadan inen sürümün sertifikası
 senin test ettiğin sertifika değil. Google ile giriş sertifikaya bağlı: bu adım atlanırsa senin
@@ -198,7 +254,8 @@ Yayınlandıktan sonra:
 
 `docs/WORK_ORDER.md` sonundaki liste geçerliliğini koruyor. Yayın açısından bilinmesi gerekenler:
 
-- Öne çıkan görsel eski (2. adım).
+- Tablet ekran görüntüsü yok (2. adım) ve PC Üzerinde Google Play Games için de ekran görüntüsü
+  yüklenmedi. İkisi de isteğe bağlı; sonucu yalnızca o yüzeylerde öne çıkmamak.
 - `recentMatches` için temizlik işi yok: silinen bir hesabın maç geçmişi satırları kalıyor ve
   bu `docs/DATA_SAFETY.md` §4.2'de beyan edilmiş durumda.
 - Worker en kötü dakikada ücretsiz planın 50 alt isteğinden 47'sini kullanıyor.

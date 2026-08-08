@@ -67,8 +67,16 @@ class RequestChannelViewModel @Inject constructor(
         viewModelScope.launch {
             sessionManager.state
                 .flatMapLatest { session ->
+                    // Everybody with an identity listens, guests included. This used to demand a
+                    // real account on the reasoning that the channel is a social feature, but
+                    // the rules are narrower than that and always were: a game invitation needs
+                    // a friendship, which nobody can have with a guest, while a rematch needs
+                    // only a finished room the two of them played. So the one thing that can
+                    // ever reach a guest here is a rematch from the player they have just
+                    // played, and refusing to listen protected them from nothing — it only made
+                    // the offer unanswerable, leaving the sender waiting on a question that was
+                    // never asked.
                     session.user?.userId
-                        ?.takeIf { session.canUseSocialFeatures }
                         ?.let(socialRepository::observeRequests)
                         ?: flowOf(emptyList())
                 }

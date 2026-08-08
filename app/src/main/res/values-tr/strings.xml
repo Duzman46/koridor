@@ -118,7 +118,7 @@
     <string name="profile_recent_result_win">Galibiyet</string>
     <string name="profile_recent_result_loss">Mağlubiyet</string>
     <string name="profile_recent_result_draw">Beraberlik</string>
-    <string name="profile_recent_unranked">Puansız</string>
+    <string name="profile_recent_unranked">Derecesiz</string>
     <string name="profile_recent_unknown_opponent">Silinmiş oyuncu</string>
 
     <!-- Hesap yönetimi -->
@@ -159,7 +159,7 @@
     <string name="room_error_password_wrong">Oda şifresi hatalı.</string>
     <string name="room_error_password_too_short">Oda şifresi en az %1$d karakter olmalı.</string>
     <string name="room_error_name_too_long">Oda adı çok uzun.</string>
-    <string name="room_error_ranked_requires_account">Puanlı maç için hesap gerekir. Puan kazanmak için hesabını bağla.</string>
+    <string name="room_error_ranked_requires_account">Dereceli maç için hesap gerekir. Dereceli oynamak için hesabını bağla.</string>
 
     <string name="online_title">Çevrim İçi Oyna</string>
     <string name="online_create_room">Oda oluştur</string>
@@ -188,7 +188,7 @@
 
     <string name="game_resign">Pes et</string>
     <string name="game_resign_confirm_title">Maçtan çekilesin mi?</string>
-    <string name="game_resign_confirm_message">Rakibin kazanır ve puanlı maçta puanın düşer.</string>
+    <string name="game_resign_confirm_message">Rakibin kazanır ve dereceli maçta puanın düşer.</string>
     <string name="game_opponent_left">Rakibinin bağlantısı koptu. Dönmesi için biraz süresi var.</string>
     <string name="game_reconnecting">Yeniden bağlanılıyor…</string>
     <string name="game_turn_timer">%1$d:%2$02d</string>
@@ -219,8 +219,8 @@
     <string name="leaderboard_tab_global">Genel</string>
     <string name="leaderboard_tab_weekly">Haftalık</string>
     <string name="leaderboard_tab_friends">Arkadaşlar</string>
-    <string name="leaderboard_empty">Henüz puanlı maç oynanmadı.</string>
-    <string name="leaderboard_empty_weekly">Bu hafta henüz puanlı maç oynanmadı.</string>
+    <string name="leaderboard_empty">Henüz dereceli maç oynanmadı.</string>
+    <string name="leaderboard_empty_weekly">Bu hafta henüz dereceli maç oynanmadı.</string>
     <string name="leaderboard_empty_friends">Karşılaştırmak için arkadaş ekle.</string>
     <string name="leaderboard_your_rank">Senin sıran</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
@@ -249,7 +249,7 @@
     <string name="game_history_pawn_label">Piyon</string>
     <string name="game_exit_title">Oyundan çıkılsın mı?</string>
     <string name="game_exit_message">Mevcut oyun sona erecek. Oyundan çıkmak istediğine emin misin?</string>
-    <string name="game_exit_online_message">Çıkmak maçı kaybetmektir. Rakibin kazanır ve puanlı maçta puanın düşer.</string>
+    <string name="game_exit_online_message">Çıkmak maçı kaybetmektir. Rakibin kazanır ve dereceli maçta puanın düşer.</string>
     <string name="game_exit_keep_playing">Oyuna Devam</string>
     <string name="game_exit_confirm">Oyundan Çık</string>
     <string name="game_place_wall">Duvar Yerleştir</string>

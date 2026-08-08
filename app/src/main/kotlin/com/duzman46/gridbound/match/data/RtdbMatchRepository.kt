@@ -102,6 +102,7 @@ class RtdbMatchRepository @Inject constructor(
     /** The fields `worker/src/sweep.ts` writes under `recentMatches/{uid}/{matchId}`. */
     object HistoryKeys {
         const val OPPONENT_NAME = "opponentName"
+        const val OPPONENT_USER_ID = "opponentUserId"
         const val RESULT = "result"
         const val PLAYED_AT = "playedAt"
         const val RATING_CHANGE = "ratingChange"
@@ -126,6 +127,10 @@ private fun DataSnapshot.toRecentMatch(): RecentMatch? {
         opponentName = string(RtdbMatchRepository.HistoryKeys.OPPONENT_NAME),
         outcome = outcome,
         playedAt = playedAt,
+        // Not a reason to drop the row when it is missing: a match played before the server
+        // started recording who the opponent was is still a match that was played, and the
+        // row simply cannot be opened. See [RecentMatch.hasOpponentProfile].
+        opponentUserId = string(RtdbMatchRepository.HistoryKeys.OPPONENT_USER_ID),
         ratingChange = child(RtdbMatchRepository.HistoryKeys.RATING_CHANGE)
             .getValue(Long::class.java)?.toInt(),
     )

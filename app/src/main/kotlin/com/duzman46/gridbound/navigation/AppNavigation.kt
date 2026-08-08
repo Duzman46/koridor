@@ -194,7 +194,7 @@ fun AppNavigation(
                 viewModel.HandleEntryEvents(navController, session)
                 SignInScreen(
                     state = state,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onEmail = viewModel::setEmail,
                     onPassword = viewModel::setPassword,
                     onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
@@ -203,13 +203,13 @@ fun AppNavigation(
                 )
             }
 
-            composable(Routes.SIGN_UP) {
+            composable(Routes.SIGN_UP) { entry ->
                 val viewModel: AuthViewModel = hiltViewModel()
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 viewModel.HandleEntryEvents(navController, session)
                 SignUpScreen(
                     state = state,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onEmail = viewModel::setEmail,
                     onPassword = viewModel::setPassword,
                     onConfirmPassword = viewModel::setConfirmPassword,
@@ -218,12 +218,12 @@ fun AppNavigation(
                 )
             }
 
-            composable(Routes.FORGOT_PASSWORD) {
+            composable(Routes.FORGOT_PASSWORD) { entry ->
                 val viewModel: AuthViewModel = hiltViewModel()
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 ForgotPasswordScreen(
                     state = state,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onEmail = viewModel::setEmail,
                     onSubmit = viewModel::sendPasswordReset,
                 )
@@ -288,7 +288,7 @@ fun AppNavigation(
 
             composable(Routes.PLAY) { entry ->
                 PlayModeScreen(
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onVsBot = { navController.navigateFrom(entry, Routes.DIFFICULTY) },
                     onLocal = {
                         navController.navigateFrom(
@@ -303,7 +303,7 @@ fun AppNavigation(
 
             composable(Routes.DIFFICULTY) { entry ->
                 DifficultyScreen(
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onSelected = { difficulty, seat ->
                         navController.navigateFrom(entry, Routes.game(GameMode.VS_AI, difficulty, seat))
                     },
@@ -312,7 +312,7 @@ fun AppNavigation(
 
             composable(Routes.LEADERBOARD) { entry ->
                 LeaderboardRoute(
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onOpenProfile = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))
                     },
@@ -321,7 +321,7 @@ fun AppNavigation(
 
             composable(Routes.FRIENDS) { entry ->
                 FriendsRoute(
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     // The lobby owns joining, so an invitation lands there with the code already
                     // filled in rather than duplicating the join logic on this screen.
                     onJoinInvite = { roomCode ->
@@ -347,8 +347,16 @@ fun AppNavigation(
             composable(
                 route = Routes.PLAYER_PROFILE,
                 arguments = listOf(navArgument("userId") { type = NavType.StringType }),
-            ) {
-                PlayerProfileRoute(onBack = navController::popBackStack)
+            ) { entry ->
+                PlayerProfileRoute(
+                    onBack = { navController.popFrom(entry) },
+                    // A history row on somebody else's page names a third player, and opening
+                    // them is the same destination this screen already is — so it stacks rather
+                    // than replaces, and back walks the chain the player actually followed.
+                    onOpenPlayer = { userId ->
+                        navController.navigateFrom(entry, Routes.playerProfile(userId))
+                    },
+                )
             }
 
             composable(Routes.PROFILE) { entry ->
@@ -365,11 +373,15 @@ fun AppNavigation(
                     // have no profile. What decides it is whether a profile can exist at all.
                     hasAccount = state.canUseSocialFeatures,
                     recentGames = recentGames,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onEdit = { navController.navigateFrom(entry, Routes.EDIT_PROFILE) },
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     onLeaderboard = { navController.navigateFrom(entry, Routes.LEADERBOARD) },
                     onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
+                    // A rival from a finished match, reached from the row that remembers them.
+                    onOpenPlayer = { userId ->
+                        navController.navigateFrom(entry, Routes.playerProfile(userId))
+                    },
                 )
             }
 
@@ -380,15 +392,15 @@ fun AppNavigation(
                 EditProfileScreen(
                     state = state,
                     canChangeUsername = profileSession.canChangeUsername,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onUsername = viewModel::setUsername,
                     onAvatar = viewModel::setAvatar,
                     onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
-                    onSubmit = { viewModel.saveProfile { navController.popBackStack() } },
+                    onSubmit = { viewModel.saveProfile { navController.popScreen() } },
                 )
             }
 
-            composable(Routes.ACCOUNT) {
+            composable(Routes.ACCOUNT) { entry ->
                 val viewModel: AccountViewModel = hiltViewModel()
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 val accountSession by viewModel.session.collectAsStateWithLifecycle()
@@ -417,7 +429,7 @@ fun AppNavigation(
                 AccountScreen(
                     state = state,
                     session = accountSession,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onEmail = viewModel::setEmail,
                     onPassword = viewModel::setPassword,
                     onLinkGoogle = {
@@ -445,7 +457,7 @@ fun AppNavigation(
             ) { entry ->
                 OnlineLobbyRoute(
                     inviteCode = entry.arguments?.getString("inviteCode").orEmpty(),
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onOpenGame = { onlineSession ->
                         navController.navigate(
                             Routes.onlineGame(
@@ -599,7 +611,7 @@ fun AppNavigation(
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 SettingsScreen(
                     state = state,
-                    onBack = navController::popBackStack,
+                    onBack = { navController.popFrom(entry) },
                     onLanguage = viewModel::setLanguage,
                     onThemeMode = viewModel::setThemeMode,
                     onSound = viewModel::setSoundEnabled,
@@ -623,10 +635,10 @@ fun AppNavigation(
                 )
             }
 
-            composable(Routes.STATISTICS) {
+            composable(Routes.STATISTICS) { entry ->
                 val viewModel: SettingsViewModel = hiltViewModel()
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                StatisticsScreen(state.statistics, navController::popBackStack)
+                StatisticsScreen(state.statistics) { navController.popFrom(entry) }
             }
         }
 
@@ -690,6 +702,27 @@ private fun NavHostController.navigateFrom(
 }
 
 /**
+ * Leaves a screen because the player pressed its back arrow. The mirror of [navigateFrom], and
+ * for the same reason: see [canLeaveScreen].
+ *
+ * Every back arrow in the graph goes through here rather than through `popBackStack` itself,
+ * because the tap that over-pops is never aimed at the screen it takes away — it is the second
+ * half of a double tap on a control that is already on its way out.
+ */
+private fun NavHostController.popFrom(entry: NavBackStackEntry) {
+    val resumed = entry.lifecycle.currentState == Lifecycle.State.RESUMED
+    if (canLeaveScreen(resumed, previousBackStackEntry?.destination?.route)) popBackStack()
+}
+
+/**
+ * Leaves a screen because something other than a press said so — a save that has landed, or an
+ * event from a repository. Held only to the backstop; see [canLeaveScreenUnprompted].
+ */
+private fun NavHostController.popScreen() {
+    if (canLeaveScreenUnprompted(previousBackStackEntry?.destination?.route)) popBackStack()
+}
+
+/**
  * Moves the player on through the entry sequence, clearing the screen they are leaving.
  *
  * Every hand-off between the splash, the welcome screens, the tutorial and the username
@@ -732,7 +765,7 @@ private fun AuthViewModel.HandleEntryEvents(
                         popUpTo(0) { inclusive = true }
                     }
 
-                AuthEvent.PasswordResetSent -> navController.popBackStack()
+                AuthEvent.PasswordResetSent -> navController.popScreen()
             }
         }
     }

@@ -27,7 +27,7 @@ import com.duzman46.gridbound.social.domain.SocialRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 /**
@@ -41,7 +41,7 @@ class FakeAuthRepository(
     override val isGoogleSignInAvailable: Boolean = true,
 ) : AuthRepository {
 
-    val state = MutableStateFlow<AuthState>(AuthState.SignedOut)
+    private val state = MutableStateFlow<AuthState>(AuthState.SignedOut)
     override val authState: Flow<AuthState> = state
 
     var deleteCount = 0
@@ -82,7 +82,42 @@ class FakeAuthRepository(
     /** Anonymous ids are handed out in order so a test can assert the id did not change. */
     private var nextGuestId = 1
 
-    override fun currentUser(): AuthUser? = (state.value as? AuthState.SignedIn)?.user
+    /**
+     * Who Firebase would name as the signed-in user right now, which is not always what
+     * [authState] has published.
+     *
+     * The real repository reads the two from different places — `currentUser` straight off
+     * the auth object, `authState` out of a listener the session then rebuilds itself from —
+     * so the live identity leads the published one for as long as that takes. Keeping them
+     * apart here is what lets a test stand in the gap; see [holdIdentityFeed].
+     */
+    private var liveUser: AuthUser? = null
+
+    private var identityFeedHeld = false
+
+    /**
+     * Stops [authState] carrying identity changes, leaving the live identity to move alone.
+     *
+     * Stands in for the instant after a credential lands: Firebase knows who this is, and
+     * everything reading the session still sees the player who was there a moment ago.
+     */
+    fun holdIdentityFeed() {
+        identityFeedHeld = true
+    }
+
+    /**
+     * Lets [authState] carry identity changes again, and publishes the one it held back.
+     *
+     * The catch-up that actually happens on a device, and the case a test has to release the
+     * feed to reach at all: held and never released models a session that never arrives, which
+     * is the far end of the wait rather than the reason there is one.
+     */
+    fun releaseIdentityFeed() {
+        identityFeedHeld = false
+        becomeIdentity(liveUser)
+    }
+
+    override fun currentUser(): AuthUser? = liveUser
 
     override suspend fun signInAsGuest(): Outcome<AuthUser> = complete {
         currentUser()?.takeIf { it.accountType == AccountType.GUEST }
@@ -118,7 +153,7 @@ class FakeAuthRepository(
     override suspend fun discardGuestIdentity() {
         val guest = currentUser()?.takeIf { it.accountType.isGuest } ?: return
         if (!guestDeletionRefused) discardedGuestIds += guest.userId
-        state.value = AuthState.SignedOut
+        becomeIdentity(null)
     }
 
     override fun forgetExistingAccountCredential() {
@@ -128,7 +163,7 @@ class FakeAuthRepository(
     override suspend fun signOut() {
         signOutCount++
         hasCredentialForExistingAccount = false
-        state.value = AuthState.SignedOut
+        becomeIdentity(null)
     }
 
     override suspend fun reauthenticate(activityContext: Context?, password: String): Outcome<Unit> {
@@ -139,7 +174,7 @@ class FakeAuthRepository(
     override suspend fun deleteAccount(): Outcome<Unit> {
         deleteCount++
         nextFailure?.let { return Outcome.Failure(it) }
-        state.value = AuthState.SignedOut
+        becomeIdentity(null)
         return Outcome.Success(Unit)
     }
 
@@ -148,15 +183,22 @@ class FakeAuthRepository(
         val current = currentUser() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
         nextFailure?.let { return Outcome.Failure(it) }
         val linked = current.copy(accountType = type, email = email)
-        state.value = AuthState.SignedIn(linked)
+        becomeIdentity(linked)
         return Outcome.Success(linked)
     }
 
     private fun complete(build: () -> AuthUser): Outcome<AuthUser> {
         nextFailure?.let { return Outcome.Failure(it) }
         val user = build()
-        state.value = AuthState.SignedIn(user)
+        becomeIdentity(user)
         return Outcome.Success(user)
+    }
+
+    private fun becomeIdentity(user: AuthUser?) {
+        liveUser = user
+        if (!identityFeedHeld) {
+            state.value = user?.let(AuthState::SignedIn) ?: AuthState.SignedOut
+        }
     }
 
     companion object {
@@ -275,10 +317,28 @@ class FakeSocialRepository : SocialRepository {
     /** Who was reported, why, and in which room. */
     val reports = mutableListOf<Triple<String, ContentReportReason, String>>()
 
-    override fun observeFriendships(userId: String): Flow<List<Friend>> = flowOf(emptyList())
-    override fun observeRequests(userId: String): Flow<List<PlayerRequest>> = flowOf(emptyList())
+    /**
+     * What the three listeners publish. StateFlows so a test can change them mid-collection,
+     * which is how the real ones behave: they stay open and speak again.
+     */
+    val friendships = MutableStateFlow<List<Friend>>(emptyList())
+    val requests = MutableStateFlow<List<PlayerRequest>>(emptyList())
+    val presence = MutableStateFlow<Map<String, PresenceState>>(emptyMap())
+
+    /**
+     * Stands in for how a database listener reports a refused read or a connection it has lost:
+     * by throwing into the flow rather than by returning anything. Set, all three do it, because
+     * what takes an app down is whichever one is not guarded.
+     */
+    var listenerFailure: Throwable? = null
+
+    override fun observeFriendships(userId: String): Flow<List<Friend>> = orFail(friendships)
+    override fun observeRequests(userId: String): Flow<List<PlayerRequest>> = orFail(requests)
     override fun observePresence(userIds: Set<String>): Flow<Map<String, PresenceState>> =
-        flowOf(emptyMap())
+        orFail(presence)
+
+    private fun <T> orFail(source: Flow<T>): Flow<T> =
+        listenerFailure?.let { error -> flow { throw error } } ?: source
 
     override suspend fun findByUsername(username: String): Outcome<UserProfile?> =
         Outcome.Success(null)

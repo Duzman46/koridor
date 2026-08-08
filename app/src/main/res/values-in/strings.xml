@@ -184,7 +184,9 @@
     <string name="game_rival_turn">Giliran lawan</string>
 
     <string name="chat_open">Katakan sesuatu</string>
-    <string name="chat_mute">Matikan pesan</string>
+    <string name="chat_mute">Bisukan di pertandingan ini</string>
+    <string name="chat_unmute">Aktifkan lagi pesan</string>
+    <string name="chat_muted">Pesan dibisukan di pertandingan ini</string>
     <string name="chat_good_luck">Semoga beruntung</string>
     <string name="chat_nice_move">Langkah bagus</string>
     <string name="chat_well_played">Main bagus</string>

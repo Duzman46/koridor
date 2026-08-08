@@ -108,6 +108,10 @@ enum class MatchOutcome {
  * would cost a profile read per line and would empty itself the day they deleted their
  * account, and a match against somebody who has since left is still a match that was played.
  *
+ * @param opponentUserId who they were, beside what they were called — what turns the row from a
+ *   caption into a way of reaching them. Empty on a row written before the field existed, and on
+ *   one whose report did not name the opponent, so a reader has to treat it as absent rather
+ *   than assume ten rows all carry one.
  * @param ratingChange null when nothing was at stake — an unranked match, or one against a
  *   guest, which the app marks unranked for the same reason. Null rather than zero because
  *   zero is a different answer: two evenly matched players who draw move each other by
@@ -117,5 +121,9 @@ data class RecentMatch(
     val opponentName: String,
     val outcome: MatchOutcome,
     val playedAt: Long,
+    val opponentUserId: String = "",
     val ratingChange: Int? = null,
-)
+) {
+    /** Whether this row has somebody behind it to open. */
+    val hasOpponentProfile: Boolean get() = opponentUserId.isNotBlank()
+}

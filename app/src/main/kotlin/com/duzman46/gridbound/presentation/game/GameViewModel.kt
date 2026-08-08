@@ -731,14 +731,16 @@ class GameViewModel @Inject constructor(
     }
 
     /**
-     * Switches match messages off for good, from inside the match they are spoiling.
+     * Silences the rival for the rest of this match, and lets them back in.
      *
-     * The same setting the settings screen holds, deliberately: a mute that lasted only until
-     * the next match would have to be found again every time, and the player who reaches for
-     * it has already decided.
+     * Deliberately not the setting the settings screen holds. That one is the standing answer
+     * to whether this player wants canned messages at all; writing it from the board turned
+     * one rival who would not stop into a preference that then had to be hunted down two
+     * screens away to undo. This belongs to the match, so it is cleared where it was set and
+     * it is gone by the next one.
      */
-    fun muteMatchMessages() {
-        viewModelScope.launch { settingsManager.setMatchMessagesEnabled(false) }
+    fun toggleMatchMute() {
+        _uiState.update { it.copy(matchMessagesMuted = !it.matchMessagesMuted) }
     }
 
     /** Concedes the match. The rules only allow handing the win to the opponent. */

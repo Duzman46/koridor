@@ -155,6 +155,7 @@ fun ProfileScreen(
     onAccount: () -> Unit,
     onLeaderboard: () -> Unit,
     onFriends: () -> Unit,
+    onOpenPlayer: (String) -> Unit,
 ) {
     Scaffold(topBar = { ScreenTopBar(stringResource(R.string.profile_title), onBack) }) { padding ->
         ScreenBackground {
@@ -215,7 +216,7 @@ fun ProfileScreen(
                         text = stringResource(R.string.account_title),
                         onClick = onAccount,
                     )
-                    RecentGamesCard(recentGames)
+                    RecentGamesCard(recentGames, onOpenPlayer)
                 }
             }
         }
@@ -236,6 +237,7 @@ fun ProfileScreen(
 @Composable
 fun PlayerProfileRoute(
     onBack: () -> Unit,
+    onOpenPlayer: (String) -> Unit,
     viewModel: PlayerProfileViewModel = hiltViewModel(),
     recentGamesViewModel: RecentGamesViewModel = hiltViewModel(),
 ) {
@@ -245,6 +247,7 @@ fun PlayerProfileRoute(
         state = state,
         recentGames = recentGames,
         onBack = onBack,
+        onOpenPlayer = onOpenPlayer,
         onSendRequest = viewModel::sendRequest,
         onAccept = viewModel::accept,
         onUnblock = viewModel::unblock,
@@ -259,6 +262,7 @@ private fun PlayerProfileScreen(
     state: PlayerProfileUiState,
     recentGames: RecentGamesState,
     onBack: () -> Unit,
+    onOpenPlayer: (String) -> Unit,
     onSendRequest: () -> Unit,
     onAccept: () -> Unit,
     onUnblock: () -> Unit,
@@ -302,7 +306,7 @@ private fun PlayerProfileScreen(
                     ProfileStatsCard(profile)
                     FriendAction(state, onSendRequest, onAccept, onUnblock)
                     SafetyActions(state, onBlock, onReport)
-                    RecentGamesCard(recentGames)
+                    RecentGamesCard(recentGames, onOpenPlayer)
                 }
             }
         }

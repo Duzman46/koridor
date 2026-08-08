@@ -339,14 +339,63 @@ class SessionManager @Inject constructor(
     }
 
     suspend fun changeUsername(username: String): Outcome<String> {
-        // Refused here and not only where the field is drawn: a name is the anchor of a
-        // public identity, and a guest has none to anchor.
-        if (!state.value.canChangeUsername) return Outcome.Failure(AppError.NOT_SIGNED_IN)
-        val userId = currentUserId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
+        val userId = namedAccountId() ?: return Outcome.Failure(AppError.NOT_SIGNED_IN)
         return profileRepository.changeUsername(userId, username).also { result ->
             // Recorded locally, so the "what should we call you?" step is asked once and
             // never again for this player, whatever a later reinstall knows about them.
             if (result is Outcome.Success) gameRepository.setUsernameChosen(true)
+        }
+    }
+
+    /**
+     * The id of the account entitled to a public name, or null when this player is a guest.
+     *
+     * Answered here and not only where the field is drawn: a name is the anchor of a public
+     * identity, and a guest has none to anchor.
+     *
+     * [state] alone cannot answer it. It is rebuilt from [AuthRepository.authState], so a
+     * credential that landed a moment ago reaches it a moment later — while the screen asking
+     * for the name was opened on the write that landed, not on the flow. Between those two
+     * moments the session still reads as the guest it was, and deciding the write on that
+     * reading answers "you are not signed in" to the very player the app has just sent to the
+     * username gate. Every route into that gate after a guest gains an account is in the gap:
+     * a link, which keeps the user id so nothing else marks the change; a local guest whose
+     * first credential creates the account outright; and the hand-over to an account the
+     * credential already belonged to.
+     *
+     * The live identity is what settles it, because it is the same thing the gate was opened
+     * on: it is a guest or it is not, and nothing is in flight either way. Where it agrees
+     * with the session there is nothing to decide; where it does not, the session is the one
+     * that is behind, and [awaitNamedIdentity] gives it the same bounded moment to catch up
+     * that every other identity hand-over here is given.
+     *
+     * That wait is not politeness. The session moves when Firebase hands out a new ID token,
+     * which is also when the database connection is given one, and the name is written under
+     * rules that authorise it against the token. Writing first would hand the claim to a
+     * connection still presenting the guest's, which the rules refuse.
+     */
+    private suspend fun namedAccountId(): String? {
+        if (state.value.canChangeUsername) return currentUserId()
+        val live = authRepository.currentUser() ?: return null
+        if (live.accountType.isGuest) return null
+        awaitNamedIdentity(live.userId)
+        return live.userId
+    }
+
+    /**
+     * Suspends until [state] reports [userId] as an account that may be named.
+     *
+     * Bounded, and its answer is deliberately not a veto: the identity has already been read
+     * from the source the session itself is built on, so a flow that is slow to agree is a
+     * stale reading, not a refusal.
+     *
+     * Bounded much more tightly than [awaitIdentity], which waits for a different thing on a
+     * screen the player can walk away from; see [Constants.Backend.SESSION_CATCHUP_TIMEOUT_MILLIS]
+     * for why a second is the right order of magnitude and fifteen is not.
+     */
+    private suspend fun awaitNamedIdentity(userId: String) {
+        withTimeoutOrNull(Constants.Backend.SESSION_CATCHUP_TIMEOUT_MILLIS) {
+            state.first { it.canChangeUsername && it.user?.userId == userId }
         }
     }
 

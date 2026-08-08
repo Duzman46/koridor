@@ -186,7 +186,13 @@ function invite(fromUserId: string, expiresAt: number): Record<string, unknown> 
 /** One player's history, exactly as a profile page reads it back. */
 type History = Record<
   string,
-  { opponentName: string; result: string; playedAt: number; ratingChange?: number }
+  {
+    opponentName: string;
+    opponentUserId?: string;
+    result: string;
+    playedAt: number;
+    ratingChange?: number;
+  }
 >;
 
 async function historyOf(uid: string): Promise<History> {
@@ -325,6 +331,11 @@ async function main(): Promise<void> {
       hostGames["GOOD01-1"]?.result === "WIN" &&
       guestGames["GOOD01-1"]?.opponentName === "alice" &&
       guestGames["GOOD01-1"]?.result === "LOSS"
+  );
+  check(
+    "and who the opponent was, so the row can be opened rather than only read",
+    hostGames["GOOD01-1"]?.opponentUserId === GUEST &&
+      guestGames["GOOD01-1"]?.opponentUserId === HOST
   );
   check(
     "and the rating each of them moved, adding up to the rating they now hold",

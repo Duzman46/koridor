@@ -185,7 +185,9 @@
     <string name="game_rival_turn">Turno del rival</string>
 
     <string name="chat_open">Di algo</string>
-    <string name="chat_mute">Desactivar los mensajes</string>
+    <string name="chat_mute">Silenciar en esta partida</string>
+    <string name="chat_unmute">Reactivar los mensajes</string>
+    <string name="chat_muted">Mensajes silenciados en esta partida</string>
     <string name="chat_good_luck">Suerte</string>
     <string name="chat_nice_move">Buena jugada</string>
     <string name="chat_well_played">Bien jugado</string>

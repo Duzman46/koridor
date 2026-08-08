@@ -2,12 +2,15 @@ package com.duzman46.gridbound.session
 
 import com.duzman46.gridbound.auth.domain.AccountType
 import com.duzman46.gridbound.core.AppError
+import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.domain.models.AppLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,6 +50,13 @@ class SessionManagerTest {
     fun tearDown() {
         managerScope?.cancel()
     }
+
+    /**
+     * How late a held session arrives. Any value under the catch-up bound would do; this one is
+     * only chosen to be obviously nothing like it, so a test that ends at the bound instead has
+     * clearly taken the other path.
+     */
+    private val catchUpMillis = 200L
 
     // --- Guest entry -------------------------------------------------------------------
 
@@ -233,6 +243,125 @@ class SessionManagerTest {
 
         assertEquals("Koray", session.state.value.profile?.username)
         assertTrue(game.isUsernameChosen)
+    }
+
+    @Test
+    fun `an account just linked is named as soon as the session catches up`() = runTest {
+        // The gate that asks for the name is opened on the credential that landed; the
+        // session is rebuilt from a flow behind it. A player sent to the username screen and
+        // then told they are not signed in is those two disagreeing, and the wait exists for
+        // this case: a session that is behind and then arrives.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        auth.holdIdentityFeed()
+
+        val linked = session.linkGuestWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+
+        assertTrue(linked is Outcome.Success)
+        // The session is exactly as stale as it is on the device: still the guest.
+        assertTrue(session.state.value.isGuest)
+        assertFalse(session.state.value.canChangeUsername)
+
+        val startedAt = testScheduler.currentTime
+        val catchesUp = launch {
+            delay(catchUpMillis)
+            auth.releaseIdentityFeed()
+        }
+        val named = session.changeUsername("Koray")
+        // Read before the join, which would otherwise run the clock to the release itself and
+        // make a call that never waited at all look exactly like one that waited and was
+        // answered.
+        val waited = testScheduler.currentTime - startedAt
+        catchesUp.join()
+
+        assertTrue(named is Outcome.Success)
+        assertEquals("Koray", profiles.profiles.value[session.state.value.user?.userId]?.username)
+        assertTrue(game.isUsernameChosen)
+        // The write went when the session agreed and not when the clock ran out. Without the
+        // wait it would have gone before the connection had the token the rules check it
+        // against; with the wait but no catch-up it would have gone a whole timeout later, and
+        // both of those look identical from the assertions above.
+        assertEquals(catchUpMillis, waited)
+        assertTrue(session.state.value.canChangeUsername)
+    }
+
+    @Test
+    fun `an account handed over to is named as soon as the session catches up`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        profiles.seedExistingAccount(username = UsernameRules.generatedName(), rating = 1400)
+        auth.hasCredentialForExistingAccount = true
+        auth.holdIdentityFeed()
+
+        // The hand-over reports what it can prove, and with the session held it can prove
+        // nothing. The account is signed in all the same, which is the state under test.
+        session.signInToExistingAccount()
+        advanceUntilIdle()
+        assertFalse(session.state.value.canChangeUsername)
+
+        val startedAt = testScheduler.currentTime
+        val catchesUp = launch {
+            delay(catchUpMillis)
+            auth.releaseIdentityFeed()
+        }
+        val named = session.changeUsername("Koray")
+        val waited = testScheduler.currentTime - startedAt
+        catchesUp.join()
+
+        assertTrue(named is Outcome.Success)
+        assertEquals(
+            "Koray",
+            profiles.profiles.value[FakeAuthRepository.EXISTING_USER_ID]?.username,
+        )
+        assertEquals(catchUpMillis, waited)
+    }
+
+    @Test
+    fun `a session that never catches up is written past once the wait is up`() = runTest {
+        // The other end of the same wait, and the one that decides how long a player stands
+        // behind a spinner on the username gate — a screen with no back arrow, no system back
+        // and its own submit button held down for the duration. Bounded by the catch-up's own
+        // constant and not by the sign-in's, which is fifteen times longer and is the right
+        // answer to a different question.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        auth.holdIdentityFeed()
+
+        session.linkGuestWithEmail("player@example.com", "longenough1")
+        advanceUntilIdle()
+        val startedAt = testScheduler.currentTime
+
+        val named = session.changeUsername("Koray")
+        advanceUntilIdle()
+
+        // Not a veto: the identity was read from the source the session is built on, so a flow
+        // that never agrees is a stale reading rather than a refusal, and the name still lands.
+        assertTrue(named is Outcome.Success)
+        assertEquals(
+            Constants.Backend.SESSION_CATCHUP_TIMEOUT_MILLIS,
+            testScheduler.currentTime - startedAt,
+        )
+    }
+
+    @Test
+    fun `a guest is refused without waiting on a session that is not going to change`() = runTest {
+        // The other half of the rule: the live identity decides, and a guest's says guest.
+        // Nothing is in flight, so nothing is waited for.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        auth.holdIdentityFeed()
+        val startedAt = testScheduler.currentTime
+
+        val renamed = session.changeUsername("Koray")
+
+        assertEquals(AppError.NOT_SIGNED_IN, renamed.errorOrNull)
+        assertEquals(startedAt, testScheduler.currentTime)
+        assertFalse(game.isUsernameChosen)
     }
 
     // --- Handing over to an account that already exists -----------------------------------

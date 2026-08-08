@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -55,15 +57,25 @@ private const val COLLAPSED_COUNT = 3
  * The recent-games section, on the player's own profile and on anybody else's.
  *
  * Shared by both pages deliberately: whose history it is changes nothing about how a history
- * reads. Nothing here can be acted on, which is why it needs no owner-versus-stranger branch
- * at all — unlike the controls above it, which are the whole reason those pages are separate.
+ * reads, and it needs no owner-versus-stranger branch — unlike the controls above it, which are
+ * the whole reason those pages are separate.
+ *
+ * A row opens the player it names, which is what makes the section a way of reaching somebody
+ * rather than a list to read: the rival you remember is the one you want to add, report, or look
+ * up, and this is where you remember them. Only rows that know who they were are pressable —
+ * a match recorded before the server kept the opponent's id, or one whose report never named
+ * them, is drawn plainly rather than as a control that does nothing.
  *
  * A read that failed draws nothing rather than an error. This is one section of a page that
  * has already loaded, and a profile that reports its own network trouble twice is worse than
  * one that quietly leaves out the part it could not fetch.
  */
 @Composable
-fun RecentGamesCard(state: RecentGamesState, modifier: Modifier = Modifier) {
+fun RecentGamesCard(
+    state: RecentGamesState,
+    onOpenPlayer: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     if (state.isUnavailable) return
     val locale = LocalResources.current.configuration.locales[0]
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -105,7 +117,11 @@ fun RecentGamesCard(state: RecentGamesState, modifier: Modifier = Modifier) {
                         if (index > 0) {
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         }
-                        RecentGameRow(match, locale)
+                        RecentGameRow(
+                            match = match,
+                            locale = locale,
+                            onOpen = { onOpenPlayer(match.opponentUserId) },
+                        )
                     }
                     if (state.matches.size > COLLAPSED_COUNT) {
                         ShowMoreRow(expanded, state.matches.size) { expanded = !expanded }
@@ -157,13 +173,26 @@ private fun ShowMoreRow(expanded: Boolean, total: Int, onToggle: () -> Unit) {
  * tell the two colours apart.
  */
 @Composable
-private fun RecentGameRow(match: RecentMatch, locale: Locale) {
+private fun RecentGameRow(match: RecentMatch, locale: Locale, onOpen: () -> Unit) {
     Row(
         // One stop for a screen reader, announced as "alice, 5.08.2026, won, +12" instead of
         // four separate stops the listener has to assemble themselves.
+        //
+        // The whole row is the target rather than the name inside it: the name is one short
+        // word, and a row is what the finger is already aimed at.
         Modifier
             .fillMaxWidth()
-            .semantics(mergeDescendants = true) { },
+            .semantics(mergeDescendants = true) { }
+            .then(
+                if (match.hasOpponentProfile) {
+                    Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onOpen)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

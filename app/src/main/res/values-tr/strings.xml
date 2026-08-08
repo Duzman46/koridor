@@ -196,7 +196,9 @@
     <string name="game_rival_turn">Rakibin sırası</string>
 
     <string name="chat_open">Bir şey söyle</string>
-    <string name="chat_mute">Mesajları kapat</string>
+    <string name="chat_mute">Bu maçta sustur</string>
+    <string name="chat_unmute">Susturmayı kaldır</string>
+    <string name="chat_muted">Bu maçta mesajlar susturuldu</string>
     <string name="chat_good_luck">Bol şans</string>
     <string name="chat_nice_move">Güzel hamle</string>
     <string name="chat_well_played">İyi oynadın</string>

@@ -183,7 +183,9 @@
     <string name="game_rival_turn">प्रतिद्वंद्वी की बारी</string>
 
     <string name="chat_open">कुछ कहें</string>
-    <string name="chat_mute">संदेश बंद करें</string>
+    <string name="chat_mute">इस मैच में म्यूट करें</string>
+    <string name="chat_unmute">संदेश फिर से चालू करें</string>
+    <string name="chat_muted">इस मैच में संदेश म्यूट हैं</string>
     <string name="chat_good_luck">शुभकामनाएँ</string>
     <string name="chat_nice_move">बढ़िया चाल</string>
     <string name="chat_well_played">अच्छा खेले</string>

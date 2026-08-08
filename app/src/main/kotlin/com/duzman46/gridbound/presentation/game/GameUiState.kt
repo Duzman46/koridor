@@ -11,6 +11,7 @@ import com.duzman46.gridbound.game.models.Position
 import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.WallOrientation
 import com.duzman46.gridbound.online.model.MatchChatEntry
+import com.duzman46.gridbound.online.model.MatchMessageKind
 import com.duzman46.gridbound.online.model.RoomEndReason
 
 data class GameUiState(
@@ -69,6 +70,17 @@ data class GameUiState(
     val chat: List<MatchChatEntry> = emptyList(),
     /** The player's own setting, which switches both halves off: nothing sent, nothing shown. */
     val matchMessagesEnabled: Boolean = true,
+    /**
+     * True while this player has silenced the rival for the rest of this match.
+     *
+     * Kept apart from [matchMessagesEnabled], and the two are different questions. The
+     * setting is a standing answer to "do I want canned messages at all", given once and
+     * kept; this is an answer to "not from this opponent, not now", given on the board with
+     * a rival saying the same thing for the eleventh time. Reaching two screens into
+     * settings to undo something done on the board is not an undo, so this dies with the
+     * match and the control that set it is the control that clears it.
+     */
+    val matchMessagesMuted: Boolean = false,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
@@ -94,10 +106,33 @@ data class GameUiState(
      */
     val showsMatchMessages: Boolean get() = isOnline && matchMessagesEnabled
 
+    /**
+     * True while what the rival says is shown.
+     *
+     * This is the whole of what a mute takes away. The row itself stays — it is where the
+     * mute was reached from and it is the only way back — and so does the ability to speak,
+     * which nobody asked to be relieved of.
+     */
+    val showsRivalMessages: Boolean get() = showsMatchMessages && !matchMessagesMuted
+
     /** True while a message would actually reach a rival who is still playing. */
     val canSendMessage: Boolean
         get() = showsMatchMessages && isOnlineConnected && winner == null &&
             boardState.status == GameStatus.IN_PROGRESS
+
+    /**
+     * True while the sheet the messages are chosen from may be opened at all.
+     *
+     * Wider than [canSendMessage], and the mute is the whole of the difference. Every condition
+     * in [canSendMessage] is about a message reaching somebody; a mute is about this player not
+     * having to read one, and the sheet holds the only control that lifts it. Gated on being
+     * able to speak, a player who mutes and then hits a connection blip — or simply reaches the
+     * end of the match — is left with the mute visibly on and nothing to press: a state that can
+     * be set and not cleared. So the way in follows whichever of the two is true, and what is
+     * offered once inside is still [canSendMessage]'s to decide.
+     */
+    val canOpenMessages: Boolean
+        get() = showsMatchMessages && (canSendMessage || matchMessagesMuted)
 
     /** The last thing the rival said, whether or not it is still worth showing. */
     val rivalMessage: MatchChatEntry? get() = chat.firstOrNull { it.userId != localUserId }
@@ -105,12 +140,32 @@ data class GameUiState(
     /** This player's own last message, echoed back so that sending one visibly did something. */
     val ownMessage: MatchChatEntry? get() = chat.firstOrNull { it.userId == localUserId }
 
+    /** The rival's half of the message row; empty while muted, and while they have said nothing. */
+    val rivalBubble: MatchChatBubble?
+        get() = rivalMessage?.takeIf { showsRivalMessages }?.let(::MatchChatBubble)
+
+    /** This player's half. A mute silences a rival, never the player who reached for it. */
+    val ownBubble: MatchChatBubble? get() = ownMessage?.let(::MatchChatBubble)
+
     val acceptsHumanInput: Boolean
         get() = !isAiThinking && !isOnlineSyncing && when (mode) {
             GameMode.LOCAL_TWO_PLAYER -> true
             GameMode.VS_AI -> boardState.currentPlayer == localPlayer
             GameMode.ONLINE -> isOnlineConnected && boardState.currentPlayer == localPlayer
         }
+}
+
+/**
+ * One side of the match message row.
+ *
+ * [showsWords] is worked out from the message rather than handed to each side, and that is the
+ * point of the type. It was handed to each side, false for the sender's own bubble on the
+ * theory that you already know what you just said — and eight of the fourteen messages are
+ * phrases, so a player who picked "Good luck" watched a bare glyph while their opponent read
+ * the words. What a message says is a property of the message, not of who is looking at it.
+ */
+data class MatchChatBubble(val entry: MatchChatEntry) {
+    val showsWords: Boolean get() = entry.message.kind == MatchMessageKind.PHRASE
 }
 
 /**

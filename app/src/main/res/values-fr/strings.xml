@@ -185,7 +185,9 @@
     <string name="game_rival_turn">Au tour de l\'adversaire</string>
 
     <string name="chat_open">Dis quelque chose</string>
-    <string name="chat_mute">Désactiver les messages</string>
+    <string name="chat_mute">Couper le son pour cette partie</string>
+    <string name="chat_unmute">Réactiver les messages</string>
+    <string name="chat_muted">Messages coupés pour cette partie</string>
     <string name="chat_good_luck">Bonne chance</string>
     <string name="chat_nice_move">Joli coup</string>
     <string name="chat_well_played">Bien joué</string>

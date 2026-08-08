@@ -183,7 +183,9 @@
     <string name="game_rival_turn">Gegner ist am Zug</string>
 
     <string name="chat_open">Sag etwas</string>
-    <string name="chat_mute">Nachrichten ausschalten</string>
+    <string name="chat_mute">Für dieses Spiel stummschalten</string>
+    <string name="chat_unmute">Stummschaltung aufheben</string>
+    <string name="chat_muted">Nachrichten in diesem Spiel stummgeschaltet</string>
     <string name="chat_good_luck">Viel Glück</string>
     <string name="chat_nice_move">Schöner Zug</string>
     <string name="chat_well_played">Gut gespielt</string>

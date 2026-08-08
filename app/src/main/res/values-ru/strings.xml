@@ -187,7 +187,9 @@
     <string name="game_rival_turn">Ход соперника</string>
 
     <string name="chat_open">Скажи что-нибудь</string>
-    <string name="chat_mute">Отключить сообщения</string>
+    <string name="chat_mute">Отключить на этот матч</string>
+    <string name="chat_unmute">Включить сообщения</string>
+    <string name="chat_muted">Сообщения отключены в этом матче</string>
     <string name="chat_good_luck">Удачи</string>
     <string name="chat_nice_move">Хороший ход</string>
     <string name="chat_well_played">Отлично сыграно</string>

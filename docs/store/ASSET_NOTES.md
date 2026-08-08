@@ -10,13 +10,13 @@ Files, and which of them are safe to upload:
 - `screenshots/phone-02-gameplay-tr.png` — a match against the Expert bot, two walls down (1080×2160)
 - `screenshots/phone-03-difficulty-tr.png` — the four bots and the colour choice (1080×2160)
 - `screenshots/phone-04-play-modes-tr.png` — the three ways to play (1080×2160)
-- `feature-graphic-1024x500.png` — **stale.** Generated from the earlier raster emblem, before the near-black palette. It is the one asset here that still shows an app the player will not recognise. Play requires a feature graphic only for some placements; regenerate it before it is used anywhere prominent.
+- `feature-graphic-1024x500.png` — the listing's feature graphic, redrawn on 2026-08-08 from the palette the app actually ships: near-black board, blue and red pawns, mint walls, and the icon's own motif on the left. It replaces a version generated before the near-black palette, which showed green tiles, an orange pawn and gold walls — an app the player would not have recognised.
 
 The four screenshots were taken on 2026-08-08 from the shipped release build on a Galaxy S24 at 1080×2340, cropped to remove the navigation bar. No interface element was generated or retouched — this is the app as it runs. The two earlier raster icons that used to sit in this folder are deleted rather than kept beside the current one, because the hazard was never that they were wrong, it was that they were named plausibly.
 
-The feature graphic was generated with the built-in image generation mode, using the project icon as the visual reference, and then center-cropped to the exact Google Play size of 1024×500 pixels.
+The feature graphic is drawn, not generated: `feature-graphic.py` renders it with Pillow at 4× and downsamples, so every colour in it is a literal from the same palette the screenshots show rather than an approximation of one. Re-run that script if the board or pawn colours change; there is no prompt to re-roll and no chance of the file drifting away from the app again.
 
-Feature graphic prompt:
-
-> Create a polished 1024×500 landscape Google Play feature graphic for the Android strategy board game Koridor. Use the attached official app icon as the visual identity reference: deep charcoal-teal background, emerald rounded board tiles, one glossy cool-blue pawn, one glossy warm-orange pawn, and golden corridor walls. Show a cinematic three-quarter view of an abstract board with the two pawns facing across a strategic maze of gold walls. Premium modern 3D game art, dramatic rim lighting, clean negative space, high contrast, sharp silhouettes, balanced composition, no text, no letters, no logo, no watermark, no device mockup, no border, no unrelated objects.
+```bash
+python docs/store/feature-graphic.py
+```
 

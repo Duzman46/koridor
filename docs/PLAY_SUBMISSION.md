@@ -6,21 +6,31 @@ tutar. Sıra önemli: 7. adım 6. adımın çıktısına bağlı, 8. adım da 2.
 Beyanları geliştirici olarak **sen** yapıyorsun. Bu belge cevapları hazırlar; yanlış beyan
 geliştirici hesabının sorumluluğunda.
 
-## Nerede kalındı — 2026-08-08
+## Nerede kalındı — 2026-08-09
 
-1–7. adımlar tamamlandı ve on değişiklik incelemeye gönderildi; konsol "Değişiklikleriniz şu
-anda inceleniyor" diyor. Somut durum:
+1–7. adımlar tamamlandı, inceleme geçti, kapalı test başladı. Somut durum:
 
 | | |
 |---|---|
 | Uygulama | `Koridor: Wall & Path Strategy` / `Koridor: Duvar ve Yol Oyunu` |
 | Play uygulama kimliği | `4975646665764434612`, geliştirici `8806161756596118584` |
-| İç test | sürüm 5 (1.0.0) yayında, kanal etkin, `Koridor ic testi` listesi tanımlı |
+| İnceleme | ✅ geçti — mağaza sayfası ve on beyan onaylandı |
+| İç test | sürüm 5 (1.0.0) yayında, `Koridor ic testi` listesi (2 kişi) |
+| Kapalı test | `Kapalı test - Alpha`, sürüm 5 (1.0.0) yayında, 177 ülke/bölge |
+| Kapalı test listesi | `Koridor kapali test` — 12 kişi, **hepsi kaydoldu** |
+| Katılım bağlantısı | `https://play.google.com/apps/testing/com.duzman46.gridbound` |
 | Kategori | Oyun → Masa |
-| İmzalama | Play'in anahtarı Firebase'e eklendi (7. adım) |
+| Üretim | Etkin değil — kapalı test şartı beklemede |
 
-Kalanlar: inceleme sonucu; ardından **kapalı test** (12 test kullanıcısı, 14 gün) — kişisel
-geliştirici hesaplarında üretime geçmenin ön şartı; ve 8. adımdaki AdMob işleri.
+**14 günlük sayaç 2026-08-09'da başladı**, yani üretime en erken **2026-08-23**'te
+başvurulabilir. Şart kesintisiz: kayıtlı test kullanıcısı 12'nin altına düşerse süreklilik
+bozulur ve sayaç yeniden başlar. Payanda yok — listede tam 12 kişi var.
+
+Başvuru üç şey soruyor ve ikisinin cevabı ancak testten çıkar: test kullanıcılarını bulmak ne
+kadar zordu, ne kadar etkileşim oldu, **geri bildirimler neydi ve sonucunda uygulamada neyi
+değiştirdin**. Yani 14 gün beklenecek bir süre değil, toplanacak bir malzeme.
+
+Kalanlar: 14 günün dolması; üretim başvurusu (~7 gün inceleme); ve 8. adımdaki AdMob işleri.
 
 ---
 
@@ -213,21 +223,31 @@ açıklama için değil, sürüm notu dahil Play'e yazdığın her metin için g
 
 **Test ve yayınlama → Kurulum → Uygulama bütünlüğü → Uygulama imzalama**.
 
-**2026-08-08'de yapıldı.** Play'in imzalama anahtarı yükleme anahtarından farklı çıktı,
-dolayısıyla bu adım gerekliydi ve tamamlandı:
+**2026-08-09'da tamamlandı.** Play'in imzalama anahtarı yükleme anahtarından farklı, dolayısıyla
+bu adım gerekliydi:
 
 | | SHA-1 | SHA-256 |
 |---|---|---|
 | Yükleme anahtarı (senin `.jks`) | `BA:49:80:EE:36:DC:A6:31:7C:D3:E0:3A:B0:12:21:CB:05:60:75:18` | `21:4A:F2:…:DD:AB` |
-| **Play imzalama anahtarı** | `B7:E2:72:AA:55:CA:92:D8:BD:43:74:C6:F1:A9:BF:49:42:A8:E1:B0` | `70:A3:0C:51:58:F8:A0:FA:33:7B:C7:CD:21:52:FD:4B:64:80:20:2A:E1:2F:69:A7:30:59:ED:65:FA:12:A5:E7` |
+| **Play imzalama anahtarı** | `7F:15:A2:7C:47:2A:09:A8:08:85:83:E9:65:FB:DA:B3:39:C9:31:31` | `DC:1F:92:92:5D:12:F2:50:91:B5:B4:73:D7:34:19:A5:2B:3D:BC:2E:4E:AC:F5:FF:49:23:F1:09:91:E6:E7:D6` |
 
 Alttaki satırın ikisi de Firebase'e (`gridbound-duzman46` → Proje ayarları → Android uygulaması
 → Parmak izi ekle) eklendi. Anahtar değişmediği sürece bir daha yapılmayacak.
 
-Play ayrıca bir **kuantum sonrası** imzalama anahtarı da tutuyor (SHA-1
-`A0:9D:A7:F6:0E:E5:64:CF:06:67:0B:AD:43:C9:4B:E0:BE:28:E7:BD`). Kullanıcıya inen APK'yı imzalayan
-klasik anahtar olduğu için Firebase'e o eklenmedi; Google ileride dağıtımı ona çevirirse eklenmesi
-gerekir.
+**Parmak izini konsoldan okuma, cihazdan ölç.** İlk denemede konsolun imzalama sayfasından
+`B7:E2:72:…` okundu ve Firebase'e o eklendi; sayfa birden fazla anahtar listeliyor (klasik,
+kuantum sonrası, yükleme) ve yanlış satır alındı. Sonuç: sideload edilen APK'da Google girişi
+çalışmaya devam etti — onun sertifikası zaten kayıtlıydı — ve yalnızca **mağazadan kuranlarda**
+kırıldı, yani hatanın görüldüğü yer test edilen yer değildi. Şüpheye yer bırakmayan ölçüm şu:
+
+```
+adb shell pm path com.duzman46.gridbound
+adb pull <base.apk yolu> .
+apksigner verify --print-certs base.apk
+```
+
+`Signer #1` satırı, kullanıcının cihazına inen APK'yı fiilen imzalayan sertifikadır. `Source
+Stamp Signer` başka bir şeydir, Firebase'e o eklenmez.
 
 Play uygulamayı kendi anahtarıyla yeniden imzalıyor, yani mağazadan inen sürümün sertifikası
 senin test ettiğin sertifika değil. Google ile giriş sertifikaya bağlı: bu adım atlanırsa senin
@@ -240,12 +260,27 @@ Doğrulaması: iç test kanalından kur, karşılama ekranında Google düğmesi
 
 ## 8. AdMob
 
-Yayınlandıktan sonra:
+**2026-08-09 durumu.** Reklamlar çıkıyor ve kazanç üretiyor (ilk günlerde ₺1'in altında), ama
+uygulama **"Sınırlı reklam sunumu"** kısıtı altında: AdMob onaylanmamış uygulamalara envanterin
+küçük bir kısmını veriyor.
 
-- **AdMob → Uygulamalar → app-ads.txt**: 2. adımdaki web sitesi alanı dolduktan sonra AdMob
-  siteyi tarıyor. İlk gün "bulunamadı" yazması normal.
-- **AdMob → Ayarlar → Test cihazları**: kendi telefonunu ekle. Hem yerleşimleri test
-  reklamlarıyla görürsün hem de kendi canlı reklamına tıklayıp hesabı riske atmazsın.
+Kısıtı kaldıran şey mağaza bağlantısı, ve o **üretime çıkmadan kurulamıyor**. AdMob eşleşmeyi
+herkese açık Play listesinde arıyor; kapalı testteki bir uygulamanın öyle bir sayfası yok ve
+sihirbaz "Eşleşen Google Play uygulaması bulunamadı" ile duruyor. Yani bu bir eksik ayar değil,
+sıraya bağlı bir adım: kapalı test → üretim → AdMob onayı → tam sunum.
+
+Sihirbazda bir tuzak var: "Kurulumu bitir" akışı varsayılan olarak **yeni bir AdMob uygulaması
+oluştur** seçili geliyor. Onaylanırsa derlemedeki reklam birimleri boşta kalır. Doğrusu "mevcut
+bir AdMob uygulamasına ekle" ve `…3421123804` — `monetization.properties` içindeki kimlik odur.
+
+- **`app-ads.txt`**: `https://gridbound-duzman46.web.app/app-ads.txt` yayında ve doğru
+  (`pub-8456650313142312`). AdMob henüz taramadı; tarama da mağaza sayfasına bağlı.
+- **Ödeme**: AdSense (Türkiye) hesabı kurulu, eşik ₺200. Kimlik doğrulaması eşiğe yaklaşınca
+  isteniyor, şimdilik bir işlem yok.
+- **AdMob → Ayarlar → Test cihazları**: kendi telefonunu ekle. **Yapılmadı ve önemli** —
+  eklenmediği sürece geliştirici uygulamayı her açtığında gerçek gösterim üretiyor. Kendi
+  reklamına tıklamak geçersiz trafik ve hesap kapatma sebebi.
+- Kapalı test kullanıcılarına "reklamlara tıkla" denmemeli; aynı politika onları da kapsıyor.
 - Yeni bir uygulamada dolum düşük başlıyor. Banner'ın boş kalması bir hata değil.
 
 ---

@@ -63,15 +63,17 @@ fun HomeHero(modifier: Modifier = Modifier) {
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                // The picture starts below the top bar rather than behind it.
+                // The picture starts below the top bar rather than behind it, because the pale
+                // piece stands in the brightest corner of the scene and that is exactly where
+                // the two round controls sit.
                 //
-                // The pale piece stands in the brightest corner of the scene, which is also
-                // where the two round controls sit, and the two were colliding. Dimming the
-                // picture would have cost the light that makes it worth looking at, and moving
-                // the controls would have cost the layout. So the picture simply begins lower:
-                // the strip the bar occupies is left as plain ground, and because that ground
-                // is the same near-black the scene fades into, the reserved space reads as part
-                // of the room rather than as a bar of colour above it.
+                // Beginning it lower solved the collision and created a worse problem: a hard
+                // horizontal edge where the photograph started, which reads as a crop and was
+                // the first thing the eye found on the screen. The asset now dissolves at both
+                // ends — the top fifth fades up into the same near-black the app paints behind
+                // it, the bottom quarter fades down into it before the wordmark. So the reserve
+                // below still holds the piece clear of the controls, and the picture arrives
+                // out of the dark instead of starting at a line.
                 .statusBarsPadding()
                 .padding(top = TopBarReserve)
                 // Mirrored under RTL like everything else the app draws, so the lamp stays on
@@ -84,9 +86,9 @@ fun HomeHero(modifier: Modifier = Modifier) {
             // the top bar no matter how short the slot gets on a small phone.
             alignment = Alignment.Center,
         )
-        // The join. The asset already fades, but a box taller than the asset would show the
-        // scene cropped rather than faded, so the last stretch is finished here as well. Costs
-        // nothing when the two line up and saves the edge when they do not.
+        // A shorter safety net than before. The asset carries its own fade at both ends now, so
+        // this only has to cover the case where the box is taller than the picture and the
+        // bottom would otherwise be cut rather than faded.
         Box(
             Modifier
                 .fillMaxWidth()
@@ -111,4 +113,4 @@ private val SceneInk = Color(0xFF070A0D)
 private val TopBarReserve = 60.dp
 
 /** How much of the box the closing fade covers. */
-private const val SCENE_JOIN = 0.22f
+private const val SCENE_JOIN = 0.14f

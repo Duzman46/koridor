@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +18,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 
 /**
@@ -60,6 +63,17 @@ fun HomeHero(modifier: Modifier = Modifier) {
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
+                // The picture starts below the top bar rather than behind it.
+                //
+                // The pale piece stands in the brightest corner of the scene, which is also
+                // where the two round controls sit, and the two were colliding. Dimming the
+                // picture would have cost the light that makes it worth looking at, and moving
+                // the controls would have cost the layout. So the picture simply begins lower:
+                // the strip the bar occupies is left as plain ground, and because that ground
+                // is the same near-black the scene fades into, the reserved space reads as part
+                // of the room rather than as a bar of colour above it.
+                .statusBarsPadding()
+                .padding(top = TopBarReserve)
                 // Mirrored under RTL like everything else the app draws, so the lamp stays on
                 // the side the reading eye starts from.
                 .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
@@ -68,7 +82,7 @@ fun HomeHero(modifier: Modifier = Modifier) {
             // composition precisely so this can be done: the pieces and the walls sit in its
             // lower two thirds, and pinning that end keeps them clear of the round controls in
             // the top bar no matter how short the slot gets on a small phone.
-            alignment = Alignment.BottomCenter,
+            alignment = Alignment.Center,
         )
         // The join. The asset already fades, but a box taller than the asset would show the
         // scene cropped rather than faded, so the last stretch is finished here as well. Costs
@@ -85,6 +99,16 @@ fun HomeHero(modifier: Modifier = Modifier) {
 
 /** What the scene sits on, and what it fades into: the dark scheme's own background. */
 private val SceneInk = Color(0xFF070A0D)
+
+/**
+ * The strip the top bar occupies, which the picture starts below.
+ *
+ * The bar's controls are 46 dp inside 8 dp of padding, so 60 clears them with a hair to spare.
+ * It was 74 and that was too generous: every device-independent pixel reserved here comes off
+ * the picture, and the picture was already the thing being squeezed. Kept as a constant rather
+ * than read from the bar, because the bar is laid out over this and cannot be measured first.
+ */
+private val TopBarReserve = 60.dp
 
 /** How much of the box the closing fade covers. */
 private const val SCENE_JOIN = 0.22f

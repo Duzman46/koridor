@@ -84,6 +84,18 @@ class FakeOnlineGameRepository : OnlineGameRepository {
     override fun observeOpenRooms(): Flow<List<OnlineRoom>> =
         if (roomsAnswer) openRooms else MutableSharedFlow()
 
+    override fun observeConnection(): Flow<Boolean> = connected
+
+    override suspend fun keepRoom(roomCode: String) {
+        kept += roomCode
+    }
+
+    /** Rooms whose standing "delete me if I vanish" instruction has been withdrawn. */
+    val kept = mutableListOf<String>()
+
+    /** The connection light. Flip it to model a handset that dropped off the network. */
+    val connected = MutableStateFlow(true)
+
     /** The browser's live list. Push to it to make a room appear the way the database would. */
     val openRooms = MutableStateFlow<List<OnlineRoom>>(emptyList())
 
@@ -119,5 +131,10 @@ class FakeOnlineGameRepository : OnlineGameRepository {
     override suspend fun resolveIdleMatch(session: OnlineSession): Outcome<Unit> =
         Outcome.Success(Unit)
 
-    override suspend fun leaveRoom(session: OnlineSession) = Unit
+    override suspend fun leaveRoom(session: OnlineSession) {
+        left += session.roomCode
+    }
+
+    /** Rooms this app has closed behind itself. */
+    val left = mutableListOf<String>()
 }

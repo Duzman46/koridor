@@ -254,6 +254,27 @@ object Constants {
          */
         const val SERVER_TIME_OFFSET_PATH = ".info/serverTimeOffset"
 
+        /**
+         * Whether the database connection is up, as Firebase itself reports it.
+         *
+         * A local read on a node the client maintains, not a request — so the waiting panel can
+         * say whether the connection is good without spending anything to find out, and say it
+         * truthfully rather than assuming.
+         */
+        const val CONNECTED_PATH = ".info/connected"
+
+        /**
+         * The wait the panel quotes while matchmaking.
+         *
+         * A stated typical figure, not a measurement: nothing in the app knows how many people
+         * are queuing right now, so this cannot be computed from anything. It is here because a
+         * blank space next to a running clock reads as "this could take forever", and a range
+         * that is usually right is kinder than no answer. Revisit it if the queue ever reports
+         * its own depth.
+         */
+        const val QUEUE_TYPICAL_WAIT_LOW_SECONDS = 10
+        const val QUEUE_TYPICAL_WAIT_HIGH_SECONDS = 25
+
         /** matchmaking/{uid} — who is waiting to be paired, and at what rating. */
         const val MATCHMAKING_PATH = "matchmaking"
 

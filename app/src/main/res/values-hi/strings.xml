@@ -390,4 +390,36 @@
     <string name="play_local_subtitle">इसी डिवाइस पर दोस्त के साथ खेलें</string>
     <string name="home_more_subtitle">स्टोर, आँकड़े और अधिक</string>
     <string name="home_leaderboard_short">लीडरबोर्ड</string>
+
+    <string name="online_ranked_match">रैंक वाला मैच</string>
+    <string name="queue_searching_hint">आपकी रेटिंग के सबसे नज़दीकी खिलाड़ी की तलाश है।</string>
+    <string name="queue_connection_good">कनेक्शन ठीक है</string>
+    <string name="queue_connection_lost">कनेक्शन नहीं है</string>
+    <string name="queue_stage">मिलान जारी है</string>
+    <string name="room_stage">कमरा खुला है</string>
+    <string name="room_yours">आपका कमरा</string>
+    <string name="queue_elapsed">बीता समय</string>
+    <string name="queue_estimate">आम प्रतीक्षा</string>
+    <string name="queue_estimate_value">%1$d–%2$d से.</string>
+    <string name="queue_cancel_note">रद्द करने पर कतार में आपकी जगह चली जाएगी।</string>
+    <string name="room_close_note">कमरा बंद करने पर उसका कोड बेकार हो जाएगा।</string>
+    <string name="queue_tip_one">देखें कि प्रतिद्वंद्वी कैसे चलता है, फिर उसी के अनुसार योजना बनाएँ।</string>
+    <string name="queue_tip_two">बचाकर रखी दीवार, जल्दी खर्च की दीवार से ज़्यादा काम आती है।</string>
+    <string name="queue_tip_three">सबसे छोटा रास्ता हमेशा सही रास्ता नहीं होता।</string>
+    <string name="queue_tip_four">दीवार प्रतिद्वंद्वी को पूरी तरह बंद नहीं कर सकती — इसका फ़ायदा उठाएँ।</string>
+    <string name="join_code_hint">दोस्त ने जो कमरा कोड भेजा है, वह दर्ज करें।</string>
+    <string name="join_code_note">कोड तभी काम करता है जब उसका कमरा खुला हो।</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">अपने नियम तय करें और प्रतिद्वंद्वी का इंतज़ार करें।</string>
+    <string name="room_password_placeholder">पासवर्ड (वैकल्पिक)</string>
+    <string name="room_password_show">पासवर्ड दिखाएँ</string>
+    <string name="room_password_hide">पासवर्ड छिपाएँ</string>
+    <string name="room_password_prompt_hint">सुरक्षित कमरे में शामिल होने के लिए कोड दर्ज करें।</string>
+    <string name="room_join_action">शामिल हों</string>
+    <string name="paint_yours">आपका रंग</string>
+    <string name="paint_rivals">प्रतिद्वंद्वी का रंग</string>
+    <string name="room_browser_refresh">ताज़ा करें</string>
+    <string name="room_browser_players_caption">खिलाड़ी</string>
+    <string name="report_note">आपकी रिपोर्ट गोपनीय रहती है।</string>
+    <string name="room_code_copied">कमरा कोड कॉपी हुआ</string>
 </resources>

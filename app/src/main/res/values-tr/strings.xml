@@ -411,4 +411,36 @@
     <string name="play_local_subtitle">Arkadaşınla aynı cihazda oyna</string>
     <string name="home_more_subtitle">Mağaza, istatistik ve diğerleri</string>
     <string name="home_leaderboard_short">Liderlik</string>
+
+    <string name="online_ranked_match">Dereceli eşleşme</string>
+    <string name="queue_searching_hint">Puanına en yakın oyuncu aranıyor.</string>
+    <string name="queue_connection_good">Bağlantı iyi</string>
+    <string name="queue_connection_lost">Bağlantı yok</string>
+    <string name="queue_stage">Eşleştirme sürüyor</string>
+    <string name="room_stage">Oda açık</string>
+    <string name="room_yours">Senin odan</string>
+    <string name="queue_elapsed">GEÇEN SÜRE</string>
+    <string name="queue_estimate">TAHMİNİ BEKLEME</string>
+    <string name="queue_estimate_value">%1$d–%2$d sn</string>
+    <string name="queue_cancel_note">İptal edersen eşleşme sırası kaybolur.</string>
+    <string name="room_close_note">Odayı kapatırsan kod geçersiz olur.</string>
+    <string name="queue_tip_one">Rakibinin hamle stilini analiz ederek stratejini geliştir.</string>
+    <string name="queue_tip_two">Elinde tuttuğun duvar, erken harcadığın duvardan değerlidir.</string>
+    <string name="queue_tip_three">En kısa yol her zaman gidilecek yol değildir.</string>
+    <string name="queue_tip_four">Duvar rakibi tamamen kapatamaz — bunu kullan.</string>
+    <string name="join_code_hint">Arkadaşının paylaştığı oda kodunu gir.</string>
+    <string name="join_code_note">Kod yalnızca geçerli odalarda çalışır.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Kendi kurallarını belirle ve rakibini bekle.</string>
+    <string name="room_password_placeholder">Oda şifresi (isteğe bağlı)</string>
+    <string name="room_password_show">Şifreyi göster</string>
+    <string name="room_password_hide">Şifreyi gizle</string>
+    <string name="room_password_prompt_hint">Şifre korumalı odaya katılmak için kodu gir.</string>
+    <string name="room_join_action">Katıl</string>
+    <string name="paint_yours">Senin rengin</string>
+    <string name="paint_rivals">Rakibin rengi</string>
+    <string name="room_browser_refresh">Yenile</string>
+    <string name="room_browser_players_caption">Oyuncu</string>
+    <string name="report_note">Bildirimin gizli tutulur.</string>
+    <string name="room_code_copied">Oda kodu kopyalandı</string>
 </resources>

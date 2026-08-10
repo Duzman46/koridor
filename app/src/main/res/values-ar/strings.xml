@@ -406,4 +406,36 @@
     <string name="play_local_subtitle">العب مع صديق على هذا الجهاز</string>
     <string name="home_more_subtitle">المتجر والإحصاءات والمزيد</string>
     <string name="home_leaderboard_short">الترتيب</string>
+
+    <string name="online_ranked_match">مباراة مصنّفة</string>
+    <string name="queue_searching_hint">نبحث عن أقرب تقييم إلى تقييمك.</string>
+    <string name="queue_connection_good">الاتصال جيد</string>
+    <string name="queue_connection_lost">لا يوجد اتصال</string>
+    <string name="queue_stage">جارٍ المطابقة</string>
+    <string name="room_stage">الغرفة مفتوحة</string>
+    <string name="room_yours">غرفتك</string>
+    <string name="queue_elapsed">الوقت المنقضي</string>
+    <string name="queue_estimate">الانتظار المعتاد</string>
+    <string name="queue_estimate_value">%1$d–%2$d ث</string>
+    <string name="queue_cancel_note">الإلغاء يفقدك مكانك في قائمة الانتظار.</string>
+    <string name="room_close_note">إغلاق الغرفة يجعل رمزها بلا فائدة.</string>
+    <string name="queue_tip_one">راقب أسلوب حركة خصمك ثم خطّط على أساسه.</string>
+    <string name="queue_tip_two">الجدار الذي تحتفظ به أثمن من جدار تنفقه مبكرًا.</string>
+    <string name="queue_tip_three">أقصر طريق ليس دائمًا الطريق الصحيح.</string>
+    <string name="queue_tip_four">لا يمكن للجدار أن يحبس الخصم تمامًا — استفد من ذلك.</string>
+    <string name="join_code_hint">أدخل رمز الغرفة الذي شاركه صديقك معك.</string>
+    <string name="join_code_note">الرمز يعمل فقط ما دامت غرفته مفتوحة.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">حدّد قواعدك الخاصة وانتظر خصمًا.</string>
+    <string name="room_password_placeholder">كلمة مرور (اختياري)</string>
+    <string name="room_password_show">إظهار كلمة المرور</string>
+    <string name="room_password_hide">إخفاء كلمة المرور</string>
+    <string name="room_password_prompt_hint">أدخل الرمز للانضمام إلى غرفة محمية.</string>
+    <string name="room_join_action">انضمام</string>
+    <string name="paint_yours">لونك</string>
+    <string name="paint_rivals">لون الخصم</string>
+    <string name="room_browser_refresh">تحديث</string>
+    <string name="room_browser_players_caption">لاعبون</string>
+    <string name="report_note">بلاغك يبقى سريًا.</string>
+    <string name="room_code_copied">تم نسخ رمز الغرفة</string>
 </resources>

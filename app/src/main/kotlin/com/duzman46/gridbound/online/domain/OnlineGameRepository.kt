@@ -72,6 +72,28 @@ interface OnlineGameRepository {
     fun observeOpenRooms(): Flow<List<OnlineRoom>>
 
     /**
+     * Whether the database connection is up.
+     *
+     * Read from the node Firebase maintains for exactly this, so it costs no request and is
+     * true rather than assumed. It exists for the panel a player stares at while matchmaking:
+     * "still searching" and "your connection died four minutes ago" look identical otherwise.
+     */
+    fun observeConnection(): Flow<Boolean>
+
+    /**
+     * Stops the server from deleting this room when the host's connection drops.
+     *
+     * A room is created with a standing instruction to the database: if this client goes away,
+     * remove it. That is what stops a room outliving the app that opened it — swiped away,
+     * crashed, or carried out of signal — and leaving a code in the browser that opens nothing.
+     *
+     * The instruction has to be withdrawn the moment a rival walks in, or the first time the
+     * host's connection blinks during the match, the room the two of them are playing in
+     * disappears from under them.
+     */
+    suspend fun keepRoom(roomCode: String)
+
+    /**
      * Ends this player's matches that nobody has moved in for
      * [com.duzman46.gridbound.core.Constants.Online.IDLE_FORFEIT_MILLIS], awarding each to
      * whichever seat is not on the clock — which may well be the opponent's.

@@ -292,9 +292,9 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
         )
         val interaction = remember { MutableInteractionSource() }
         val pressed by interaction.collectIsPressedAsState()
-        Box(
+        Row(
             Modifier
-                .size(44.dp)
+                .clip(RoundedCornerShape(50))
                 // Click outside the scale. See pressScale.
                 .clickable(
                     interactionSource = interaction,
@@ -302,11 +302,24 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
                     role = Role.Button,
                     onClick = onRefresh,
                 )
-                .semantics { contentDescription = refreshLabel }
-                .pressLayer(pressScale(pressed), CircleShape),
-            contentAlignment = Alignment.Center,
+                .semantics(mergeDescendants = true) { contentDescription = refreshLabel }
+                .pressLayer(pressScale(pressed), RoundedCornerShape(50))
+                .heightIn(min = 44.dp)
+                .padding(horizontal = Dimens.SpaceSm),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Canvas(Modifier.size(24.dp)) { drawRefresh() }
+            Canvas(Modifier.size(22.dp)) { drawRefresh() }
+            // The word as well as the mark. Two arrows chasing each other is understood by
+            // people who have seen it before; everyone else was looking at a decoration.
+            Text(
+                text = refreshLabel,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = KoridorGold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

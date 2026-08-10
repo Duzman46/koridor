@@ -50,6 +50,13 @@ data class OnlineLobbyUiState(
     val waitingSession: OnlineSession? = null,
     val openRooms: List<OnlineRoom> = emptyList(),
     val isLoadingRooms: Boolean = false,
+    /**
+     * Whether the database connection is up.
+     *
+     * Assumed good until told otherwise, because that is the state a player spends almost all
+     * of their time in and a warning that flashes on every launch is a warning nobody reads.
+     */
+    val isConnected: Boolean = true,
     val filter: RoomBrowserFilter = RoomBrowserFilter(),
     /** The room code we are asking a password for. Set from either join path. */
     val passwordPromptCode: String? = null,
@@ -218,6 +225,15 @@ class OnlineLobbyViewModel @Inject constructor(
         roomsJob?.cancel()
         _uiState.update { it.copy(isLoadingRooms = true) }
         roomsJob = viewModelScope.launch {
+            // The connection light rides along on the same lifetime. It is a local read on a
+            // node the client keeps for itself — no request, no cost — and it is the difference
+            // between a waiting panel that says "still looking" and one that admits the handset
+            // fell off the network four minutes ago.
+            launch {
+                repository.observeConnection().collect { up ->
+                    _uiState.update { it.copy(isConnected = up) }
+                }
+            }
             // The spinner cannot be allowed to outlive the answer. Firebase's listener simply
             // never fires while there is no connection and nothing cached, and the first
             // version of this left a spinning indicator on screen forever — an animation
@@ -418,6 +434,12 @@ class OnlineLobbyViewModel @Inject constructor(
                         }
 
                         room.status.isPlayable && room.playerCount == 2 -> {
+                            // Not waiting any more, and clearing it matters beyond tidiness:
+                            // the screen now closes an abandoned room on its way out, and a
+                            // session still sitting here would make it close the match that
+                            // had just started.
+                            _uiState.update { it.copy(waitingSession = null) }
+                            repository.keepRoom(session.roomCode)
                             _events.emit(OnlineLobbyEvent.OpenGame(session))
                             waitingJob?.cancel()
                         }

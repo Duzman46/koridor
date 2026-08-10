@@ -84,6 +84,16 @@ class FirebaseOnlineGameRepository @Inject constructor(
                     Transaction.success(current)
                 }
                 if (created) {
+                    // A standing instruction to the server: if this client goes away, take the
+                    // room with it. Leaving the screen is handled by the screen, but nothing in
+                    // the app runs when it is swiped out of the recents list or the handset
+                    // walks into a lift — and until now those rooms sat in the browser for half
+                    // an hour, offering a code that opened nothing. Withdrawn by keepRoom the
+                    // moment a rival walks in.
+                    runCatching {
+                        roomRef(roomCode).onDisconnect().removeValue().await()
+                        secretRef(roomCode).onDisconnect().removeValue().await()
+                    }.onFailure { AppLog.warn("room-on-disconnect", it) }
                     return@lobbyCall OnlineLobbyResult.Success(
                         OnlineSession(roomCode, userId, hostSeat),
                     )
@@ -564,6 +574,20 @@ class FirebaseOnlineGameRepository @Inject constructor(
         // its own cache first and then from the wire, so attaching it costs no more than the
         // read it replaces and every later change arrives without asking.
         openRoomsQuery().snapshotFlow().map(::readOpenRooms)
+
+    override suspend fun keepRoom(roomCode: String) {
+        runCatching {
+            roomRef(roomCode).onDisconnect().cancel().await()
+            secretRef(roomCode).onDisconnect().cancel().await()
+        }.onFailure { AppLog.warn("room-keep", it) }
+    }
+
+    override fun observeConnection(): Flow<Boolean> =
+        firebase.database
+            .getReference(Constants.Online.CONNECTED_PATH)
+            .snapshotFlow()
+            .map { it.getValue(Boolean::class.java) == true }
+            .catch { emit(false) }
 
     private fun openRoomsQuery(): Query = roomsRef()
         .orderByChild(RoomCodec.Keys.BROWSE_KEY)

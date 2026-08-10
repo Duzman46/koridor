@@ -393,4 +393,36 @@
     <string name="play_local_subtitle">Joue avec un ami sur cet appareil</string>
     <string name="home_more_subtitle">Boutique, stats et plus</string>
     <string name="home_leaderboard_short">Classement</string>
+
+    <string name="online_ranked_match">Partie classée</string>
+    <string name="queue_searching_hint">Recherche du classement le plus proche du tien.</string>
+    <string name="queue_connection_good">Connexion bonne</string>
+    <string name="queue_connection_lost">Pas de connexion</string>
+    <string name="queue_stage">Appariement en cours</string>
+    <string name="room_stage">Salon ouvert</string>
+    <string name="room_yours">Ton salon</string>
+    <string name="queue_elapsed">ÉCOULÉ</string>
+    <string name="queue_estimate">ATTENTE HABITUELLE</string>
+    <string name="queue_estimate_value">%1$d–%2$d s</string>
+    <string name="queue_cancel_note">Annuler te fait perdre ta place dans la file.</string>
+    <string name="room_close_note">Fermer le salon rend son code inutile.</string>
+    <string name="queue_tip_one">Observe comment ton adversaire se déplace, puis adapte ton plan.</string>
+    <string name="queue_tip_two">Un mur gardé vaut mieux qu\'un mur posé trop tôt.</string>
+    <string name="queue_tip_three">Le chemin le plus court n\'est pas toujours le bon.</string>
+    <string name="queue_tip_four">Un mur ne peut jamais enfermer complètement l\'adversaire — profites-en.</string>
+    <string name="join_code_hint">Saisis le code du salon qu\'on t\'a partagé.</string>
+    <string name="join_code_note">Un code ne fonctionne que tant que son salon est ouvert.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Définis tes règles et attends un adversaire.</string>
+    <string name="room_password_placeholder">Mot de passe (facultatif)</string>
+    <string name="room_password_show">Afficher le mot de passe</string>
+    <string name="room_password_hide">Masquer le mot de passe</string>
+    <string name="room_password_prompt_hint">Saisis le code pour rejoindre un salon protégé.</string>
+    <string name="room_join_action">Rejoindre</string>
+    <string name="paint_yours">Ta couleur</string>
+    <string name="paint_rivals">Couleur de l\'adversaire</string>
+    <string name="room_browser_refresh">Actualiser</string>
+    <string name="room_browser_players_caption">Joueurs</string>
+    <string name="report_note">Ton signalement reste confidentiel.</string>
+    <string name="room_code_copied">Code copié</string>
 </resources>

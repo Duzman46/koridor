@@ -396,4 +396,36 @@
     <string name="play_local_subtitle">Игра вдвоём на одном устройстве</string>
     <string name="home_more_subtitle">Магазин, статистика и другое</string>
     <string name="home_leaderboard_short">Рейтинг</string>
+
+    <string name="online_ranked_match">Рейтинговый матч</string>
+    <string name="queue_searching_hint">Ищем игрока с ближайшим рейтингом.</string>
+    <string name="queue_connection_good">Связь в порядке</string>
+    <string name="queue_connection_lost">Нет связи</string>
+    <string name="queue_stage">Идёт подбор</string>
+    <string name="room_stage">Комната открыта</string>
+    <string name="room_yours">Ваша комната</string>
+    <string name="queue_elapsed">ПРОШЛО</string>
+    <string name="queue_estimate">ОБЫЧНОЕ ОЖИДАНИЕ</string>
+    <string name="queue_estimate_value">%1$d–%2$d с</string>
+    <string name="queue_cancel_note">Отмена освобождает ваше место в очереди.</string>
+    <string name="room_close_note">Если закрыть комнату, её код перестанет работать.</string>
+    <string name="queue_tip_one">Присмотритесь к ходам соперника и стройте план вокруг них.</string>
+    <string name="queue_tip_two">Стена, оставленная про запас, ценнее потраченной рано.</string>
+    <string name="queue_tip_three">Кратчайший путь не всегда лучший.</string>
+    <string name="queue_tip_four">Стена никогда не запрёт соперника полностью — пользуйтесь этим.</string>
+    <string name="join_code_hint">Введите код комнаты, которым с вами поделились.</string>
+    <string name="join_code_note">Код работает, только пока его комната открыта.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Задайте свои правила и дождитесь соперника.</string>
+    <string name="room_password_placeholder">Пароль (необязательно)</string>
+    <string name="room_password_show">Показать пароль</string>
+    <string name="room_password_hide">Скрыть пароль</string>
+    <string name="room_password_prompt_hint">Введите код, чтобы войти в защищённую комнату.</string>
+    <string name="room_join_action">Войти</string>
+    <string name="paint_yours">Ваш цвет</string>
+    <string name="paint_rivals">Цвет соперника</string>
+    <string name="room_browser_refresh">Обновить</string>
+    <string name="room_browser_players_caption">Игроки</string>
+    <string name="report_note">Ваша жалоба остаётся конфиденциальной.</string>
+    <string name="room_code_copied">Код скопирован</string>
 </resources>

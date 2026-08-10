@@ -390,4 +390,36 @@
     <string name="play_local_subtitle">Mit einem Freund auf diesem Gerät</string>
     <string name="home_more_subtitle">Shop, Statistik und mehr</string>
     <string name="home_leaderboard_short">Rangliste</string>
+
+    <string name="online_ranked_match">Gewertete Partie</string>
+    <string name="queue_searching_hint">Es wird nach der Wertung gesucht, die deiner am nächsten kommt.</string>
+    <string name="queue_connection_good">Verbindung gut</string>
+    <string name="queue_connection_lost">Keine Verbindung</string>
+    <string name="queue_stage">Suche läuft</string>
+    <string name="room_stage">Raum offen</string>
+    <string name="room_yours">Dein Raum</string>
+    <string name="queue_elapsed">VERGANGEN</string>
+    <string name="queue_estimate">ÜBLICHE WARTEZEIT</string>
+    <string name="queue_estimate_value">%1$d–%2$d Sek.</string>
+    <string name="queue_cancel_note">Beim Abbrechen verlierst du deinen Platz in der Schlange.</string>
+    <string name="room_close_note">Wenn du den Raum schließt, wird sein Code ungültig.</string>
+    <string name="queue_tip_one">Beobachte, wie dein Gegner zieht, und plane danach.</string>
+    <string name="queue_tip_two">Eine Wand, die du behältst, ist mehr wert als eine früh gesetzte.</string>
+    <string name="queue_tip_three">Der kürzeste Weg ist nicht immer der richtige.</string>
+    <string name="queue_tip_four">Eine Wand kann den Gegner nie ganz einschließen — nutze das.</string>
+    <string name="join_code_hint">Gib den Raumcode ein, den dir jemand geschickt hat.</string>
+    <string name="join_code_note">Ein Code funktioniert nur, solange sein Raum offen ist.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Leg deine eigenen Regeln fest und warte auf einen Gegner.</string>
+    <string name="room_password_placeholder">Passwort (optional)</string>
+    <string name="room_password_show">Passwort anzeigen</string>
+    <string name="room_password_hide">Passwort verbergen</string>
+    <string name="room_password_prompt_hint">Gib den Code ein, um einem geschützten Raum beizutreten.</string>
+    <string name="room_join_action">Beitreten</string>
+    <string name="paint_yours">Deine Farbe</string>
+    <string name="paint_rivals">Farbe des Gegners</string>
+    <string name="room_browser_refresh">Aktualisieren</string>
+    <string name="room_browser_players_caption">Spieler</string>
+    <string name="report_note">Deine Meldung bleibt vertraulich.</string>
+    <string name="room_code_copied">Raumcode kopiert</string>
 </resources>

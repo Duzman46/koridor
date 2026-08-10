@@ -390,4 +390,36 @@
     <string name="play_local_subtitle">Main bersama teman di perangkat ini</string>
     <string name="home_more_subtitle">Toko, statistik, dan lainnya</string>
     <string name="home_leaderboard_short">Peringkat</string>
+
+    <string name="online_ranked_match">Pertandingan berperingkat</string>
+    <string name="queue_searching_hint">Mencari peringkat yang paling dekat denganmu.</string>
+    <string name="queue_connection_good">Koneksi bagus</string>
+    <string name="queue_connection_lost">Tidak ada koneksi</string>
+    <string name="queue_stage">Sedang mencocokkan</string>
+    <string name="room_stage">Ruang terbuka</string>
+    <string name="room_yours">Ruangmu</string>
+    <string name="queue_elapsed">BERJALAN</string>
+    <string name="queue_estimate">PERKIRAAN TUNGGU</string>
+    <string name="queue_estimate_value">%1$d–%2$d dtk</string>
+    <string name="queue_cancel_note">Membatalkan berarti kehilangan giliranmu di antrean.</string>
+    <string name="room_close_note">Menutup ruang membuat kodenya tidak berlaku.</string>
+    <string name="queue_tip_one">Perhatikan cara lawan melangkah, lalu susun rencanamu.</string>
+    <string name="queue_tip_two">Dinding yang kamu simpan lebih berharga daripada yang cepat dipakai.</string>
+    <string name="queue_tip_three">Jalur terpendek tidak selalu jalur yang tepat.</string>
+    <string name="queue_tip_four">Dinding tidak pernah bisa mengurung lawan sepenuhnya — manfaatkan itu.</string>
+    <string name="join_code_hint">Masukkan kode ruang yang dibagikan temanmu.</string>
+    <string name="join_code_note">Kode hanya berlaku selama ruangnya masih terbuka.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Tentukan aturanmu sendiri dan tunggu lawan.</string>
+    <string name="room_password_placeholder">Kata sandi (opsional)</string>
+    <string name="room_password_show">Tampilkan kata sandi</string>
+    <string name="room_password_hide">Sembunyikan kata sandi</string>
+    <string name="room_password_prompt_hint">Masukkan kode untuk bergabung ke ruang terlindungi.</string>
+    <string name="room_join_action">Gabung</string>
+    <string name="paint_yours">Warnamu</string>
+    <string name="paint_rivals">Warna lawan</string>
+    <string name="room_browser_refresh">Segarkan</string>
+    <string name="room_browser_players_caption">Pemain</string>
+    <string name="report_note">Laporanmu dirahasiakan.</string>
+    <string name="room_code_copied">Kode ruang disalin</string>
 </resources>

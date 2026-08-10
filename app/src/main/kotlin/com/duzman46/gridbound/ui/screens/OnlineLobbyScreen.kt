@@ -1,8 +1,13 @@
 package com.duzman46.gridbound.ui.screens
 
+import android.os.Build
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -15,15 +20,18 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +59,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,12 +69,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -74,9 +90,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -101,18 +121,57 @@ import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.components.ReportDialog
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.SubmitButton
+import com.duzman46.gridbound.game.board.SeatColors
+import com.duzman46.gridbound.ui.components.home.DialogCrest
+import com.duzman46.gridbound.ui.components.home.DurationChip
 import com.duzman46.gridbound.ui.components.home.EmptyRoomsPanel
+import com.duzman46.gridbound.ui.components.home.FieldControl
+import com.duzman46.gridbound.ui.components.home.FieldLabel
+import com.duzman46.gridbound.ui.components.home.FormHeading
+import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.HomeSceneShare
 import com.duzman46.gridbound.ui.components.home.LobbyActionCard
+import com.duzman46.gridbound.ui.components.home.LobbyField
 import com.duzman46.gridbound.ui.components.home.LobbySectionHeader
+import com.duzman46.gridbound.ui.components.home.OpenRoomCard
+import com.duzman46.gridbound.ui.components.home.OutlineAction
+import com.duzman46.gridbound.ui.components.home.PanelFootnote
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.RankedQueueCard
+import com.duzman46.gridbound.ui.components.home.SearchingPanel
+import com.duzman46.gridbound.ui.components.home.SeatCard
+import com.duzman46.gridbound.ui.components.home.SheetGrip
+import com.duzman46.gridbound.ui.components.home.drawEye
+import com.duzman46.gridbound.ui.components.home.drawHash
+import com.duzman46.gridbound.ui.components.home.drawLock
+import com.duzman46.gridbound.ui.components.home.drawPairMark
+import com.duzman46.gridbound.ui.components.home.drawPlusMark
+import com.duzman46.gridbound.ui.components.home.drawRoomCrest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Which of the lobby's two forms is open, if either. */
 private enum class LobbyForm { JOIN, CREATE }
+
+/**
+ * How much of the window the scene keeps on this screen.
+ *
+ * Less than the third it takes on home and play, and one number for every state this screen has.
+ *
+ * It was briefly two numbers — a third while the room list was empty, a sixth once rooms
+ * arrived — and that was worse than either. Rooms arrive a moment after the screen does, so
+ * opening the lobby meant watching it settle and then jump: the photograph shrank and every
+ * control slid up under the finger already reaching for one. A layout that moves when data
+ * lands is a layout that cannot be aimed at.
+ *
+ * So the screen commits up front to the size its fullest state needs. The lobby carries more
+ * than home does — a queue card, two cards, a header, and a list whose length nobody controls —
+ * and the waiting panel that replaces it is one tall column that has to reach its own cancel
+ * button on the shortest phone the app supports. The scene stays, because vanishing between two
+ * screens is its own kind of jolt; it just stops being what the layout is built around.
+ */
+private const val LOBBY_SCENE_SHARE = 0.16f
 
 /**
  * @param inviteCode pre-fills the join field when the player arrived from an invitation, so
@@ -158,11 +217,23 @@ private fun OnlineLobbyScreen(
         if (state.waitingSession != null || state.passwordPromptCode != null) openForm = null
     }
 
-    // A place in the matchmaking list is a promise to be there the moment a rival is found,
-    // and an app that is not on screen cannot keep it: the opponent would be dropped into a
-    // match against nobody. Giving the place up here is also what makes leaving the lobby
-    // enough — there is no other exit to catch.
-    LifecycleStartEffect(Unit) { onStopOrDispose { viewModel.leaveQueue() } }
+    // A place in the matchmaking list is a promise to be there the moment a rival is found, and
+    // an app that is not on screen cannot keep it: the opponent would be dropped into a match
+    // against nobody. Giving the place up here is also what makes leaving the lobby enough —
+    // there is no other exit to catch.
+    //
+    // A hosted room is the same promise with a code attached, and it was not being kept. Every
+    // way out except the button — the back gesture, the home key, swiping the app away — left a
+    // room sitting in the browser for half an hour with nobody behind it. A player who tapped
+    // it waited for a host who had gone. So the room goes when the screen goes, by the same
+    // rule and in the same place; `waitingSession` is already null by the time a match starts,
+    // so this cannot close a room that has just found its rival.
+    LifecycleStartEffect(Unit) {
+        onStopOrDispose {
+            viewModel.leaveQueue()
+            viewModel.cancelWaiting()
+        }
+    }
 
     // The list is a live listener rather than something re-fetched every fifteen seconds: a
     // room that opens shows up at once and one that fills leaves at once. It is still tied to
@@ -197,14 +268,12 @@ private fun OnlineLobbyScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // The same scene, at the same height, as the two screens a player passed through to get
-        // here. Home, play and the lobby are one route taken three taps in a row, and a
-        // photograph that changes size at each step is what makes one route read as three
-        // designs. The share is the picture's own — see HomeSceneShare.
+        // The same scene as the two screens a player passed through to get here, at the size
+        // this one can afford — see LOBBY_SCENE_SHARE. One number, whatever the screen is doing.
         Box(
             Modifier
                 .fillMaxWidth()
-                .weight(HomeSceneShare),
+                .weight(LOBBY_SCENE_SHARE),
         ) {
             HomeHero(Modifier.fillMaxSize())
             Row(
@@ -229,7 +298,7 @@ private fun OnlineLobbyScreen(
         Box(
             Modifier
                 .fillMaxWidth()
-                .weight(1f - HomeSceneShare),
+                .weight(1f - LOBBY_SCENE_SHARE),
         ) {
             when {
                 !state.isConfigured ->
@@ -238,6 +307,7 @@ private fun OnlineLobbyScreen(
                 state.isQueued -> WaitingPanel(
                     roomCode = null,
                     message = state.message,
+                    connected = state.isConnected,
                     onCancel = viewModel::leaveQueue,
                 )
 
@@ -246,6 +316,7 @@ private fun OnlineLobbyScreen(
                     // Nothing rendered state.message here, so an invite that failed just
                     // flipped the icon back with no explanation at all.
                     message = state.message,
+                    connected = state.isConnected,
                     onCancel = viewModel::cancelWaiting,
                     friends = state.invitableFriends,
                     invitedUserIds = state.invitedUserIds,
@@ -369,7 +440,7 @@ private fun LobbyContent(
 
         LobbySectionHeader(
             title = stringResource(R.string.online_browse_rooms),
-            refreshLabel = stringResource(R.string.action_retry),
+            refreshLabel = stringResource(R.string.room_browser_refresh),
             onRefresh = viewModel::refreshOpenRooms,
         )
 
@@ -402,9 +473,10 @@ private fun LobbyContent(
                     contentPadding = PaddingValues(bottom = Dimens.SpaceLg + gestureBar),
                     verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                 ) {
-                    items(state.visibleRooms, key = OnlineRoom::roomId) { room ->
+                    itemsIndexed(state.visibleRooms, key = { _, room -> room.roomId }) { at, room ->
                         OpenRoomRow(
                             room = room,
+                            index = at + 1,
                             enabled = !state.isBusy,
                             onJoin = { viewModel.joinListedRoom(room) },
                             onReport = { reason -> viewModel.reportRoom(room, reason) },
@@ -439,26 +511,25 @@ private fun LobbyFormSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        // The sheet brings its own grip, drawn in gold like the rest of the screen. Material's
+        // is a grey pill from a different design.
+        dragHandle = {
+            Box(Modifier.fillMaxWidth().padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceXs)) {
+                SheetGrip(Modifier.align(Alignment.Center))
+            }
+        },
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceXl),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
         ) {
-            Text(
-                stringResource(
-                    when (form) {
-                        LobbyForm.JOIN -> R.string.online_join_by_code
-                        LobbyForm.CREATE -> R.string.online_create_room
-                    },
-                ),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
             when (form) {
                 LobbyForm.JOIN -> JoinByCodeForm(state, viewModel)
                 LobbyForm.CREATE -> CreateRoomForm(state, viewModel)
@@ -470,79 +541,135 @@ private fun LobbyFormSheet(
 
 @Composable
 private fun JoinByCodeForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyViewModel) {
-    OutlinedTextField(
-        value = state.roomCodeInput,
-        onValueChange = viewModel::setRoomCode,
-        label = { Text(stringResource(R.string.room_code_label)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Characters,
-            keyboardType = KeyboardType.Ascii,
-            imeAction = ImeAction.Done,
-        ),
-        modifier = Modifier.fillMaxWidth(),
+    FormHeading(
+        title = stringResource(R.string.online_join_by_code),
+        subtitle = stringResource(R.string.join_code_hint),
+        mark = { drawHash() },
     )
-    SubmitButton(
-        text = stringResource(R.string.online_join_by_code),
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FieldLabel(stringResource(R.string.room_code_label))
+        LobbyField(
+            value = state.roomCodeInput,
+            onValueChange = viewModel::setRoomCode,
+            placeholder = stringResource(R.string.room_code_placeholder),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Characters,
+                keyboardType = KeyboardType.Ascii,
+                imeAction = ImeAction.Done,
+            ),
+        )
+    }
+    PanelFootnote(stringResource(R.string.join_code_note))
+    GoldSubmit(
+        label = stringResource(R.string.online_join_by_code),
         onClick = viewModel::joinByCode,
         enabled = state.canJoinByCode,
-        isSubmitting = state.isBusy,
-        leadingIcon = Icons.Rounded.Groups,
+        busy = state.isBusy,
+        mark = { drawPairMark(Color(0xFF1A1206)) },
     )
 }
 
 @Composable
 private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyViewModel) {
     val configuration = state.configuration
+    var passwordShown by rememberSaveable { mutableStateOf(false) }
 
-    OutlinedTextField(
-        value = configuration.roomName,
-        onValueChange = viewModel::setRoomName,
-        label = { Text(stringResource(R.string.room_name_label)) },
-        placeholder = { Text(stringResource(R.string.room_name_placeholder)) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+    FormHeading(
+        title = stringResource(R.string.online_create_room),
+        subtitle = stringResource(R.string.create_room_hint),
+        mark = { drawRoomCrest() },
     )
+
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FieldLabel(stringResource(R.string.room_name_label))
+        LobbyField(
+            value = configuration.roomName,
+            onValueChange = viewModel::setRoomName,
+            placeholder = stringResource(R.string.room_name_placeholder),
+            leading = { drawRoomCrest() },
+        )
+    }
 
     // The host picks a colour and with it a seat; the guest gets the other one. It arrives
     // already drawn, so the swatch showing as chosen is the seat the room will be written
     // with. It used to be drawn at write time and rendered here as blue meanwhile, which told
     // every host who left it alone that they had blue and gave them red half the time.
-    SeatPicker(
-        selected = configuration.hostSeat ?: PlayerId.PLAYER_ONE,
-        onSelect = viewModel::setHostSeat,
-    )
-
-    Text(stringResource(R.string.room_turn_duration_label), fontWeight = FontWeight.SemiBold)
-    ChipRow {
-        OnlineLobbyViewModel.TURN_OPTIONS.forEach { seconds ->
-            FilterChip(
-                selected = configuration.timing.turnDurationSeconds == seconds,
-                onClick = { viewModel.setTurnDuration(seconds) },
-                label = { Text(durationLabel(seconds)) },
-            )
+    val seat = configuration.hostSeat ?: PlayerId.PLAYER_ONE
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FieldLabel(stringResource(R.string.paint_label))
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
+            PlayerId.entries.forEach { option ->
+                val chosen = option == seat
+                SeatCard(
+                    swatch = SeatColors.pawn(option),
+                    name = stringResource(
+                        if (option == PlayerId.PLAYER_ONE) {
+                            R.string.game_player_blue
+                        } else {
+                            R.string.game_player_red
+                        },
+                    ),
+                    role = stringResource(
+                        if (chosen) R.string.paint_yours else R.string.paint_rivals,
+                    ),
+                    chosen = chosen,
+                    onClick = { viewModel.setHostSeat(option) },
+                )
+            }
         }
     }
 
-    OutlinedTextField(
-        value = configuration.password,
-        onValueChange = viewModel::setRoomPassword,
-        label = { Text(stringResource(R.string.room_password_label)) },
-        placeholder = { Text(stringResource(R.string.room_password_optional)) },
-        singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-        ),
-        modifier = Modifier.fillMaxWidth(),
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FieldLabel(stringResource(R.string.room_turn_duration_label))
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+            OnlineLobbyViewModel.TURN_OPTIONS.forEach { seconds ->
+                DurationChip(
+                    label = durationLabel(seconds),
+                    chosen = configuration.timing.turnDurationSeconds == seconds,
+                    unlimited = seconds <= 0,
+                    onClick = { viewModel.setTurnDuration(seconds) },
+                )
+            }
+        }
+    }
 
-    SubmitButton(
-        text = stringResource(R.string.online_create_room),
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FieldLabel(
+            stringResource(R.string.room_password_label),
+            trailing = stringResource(R.string.room_password_optional),
+        )
+        LobbyField(
+            value = configuration.password,
+            onValueChange = viewModel::setRoomPassword,
+            placeholder = stringResource(R.string.room_password_placeholder),
+            visualTransformation = if (passwordShown) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            leading = { drawLock() },
+            trailing = {
+                // A password nobody can read back is a password typed wrong on a phone
+                // keyboard, and this one is read out loud to a friend anyway.
+                FieldControl(
+                    label = stringResource(
+                        if (passwordShown) R.string.room_password_hide else R.string.room_password_show,
+                    ),
+                    onClick = { passwordShown = !passwordShown },
+                ) { drawEye(Color(0xFF8B9098), open = passwordShown) }
+            },
+        )
+    }
+
+    GoldSubmit(
+        label = stringResource(R.string.online_create_room),
         onClick = viewModel::createRoom,
-        isSubmitting = state.isBusy,
-        leadingIcon = Icons.Rounded.AddCircle,
+        busy = state.isBusy,
+        mark = { drawPlusMark(Color(0xFF1A1206)) },
     )
 }
 
@@ -556,6 +683,7 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
 @Composable
 private fun OpenRoomRow(
     room: OnlineRoom,
+    index: Int,
     enabled: Boolean,
     onJoin: () -> Unit,
     onReport: (ContentReportReason) -> Unit,
@@ -571,73 +699,21 @@ private fun OpenRoomRow(
             },
         )
     }
-    Card(
-        onClick = onJoin,
+    OpenRoomCard(
+        index = index,
+        seat = SeatColors.pawn(room.hostSeat),
+        title = room.roomName.ifBlank { room.roomCode },
+        host = room.hostName.ifBlank { room.roomCode },
+        rating = room.hostRating,
+        durationLabel = durationLabel(room.timing.turnDurationSeconds),
+        players = stringResource(R.string.room_browser_players, room.playerCount),
+        locked = room.requiresPassword,
+        lockedLabel = stringResource(R.string.room_locked),
+        reportLabel = stringResource(R.string.report_action),
         enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-        ),
-    ) {
-        Row(
-            Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PlayerAvatar(
-                avatarId = Constants.Profile.DEFAULT_AVATAR_ID,
-                name = room.hostName.ifBlank { room.roomCode },
-                size = 40.dp,
-            )
-            Column(Modifier.weight(1f)) {
-                Text(
-                    room.roomName.ifBlank { room.roomCode },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    stringResource(R.string.room_browser_host, room.hostName, room.hostRating),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    durationLabel(room.timing.turnDurationSeconds),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    stringResource(R.string.room_browser_players, room.playerCount),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (room.requiresPassword) {
-                Icon(
-                    Icons.Rounded.Lock,
-                    contentDescription = stringResource(R.string.room_locked),
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            IconButton(onClick = { reporting = true }) {
-                Icon(
-                    Icons.Rounded.Flag,
-                    contentDescription = stringResource(R.string.report_action),
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
+        onJoin = onJoin,
+        onReport = { reporting = true },
+    )
 }
 
 /**
@@ -655,109 +731,210 @@ private fun OpenRoomRow(
 private fun WaitingPanel(
     roomCode: String?,
     message: UiText?,
+    connected: Boolean,
     onCancel: () -> Unit,
     friends: List<OnlineFriend> = emptyList(),
     invitedUserIds: Set<String> = emptySet(),
     onInvite: (String) -> Unit = {},
 ) {
+    // The clock lives here rather than in the view model. It ticks once a second, and a second
+    // of state in a view model is a second of recomposition for the whole screen; here it is a
+    // second of recomposition for one line of text.
+    var seconds by remember(roomCode) { mutableIntStateOf(0) }
+    LaunchedEffect(roomCode) {
+        while (true) {
+            delay(1_000)
+            seconds++
+        }
+    }
+
+    // Something to read while there is nothing to do. Rotating, because a single line held for
+    // four minutes stops being advice and becomes wallpaper.
+    val tips = listOf(
+        stringResource(R.string.queue_tip_one),
+        stringResource(R.string.queue_tip_two),
+        stringResource(R.string.queue_tip_three),
+        stringResource(R.string.queue_tip_four),
+    )
+
     Box(
         Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Dimens.ScreenPadding)
+            .padding(vertical = Dimens.SpaceMd)
+            .navigationBarsPadding(),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 4.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 480.dp)
-                .padding(20.dp),
+        Column(
+            Modifier.widthIn(max = 480.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
         ) {
-            Column(
-                Modifier.padding(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+            SearchingPanel(
+                badge = stringResource(
+                    if (roomCode == null) R.string.online_ranked else R.string.room_yours,
+                ),
+                title = stringResource(
+                    if (roomCode == null) {
+                        R.string.online_quick_match_searching
+                    } else {
+                        R.string.room_waiting_for_opponent
+                    },
+                ),
+                subtitle = stringResource(
+                    if (roomCode == null) R.string.queue_searching_hint else R.string.room_code_hint,
+                ),
+                connectionLabel = stringResource(
+                    if (connected) R.string.queue_connection_good else R.string.queue_connection_lost,
+                ),
+                stageLabel = stringResource(
+                    if (roomCode == null) R.string.queue_stage else R.string.room_stage,
+                ),
+                elapsedLabel = stringResource(R.string.queue_elapsed),
+                elapsedValue = "%02d:%02d".format(seconds / 60, seconds % 60),
+                estimateLabel = stringResource(R.string.queue_estimate),
+                estimateValue = stringResource(
+                    R.string.queue_estimate_value,
+                    Constants.Online.QUEUE_TYPICAL_WAIT_LOW_SECONDS,
+                    Constants.Online.QUEUE_TYPICAL_WAIT_HIGH_SECONDS,
+                ),
+                tip = tips[(seconds / TIP_HOLD_SECONDS) % tips.size].takeIf { roomCode == null },
+                connected = connected,
             ) {
-                CircularProgressIndicator()
-                Text(
-                    stringResource(
-                        if (roomCode == null) {
-                            R.string.online_quick_match_searching
-                        } else {
-                            R.string.room_waiting_for_opponent
-                        },
-                    ),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
+                // A hosted room has something matchmaking does not: a code somebody else can
+                // type. It goes inside the panel because it is the answer to "what now".
                 if (roomCode != null) {
-                    SelectionContainer {
-                        Text(
-                            roomCode,
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Black,
-                        )
-                    }
-                    Text(
-                        stringResource(R.string.room_code_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    RoomCodePlate(roomCode)
                 }
-                message?.let { FormMessage(it) }
+            }
 
-                // Inviting only makes sense here: this is the one moment there is a live
-                // room code to send.
-                if (roomCode != null && friends.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.friends_invite),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    friends.forEach { friend ->
-                        val invited = friend.userId in invitedUserIds
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            PlayerAvatar(friend.avatarId, friend.username, size = 32.dp)
-                            Text(
-                                friend.username,
-                                Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            if (invited) {
-                                Text(
-                                    stringResource(R.string.friends_invite_sent),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            } else {
-                                IconButton(onClick = { onInvite(friend.userId) }) {
-                                    Icon(
-                                        Icons.Rounded.PersonAdd,
-                                        contentDescription = stringResource(R.string.friends_invite),
-                                    )
-                                }
-                            }
-                        }
+            message?.let { FormMessage(it) }
+
+            // Inviting only makes sense here: this is the one moment there is a live room
+            // code to send.
+            if (roomCode != null && friends.isNotEmpty()) {
+                InviteList(friends, invitedUserIds, onInvite)
+            }
+
+            OutlineAction(
+                label = stringResource(
+                    if (roomCode == null) R.string.action_cancel else R.string.room_close,
+                ),
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            PanelFootnote(
+                text = stringResource(
+                    if (roomCode == null) R.string.queue_cancel_note else R.string.room_close_note,
+                ),
+            )
+        }
+    }
+}
+
+/**
+ * The code, big enough to read out over a phone and long-pressable to copy.
+ *
+ * It used to be a `SelectionContainer`, which is Android's answer to "let them copy it" and the
+ * wrong one here: it asks the player to press, wait for handles, drag them to both ends of a
+ * six-character word and then find "Copy" in a popup. The panel's own subtitle promised that
+ * holding the code copies it. Now it does — one press, the whole code, and a buzz to say so.
+ */
+@Composable
+private fun RoomCodePlate(roomCode: String) {
+    val clipboard = LocalClipboardManager.current
+    val haptics = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val copied = stringResource(R.string.room_code_copied)
+    val shape = RoundedCornerShape(16.dp)
+    Text(
+        text = roomCode,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(KoridorGold.copy(alpha = 0.08f))
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onLongClickLabel = copied,
+                onLongClick = {
+                    clipboard.setText(AnnotatedString(roomCode))
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    // Android 13 and later show their own confirmation for anything put on the
+                    // clipboard, and a second one on top of it is the app talking over the
+                    // system. Older versions say nothing at all, so we do.
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
+                onClick = {
+                    clipboard.setText(AnnotatedString(roomCode))
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
+            .padding(vertical = Dimens.SpaceMd),
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 4.sp,
+        color = KoridorGold,
+        textAlign = TextAlign.Center,
+    )
+}
 
-                SecondarySubmitButton(
-                    text = stringResource(
-                        if (roomCode == null) R.string.action_cancel else R.string.room_close,
-                    ),
-                    onClick = onCancel,
+/** Friends who could be sent the code, and whether they already have been. */
+@Composable
+private fun InviteList(
+    friends: List<OnlineFriend>,
+    invitedUserIds: Set<String>,
+    onInvite: (String) -> Unit,
+) {
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        FieldLabel(stringResource(R.string.friends_invite))
+        friends.forEach { friend ->
+            val invited = friend.userId in invitedUserIds
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            ) {
+                PlayerAvatar(friend.avatarId, friend.username, size = 32.dp)
+                Text(
+                    friend.username,
+                    Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                if (invited) {
+                    Text(
+                        stringResource(R.string.friends_invite_sent),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = KoridorGold,
+                    )
+                } else {
+                    FieldControl(
+                        label = stringResource(R.string.friends_invite),
+                        onClick = { onInvite(friend.userId) },
+                    ) { drawPlusMark(KoridorGold) }
+                }
             }
         }
     }
 }
+
+/** How long one tip stays up before the next one takes its place. */
+private const val TIP_HOLD_SECONDS = 8
 
 @Composable
 private fun PasswordPromptDialog(
@@ -766,45 +943,111 @@ private fun PasswordPromptDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.room_password_label)) },
-        text = {
-            OutlinedTextField(
-                value = password,
-                onValueChange = onPassword,
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-                modifier = Modifier.fillMaxWidth(),
+    var shown by rememberSaveable { mutableStateOf(false) }
+    LobbyDialog(
+        onDismiss = onDismiss,
+        crest = { drawLock() },
+        title = stringResource(R.string.room_password_label),
+        subtitle = stringResource(R.string.room_password_prompt_hint),
+    ) {
+        LobbyField(
+            value = password,
+            onValueChange = onPassword,
+            placeholder = stringResource(R.string.room_password_label),
+            visualTransformation = if (shown) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            leading = { drawLock() },
+            trailing = {
+                FieldControl(
+                    label = stringResource(
+                        if (shown) R.string.room_password_hide else R.string.room_password_show,
+                    ),
+                    onClick = { shown = !shown },
+                ) { drawEye(Color(0xFF8B9098), open = shown) }
+            },
+        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
+            OutlineAction(
+                label = stringResource(R.string.action_cancel),
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f),
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = password.isNotBlank()) {
-                Text(stringResource(R.string.online_join_by_code))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
-    )
+            GoldSubmit(
+                label = stringResource(R.string.room_join_action),
+                onClick = onConfirm,
+                enabled = password.isNotBlank(),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
 }
 
+/**
+ * The shape every dialog on this screen takes: a crest hanging off the top edge, a title, a
+ * sentence, and whatever the dialog is actually for.
+ *
+ * Not an `AlertDialog`. Material's is a rounded rectangle with a title row and a button row, and
+ * every part of it — the tonal surface, the text button pair, the corner radius — belongs to a
+ * different design than a gold hairline on near-black. What is kept is the only part that
+ * matters: it is a `Dialog`, so it dims what is behind it and takes the back button.
+ */
 @Composable
-private fun ChipRow(
-    modifier: Modifier = Modifier,
-    content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+private fun LobbyDialog(
+    onDismiss: () -> Unit,
+    crest: DrawScope.() -> Unit,
+    title: String,
+    subtitle: String,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Row(
-        modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        content = content,
-    )
+    Dialog(onDismissRequest = onDismiss) {
+        val shape = RoundedCornerShape(26.dp)
+        // The crest sits half outside the panel, so the panel starts below its middle and the
+        // Box lets it hang over the top edge rather than pushing the title down.
+        Box(Modifier.padding(top = 32.dp), contentAlignment = Alignment.TopCenter) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.35f)), shape)
+                    .padding(Dimens.SpaceLg)
+                    .padding(top = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF8B9098),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                content()
+            }
+            DialogCrest(crest, Modifier.align(Alignment.TopCenter).offset(y = (-32).dp))
+        }
+    }
 }
 
 @Composable

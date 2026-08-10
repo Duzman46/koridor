@@ -425,4 +425,36 @@
     <string name="play_local_subtitle">Play with a friend on this device</string>
     <string name="home_more_subtitle">Store, statistics and more</string>
     <string name="home_leaderboard_short">Leaderboard</string>
+
+    <string name="online_ranked_match">Ranked match</string>
+    <string name="queue_searching_hint">Looking for the closest rating to yours.</string>
+    <string name="queue_connection_good">Connection good</string>
+    <string name="queue_connection_lost">No connection</string>
+    <string name="queue_stage">Matchmaking</string>
+    <string name="room_stage">Room open</string>
+    <string name="room_yours">Your room</string>
+    <string name="queue_elapsed">ELAPSED</string>
+    <string name="queue_estimate">TYPICAL WAIT</string>
+    <string name="queue_estimate_value">%1$d–%2$d s</string>
+    <string name="queue_cancel_note">Cancelling gives up your place in the queue.</string>
+    <string name="room_close_note">Closing the room makes its code useless.</string>
+    <string name="queue_tip_one">Study how your rival moves, then plan around it.</string>
+    <string name="queue_tip_two">A wall you keep is worth more than a wall you spend early.</string>
+    <string name="queue_tip_three">The shortest path is not always the one to take.</string>
+    <string name="queue_tip_four">A wall can never seal a rival in completely — use that.</string>
+    <string name="join_code_hint">Enter the room code a friend shared with you.</string>
+    <string name="join_code_note">A code only works while its room is open.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Set your own rules and wait for a rival.</string>
+    <string name="room_password_placeholder">Optional password</string>
+    <string name="room_password_show">Show password</string>
+    <string name="room_password_hide">Hide password</string>
+    <string name="room_password_prompt_hint">Enter the code to join a protected room.</string>
+    <string name="room_join_action">Join</string>
+    <string name="paint_yours">Your colour</string>
+    <string name="paint_rivals">Rival\'s colour</string>
+    <string name="room_browser_refresh">Refresh</string>
+    <string name="room_browser_players_caption">Players</string>
+    <string name="report_note">Your report is kept private.</string>
+    <string name="room_code_copied">Room code copied</string>
 </resources>

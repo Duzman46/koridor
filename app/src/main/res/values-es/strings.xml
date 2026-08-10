@@ -393,4 +393,36 @@
     <string name="play_local_subtitle">Juega con un amigo en este dispositivo</string>
     <string name="home_more_subtitle">Tienda, estadísticas y más</string>
     <string name="home_leaderboard_short">Ranking</string>
+
+    <string name="online_ranked_match">Partida clasificatoria</string>
+    <string name="queue_searching_hint">Buscando la puntuación más parecida a la tuya.</string>
+    <string name="queue_connection_good">Conexión buena</string>
+    <string name="queue_connection_lost">Sin conexión</string>
+    <string name="queue_stage">Emparejando</string>
+    <string name="room_stage">Sala abierta</string>
+    <string name="room_yours">Tu sala</string>
+    <string name="queue_elapsed">TRANSCURRIDO</string>
+    <string name="queue_estimate">ESPERA HABITUAL</string>
+    <string name="queue_estimate_value">%1$d–%2$d s</string>
+    <string name="queue_cancel_note">Si cancelas, pierdes tu lugar en la cola.</string>
+    <string name="room_close_note">Si cierras la sala, su código deja de servir.</string>
+    <string name="queue_tip_one">Observa cómo se mueve tu rival y planea en consecuencia.</string>
+    <string name="queue_tip_two">Un muro que guardas vale más que uno que gastas pronto.</string>
+    <string name="queue_tip_three">El camino más corto no siempre es el que conviene.</string>
+    <string name="queue_tip_four">Un muro nunca puede encerrar del todo al rival: apróvechalo.</string>
+    <string name="join_code_hint">Escribe el código de sala que te han compartido.</string>
+    <string name="join_code_note">Un código solo sirve mientras su sala esté abierta.</string>
+    <string name="room_code_placeholder">XXXX-XXXX</string>
+    <string name="create_room_hint">Pon tus propias reglas y espera a un rival.</string>
+    <string name="room_password_placeholder">Contraseña (opcional)</string>
+    <string name="room_password_show">Mostrar contraseña</string>
+    <string name="room_password_hide">Ocultar contraseña</string>
+    <string name="room_password_prompt_hint">Escribe el código para entrar en una sala protegida.</string>
+    <string name="room_join_action">Entrar</string>
+    <string name="paint_yours">Tu color</string>
+    <string name="paint_rivals">Color del rival</string>
+    <string name="room_browser_refresh">Actualizar</string>
+    <string name="room_browser_players_caption">Jugadores</string>
+    <string name="report_note">Tu denuncia se mantiene privada.</string>
+    <string name="room_code_copied">Código copiado</string>
 </resources>

@@ -15,6 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -121,14 +123,61 @@ class OnlineLobbyViewModelTest {
     }
 
     @Test
-    fun `a rival walking in opens the board rather than clearing the panel`() =
-        runTest(dispatcher) {
-            val model = viewModel()
-            model.createRoom()
-            repository.rooms.value = repository.waitingRoom(OnlineRoomStatus.IN_PROGRESS)
-                .copy(guestUserId = "bob-uid")
-            assertNotNull(model.uiState.value.waitingSession)
-        }
+    fun `a rival walking in opens the board`() = runTest(dispatcher) {
+        val model = viewModel()
+        val seen = mutableListOf<OnlineLobbyEvent>()
+        val collector = launch { model.events.toList(seen) }
+
+        model.createRoom()
+        repository.rooms.value = repository.waitingRoom(OnlineRoomStatus.IN_PROGRESS)
+            .copy(guestUserId = "bob-uid")
+
+        assertTrue(seen.any { it is OnlineLobbyEvent.OpenGame })
+        collector.cancel()
+    }
+
+    @Test
+    fun `and the room stops being one the server deletes when we vanish`() = runTest(dispatcher) {
+        // A room is created with a standing instruction to delete it if this client goes away.
+        // Left in place, the first blink in the host's connection during the match would take
+        // the room the two of them are playing in with it.
+        val model = viewModel()
+        model.createRoom()
+
+        repository.rooms.value = repository.waitingRoom(OnlineRoomStatus.IN_PROGRESS)
+            .copy(guestUserId = "bob-uid")
+
+        assertEquals(1, repository.kept.size)
+    }
+
+    @Test
+    fun `leaving the lobby closes a room nobody joined`() = runTest(dispatcher) {
+        // Every way out except the cancel button used to leave the room sitting in the browser
+        // for half an hour with nobody behind it, and a player who tapped it waited for a host
+        // who had gone. This is what the screen calls on its way out.
+        val model = viewModel()
+        model.createRoom()
+        assertNotNull(model.uiState.value.waitingSession)
+
+        model.cancelWaiting()
+
+        assertNull(model.uiState.value.waitingSession)
+        assertEquals(1, repository.left.size)
+    }
+
+    @Test
+    fun `but leaving after a rival joined leaves the match alone`() = runTest(dispatcher) {
+        // The same call fires when the lobby is disposed on its way to the board. It must not
+        // close the room the match has just started in.
+        val model = viewModel()
+        model.createRoom()
+        repository.rooms.value = repository.waitingRoom(OnlineRoomStatus.IN_PROGRESS)
+            .copy(guestUserId = "bob-uid")
+
+        model.cancelWaiting()
+
+        assertEquals(emptyList<String>(), repository.left)
+    }
 
     @Test
     fun `a room that opens reaches the browser without anyone asking`() = runTest(dispatcher) {

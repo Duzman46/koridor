@@ -298,7 +298,7 @@ fun MainMenuScreen(
                 // The name sits under the picture, not over it: laid on the scene it needed a
                 // scrim heavy enough to bury the pieces it was there to introduce.
                 HomeBrand()
-                Spacer(Modifier.height(Dimens.SpaceLg))
+                Spacer(Modifier.height(Dimens.SpaceMd))
                 PrimaryPlayCard(
                     title = stringResource(R.string.menu_play),
                     subtitle = stringResource(R.string.home_play_subtitle),

@@ -125,8 +125,8 @@ fun PrimaryPlayCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .heightIn(min = 92.dp)
-            .padding(horizontal = 22.dp, vertical = Dimens.SpaceMd),
+            .heightIn(min = 86.dp)
+            .padding(horizontal = 22.dp, vertical = Dimens.SpaceSm),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -204,7 +204,7 @@ fun RowScope.HomeMenuCard(
             accented = accented,
             onClick = onClick,
             trailing = null,
-            minHeight = 78.dp,
+            minHeight = 72.dp,
         )
     }
 }
@@ -226,7 +226,7 @@ fun WideMenuCard(
         accented = accented,
         onClick = onClick,
         trailing = { Chevron() },
-        minHeight = 72.dp,
+        minHeight = 68.dp,
         modifier = modifier,
     )
 }
@@ -477,7 +477,7 @@ fun KoridorBottomBar(
             .clip(shape)
             .background(Color(0xFF0D1115))
             .border(BorderStroke(1.dp, Color(0xFF24282D)), shape)
-            .heightIn(min = 70.dp),
+            .heightIn(min = 64.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {

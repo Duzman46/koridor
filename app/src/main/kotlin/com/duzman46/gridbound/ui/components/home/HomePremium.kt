@@ -125,8 +125,8 @@ fun PrimaryPlayCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .heightIn(min = 86.dp)
-            .padding(horizontal = 22.dp, vertical = Dimens.SpaceSm),
+            .heightIn(min = 80.dp)
+            .padding(horizontal = 22.dp, vertical = Dimens.SpaceXs),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -204,7 +204,7 @@ fun RowScope.HomeMenuCard(
             accented = accented,
             onClick = onClick,
             trailing = null,
-            minHeight = 72.dp,
+            minHeight = 62.dp,
         )
     }
 }
@@ -226,7 +226,7 @@ fun WideMenuCard(
         accented = accented,
         onClick = onClick,
         trailing = { Chevron() },
-        minHeight = 68.dp,
+        minHeight = 60.dp,
         modifier = modifier,
     )
 }
@@ -263,7 +263,7 @@ private fun MenuSurface(
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .heightIn(min = minHeight)
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
+            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceXs),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -477,7 +477,7 @@ fun KoridorBottomBar(
             .clip(shape)
             .background(Color(0xFF0D1115))
             .border(BorderStroke(1.dp, Color(0xFF24282D)), shape)
-            .heightIn(min = 64.dp),
+            .heightIn(min = 58.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -502,9 +502,9 @@ private fun BottomTab(item: BottomItem, active: Boolean, modifier: Modifier) {
                 role = Role.Tab,
                 onClick = item.onClick,
             )
-            .padding(vertical = Dimens.SpaceSm),
+            .padding(vertical = Dimens.SpaceXs),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
             Modifier

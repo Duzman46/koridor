@@ -238,7 +238,7 @@ fun MainMenuScreen(
                 selectedIndex = 0,
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceXs),
             )
         },
     ) { padding ->
@@ -298,13 +298,13 @@ fun MainMenuScreen(
                 // The name sits under the picture, not over it: laid on the scene it needed a
                 // scrim heavy enough to bury the pieces it was there to introduce.
                 HomeBrand()
-                Spacer(Modifier.height(Dimens.SpaceMd))
+                Spacer(Modifier.height(Dimens.SpaceSm))
                 PrimaryPlayCard(
                     title = stringResource(R.string.menu_play),
                     subtitle = stringResource(R.string.home_play_subtitle),
                     onClick = onPlay,
                 )
-                Spacer(Modifier.height(Dimens.SpaceMd))
+                Spacer(Modifier.height(Dimens.SpaceSm))
                 // Two by two rather than four stacked. The four destinations under the play
                 // card are peers — none is more likely than the others — and a column says the
                 // opposite by putting one of them first.
@@ -329,7 +329,7 @@ fun MainMenuScreen(
                         )
                     },
                 )
-                Spacer(Modifier.height(Dimens.SpaceMd))
+                Spacer(Modifier.height(Dimens.SpaceSm))
                 HomeGridRow(
                     left = {
                         HomeMenuCard(
@@ -348,7 +348,7 @@ fun MainMenuScreen(
                         )
                     },
                 )
-                Spacer(Modifier.height(Dimens.SpaceMd))
+                Spacer(Modifier.height(Dimens.SpaceSm))
                 // The reference puts daily objectives in this slot. That feature does not exist
                 // yet, and a card promising one that opens nothing is the cheapest way to make
                 // an app feel broken — so the slot carries the one real destination without a
@@ -360,7 +360,7 @@ fun MainMenuScreen(
                     onClick = { openSheet = HomeMenu.MORE },
                     accented = true,
                 )
-                Spacer(Modifier.height(Dimens.SpaceMd))
+                Spacer(Modifier.height(Dimens.SpaceSm))
             }
         }
     }

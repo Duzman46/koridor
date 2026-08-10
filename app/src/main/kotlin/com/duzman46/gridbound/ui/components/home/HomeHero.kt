@@ -79,9 +79,11 @@ fun HomeHero(modifier: Modifier = Modifier) {
                 // the side the reading eye starts from.
                 .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
             contentScale = ContentScale.Crop,
-            // Pinned to the bottom: the pieces stand on the lower edge of the picture, and that
-            // is the end that has to survive when the slot is shorter than the asset.
-            alignment = Alignment.BottomCenter,
+            // Pinned to the top, and that is what makes the headroom work. The asset carries a
+            // strip of unlit floor above the composition so the pale piece lands below the two
+            // round controls; anchoring the other end would crop that strip away and undo it.
+            // What gets trimmed instead is floor beneath the near piece, which carries nothing.
+            alignment = Alignment.TopCenter,
         )
         // A shorter safety net than before. The asset carries its own fade at both ends now, so
         // this only has to cover the case where the box is taller than the picture and the

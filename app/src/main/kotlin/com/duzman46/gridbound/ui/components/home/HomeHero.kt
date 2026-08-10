@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,28 +61,27 @@ fun HomeHero(modifier: Modifier = Modifier) {
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                // The picture starts below the top bar rather than behind it, because the pale
-                // piece stands in the brightest corner of the scene and that is exactly where
-                // the two round controls sit.
+                // Edge to edge, and under the status bar. The picture is the room the interface
+                // stands in, so it starts where the screen starts.
                 //
-                // Beginning it lower solved the collision and created a worse problem: a hard
-                // horizontal edge where the photograph started, which reads as a crop and was
-                // the first thing the eye found on the screen. The asset now dissolves at both
-                // ends — the top fifth fades up into the same near-black the app paints behind
-                // it, the bottom quarter fades down into it before the wordmark. So the reserve
-                // below still holds the piece clear of the controls, and the picture arrives
-                // out of the dark instead of starting at a line.
-                .statusBarsPadding()
-                .padding(top = TopBarReserve)
+                // It was inset below the top bar for a while, to stop the pale piece colliding
+                // with the two round controls. That worked and cost far too much: the inset ate
+                // a third of the slot, the photograph had to be squeezed into what was left,
+                // and the pieces came out half the size they are meant to be. The scene is the
+                // first thing anyone sees and it cannot be the thing that gives way.
+                //
+                // What keeps the piece clear now is the asset itself. It carries unlit floor
+                // above the composition — that is what the crop is chosen to include — so the
+                // bar sits over empty ground rather than over the piece, and the top fifth
+                // fades up into the same near-black the app paints behind it, so there is no
+                // edge where the picture begins.
                 // Mirrored under RTL like everything else the app draws, so the lamp stays on
                 // the side the reading eye starts from.
                 .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
             contentScale = ContentScale.Crop,
-            // Anchored to the bottom. The asset carries a strip of empty floor above the
-            // composition precisely so this can be done: the pieces and the walls sit in its
-            // lower two thirds, and pinning that end keeps them clear of the round controls in
-            // the top bar no matter how short the slot gets on a small phone.
-            alignment = Alignment.Center,
+            // Pinned to the bottom: the pieces stand on the lower edge of the picture, and that
+            // is the end that has to survive when the slot is shorter than the asset.
+            alignment = Alignment.BottomCenter,
         )
         // A shorter safety net than before. The asset carries its own fade at both ends now, so
         // this only has to cover the case where the box is taller than the picture and the
@@ -101,16 +98,6 @@ fun HomeHero(modifier: Modifier = Modifier) {
 
 /** What the scene sits on, and what it fades into: the dark scheme's own background. */
 private val SceneInk = Color(0xFF070A0D)
-
-/**
- * The strip the top bar occupies, which the picture starts below.
- *
- * The bar's controls are 46 dp inside 8 dp of padding, so 60 clears them with a hair to spare.
- * It was 74 and that was too generous: every device-independent pixel reserved here comes off
- * the picture, and the picture was already the thing being squeezed. Kept as a constant rather
- * than read from the bar, because the bar is laid out over this and cannot be measured first.
- */
-private val TopBarReserve = 60.dp
 
 /** How much of the box the closing fade covers. */
 private const val SCENE_JOIN = 0.14f

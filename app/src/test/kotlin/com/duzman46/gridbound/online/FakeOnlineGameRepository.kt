@@ -78,7 +78,12 @@ class FakeOnlineGameRepository : OnlineGameRepository {
     override fun matchmake(ranked: Boolean): Flow<MatchmakingState> =
         flowOf(MatchmakingState.Searching)
 
-    override suspend fun loadOpenRooms(): Outcome<List<OnlineRoom>> = Outcome.Success(emptyList())
+    override suspend fun loadOpenRooms(): Outcome<List<OnlineRoom>> = Outcome.Success(openRooms.value)
+
+    override fun observeOpenRooms(): Flow<List<OnlineRoom>> = openRooms
+
+    /** The browser's live list. Push to it to make a room appear the way the database would. */
+    val openRooms = MutableStateFlow<List<OnlineRoom>>(emptyList())
 
     override suspend fun closeIdleMatches(userId: String): Outcome<Unit> = Outcome.Success(Unit)
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -69,20 +70,18 @@ import com.duzman46.gridbound.theme.KoridorGold
 
 private const val PRESSED_SCALE = 0.98f
 
-/**
- * How tall the empty-rooms panel stands.
- *
- * Measured against the screen rather than chosen for the drawing. Under the scene there are
- * about 560 dp on a 1080×2340 phone; the queue card, the pair of cards, the header, the gaps
- * between them and the gesture bar claim roughly 410 of it. What is left is this.
- *
- * It is a hard number because of what it protects. The sentence in this panel — that there is
- * nothing here yet, and what to do about it — is the one a first-time player most needs, and
- * the first version pushed it under the navigation bar where nobody would ever scroll to find
- * it. The drawing gives way to the sentence, not the other way round.
- */
-private val PANEL_HEIGHT = 146.dp
 
+/**
+ * The press acknowledgement, and the rule that comes with it.
+ *
+ * **The scale must sit inside the click, never outside it.** Every surface here puts `clickable`
+ * before `scale`, which reads backwards and is exactly the point: an earlier modifier wraps the
+ * later ones, so the touch target stays the control at rest and only the picture inside it moves.
+ *
+ * The other way round, the control being pressed is also the control whose target is shrinking
+ * under the finger in that same frame — a touch near an edge lands outside what it just hit, and
+ * Compose cancels the tap. Nothing happens, the player taps again, and the second one works.
+ */
 @Composable
 private fun pressScale(pressed: Boolean): Float {
     val scale by animateFloatAsState(
@@ -159,6 +158,15 @@ private fun GoldButton(label: String, onClick: () -> Unit, busy: Boolean) {
     Row(
         Modifier
             .fillMaxWidth()
+            // Click outside the scale. See pressScale.
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = !busy,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics { contentDescription = label }
             .scale(pressScale(pressed))
             .clip(shape)
             .background(
@@ -170,14 +178,6 @@ private fun GoldButton(label: String, onClick: () -> Unit, busy: Boolean) {
                     },
                 ),
             )
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                enabled = !busy,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics { contentDescription = label }
             .heightIn(min = 56.dp)
             .padding(horizontal = Dimens.SpaceLg),
         horizontalArrangement = Arrangement.Center,
@@ -228,10 +228,7 @@ fun RowScope.LobbyActionCard(
     Row(
         modifier
             .weight(1f)
-            .scale(pressScale(pressed))
-            .clip(shape)
-            .background(if (pressed) colors.surfaceVariant else colors.surface)
-            .border(BorderStroke(1.dp, colors.outlineVariant), shape)
+            // Click outside the scale. See pressScale.
             .clickable(
                 interactionSource = interaction,
                 indication = null,
@@ -239,6 +236,10 @@ fun RowScope.LobbyActionCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = label }
+            .scale(pressScale(pressed))
+            .clip(shape)
+            .background(if (pressed) colors.surfaceVariant else colors.surface)
+            .border(BorderStroke(1.dp, colors.outlineVariant), shape)
             .heightIn(min = 70.dp)
             .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
@@ -287,15 +288,16 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
         Box(
             Modifier
                 .size(44.dp)
-                .scale(pressScale(pressed))
-                .clip(CircleShape)
+                // Click outside the scale. See pressScale.
                 .clickable(
                     interactionSource = interaction,
                     indication = null,
                     role = Role.Button,
                     onClick = onRefresh,
                 )
-                .semantics { contentDescription = refreshLabel },
+                .semantics { contentDescription = refreshLabel }
+                .scale(pressScale(pressed))
+                .clip(CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size(24.dp)) { drawRefresh() }
@@ -316,17 +318,17 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
 @Composable
 fun EmptyRoomsPanel(title: String, hint: String, modifier: Modifier = Modifier) {
     Box(
-        modifier
-            .fillMaxWidth()
-            .heightIn(min = PANEL_HEIGHT),
+        modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.fillMaxWidth().height(PANEL_HEIGHT)) { drawCornerBrackets() }
+        // The brackets frame whatever room the list was going to have, rather than a height of
+        // their own. The panel is the empty slot, so it is exactly the size of the slot.
+        Canvas(Modifier.fillMaxSize()) { drawCornerBrackets() }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         ) {
-            Canvas(Modifier.size(72.dp)) { drawEmptyDoorway() }
+            Canvas(Modifier.size(84.dp)) { drawEmptyDoorway() }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),

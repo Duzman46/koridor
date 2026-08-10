@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppError
+import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.game.models.PlayerId
@@ -104,10 +105,11 @@ class OnlineLobbyViewModel @Inject constructor(
 
     private var waitingJob: Job? = null
     private var queueJob: Job? = null
+    private var roomsJob: Job? = null
 
     init {
         closeIdleMatches()
-        refreshOpenRooms()
+        observeOpenRooms()
         observeFriends()
     }
 
@@ -197,20 +199,40 @@ class OnlineLobbyViewModel @Inject constructor(
         }
     }
 
-    fun refreshOpenRooms() {
+    /**
+     * Watches the open rooms for as long as this view model lives.
+     *
+     * There is no polling any more and no reason for the screen to ask. The listener is attached
+     * once, here, and every room that opens or fills reaches the list on its own — which is both
+     * faster than the fifteen-second poll it replaces and cheaper, because a lobby nobody is
+     * changing costs nothing to keep open.
+     *
+     * A failure leaves whatever the list already held rather than blanking it. The rooms on
+     * screen were real a moment ago, and a dropped connection is not news that they are gone.
+     */
+    private fun observeOpenRooms() {
+        roomsJob?.cancel()
         _uiState.update { it.copy(isLoadingRooms = true) }
-        viewModelScope.launch {
-            when (val result = repository.loadOpenRooms()) {
-                is Outcome.Success -> _uiState.update {
-                    it.copy(openRooms = result.value, isLoadingRooms = false)
+        roomsJob = viewModelScope.launch {
+            repository.observeOpenRooms()
+                .catch { error ->
+                    AppLog.warn("observe-open-rooms", error)
+                    _uiState.update { it.copy(isLoadingRooms = false) }
                 }
-
-                is Outcome.Failure -> _uiState.update {
-                    it.copy(isLoadingRooms = false, message = result.error.message)
+                .collect { rooms ->
+                    _uiState.update { it.copy(openRooms = rooms, isLoadingRooms = false) }
                 }
-            }
         }
     }
+
+    /**
+     * The refresh control.
+     *
+     * With a live listener there is nothing to re-ask for, so this reattaches it instead. That
+     * is not nothing: it is the one thing that helps when the connection dropped and came back,
+     * and it is what a player reaches for when the list looks wrong.
+     */
+    fun refreshOpenRooms() = observeOpenRooms()
 
     fun createRoom() {
         val configuration = _uiState.value.configuration

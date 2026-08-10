@@ -58,6 +58,20 @@ interface OnlineGameRepository {
     suspend fun loadOpenRooms(): Outcome<List<OnlineRoom>>
 
     /**
+     * The same list, and every change to it as it happens.
+     *
+     * The browser used to re-ask for the whole list every fifteen seconds, which is wrong twice
+     * over. It is too slow — a room opened one second after a poll stays invisible for the next
+     * fourteen, and by the time it appears somebody else has usually taken it. And it is too
+     * expensive — a full indexed query every fifteen seconds for as long as the lobby is open,
+     * whether or not a single room changed, on a screen a player may sit on for minutes.
+     *
+     * One listener replaces both. The database pushes: a room that opens appears at once, and a
+     * room that fills disappears the moment it fills. Nothing is asked for when nothing changes.
+     */
+    fun observeOpenRooms(): Flow<List<OnlineRoom>>
+
+    /**
      * Ends this player's matches that nobody has moved in for
      * [com.duzman46.gridbound.core.Constants.Online.IDLE_FORFEIT_MILLIS], awarding each to
      * whichever seat is not on the clock — which may well be the opponent's.

@@ -2,6 +2,7 @@ package com.duzman46.gridbound.presentation.online
 
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.FakeOnlineGameRepository
+import com.duzman46.gridbound.online.model.OnlineRoom
 import com.duzman46.gridbound.online.model.OnlineRoomStatus
 import com.duzman46.gridbound.session.FakeAuthRepository
 import com.duzman46.gridbound.session.FakeGameRepository
@@ -124,4 +125,29 @@ class OnlineLobbyViewModelTest {
                 .copy(guestUserId = "bob-uid")
             assertNotNull(model.uiState.value.waitingSession)
         }
+
+    @Test
+    fun `a room that opens reaches the browser without anyone asking`() = runTest(dispatcher) {
+        // The browser used to re-ask every fifteen seconds, so a room opened one second after a
+        // poll stayed invisible for fourteen and was usually taken by the time it appeared.
+        // Nothing sits between the room being written and it being on screen now.
+        val model = viewModel()
+        assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
+
+        val opened = repository.waitingRoom(OnlineRoomStatus.WAITING)
+        repository.openRooms.value = listOf(opened)
+
+        assertEquals(listOf(opened), model.uiState.value.openRooms)
+    }
+
+    @Test
+    fun `a room that fills leaves the browser the same way`() = runTest(dispatcher) {
+        val model = viewModel()
+        repository.openRooms.value = listOf(repository.waitingRoom(OnlineRoomStatus.WAITING))
+        assertEquals(1, model.uiState.value.openRooms.size)
+
+        repository.openRooms.value = emptyList()
+
+        assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
+    }
 }

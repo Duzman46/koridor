@@ -29,6 +29,7 @@ import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.Query
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.Transaction
 import javax.inject.Inject
@@ -556,13 +557,28 @@ class FirebaseOnlineGameRepository @Inject constructor(
         }
     }
 
-    private suspend fun openRooms(): List<OnlineRoom> {
+    private suspend fun openRooms(): List<OnlineRoom> = readOpenRooms(openRoomsQuery().awaitSnapshot())
+
+    override fun observeOpenRooms(): Flow<List<OnlineRoom>> =
+        // The same query the one-shot read uses, kept open. Firebase answers a new listener from
+        // its own cache first and then from the wire, so attaching it costs no more than the
+        // read it replaces and every later change arrives without asking.
+        openRoomsQuery().snapshotFlow().map(::readOpenRooms)
+
+    private fun openRoomsQuery(): Query = roomsRef()
+        .orderByChild(RoomCodec.Keys.BROWSE_KEY)
+        .equalTo(codec.browseKey(RoomVisibility.PUBLIC, OnlineRoomStatus.WAITING))
+        .limitToLast(Constants.Online.ROOM_BROWSER_PAGE_SIZE)
+
+    /**
+     * A room's own expiry is checked here rather than in the query, because the window closes
+     * while nobody is writing anything: an expired room is still indexed as waiting, and only
+     * the passage of time makes it stale. The listener would never fire for that, so a room can
+     * still be a few seconds past its end when it is dropped — which is the same tolerance the
+     * poll had, and far better than showing it for another fourteen.
+     */
+    private fun readOpenRooms(snapshot: DataSnapshot): List<OnlineRoom> {
         val now = System.currentTimeMillis()
-        val snapshot = roomsRef()
-            .orderByChild(RoomCodec.Keys.BROWSE_KEY)
-            .equalTo(codec.browseKey(RoomVisibility.PUBLIC, OnlineRoomStatus.WAITING))
-            .limitToLast(Constants.Online.ROOM_BROWSER_PAGE_SIZE)
-            .awaitSnapshot()
         return snapshot.children
             .mapNotNull { codec.decode(it.key.orEmpty(), it.value) }
             .filter { it.expiresAt == 0L || it.expiresAt > now }

@@ -67,7 +67,22 @@ import com.duzman46.gridbound.theme.KoridorGold
 
 private const val PRESSED_SCALE = 0.98f
 
-/** How a card acknowledges a press: a hair smaller, quickly down and slowly back. */
+/**
+ * How a card acknowledges a press: a hair smaller, quickly down and slowly back.
+ *
+ * **The scale must sit inside the click, never outside it.** Every surface in this file puts
+ * `clickable` before `scale` in its modifier chain, which reads backwards and is the whole point:
+ * a modifier listed earlier wraps the ones after it, so the touch target is the card at rest and
+ * only the picture inside it shrinks.
+ *
+ * Written the natural way round — scale first, clickable after — the card that is being pressed
+ * is also the card whose touch target is shrinking under the finger, by two percent, immediately,
+ * in the same frame as the press. A finger anywhere near an edge ends up outside the target it
+ * just landed on, Compose reads that as the pointer leaving, and the tap is cancelled with no
+ * click. The player sees a card that flickered and did nothing, taps again more carefully, and
+ * the second one works. It was every surface on the home screen, and it is why this comment is
+ * longer than the function.
+ */
 @Composable
 private fun pressScale(pressed: Boolean): Float {
     val scale by animateFloatAsState(
@@ -106,6 +121,14 @@ fun PrimaryPlayCard(
     Box(
         modifier
             .fillMaxWidth()
+            // Click outside the scale. See pressScale.
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .scale(scale)
             .clip(shape)
             .background(
@@ -120,13 +143,6 @@ fun PrimaryPlayCard(
                 ),
             )
             .border(BorderStroke(1.dp, Color(0xFF8D713B)), shape)
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .heightIn(min = 92.dp)
             .padding(horizontal = 22.dp, vertical = Dimens.SpaceMd),
         contentAlignment = Alignment.Center,
@@ -253,10 +269,7 @@ private fun MenuSurface(
     Row(
         modifier
             .fillMaxWidth()
-            .scale(scale)
-            .clip(shape)
-            .background(if (pressed) colors.surfaceVariant else colors.surface)
-            .border(BorderStroke(1.dp, colors.outlineVariant), shape)
+            // Click outside the scale. See pressScale.
             .clickable(
                 interactionSource = interaction,
                 indication = null,
@@ -264,6 +277,10 @@ private fun MenuSurface(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
+            .scale(scale)
+            .clip(shape)
+            .background(if (pressed) colors.surfaceVariant else colors.surface)
+            .border(BorderStroke(1.dp, colors.outlineVariant), shape)
             .heightIn(min = minHeight)
             .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
@@ -361,6 +378,14 @@ fun PlayModeCard(
     Row(
         modifier
             .fillMaxWidth()
+            // Click outside the scale. See pressScale.
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .scale(scale)
             .clip(shape)
             .background(
@@ -374,13 +399,6 @@ fun PlayModeCard(
                 BorderStroke(1.dp, if (leading) Color(0xFF8D713B) else colors.outlineVariant),
                 shape,
             )
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .heightIn(min = 126.dp)
             .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
@@ -535,17 +553,18 @@ private fun RoundControl(icon: PremiumIcon, label: String, onClick: () -> Unit) 
     Box(
         Modifier
             .size(46.dp)
-            .scale(pressScale(pressed))
-            .clip(CircleShape)
-            .background(Color(0xFF11151A))
-            .border(BorderStroke(1.dp, Color(0xFF242A31)), CircleShape)
+            // Click outside the scale. See pressScale.
             .clickable(
                 interactionSource = interaction,
                 indication = null,
                 role = Role.Button,
                 onClick = onClick,
             )
-            .semantics { contentDescription = label },
+            .semantics { contentDescription = label }
+            .scale(pressScale(pressed))
+            .clip(CircleShape)
+            .background(Color(0xFF11151A))
+            .border(BorderStroke(1.dp, Color(0xFF242A31)), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         PremiumGlyph(icon, Modifier.size(21.dp), tint = Color(0xFFD7D9DC))

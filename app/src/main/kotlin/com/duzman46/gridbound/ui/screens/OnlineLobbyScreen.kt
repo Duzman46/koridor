@@ -164,20 +164,9 @@ private fun OnlineLobbyScreen(
     // enough — there is no other exit to catch.
     LifecycleStartEffect(Unit) { onStopOrDispose { viewModel.leaveQueue() } }
 
-    // The room list ages out from under the player: rooms are taken within a minute or two,
-    // and asking them to pull for a fresh one is the app making its own staleness their
-    // problem. Tied to the screen being resumed, so a lobby left open in the background is
-    // not quietly issuing a query every fifteen seconds for the rest of the day.
-    val scope = rememberCoroutineScope()
-    LifecycleResumeEffect(Unit) {
-        val ticker = scope.launch {
-            while (true) {
-                delay(Constants.Online.ROOM_BROWSER_REFRESH_MILLIS)
-                viewModel.refreshOpenRooms()
-            }
-        }
-        onPauseOrDispose { ticker.cancel() }
-    }
+    // The list used to be re-fetched here every fifteen seconds. It is a live listener in the
+    // view model now: a room that opens shows up at once, a room that fills leaves at once, and
+    // a lobby nobody is changing costs nothing to sit on. Nothing to tick, nothing to cancel.
 
     state.passwordPromptCode?.let {
         PasswordPromptDialog(
@@ -329,84 +318,93 @@ private fun LobbyContent(
     viewModel: OnlineLobbyViewModel,
     onOpenForm: (LobbyForm) -> Unit,
 ) {
-    // Carried in the list's own padding rather than as a modifier on it, so the last room still
-    // scrolls up under the gesture bar instead of stopping short of it behind a band of
-    // background. The bar only ever covers the bottom of the list, never the top of it.
     val gestureBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = Dimens.ScreenPadding,
-            end = Dimens.ScreenPadding,
-            top = Dimens.SpaceLg,
-            bottom = Dimens.SpaceXl + gestureBar,
-        ),
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = Dimens.ScreenPadding)
+            .padding(top = Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
         // The queue first, and loudest. Nine players in ten opened this screen to be put in
         // front of somebody, and it used to be a tonal card indistinguishable from the two
         // buttons under it.
-        item {
-            RankedQueueCard(
-                title = stringResource(R.string.online_ranked),
-                hint = stringResource(R.string.online_quick_match_hint),
-                action = stringResource(R.string.online_quick_match),
-                onClick = viewModel::quickMatch,
-                busy = state.isBusy,
-                modifier = Modifier.widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
-            )
-        }
+        RankedQueueCard(
+            title = stringResource(R.string.online_ranked),
+            hint = stringResource(R.string.online_quick_match_hint),
+            action = stringResource(R.string.online_quick_match),
+            onClick = viewModel::quickMatch,
+            busy = state.isBusy,
+            modifier = Modifier.widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
+        )
 
-        item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-            ) {
-                LobbyActionCard(
-                    label = stringResource(R.string.online_join_by_code),
-                    icon = PremiumIcon.PEOPLE,
-                    onClick = { onOpenForm(LobbyForm.JOIN) },
-                )
-                LobbyActionCard(
-                    label = stringResource(R.string.online_create_room),
-                    icon = PremiumIcon.PLUS,
-                    onClick = { onOpenForm(LobbyForm.CREATE) },
-                )
-            }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
+            LobbyActionCard(
+                label = stringResource(R.string.online_join_by_code),
+                icon = PremiumIcon.PEOPLE,
+                onClick = { onOpenForm(LobbyForm.JOIN) },
+            )
+            LobbyActionCard(
+                label = stringResource(R.string.online_create_room),
+                icon = PremiumIcon.PLUS,
+                onClick = { onOpenForm(LobbyForm.CREATE) },
+            )
         }
 
         // Quick match and tapping a listed room both report failures through state.message, and
         // it belongs beside the controls that caused it rather than below an arbitrarily long
         // list where nobody would scroll to find it.
-        state.message?.let { message -> item { FormMessage(message) } }
+        state.message?.let { message -> FormMessage(message) }
 
-        item {
-            LobbySectionHeader(
-                title = stringResource(R.string.online_browse_rooms),
-                refreshLabel = stringResource(R.string.action_retry),
-                onRefresh = viewModel::refreshOpenRooms,
-            )
-        }
+        LobbySectionHeader(
+            title = stringResource(R.string.online_browse_rooms),
+            refreshLabel = stringResource(R.string.action_retry),
+            onRefresh = viewModel::refreshOpenRooms,
+        )
 
-        when {
-            state.isLoadingRooms && state.openRooms.isEmpty() -> item { LoadingState() }
+        // The page does not scroll. Everything above this point is fixed, and the rooms take
+        // whatever is left and scroll inside it.
+        //
+        // That distinction is the whole layout. The list is the one thing here whose length
+        // nobody controls — it can be empty, or it can be twenty rooms — and letting it push
+        // the page meant the queue card, the card a player came for, slid off the top the
+        // moment anyone looked at the list. Weighted instead: the queue never moves, the rooms
+        // scroll under it, and on an empty lobby the panel simply sits in the space.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
+            when {
+                state.isLoadingRooms && state.openRooms.isEmpty() -> LoadingState()
 
-            state.visibleRooms.isEmpty() -> item {
-                EmptyRoomsPanel(
+                state.visibleRooms.isEmpty() -> EmptyRoomsPanel(
                     title = stringResource(R.string.room_browser_empty),
                     hint = stringResource(R.string.room_browser_empty_hint),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = Dimens.SpaceLg + gestureBar),
                 )
-            }
 
-            else -> items(state.visibleRooms, key = OnlineRoom::roomId) { room ->
-                OpenRoomRow(
-                    room = room,
-                    enabled = !state.isBusy,
-                    onJoin = { viewModel.joinListedRoom(room) },
-                    onReport = { reason -> viewModel.reportRoom(room, reason) },
-                )
+                else -> LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = Dimens.SpaceLg + gestureBar),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                ) {
+                    items(state.visibleRooms, key = OnlineRoom::roomId) { room ->
+                        OpenRoomRow(
+                            room = room,
+                            enabled = !state.isBusy,
+                            onJoin = { viewModel.joinListedRoom(room) },
+                            onReport = { reason -> viewModel.reportRoom(room, reason) },
+                        )
+                    }
+                }
             }
         }
     }

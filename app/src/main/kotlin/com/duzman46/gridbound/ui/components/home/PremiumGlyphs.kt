@@ -68,6 +68,9 @@ enum class PremiumIcon {
 
     /** The app's language. A globe with meridians only — no figure, because it is not a mode. */
     LANGUAGE,
+
+    /** Making something that did not exist. A plus. */
+    PLUS,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -92,8 +95,34 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.GLOBE -> globe(s, tint, line, withFigure = true)
             PremiumIcon.LANGUAGE -> globe(s, tint, line, withFigure = false)
             PremiumIcon.ROBOT -> robot(s, tint, line)
+            PremiumIcon.PLUS -> plus(s, tint, line)
         }
     }
+}
+
+/**
+ * A plus, drawn to the set's own weight rather than as two thin hairlines.
+ *
+ * It sits beside the join mark on the lobby's pair of cards, and the two have to read as
+ * equals at 20 dp: a stroke lighter than the rest of the set would make "create" look like
+ * the lesser of the two before anyone read a word.
+ */
+private fun DrawScope.plus(s: Float, tint: Color, line: Float) {
+    val bar = line * 1.35f
+    drawLine(
+        tint,
+        Offset(s * 0.5f, s * 0.14f),
+        Offset(s * 0.5f, s * 0.86f),
+        strokeWidth = bar,
+        cap = StrokeCap.Round,
+    )
+    drawLine(
+        tint,
+        Offset(s * 0.14f, s * 0.5f),
+        Offset(s * 0.86f, s * 0.5f),
+        strokeWidth = bar,
+        cap = StrokeCap.Round,
+    )
 }
 
 /**

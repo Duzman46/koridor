@@ -164,6 +164,7 @@
     <string name="online_create_room">إنشاء غرفة</string>
     <string name="online_join_by_code">الانضمام برمز</string>
     <string name="online_browse_rooms">الغرف المفتوحة</string>
+    <string name="online_ranked">مباراة مصنّفة</string>
     <string name="online_quick_match">مباراة سريعة</string>
     <string name="online_quick_match_searching">جارٍ البحث عن خصم…</string>
 
@@ -180,7 +181,8 @@
     <string name="room_waiting_for_opponent">في انتظار خصم</string>
     <string name="room_close">إغلاق الغرفة</string>
 
-    <string name="room_browser_empty">لا توجد غرف مفتوحة الآن. أنشئ غرفة وانتظر خصمًا.</string>
+    <string name="room_browser_empty">لا توجد غرف مفتوحة الآن</string>
+    <string name="room_browser_empty_hint">أنشئ غرفة وانتظر خصمًا.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">محمية بكلمة مرور</string>
@@ -389,7 +391,7 @@
     <string name="more_about_version">الإصدار %1$s</string>
     <string name="error_not_friends">يمكنك دعوة الأصدقاء فقط.</string>
     <string name="paint_label">لونك</string>
-    <string name="online_quick_match_hint">اضغط وانتظر — ستُقابَل مع اللاعب المنتظر الأقرب إليك في التقييم.</string>
+    <string name="online_quick_match_hint">ستُقابَل بأقرب تقييم في قائمة الانتظار.</string>
     <string name="nav_home">الرئيسية</string>
     <string name="nav_games">الألعاب</string>
     <string name="nav_profile">الملف</string>

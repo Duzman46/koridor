@@ -1,45 +1,49 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddCircle
-import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,15 +58,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -79,16 +92,22 @@ import com.duzman46.gridbound.presentation.online.OnlineLobbyUiState
 import com.duzman46.gridbound.presentation.online.OnlineLobbyViewModel
 import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend as OnlineFriend
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.FormMessage
-import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.components.ReportDialog
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SectionCard
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.SubmitButton
+import com.duzman46.gridbound.ui.components.home.EmptyRoomsPanel
+import com.duzman46.gridbound.ui.components.home.HomeHero
+import com.duzman46.gridbound.ui.components.home.HomeSceneShare
+import com.duzman46.gridbound.ui.components.home.LobbyActionCard
+import com.duzman46.gridbound.ui.components.home.LobbySectionHeader
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import com.duzman46.gridbound.ui.components.home.RankedQueueCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -178,41 +197,117 @@ private fun OnlineLobbyScreen(
         )
     }
 
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.online_title), onBack) }) { padding ->
-        ScreenBackground {
-            Box(
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        // The same scene, at the same height, as the two screens a player passed through to get
+        // here. Home, play and the lobby are one route taken three taps in a row, and a
+        // photograph that changes size at each step is what makes one route read as three
+        // designs. The share is the picture's own — see HomeSceneShare.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(HomeSceneShare),
+        ) {
+            HomeHero(Modifier.fillMaxSize())
+            Row(
                 Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                when {
-                    !state.isConfigured ->
-                        EmptyState(stringResource(R.string.error_service_unavailable))
-
-                    state.isQueued -> WaitingPanel(
-                        roomCode = null,
-                        message = state.message,
-                        onCancel = viewModel::leaveQueue,
-                    )
-
-                    state.waitingSession != null -> WaitingPanel(
-                        roomCode = state.waitingSession.roomCode,
-                        // Nothing rendered state.message here, so an invite that failed just
-                        // flipped the icon back with no explanation at all.
-                        message = state.message,
-                        onCancel = viewModel::cancelWaiting,
-                        friends = state.invitableFriends,
-                        invitedUserIds = state.invitedUserIds,
-                        onInvite = viewModel::inviteFriend,
-                    )
-
-                    else -> LobbyContent(
-                        state = state,
-                        viewModel = viewModel,
-                        onOpenForm = { openForm = it },
-                    )
-                }
+                LobbyBackArrow(onBack)
+                Text(
+                    text = stringResource(R.string.online_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
+        }
+        // Everything under the picture, and the only part of the screen that scrolls.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f - HomeSceneShare),
+        ) {
+            when {
+                !state.isConfigured ->
+                    EmptyState(stringResource(R.string.error_service_unavailable))
+
+                state.isQueued -> WaitingPanel(
+                    roomCode = null,
+                    message = state.message,
+                    onCancel = viewModel::leaveQueue,
+                )
+
+                state.waitingSession != null -> WaitingPanel(
+                    roomCode = state.waitingSession.roomCode,
+                    // Nothing rendered state.message here, so an invite that failed just
+                    // flipped the icon back with no explanation at all.
+                    message = state.message,
+                    onCancel = viewModel::cancelWaiting,
+                    friends = state.invitableFriends,
+                    invitedUserIds = state.invitedUserIds,
+                    onInvite = viewModel::inviteFriend,
+                )
+
+                else -> LobbyContent(
+                    state = state,
+                    viewModel = viewModel,
+                    onOpenForm = { openForm = it },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The way back, on a screen whose top bar is a photograph.
+ *
+ * The same arrow the play screen uses, drawn again rather than shared: it is eleven lines of
+ * canvas and pulling it into a component would mean a file whose only job is to hold one
+ * private glyph two screens happen to agree on.
+ */
+@Composable
+private fun LobbyBackArrow(onBack: () -> Unit) {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val label = stringResource(R.string.action_back)
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onBack,
+            )
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(
+            Modifier
+                .size(24.dp)
+                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
+        ) {
+            val s = size.minDimension
+            drawPath(
+                Path().apply {
+                    moveTo(s * 0.92f, s * 0.5f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    moveTo(s * 0.44f, s * 0.18f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    lineTo(s * 0.44f, s * 0.82f)
+                },
+                KoridorGold,
+                style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
     }
 }
@@ -234,31 +329,50 @@ private fun LobbyContent(
     viewModel: OnlineLobbyViewModel,
     onOpenForm: (LobbyForm) -> Unit,
 ) {
+    // Carried in the list's own padding rather than as a modifier on it, so the last room still
+    // scrolls up under the gesture bar instead of stopping short of it behind a band of
+    // background. The bar only ever covers the bottom of the list, never the top of it.
+    val gestureBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(
+            start = Dimens.ScreenPadding,
+            end = Dimens.ScreenPadding,
+            top = Dimens.SpaceLg,
+            bottom = Dimens.SpaceXl + gestureBar,
+        ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
-        item { QuickMatchCard(state, viewModel) }
+        // The queue first, and loudest. Nine players in ten opened this screen to be put in
+        // front of somebody, and it used to be a tonal card indistinguishable from the two
+        // buttons under it.
+        item {
+            RankedQueueCard(
+                title = stringResource(R.string.online_ranked),
+                hint = stringResource(R.string.online_quick_match_hint),
+                action = stringResource(R.string.online_quick_match),
+                onClick = viewModel::quickMatch,
+                busy = state.isBusy,
+                modifier = Modifier.widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
+            )
+        }
 
         item {
             Row(
                 Modifier
                     .fillMaxWidth()
                     .widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
             ) {
-                LobbyActionButton(
-                    text = stringResource(R.string.online_join_by_code),
-                    icon = Icons.Rounded.Groups,
+                LobbyActionCard(
+                    label = stringResource(R.string.online_join_by_code),
+                    icon = PremiumIcon.PEOPLE,
                     onClick = { onOpenForm(LobbyForm.JOIN) },
-                    modifier = Modifier.weight(1f),
                 )
-                LobbyActionButton(
-                    text = stringResource(R.string.online_create_room),
-                    icon = Icons.Rounded.AddCircle,
+                LobbyActionCard(
+                    label = stringResource(R.string.online_create_room),
+                    icon = PremiumIcon.PLUS,
                     onClick = { onOpenForm(LobbyForm.CREATE) },
-                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -268,16 +382,21 @@ private fun LobbyContent(
         // list where nobody would scroll to find it.
         state.message?.let { message -> item { FormMessage(message) } }
 
-        item { OpenRoomsHeader(onRefresh = viewModel::refreshOpenRooms) }
+        item {
+            LobbySectionHeader(
+                title = stringResource(R.string.online_browse_rooms),
+                refreshLabel = stringResource(R.string.action_retry),
+                onRefresh = viewModel::refreshOpenRooms,
+            )
+        }
 
         when {
             state.isLoadingRooms && state.openRooms.isEmpty() -> item { LoadingState() }
 
             state.visibleRooms.isEmpty() -> item {
-                Text(
-                    stringResource(R.string.room_browser_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptyRoomsPanel(
+                    title = stringResource(R.string.room_browser_empty),
+                    hint = stringResource(R.string.room_browser_empty_hint),
                 )
             }
 
@@ -289,57 +408,6 @@ private fun LobbyContent(
                     onReport = { reason -> viewModel.reportRoom(room, reason) },
                 )
             }
-        }
-    }
-}
-
-/**
- * One of the two ways into a form.
- *
- * Deliberately not a [SubmitButton]: nothing is submitted by opening a form, so there is no
- * busy state to show, and the label needs room to wrap — "Rejoindre avec un code" does not fit
- * on one line at half the width of a phone.
- */
-@Composable
-private fun LobbyActionButton(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = 60.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-    ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-        Text(
-            text,
-            Modifier.padding(start = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun OpenRoomsHeader(onRefresh: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.online_browse_rooms),
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        IconButton(onClick = onRefresh) {
-            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.action_retry))
         }
     }
 }
@@ -393,26 +461,6 @@ private fun LobbyFormSheet(
             }
             state.message?.let { FormMessage(it) }
         }
-    }
-}
-
-@Composable
-private fun QuickMatchCard(state: OnlineLobbyUiState, viewModel: OnlineLobbyViewModel) {
-    SectionCard(
-        stringResource(R.string.online_quick_match),
-        Modifier.widthIn(max = Constants.Ui.FORM_MAX_WIDTH_DP.dp),
-    ) {
-        Text(
-            stringResource(R.string.online_quick_match_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SubmitButton(
-            text = stringResource(R.string.online_quick_match),
-            onClick = viewModel::quickMatch,
-            isSubmitting = state.isBusy,
-            leadingIcon = Icons.Rounded.Bolt,
-        )
     }
 }
 

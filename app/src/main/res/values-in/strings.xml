@@ -153,6 +153,7 @@
     <string name="online_create_room">Buat ruang</string>
     <string name="online_join_by_code">Gabung dengan kode</string>
     <string name="online_browse_rooms">Ruang terbuka</string>
+    <string name="online_ranked">Berperingkat</string>
     <string name="online_quick_match">Pertandingan cepat</string>
     <string name="online_quick_match_searching">Mencari lawan…</string>
 
@@ -169,7 +170,8 @@
     <string name="room_waiting_for_opponent">Menunggu lawan</string>
     <string name="room_close">Tutup ruang</string>
 
-    <string name="room_browser_empty">Belum ada ruang terbuka. Buat satu dan tunggu lawan.</string>
+    <string name="room_browser_empty">Belum ada ruang terbuka</string>
+    <string name="room_browser_empty_hint">Buat satu dan tunggu lawan.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Dilindungi kata sandi</string>
@@ -373,7 +375,7 @@
     <string name="more_about_version">Versi %1$s</string>
     <string name="error_not_friends">Anda hanya bisa mengundang teman.</string>
     <string name="paint_label">Warnamu</string>
-    <string name="online_quick_match_hint">Tekan dan tunggu — kamu dipasangkan dengan pemain menunggu yang peringkatnya paling dekat denganmu.</string>
+    <string name="online_quick_match_hint">Kamu dipasangkan dengan peringkat terdekat di antrean.</string>
     <string name="nav_home">Beranda</string>
     <string name="nav_games">Permainan</string>
     <string name="nav_profile">Profil</string>

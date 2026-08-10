@@ -156,6 +156,7 @@
     <string name="online_create_room">Создать комнату</string>
     <string name="online_join_by_code">Войти по коду</string>
     <string name="online_browse_rooms">Открытые комнаты</string>
+    <string name="online_ranked">Рейтинговая</string>
     <string name="online_quick_match">Быстрый матч</string>
     <string name="online_quick_match_searching">Поиск соперника…</string>
 
@@ -172,7 +173,8 @@
     <string name="room_waiting_for_opponent">Ожидание соперника</string>
     <string name="room_close">Закрыть комнату</string>
 
-    <string name="room_browser_empty">Сейчас открытых комнат нет. Создайте свою и дождитесь соперника.</string>
+    <string name="room_browser_empty">Сейчас открытых комнат нет</string>
+    <string name="room_browser_empty_hint">Создайте свою и дождитесь соперника.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Защищена паролем</string>
@@ -379,7 +381,7 @@
     <string name="more_about_version">Версия %1$s</string>
     <string name="error_not_friends">Приглашать можно только друзей.</string>
     <string name="paint_label">Ваш цвет</string>
-    <string name="online_quick_match_hint">Нажмите и подождите — вас сведут с ожидающим игроком, чей рейтинг ближе всего к вашему.</string>
+    <string name="online_quick_match_hint">Вас сведут с ближайшим по рейтингу в очереди.</string>
     <string name="nav_home">Главная</string>
     <string name="nav_games">Игры</string>
     <string name="nav_profile">Профиль</string>

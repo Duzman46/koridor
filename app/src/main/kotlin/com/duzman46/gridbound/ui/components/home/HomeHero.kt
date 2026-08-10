@@ -98,6 +98,17 @@ fun HomeHero(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * How much of a window the scene takes, on every screen that shows it.
+ *
+ * One constant rather than a number per screen. Home, play and the online lobby are a single
+ * route — three taps in a row — and they all open on this same photograph. A picture that is
+ * a third of the window on one screen and half of it on the next does not read as one app
+ * moving; it reads as three screens that were designed apart. So the share lives with the
+ * picture, and a screen that wants the scene takes it at the size the scene is.
+ */
+const val HomeSceneShare = 0.34f
+
 /** What the scene sits on, and what it fades into: the dark scheme's own background. */
 private val SceneInk = Color(0xFF070A0D)
 

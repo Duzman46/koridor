@@ -152,6 +152,7 @@
     <string name="online_create_room">कमरा बनाएँ</string>
     <string name="online_join_by_code">कोड से जुड़ें</string>
     <string name="online_browse_rooms">खुले कमरे</string>
+    <string name="online_ranked">रैंक वाला</string>
     <string name="online_quick_match">त्वरित मैच</string>
     <string name="online_quick_match_searching">प्रतिद्वंद्वी खोजा जा रहा है…</string>
 
@@ -168,7 +169,8 @@
     <string name="room_waiting_for_opponent">प्रतिद्वंद्वी का इंतज़ार</string>
     <string name="room_close">कमरा बंद करें</string>
 
-    <string name="room_browser_empty">अभी कोई कमरा खुला नहीं है। एक बनाएँ और प्रतिद्वंद्वी का इंतज़ार करें।</string>
+    <string name="room_browser_empty">अभी कोई कमरा खुला नहीं है</string>
+    <string name="room_browser_empty_hint">एक बनाएँ और प्रतिद्वंद्वी का इंतज़ार करें।</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">पासवर्ड से सुरक्षित</string>
@@ -373,7 +375,7 @@
     <string name="more_about_version">संस्करण %1$s</string>
     <string name="error_not_friends">आप केवल मित्रों को आमंत्रित कर सकते हैं।</string>
     <string name="paint_label">आपका रंग</string>
-    <string name="online_quick_match_hint">दबाएं और प्रतीक्षा करें — प्रतीक्षा कर रहे खिलाड़ियों में से आपकी रेटिंग के सबसे नज़दीकी से मिलान होगा।</string>
+    <string name="online_quick_match_hint">कतार में आपकी रेटिंग के सबसे नज़दीकी से मिलान होगा।</string>
     <string name="nav_home">होम</string>
     <string name="nav_games">गेम</string>
     <string name="nav_profile">प्रोफ़ाइल</string>

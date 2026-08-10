@@ -165,6 +165,7 @@
     <string name="online_create_room">Oda oluştur</string>
     <string name="online_join_by_code">Kodla katıl</string>
     <string name="online_browse_rooms">Açık odalar</string>
+    <string name="online_ranked">Dereceli</string>
     <string name="online_quick_match">Hızlı eşleşme</string>
     <string name="online_quick_match_searching">Rakip aranıyor…</string>
 
@@ -181,7 +182,8 @@
     <string name="room_waiting_for_opponent">Rakip bekleniyor</string>
     <string name="room_close">Odayı kapat</string>
 
-    <string name="room_browser_empty">Şu anda açık oda yok. Bir oda oluştur ve rakip bekle.</string>
+    <string name="room_browser_empty">Şu anda açık oda yok</string>
+    <string name="room_browser_empty_hint">Bir oda oluştur ve rakip bekle.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Şifre korumalı</string>
@@ -394,7 +396,7 @@
     <string name="more_about_version">Sürüm %1$s</string>
     <string name="error_not_friends">Yalnızca arkadaşlarını davet edebilirsin.</string>
     <string name="paint_label">Rengin</string>
-    <string name="online_quick_match_hint">Bas ve bekle — sırada bekleyenler arasından puanı sana en yakın olanla eşleşirsin.</string>
+    <string name="online_quick_match_hint">Sırada puanı sana en yakın olanla eşleşirsin.</string>
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_games">Oyunlar</string>
     <string name="nav_profile">Profil</string>

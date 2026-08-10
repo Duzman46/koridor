@@ -174,6 +174,7 @@
     <string name="online_create_room">Create room</string>
     <string name="online_join_by_code">Join with a code</string>
     <string name="online_browse_rooms">Open rooms</string>
+    <string name="online_ranked">Ranked</string>
     <string name="online_quick_match">Quick match</string>
     <string name="online_quick_match_searching">Looking for an opponent…</string>
 
@@ -190,7 +191,8 @@
     <string name="room_waiting_for_opponent">Waiting for an opponent</string>
     <string name="room_close">Close room</string>
 
-    <string name="room_browser_empty">No open rooms right now. Create one and wait for a rival.</string>
+    <string name="room_browser_empty">No open rooms right now</string>
+    <string name="room_browser_empty_hint">Create one and wait for a rival.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Password protected</string>
@@ -408,7 +410,7 @@
     <string name="more_about_version">Version %1$s</string>
     <string name="error_not_friends">You can only invite friends.</string>
     <string name="paint_label">Your colour</string>
-    <string name="online_quick_match_hint">Press it and wait — you are paired with the waiting player whose rating is closest to yours.</string>
+    <string name="online_quick_match_hint">You are matched with the closest rating in the queue.</string>
     <string name="nav_home">Home</string>
     <string name="nav_games">Games</string>
     <string name="nav_profile">Profile</string>

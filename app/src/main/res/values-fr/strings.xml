@@ -154,6 +154,7 @@
     <string name="online_create_room">Créer un salon</string>
     <string name="online_join_by_code">Rejoindre avec un code</string>
     <string name="online_browse_rooms">Salons ouverts</string>
+    <string name="online_ranked">Classée</string>
     <string name="online_quick_match">Partie rapide</string>
     <string name="online_quick_match_searching">Recherche d\'un adversaire…</string>
 
@@ -170,7 +171,8 @@
     <string name="room_waiting_for_opponent">En attente d\'un adversaire</string>
     <string name="room_close">Fermer le salon</string>
 
-    <string name="room_browser_empty">Aucun salon ouvert pour l\'instant. Crées-en un et attends un adversaire.</string>
+    <string name="room_browser_empty">Aucun salon ouvert pour l\'instant</string>
+    <string name="room_browser_empty_hint">Crées-en un et attends un adversaire.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Protégé par mot de passe</string>
@@ -376,7 +378,7 @@
     <string name="more_about_version">Version %1$s</string>
     <string name="error_not_friends">Vous ne pouvez inviter que des amis.</string>
     <string name="paint_label">Ta couleur</string>
-    <string name="online_quick_match_hint">Appuie et patiente — tu es apparié au joueur en attente dont le classement est le plus proche du tien.</string>
+    <string name="online_quick_match_hint">Tu es apparié au classement le plus proche de la file.</string>
     <string name="nav_home">Accueil</string>
     <string name="nav_games">Parties</string>
     <string name="nav_profile">Profil</string>

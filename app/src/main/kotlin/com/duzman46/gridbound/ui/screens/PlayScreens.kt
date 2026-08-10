@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.home.HomeHero
+import com.duzman46.gridbound.ui.components.home.HomeSceneShare
 import com.duzman46.gridbound.ui.components.home.PlayModeCard
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import androidx.compose.foundation.BorderStroke
@@ -80,15 +81,6 @@ import com.duzman46.gridbound.ui.components.home.PlaySlab
  * Online leads and is the one loud target. It is the mode the game is built around and the
  * only one that needs another person waiting, so it should not be the third thing read.
  */
-/**
- * How much of the window the scene takes, on this screen and on the home screen alike.
- *
- * A shared constant rather than two numbers that happen to agree today: the two screens show the
- * same photograph one tap apart, and a picture that changes size between them reads as two
- * designs rather than one.
- */
-private const val SCENE_SHARE = 0.34f
-
 @Composable
 fun PlayModeScreen(
     onBack: () -> Unit,
@@ -108,10 +100,10 @@ fun PlayModeScreen(
         Box(
             Modifier
                 .fillMaxWidth()
-                // The same share the home screen gives the picture. Weighted against the cards
-                // rather than taking what they leave, so one photograph is one size across the
-                // two screens a player passes through on the way to every match.
-                .weight(SCENE_SHARE),
+                // The share the picture itself declares. Weighted against the cards rather than
+                // taking what they leave, so one photograph is one size across every screen a
+                // player passes through on the way to a match.
+                .weight(HomeSceneShare),
         ) {
             HomeHero(Modifier.fillMaxSize())
             Row(
@@ -137,7 +129,7 @@ fun PlayModeScreen(
                 .fillMaxWidth()
                 .widthIn(max = Dimens.MenuMaxWidth)
                 .align(Alignment.CenterHorizontally)
-                .weight(1f - SCENE_SHARE)
+                .weight(1f - HomeSceneShare)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimens.ScreenPadding)
                 .padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceSm)

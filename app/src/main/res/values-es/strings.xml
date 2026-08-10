@@ -154,6 +154,7 @@
     <string name="online_create_room">Crear sala</string>
     <string name="online_join_by_code">Unirse con un código</string>
     <string name="online_browse_rooms">Salas abiertas</string>
+    <string name="online_ranked">Clasificatoria</string>
     <string name="online_quick_match">Partida rápida</string>
     <string name="online_quick_match_searching">Buscando rival…</string>
 
@@ -170,7 +171,8 @@
     <string name="room_waiting_for_opponent">Esperando a un rival</string>
     <string name="room_close">Cerrar sala</string>
 
-    <string name="room_browser_empty">Ahora mismo no hay salas abiertas. Crea una y espera a un rival.</string>
+    <string name="room_browser_empty">Ahora mismo no hay salas abiertas</string>
+    <string name="room_browser_empty_hint">Crea una y espera a un rival.</string>
     <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Protegida con contraseña</string>
@@ -376,7 +378,7 @@
     <string name="more_about_version">Versión %1$s</string>
     <string name="error_not_friends">Solo puedes invitar a amigos.</string>
     <string name="paint_label">Tu color</string>
-    <string name="online_quick_match_hint">Púlsalo y espera: te emparejamos con el jugador en espera cuya puntuación sea la más parecida a la tuya.</string>
+    <string name="online_quick_match_hint">Te emparejamos con la puntuación más cercana de la cola.</string>
     <string name="nav_home">Inicio</string>
     <string name="nav_games">Juegos</string>
     <string name="nav_profile">Perfil</string>

@@ -232,13 +232,16 @@ fun MainMenuScreen(
                     // Home is already here, so its tab is a no-op rather than a re-entry that
                     // would rebuild the screen under the player's finger.
                     BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE) {},
-                    BottomItem(stringResource(R.string.nav_games), PremiumIcon.GAMEPAD, onPlay),
+                    // The leaderboard, not the play screen: the gold card above already is
+                    // the way into a match, twice as loudly, and a tab that repeats the loudest
+                    // control on its own screen teaches the player that neither route is real.
+                    BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY, onLeaderboard),
                     BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
                 ),
                 selectedIndex = 0,
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceXs),
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
             )
         },
     ) { padding ->
@@ -280,10 +283,10 @@ fun MainMenuScreen(
                         // a crown is a rank, and a guest is not ranked.
                         rating = profile?.rating?.takeIf { !session.isGuest }?.toString(),
                         onProfile = onProfile,
-                        onStats = onStatistics,
+                        onLanguage = { languagePickerOpen = true },
                         onSettings = onSettings,
                         profileLabel = stringResource(R.string.profile_title),
-                        statsLabel = stringResource(R.string.menu_statistics),
+                        languageLabel = stringResource(R.string.settings_language),
                         settingsLabel = stringResource(R.string.game_settings),
                     )
                 }
@@ -298,13 +301,13 @@ fun MainMenuScreen(
                 // The name sits under the picture, not over it: laid on the scene it needed a
                 // scrim heavy enough to bury the pieces it was there to introduce.
                 HomeBrand()
-                Spacer(Modifier.height(Dimens.SpaceSm))
+                Spacer(Modifier.height(Dimens.SpaceMd))
                 PrimaryPlayCard(
                     title = stringResource(R.string.menu_play),
                     subtitle = stringResource(R.string.home_play_subtitle),
                     onClick = onPlay,
                 )
-                Spacer(Modifier.height(Dimens.SpaceSm))
+                Spacer(Modifier.height(Dimens.SpaceMd))
                 // Two by two rather than four stacked. The four destinations under the play
                 // card are peers — none is more likely than the others — and a column says the
                 // opposite by putting one of them first.
@@ -329,7 +332,7 @@ fun MainMenuScreen(
                         )
                     },
                 )
-                Spacer(Modifier.height(Dimens.SpaceSm))
+                Spacer(Modifier.height(Dimens.SpaceMd))
                 HomeGridRow(
                     left = {
                         HomeMenuCard(
@@ -348,7 +351,7 @@ fun MainMenuScreen(
                         )
                     },
                 )
-                Spacer(Modifier.height(Dimens.SpaceSm))
+                Spacer(Modifier.height(Dimens.SpaceMd))
                 // The reference puts daily objectives in this slot. That feature does not exist
                 // yet, and a card promising one that opens nothing is the cheapest way to make
                 // an app feel broken — so the slot carries the one real destination without a
@@ -360,7 +363,7 @@ fun MainMenuScreen(
                     onClick = { openSheet = HomeMenu.MORE },
                     accented = true,
                 )
-                Spacer(Modifier.height(Dimens.SpaceSm))
+                Spacer(Modifier.height(Dimens.SpaceMd))
             }
         }
     }

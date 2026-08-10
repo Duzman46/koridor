@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -125,8 +127,8 @@ fun PrimaryPlayCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .heightIn(min = 80.dp)
-            .padding(horizontal = 22.dp, vertical = Dimens.SpaceXs),
+            .heightIn(min = 92.dp)
+            .padding(horizontal = 22.dp, vertical = Dimens.SpaceMd),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -204,7 +206,7 @@ fun RowScope.HomeMenuCard(
             accented = accented,
             onClick = onClick,
             trailing = null,
-            minHeight = 62.dp,
+            minHeight = 80.dp,
         )
     }
 }
@@ -226,7 +228,7 @@ fun WideMenuCard(
         accented = accented,
         onClick = onClick,
         trailing = { Chevron() },
-        minHeight = 60.dp,
+        minHeight = 76.dp,
         modifier = modifier,
     )
 }
@@ -263,7 +265,7 @@ private fun MenuSurface(
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .heightIn(min = minHeight)
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceXs),
+            .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -323,6 +325,100 @@ private fun Chevron() {
 }
 
 /**
+ * A mode on the play screen.
+ *
+ * Bigger than a menu card, and it earns the height: this is the one screen where the player is
+ * choosing *what kind of game to have*, and the difference between playing a stranger, a machine
+ * and the person sitting next to them is not something a two-word label conveys. So the icon is
+ * large enough to be read as a picture rather than a mark, and the description gets two lines to
+ * say what the mode actually is.
+ *
+ * A hairline rule stands between the icon and the text. It is the only divider in the app and it
+ * is here because the icon is doing real work — without it the glyph reads as decoration stuck to
+ * the title; with it the card reads as two things, what this is and what it means.
+ *
+ * [leading] wears the gold: border, icon and title. Exactly one card on the screen may have it,
+ * and it belongs to online play — that is the mode the game is built around and the one a
+ * returning player wants most of the time. A second gold card would make neither of them the
+ * answer.
+ */
+@Composable
+fun PlayModeCard(
+    title: String,
+    subtitle: String,
+    icon: PremiumIcon,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leading: Boolean = false,
+) {
+    val colors = MaterialTheme.colorScheme
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale = pressScale(pressed)
+    val shape = RoundedCornerShape(20.dp)
+    val ink = if (leading) KoridorGold else Color(0xFFB9BEC5)
+
+    Row(
+        modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .clip(shape)
+            .background(
+                if (leading) {
+                    Brush.horizontalGradient(listOf(Color(0xFF14120E), Color(0xFF1F1912)))
+                } else {
+                    SolidColor(if (pressed) colors.surfaceVariant else colors.surface)
+                },
+            )
+            .border(
+                BorderStroke(1.dp, if (leading) Color(0xFF8D713B) else colors.outlineVariant),
+                shape,
+            )
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
+            .heightIn(min = 126.dp)
+            .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PremiumGlyph(icon, Modifier.size(44.dp), tint = ink)
+        Box(
+            Modifier
+                .height(54.dp)
+                .width(Dimens.Hairline)
+                .background(colors.outlineVariant),
+        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (leading) KoridorGold else colors.onSurface,
+                // Two lines, because one is not enough for the honest name of this mode.
+                // "Aynı Cihazda İki Oyuncu" truncated to "Aynı Cihazda İki O…", and shortening
+                // the string would have cost the only thing it says — that both players are
+                // here, on this phone. The card grows instead.
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF8B9098),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Chevron()
+    }
+}
+
+/**
  * The bar across the top: who you are on one side, what you can adjust on the other.
  *
  * The player's name and rating lead because this is the one screen where the app addresses the
@@ -336,11 +432,11 @@ fun PremiumTopBar(
     name: String,
     rating: String?,
     onProfile: () -> Unit,
-    onStats: () -> Unit,
+    onLanguage: () -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     profileLabel: String,
-    statsLabel: String,
+    languageLabel: String,
     settingsLabel: String,
 ) {
     Row(
@@ -403,7 +499,7 @@ fun PremiumTopBar(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
-            RoundControl(PremiumIcon.BARS, statsLabel, onStats)
+            RoundControl(PremiumIcon.LANGUAGE, languageLabel, onLanguage)
             RoundControl(PremiumIcon.COG, settingsLabel, onSettings)
         }
     }
@@ -477,7 +573,7 @@ fun KoridorBottomBar(
             .clip(shape)
             .background(Color(0xFF0D1115))
             .border(BorderStroke(1.dp, Color(0xFF24282D)), shape)
-            .heightIn(min = 58.dp),
+            .heightIn(min = 66.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -502,9 +598,9 @@ private fun BottomTab(item: BottomItem, active: Boolean, modifier: Modifier) {
                 role = Role.Tab,
                 onClick = item.onClick,
             )
-            .padding(vertical = Dimens.SpaceXs),
+            .padding(vertical = Dimens.SpaceSm),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Box(
             Modifier

@@ -1,7 +1,31 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
+import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.ui.components.home.HomeHero
+import com.duzman46.gridbound.ui.components.home.PlayModeCard
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -56,6 +80,15 @@ import com.duzman46.gridbound.ui.components.home.PlaySlab
  * Online leads and is the one loud target. It is the mode the game is built around and the
  * only one that needs another person waiting, so it should not be the third thing read.
  */
+/**
+ * How much of the window the scene takes, on this screen and on the home screen alike.
+ *
+ * A shared constant rather than two numbers that happen to agree today: the two screens show the
+ * same photograph one tap apart, and a picture that changes size between them reads as two
+ * designs rather than one.
+ */
+private const val SCENE_SHARE = 0.34f
+
 @Composable
 fun PlayModeScreen(
     onBack: () -> Unit,
@@ -64,15 +97,120 @@ fun PlayModeScreen(
     onOnline: () -> Unit,
     showAdBanner: Boolean,
 ) {
-    // The second banner in the app, and the last. This screen and the home screen are the two a
-    // player passes through on the way to every match and neither is a board, so a strip at the
-    // bottom of them costs nobody a move. The difficulty screen deliberately has none: it sits
-    // between this one and the game, and three banners in three taps is what makes a game feel
-    // like it is selling something rather than being played.
-    ModeColumn(stringResource(R.string.menu_play), onBack, showAdBanner) {
-        PlaySlab(stringResource(R.string.menu_online), onClick = onOnline, glyph = GlyphKind.ONLINE)
-        HomeChoice(stringResource(R.string.play_vs_bot), GlyphKind.VS_BOT, onClick = onVsBot)
-        HomeChoice(stringResource(R.string.play_local), GlyphKind.FRIENDS, onClick = onLocal)
+    // No banner here any more. This screen now opens on the same scene the home screen does, and
+    // a strip of advertising under a photograph is what turns a game into a storefront. The
+    // interstitial after a match still runs; that is where the app asks.
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                // The same share the home screen gives the picture. Weighted against the cards
+                // rather than taking what they leave, so one photograph is one size across the
+                // two screens a player passes through on the way to every match.
+                .weight(SCENE_SHARE),
+        ) {
+            HomeHero(Modifier.fillMaxSize())
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BackArrow(onBack)
+                Text(
+                    text = stringResource(R.string.menu_play),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .widthIn(max = Dimens.MenuMaxWidth)
+                .align(Alignment.CenterHorizontally)
+                .weight(1f - SCENE_SHARE)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceSm)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
+            // Online leads and wears the gold. It is the mode the game is built around and the
+            // only one that needs another person waiting, so it must not be the third thing read.
+            PlayModeCard(
+                title = stringResource(R.string.menu_online),
+                subtitle = stringResource(R.string.play_online_subtitle),
+                icon = PremiumIcon.GLOBE,
+                onClick = onOnline,
+                leading = true,
+            )
+            PlayModeCard(
+                title = stringResource(R.string.play_vs_bot),
+                subtitle = stringResource(R.string.play_bot_subtitle),
+                icon = PremiumIcon.ROBOT,
+                onClick = onVsBot,
+            )
+            PlayModeCard(
+                title = stringResource(R.string.play_local),
+                subtitle = stringResource(R.string.play_local_subtitle),
+                icon = PremiumIcon.PEOPLE,
+                onClick = onLocal,
+            )
+        }
+    }
+}
+
+/**
+ * The way back, on a screen whose top bar is a photograph.
+ *
+ * A plain arrow rather than Material's icon button: there is no surface behind it to tint, and a
+ * ripple on a picture reads as a smudge. It keeps the 48 dp touch target the platform asks for
+ * even though it is drawn at 24.
+ */
+@Composable
+private fun BackArrow(onBack: () -> Unit) {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val label = stringResource(R.string.action_back)
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onBack,
+            )
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(
+            Modifier
+                .size(24.dp)
+                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
+        ) {
+            val s = size.minDimension
+            drawPath(
+                Path().apply {
+                    moveTo(s * 0.92f, s * 0.5f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    moveTo(s * 0.44f, s * 0.18f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    lineTo(s * 0.44f, s * 0.82f)
+                },
+                KoridorGold,
+                style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
     }
 }
 

@@ -59,6 +59,15 @@ enum class PremiumIcon {
 
     /** Settings, at the top of the screen. A cogwheel. */
     COG,
+
+    /** Playing other people. A globe with a figure beside it. */
+    GLOBE,
+
+    /** Playing the machine. A robot's head. */
+    ROBOT,
+
+    /** The app's language. A globe with meridians only — no figure, because it is not a mode. */
+    LANGUAGE,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -80,7 +89,97 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.PERSON -> person(s, tint)
             PremiumIcon.BARS -> bars(s, tint)
             PremiumIcon.COG -> cog(s, tint, line)
+            PremiumIcon.GLOBE -> globe(s, tint, line, withFigure = true)
+            PremiumIcon.LANGUAGE -> globe(s, tint, line, withFigure = false)
+            PremiumIcon.ROBOT -> robot(s, tint, line)
         }
+    }
+}
+
+/**
+ * A globe, drawn in outline.
+ *
+ * The mode icons on the play screen are larger than the marks on a menu row and they are the
+ * only thing distinguishing three otherwise identical cards, so these are stroked rather than
+ * filled — an outline holds its detail at 40 dp where a solid shape becomes a blob.
+ *
+ * [withFigure] is what separates the two things a globe can mean here. With a person beside it
+ * the globe is *other players*, which is the online mode; without one it is simply the world,
+ * which is the language control. Same drawing, one addition, two meanings that never collide
+ * because they never appear on the same screen.
+ */
+private fun DrawScope.globe(s: Float, tint: Color, line: Float, withFigure: Boolean) {
+    val radius = if (withFigure) s * 0.33f else s * 0.40f
+    val centre = if (withFigure) Offset(s * 0.42f, s * 0.42f) else Offset(s * 0.5f, s * 0.5f)
+    drawCircle(tint, radius, centre, style = Stroke(line))
+    // The equator, and two meridians drawn as ellipses of decreasing width.
+    drawLine(
+        tint,
+        Offset(centre.x - radius, centre.y),
+        Offset(centre.x + radius, centre.y),
+        strokeWidth = line,
+    )
+    listOf(0.42f, 0.86f).forEach { squeeze ->
+        drawOval(
+            color = tint,
+            topLeft = Offset(centre.x - radius * squeeze, centre.y - radius),
+            size = Size(radius * 2f * squeeze, radius * 2f),
+            style = Stroke(line * 0.85f),
+        )
+    }
+    if (withFigure) {
+        // The other player, standing in front of the world.
+        val fx = s * 0.74f
+        val fy = s * 0.66f
+        drawCircle(tint, s * 0.115f, Offset(fx, fy - s * 0.10f))
+        drawArc(
+            color = tint,
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = true,
+            topLeft = Offset(fx - s * 0.185f, fy + s * 0.02f),
+            size = Size(s * 0.37f, s * 0.30f),
+        )
+    }
+}
+
+/**
+ * A robot's head: a rounded box, two eyes, an aerial.
+ *
+ * Deliberately friendly rather than menacing. The bot is the mode a beginner picks first, and an
+ * icon that looks like a threat is an icon that says "not for you".
+ */
+private fun DrawScope.robot(s: Float, tint: Color, line: Float) {
+    // Aerial
+    drawLine(tint, Offset(s * 0.5f, s * 0.06f), Offset(s * 0.5f, s * 0.20f), strokeWidth = line)
+    drawCircle(tint, s * 0.06f, Offset(s * 0.5f, s * 0.06f))
+    // Head
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.13f, s * 0.22f),
+        size = Size(s * 0.74f, s * 0.56f),
+        cornerRadius = CornerRadius(s * 0.18f),
+        style = Stroke(line),
+    )
+    // Eyes
+    drawCircle(tint, s * 0.075f, Offset(s * 0.35f, s * 0.48f))
+    drawCircle(tint, s * 0.075f, Offset(s * 0.65f, s * 0.48f))
+    // Mouth
+    drawLine(
+        tint,
+        Offset(s * 0.36f, s * 0.63f),
+        Offset(s * 0.64f, s * 0.63f),
+        strokeWidth = line * 0.9f,
+        cap = StrokeCap.Round,
+    )
+    // Ears
+    listOf(0.05f, 0.87f).forEach { x ->
+        drawRoundRect(
+            color = tint,
+            topLeft = Offset(s * x, s * 0.40f),
+            size = Size(s * 0.08f, s * 0.20f),
+            cornerRadius = CornerRadius(s * 0.04f),
+        )
     }
 }
 

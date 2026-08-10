@@ -400,11 +400,13 @@
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Planla. Engelle. Kazan.</string>
     <string name="home_play_subtitle">Hemen bir maç başlat</string>
-    <string name="home_leaderboard_subtitle">En iyi oyuncuları gör</string>
-    <string name="home_friends_subtitle">Arkadaşlarını davet et</string>
+    <string name="home_leaderboard_subtitle">En iyi oyuncular</string>
+    <string name="home_friends_subtitle">Davet et, oyna</string>
     <string name="home_tutorial_subtitle">Nasıl oynanır?</string>
-    <string name="home_settings_subtitle">Tercihlerini yönet</string>
+    <string name="home_settings_subtitle">Tercihlerin</string>
     <string name="play_online_subtitle">Gerçek oyunculara karşı oyna</string>
     <string name="play_bot_subtitle">Yapay zekâya karşı oyna</string>
     <string name="play_local_subtitle">Arkadaşınla aynı cihazda oyna</string>
+    <string name="home_more_subtitle">Mağaza, istatistik ve diğerleri</string>
+    <string name="home_leaderboard_short">Liderlik</string>
 </resources>

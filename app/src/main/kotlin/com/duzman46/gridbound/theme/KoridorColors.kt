@@ -56,6 +56,16 @@ data class AccentPalette(
     val learn: Tone,
     val social: Tone,
     val reward: Tone,
+    /**
+     * The one tone that names no destination.
+     *
+     * Settings and More are not places you go to play, and giving them a mode's colour was the
+     * exact mistake the paragraph above warns about: Settings took [local] and More took [bot],
+     * so on the play screen — where those two tones mean "same device" and "vs computer" — the
+     * same blue and the same violet would have meant something else one screen earlier. A
+     * neutral keeps the five destination tones honest.
+     */
+    val system: Tone,
 ) {
     @Immutable
     data class Tone(val fill: Color, val ink: Color)
@@ -68,6 +78,7 @@ private val DarkAccents = AccentPalette(
     learn = AccentPalette.Tone(fill = Color(0xFF3A2A12), ink = Color(0xFFF0A855)),
     social = AccentPalette.Tone(fill = Color(0xFF123A38), ink = Color(0xFF4FD6C8)),
     reward = AccentPalette.Tone(fill = Color(0xFF3D1C2C), ink = Color(0xFFF57FA6)),
+    system = AccentPalette.Tone(fill = Color(0xFF232B28), ink = Color(0xFFB9CCC4)),
 )
 
 private val LightAccents = AccentPalette(
@@ -77,6 +88,7 @@ private val LightAccents = AccentPalette(
     learn = AccentPalette.Tone(fill = Color(0xFFFAE6CE), ink = Color(0xFF8A4B08)),
     social = AccentPalette.Tone(fill = Color(0xFFD1EFEC), ink = Color(0xFF0A5E58)),
     reward = AccentPalette.Tone(fill = Color(0xFFFBDDE7), ink = Color(0xFF9B2B51)),
+    system = AccentPalette.Tone(fill = Color(0xFFE2EAE6), ink = Color(0xFF3A4A44)),
 )
 
 val LightKoridor = KoridorColors(

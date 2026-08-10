@@ -36,37 +36,34 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.ui.components.ScreenBackground
+import com.duzman46.gridbound.ui.components.home.GlyphKind
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.duzman46.gridbound.ui.components.home.HomeBrand
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.LocalKoridorColors
-import com.duzman46.gridbound.ui.components.AdBanner
-import com.duzman46.gridbound.ui.components.BlockHeight
-import com.duzman46.gridbound.ui.components.CardChevron
-import com.duzman46.gridbound.ui.components.CardHeight
-import com.duzman46.gridbound.ui.components.KoridorCard
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.LanguagePickerDialog
 import com.duzman46.gridbound.session.SessionState
-import com.duzman46.gridbound.ui.components.home.BoardShowcase
-import com.duzman46.gridbound.ui.components.home.GlyphKind
+import com.duzman46.gridbound.ui.components.home.BottomItem
+import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.HomeGridRow
-import com.duzman46.gridbound.ui.components.home.HomeTagline
-import com.duzman46.gridbound.ui.components.home.HomeTile
-import com.duzman46.gridbound.ui.components.home.HomeTileHeight
+import com.duzman46.gridbound.ui.components.home.HomeMenuCard
+import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
+import com.duzman46.gridbound.ui.components.home.PremiumTopBar
+import com.duzman46.gridbound.ui.components.home.PrimaryPlayCard
+import com.duzman46.gridbound.ui.components.home.WideMenuCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.duzman46.gridbound.BuildConfig
-import com.duzman46.gridbound.ui.components.home.HomeChoice
 import com.duzman46.gridbound.ui.components.home.HomeSheet
-import com.duzman46.gridbound.ui.components.home.HomeTopBar
-import com.duzman46.gridbound.ui.components.home.HomeWordmark
 import com.duzman46.gridbound.ui.components.home.SheetAction
 import com.duzman46.gridbound.ui.components.home.SheetDivider
 import com.duzman46.gridbound.ui.components.home.SheetLink
 import com.duzman46.gridbound.ui.components.home.SheetVersion
-import com.duzman46.gridbound.ui.components.home.PlaySlab
-import com.duzman46.gridbound.ui.components.ScreenBackground
 import kotlinx.coroutines.delay
 
 @Composable
@@ -105,44 +102,39 @@ fun SplashScreen(onFinished: () -> Unit) {
     }
 }
 
-/** Rows of the two-up grid under the loud action. */
-private const val HOME_GRID_ROWS = 2
-
 /**
- * What the round marks in the utility row measure once Material's 48 dp touch floor applies to
- * them, which is more than the 44 dp they are drawn at.
- */
-private val HomeUtilityRowHeight = 48.dp
-
-/** One line of the wordmark: the 30 dp size [HomeWordmark] fixes it to, in its 1.2 line box. */
-private val HomeWordmarkHeight = 36.dp
-
-/** The tagline's own line: bodyMedium's 20 sp line box, plus the gap that ties it to the mark. */
-private val HomeTaglineHeight = 20.dp
-
-/**
- * Every fixed row of the home screen added up, at default font scale.
+ * Everything under the scene, added up.
  *
- * The board panel is the only element here that can be any size, so it gets what is left of
- * the window after this — which is the one arrangement in which the whole screen fits a phone
- * without scrolling. On a 360x740 dp content area that leaves 184 dp of panel behind a 50 dp
- * ad banner and 144 dp behind the 90 dp one a tall device asks for, against a floor of 133 dp;
- * `HomeLayoutBudgetTest` holds those numbers to it.
+ * The scene is the only element on this screen that can be any size, so it takes what is left
+ * of the window after this — which is the one arrangement where the whole screen lands in one
+ * frame on a phone rather than asking the player to scroll for the play button.
  *
- * Written as the rows it is made of rather than as one total, so a spacing or control token
- * that moves takes the budget with it, and declared under the pieces it is built from because
- * a file's properties are initialised in the order they are written. A row added to the screen
- * has to be added here as well, or the screen starts scrolling again.
+ * Written as the rows it is made of rather than as one total, so a spacing token that moves
+ * takes the stack with it. A row added to the screen has to be added here too, or the screen
+ * starts scrolling again.
  */
-internal val HomeChrome: Dp =
-    Dimens.SpaceMd + HomeUtilityRowHeight +
-        Dimens.SpaceLg + HomeWordmarkHeight +
-        Dimens.SpaceXs + HomeTaglineHeight +
-        Dimens.SpaceSm + // the tagline's gap to the panel
-        Dimens.SpaceLg + BlockHeight.Loud + Dimens.PressTravel +
-        (Dimens.SpaceMd + HomeTileHeight) * HOME_GRID_ROWS +
-        Dimens.SpaceMd + CardHeight.Compact + Dimens.PressTravel +
-        Dimens.SpaceLg
+/** The wordmark, its gap and the tagline, at default font scale. */
+internal val HomeBrandBlock: Dp = Dimens.SpaceSm + 42.dp + Dimens.SpaceSm + 20.dp
+
+/** What [com.duzman46.gridbound.ui.components.home.PrimaryPlayCard] measures at its minimum. */
+internal val PlayCardHeight: Dp = 92.dp
+
+/** One card of the two-up grid. */
+internal val MenuCardHeight: Dp = 78.dp
+
+/** The full-width card under the grid. */
+internal val WideCardHeight: Dp = 72.dp
+
+/** The docked bar and the padding it floats in, which content never sits behind. */
+internal val DockedBarBlock: Dp = 70.dp + Dimens.SpaceSm * 2
+
+internal val HomeStackUnderScene: Dp =
+    HomeBrandBlock +
+        Dimens.SpaceLg + PlayCardHeight +
+        Dimens.SpaceMd + MenuCardHeight +
+        Dimens.SpaceMd + MenuCardHeight +
+        Dimens.SpaceMd + WideCardHeight +
+        Dimens.SpaceMd
 
 /**
  * The home screen.
@@ -229,114 +221,146 @@ fun MainMenuScreen(
     }
 
     Scaffold(
-        bottomBar = { if (showAdBanner) AdBanner(Modifier.navigationBarsPadding()) },
+        containerColor = MaterialTheme.colorScheme.background,
+        // No ad banner on this screen. The docked bar is the last thing above the system's
+        // navigation, and a banner beneath it pushed the bar up into the middle of the content
+        // — the one place a navigation bar must never be. Interstitials still run; the home
+        // screen simply is not where the app asks for money.
+        bottomBar = {
+            KoridorBottomBar(
+                items = listOf(
+                    // Home is already here, so its tab is a no-op rather than a re-entry that
+                    // would rebuild the screen under the player's finger.
+                    BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE) {},
+                    BottomItem(stringResource(R.string.nav_games), PremiumIcon.GAMEPAD, onPlay),
+                    BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
+                ),
+                selectedIndex = 0,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
+            )
+        },
     ) { padding ->
-        ScreenBackground {
-            // Measured outside the scroll, because inside one the height is unbounded and
-            // there is nothing left to divide up. What arrives here is the window minus the
-            // status bar and minus whatever the ad banner took, which is exactly the space
-            // the screen has to fit into.
-            BoxWithConstraints(
+        // No scroll, and no height budget either.
+        //
+        // Both previous attempts added up the rows by hand and handed the scene what was left,
+        // and both were wrong on the device — a card measures what its text and padding say it
+        // measures, not what a constant in another file claims. So the arithmetic is gone: the
+        // fixed rows take exactly the height they need, the scene is weighted, and it absorbs
+        // whatever remains. Overflow is now impossible rather than merely unlikely, on every
+        // screen size, at every font scale.
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(bottom = padding.calculateBottomPadding()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
                 Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                    .fillMaxWidth()
+                    .weight(1f),
             ) {
-                val hero = maxHeight - HomeChrome
+                HomeHero(Modifier.fillMaxSize())
+                // The top bar rides on the scene rather than above it. A row of its own cost
+                // sixty device-independent pixels of picture and bought nothing: the scene is
+                // darkest along its top edge, which is exactly where this has to be legible.
                 Column(
                     Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
                 ) {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = Dimens.MenuMaxWidth)
-                            .padding(horizontal = Dimens.ScreenPadding),
-                        horizontalAlignment = Alignment.Start,
-                    ) {
-                        Spacer(Modifier.height(Dimens.SpaceMd))
-                        HomeTopBar(
-                            session = session,
-                            language = language,
-                            onFriends = onFriends,
-                            onSettings = onSettings,
-                            onLanguage = { languagePickerOpen = true },
-                            onProfile = onProfile,
-                        )
-                        Spacer(Modifier.height(Dimens.SpaceLg))
-                        // Tight to the panel, loose from the row above it: the wordmark
-                        // belongs to the picture it introduces, and equal gaps on both sides
-                        // would leave it floating between two things it has nothing to do
-                        // with.
-                        HomeWordmark()
-                        Spacer(Modifier.height(Dimens.SpaceXs))
-                        // Tight under the mark, because it is the mark's second line and not a
-                        // row of its own. What the game is, for somebody who has just installed
-                        // something called "Koridor" and does not yet know what that means.
-                        HomeTagline()
-                        Spacer(Modifier.height(Dimens.SpaceSm))
-                        BoardShowcase(hero)
-                        Spacer(Modifier.height(Dimens.SpaceLg))
-                        PlaySlab(stringResource(R.string.menu_play), onClick = onPlay)
-                        Spacer(Modifier.height(Dimens.SpaceMd))
-                        // Two by two rather than four stacked. The four destinations under the
-                        // slab are peers — none of them is more likely than the others — and a
-                        // column says the opposite by putting one of them first. The grid also
-                        // buys back two rows of height, which is what pays for the subtitles.
-                        val accents = LocalKoridorColors.current.accents
-                        HomeGridRow(
-                            left = {
-                                HomeTile(
-                                    title = stringResource(R.string.leaderboard_title),
-                                    subtitle = stringResource(R.string.home_leaderboard_subtitle),
-                                    glyph = GlyphKind.LEADERBOARD,
-                                    tone = accents.reward,
-                                    onClick = onLeaderboard,
-                                )
-                            },
-                            right = {
-                                HomeTile(
-                                    title = stringResource(R.string.friends_title),
-                                    subtitle = stringResource(R.string.home_friends_subtitle),
-                                    glyph = GlyphKind.FRIENDS,
-                                    tone = accents.social,
-                                    onClick = onFriends,
-                                )
-                            },
-                        )
-                        Spacer(Modifier.height(Dimens.SpaceMd))
-                        HomeGridRow(
-                            left = {
-                                HomeTile(
-                                    title = stringResource(R.string.menu_tutorial),
-                                    subtitle = stringResource(R.string.home_tutorial_subtitle),
-                                    glyph = GlyphKind.TUTORIAL,
-                                    tone = accents.learn,
-                                    onClick = onTutorial,
-                                )
-                            },
-                            right = {
-                                HomeTile(
-                                    title = stringResource(R.string.game_settings),
-                                    subtitle = stringResource(R.string.home_settings_subtitle),
-                                    glyph = GlyphKind.SETTINGS,
-                                    tone = accents.local,
-                                    onClick = onSettings,
-                                )
-                            },
-                        )
-                        Spacer(Modifier.height(Dimens.SpaceMd))
-                        KoridorCard(
-                            title = stringResource(R.string.menu_more),
-                            glyph = GlyphKind.MORE,
-                            tone = accents.bot,
-                            onClick = { openSheet = HomeMenu.MORE },
-                            trailing = { CardChevron() },
-                        )
-                        Spacer(Modifier.height(Dimens.SpaceLg))
-                    }
+                    val profile = session.profile
+                    PremiumTopBar(
+                        initial = profile?.username?.firstOrNull()?.uppercase() ?: "K",
+                        name = profile?.username ?: stringResource(R.string.profile_title),
+                        // Hidden rather than zeroed for a player who has none: a number beside
+                        // a crown is a rank, and a guest is not ranked.
+                        rating = profile?.rating?.takeIf { !session.isGuest }?.toString(),
+                        onProfile = onProfile,
+                        onStats = onStatistics,
+                        onSettings = onSettings,
+                        profileLabel = stringResource(R.string.profile_title),
+                        statsLabel = stringResource(R.string.menu_statistics),
+                        settingsLabel = stringResource(R.string.game_settings),
+                    )
                 }
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = Dimens.MenuMaxWidth)
+                    .padding(horizontal = Dimens.ScreenPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // The name sits under the picture, not over it: laid on the scene it needed a
+                // scrim heavy enough to bury the pieces it was there to introduce.
+                HomeBrand()
+                Spacer(Modifier.height(Dimens.SpaceLg))
+                PrimaryPlayCard(
+                    title = stringResource(R.string.menu_play),
+                    subtitle = stringResource(R.string.home_play_subtitle),
+                    onClick = onPlay,
+                )
+                Spacer(Modifier.height(Dimens.SpaceMd))
+                // Two by two rather than four stacked. The four destinations under the play
+                // card are peers — none is more likely than the others — and a column says the
+                // opposite by putting one of them first.
+                HomeGridRow(
+                    left = {
+                        HomeMenuCard(
+                            title = stringResource(R.string.home_leaderboard_short),
+                            subtitle = stringResource(R.string.home_leaderboard_subtitle),
+                            icon = PremiumIcon.TROPHY,
+                            onClick = onLeaderboard,
+                            // Gold: standings are where a player sees they are getting
+                            // somewhere. The other three are maintenance.
+                            accented = true,
+                        )
+                    },
+                    right = {
+                        HomeMenuCard(
+                            title = stringResource(R.string.friends_title),
+                            subtitle = stringResource(R.string.home_friends_subtitle),
+                            icon = PremiumIcon.PEOPLE,
+                            onClick = onFriends,
+                        )
+                    },
+                )
+                Spacer(Modifier.height(Dimens.SpaceMd))
+                HomeGridRow(
+                    left = {
+                        HomeMenuCard(
+                            title = stringResource(R.string.menu_tutorial),
+                            subtitle = stringResource(R.string.home_tutorial_subtitle),
+                            icon = PremiumIcon.MORTARBOARD,
+                            onClick = onTutorial,
+                        )
+                    },
+                    right = {
+                        HomeMenuCard(
+                            title = stringResource(R.string.game_settings),
+                            subtitle = stringResource(R.string.home_settings_subtitle),
+                            icon = PremiumIcon.SLIDERS,
+                            onClick = onSettings,
+                        )
+                    },
+                )
+                Spacer(Modifier.height(Dimens.SpaceMd))
+                // The reference puts daily objectives in this slot. That feature does not exist
+                // yet, and a card promising one that opens nothing is the cheapest way to make
+                // an app feel broken — so the slot carries the one real destination without a
+                // tile of its own until the objectives arrive.
+                WideMenuCard(
+                    title = stringResource(R.string.menu_more),
+                    subtitle = stringResource(R.string.home_more_subtitle),
+                    icon = PremiumIcon.SHIELD_STAR,
+                    onClick = { openSheet = HomeMenu.MORE },
+                    accented = true,
+                )
+                Spacer(Modifier.height(Dimens.SpaceMd))
             }
         }
     }

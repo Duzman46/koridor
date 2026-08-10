@@ -414,11 +414,13 @@
     <string name="nav_profile">Profile</string>
     <string name="home_tagline">Plan. Block. Win.</string>
     <string name="home_play_subtitle">Start a match now</string>
-    <string name="home_leaderboard_subtitle">See the best players</string>
-    <string name="home_friends_subtitle">Invite your friends</string>
+    <string name="home_leaderboard_subtitle">Top players</string>
+    <string name="home_friends_subtitle">Invite and play</string>
     <string name="home_tutorial_subtitle">How to play</string>
-    <string name="home_settings_subtitle">Manage your preferences</string>
+    <string name="home_settings_subtitle">Your preferences</string>
     <string name="play_online_subtitle">Play against real players</string>
     <string name="play_bot_subtitle">Play against the computer</string>
     <string name="play_local_subtitle">Play with a friend on this device</string>
+    <string name="home_more_subtitle">Store, statistics and more</string>
+    <string name="home_leaderboard_short">Leaderboard</string>
 </resources>

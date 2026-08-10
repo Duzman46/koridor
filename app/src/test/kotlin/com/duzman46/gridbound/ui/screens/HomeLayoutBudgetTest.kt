@@ -1,56 +1,57 @@
 package com.duzman46.gridbound.ui.screens
 
-import androidx.compose.ui.unit.dp
-import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.ui.components.home.heroHeight
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Holds the home screen to one window.
+ * What is left of the home screen's height contract.
  *
- * The first screen anyone opens has to show the way in without being scrolled to, and it is
- * one row away from not doing that: five controls, a wordmark, a utility row, an ad banner and
- * a board panel on a phone. Nothing about that is visible from reading the layout, and it is
- * only ever noticed on a device — so it is asserted here instead, against the same constants
- * the screen is built from.
+ * The arithmetic version of this test is gone, and deliberately. It added up every fixed row and
+ * handed the picture what remained, and it was wrong on the device twice — because a card
+ * measures what its own text and padding say it measures, not what a constant in another file
+ * claims. The screen no longer has a budget: the scene is weighted and absorbs whatever is
+ * left, so overflow is structurally impossible rather than arithmetically unlikely, and there
+ * is nothing left to assert about heights.
+ *
+ * What is worth pinning is the icon set. Five destinations on this screen are told apart by
+ * their marks before their labels are read, and two of them are gold while three are not — a
+ * ration that only holds if nobody quietly adds a sixth.
  */
-class HomeLayoutBudgetTest {
-
-    /** The smallest content area a current phone gives an app, once the system bars are out. */
-    private val contentHeight = 740.dp
-    private val contentWidth = 360.dp
-    private val column = contentWidth - Dimens.ScreenPadding * 2
-
-    /**
-     * Anchored adaptive banners are 15% of the display height, floored at 50 dp and capped at
-     * 90, so both ends of that have to fit rather than the comfortable one.
-     */
-    private val bannerHeights = listOf(50.dp, 90.dp)
+class HomeIconographyTest {
 
     @Test
-    fun `the whole home screen fits a phone without scrolling`() {
-        bannerHeights.forEach { banner ->
-            val panel = heroHeight(contentHeight - banner - HomeChrome, column)
-            val total = HomeChrome + panel + banner
-            assertTrue(
-                "the home screen needs $total behind a $banner banner and only has $contentHeight",
-                total <= contentHeight,
-            )
-        }
+    fun `every home destination has its own mark`() {
+        val used = listOf(
+            PremiumIcon.TROPHY,
+            PremiumIcon.PEOPLE,
+            PremiumIcon.MORTARBOARD,
+            PremiumIcon.SLIDERS,
+            PremiumIcon.SHIELD_STAR,
+        )
+        assertEquals("two destinations share a mark", used.size, used.toSet().size)
     }
 
     @Test
-    fun `the panel keeps a board worth looking at`() {
-        bannerHeights.forEach { banner ->
-            val panel = heroHeight(contentHeight - banner - HomeChrome, column)
-            // The board fills all but a few percent of the panel's height, so the panel's
-            // height is the board's side. Under 128 dp that is nine ranks of fourteen, which
-            // is a diagram of a board rather than a board with two pawns on it.
-            assertTrue(
-                "a $panel panel behind a $banner banner leaves the board unreadable",
-                panel >= column / 2.5f,
-            )
-        }
+    fun `the bar and the top row do not borrow the cards' marks`() {
+        val cards = setOf(
+            PremiumIcon.TROPHY,
+            PremiumIcon.PEOPLE,
+            PremiumIcon.MORTARBOARD,
+            PremiumIcon.SLIDERS,
+            PremiumIcon.SHIELD_STAR,
+        )
+        val chrome = setOf(
+            PremiumIcon.HOUSE,
+            PremiumIcon.GAMEPAD,
+            PremiumIcon.PERSON,
+            PremiumIcon.BARS,
+            PremiumIcon.COG,
+        )
+        assertTrue(
+            "a mark means two things on one screen",
+            cards.intersect(chrome).isEmpty(),
+        )
     }
 }

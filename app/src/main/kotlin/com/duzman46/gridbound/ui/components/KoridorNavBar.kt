@@ -3,8 +3,8 @@ package com.duzman46.gridbound.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -118,8 +118,12 @@ private fun NavBarItem(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    // `secondary`, not `primary`. The theme states that primary is a fill and that an accent
+    // used as ink is secondary; on light paper primary measures 4.55:1 against a 4.5 floor for
+    // 11 sp text, which passes by five hundredths and is exactly the margin the rule exists to
+    // keep us out of. secondary is 7.19:1 on the same ground.
     val tint by animateColorAsState(
-        targetValue = if (active) colors.primary else colors.onSurfaceVariant,
+        targetValue = if (active) colors.secondary else colors.onSurfaceVariant,
         animationSpec = tween(durationMillis = 120),
         label = "navTint",
     )
@@ -127,7 +131,12 @@ private fun NavBarItem(
     Column(
         modifier
             .clip(RoundedCornerShape(Dimens.RadiusSm))
-            .clickable(
+            // `selectable`, not `clickable`. Role.Tab on a clickable never sets the selected
+            // state, so a screen reader announced all three tabs identically and never said
+            // which one you were on — the selection was carried by tint and weight alone, and
+            // neither of those reaches TalkBack.
+            .selectable(
+                selected = active,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.Tab,

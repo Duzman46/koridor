@@ -386,10 +386,12 @@
     <string name="home_tagline">Планируй. Блокируй. Побеждай.</string>
     <string name="home_play_subtitle">Начать матч сейчас</string>
     <string name="home_leaderboard_subtitle">Лучшие игроки</string>
-    <string name="home_friends_subtitle">Пригласить друзей</string>
+    <string name="home_friends_subtitle">Пригласить друга</string>
     <string name="home_tutorial_subtitle">Как играть</string>
     <string name="home_settings_subtitle">Настройки</string>
     <string name="play_online_subtitle">Игра с реальными соперниками</string>
     <string name="play_bot_subtitle">Игра против компьютера</string>
     <string name="play_local_subtitle">Игра вдвоём на одном устройстве</string>
+    <string name="home_more_subtitle">Магазин, статистика и другое</string>
+    <string name="home_leaderboard_short">Рейтинг</string>
 </resources>

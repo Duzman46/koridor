@@ -64,10 +64,18 @@ import com.duzman46.gridbound.ui.components.home.KoridorGlyph
  * its first is worse than a card with one line.
  */
 
-/** How tall a card's content is allowed to get down to, by how much it carries. */
+/**
+ * How tall a card's content is allowed to get down to, by how much it carries.
+ *
+ * [Compact] is the one that has to be derived rather than chosen. `heightIn` sits outside the
+ * card's vertical padding, so a minimum below the content's own height never binds: a glyph
+ * tile is [TileSize] and the padding adds `SpaceMd` twice, which is 68 dp before a single word
+ * of the title is measured. Naming it 60 did not make the card 60 — it made the home screen's
+ * budget wrong by eight. The other two sit above their content and bind normally.
+ */
 object CardHeight {
-    /** Title only. */
-    val Compact = 60.dp
+    /** Title only — the tile's own height plus its padding, which is the floor. */
+    val Compact = TileSize + Dimens.SpaceMd * 2
 
     /** Title and subtitle — the default. */
     val Standard = 76.dp
@@ -77,7 +85,7 @@ object CardHeight {
 }
 
 /** The tinted square a card is recognised by. Sized to hold [Dimens.GlyphMd] with room around it. */
-private val TileSize = 44.dp
+internal val TileSize = 44.dp
 private val FeatureTileSize = 52.dp
 
 /**
@@ -93,18 +101,28 @@ fun AccentTile(
     tone: AccentPalette.Tone,
     modifier: Modifier = Modifier,
     large: Boolean = false,
+    inset: Boolean = false,
 ) {
     val side = if (large) FeatureTileSize else TileSize
     Box(
+        // `modifier` first so a caller can fix the box's size — the home tiles run a smaller
+        // square than a full-width card does, and a `size` written after this one would win
+        // and undo them.
         modifier
-            .size(side)
+            .then(if (inset) Modifier else Modifier.size(side))
             .clip(RoundedCornerShape(Dimens.RadiusSm))
             .background(tone.fill),
         contentAlignment = Alignment.Center,
     ) {
         KoridorGlyph(
             glyph,
-            Modifier.size(if (large) Dimens.GlyphLg else Dimens.GlyphMd),
+            Modifier.size(
+                when {
+                    large -> Dimens.GlyphLg
+                    inset -> Dimens.IconSm
+                    else -> Dimens.GlyphMd
+                },
+            ),
             tint = tone.ink,
         )
     }
@@ -171,7 +189,13 @@ fun KoridorCard(
                 .fillMaxWidth()
                 .clip(shape)
                 .background(fill)
-                .border(BorderStroke(Dimens.Hairline, colors.outlineVariant), shape)
+                // `outline`, not `outlineVariant`. The theme's own rule is that the quiet
+                // token separates and the loud one identifies, and a card is identified by
+                // nothing else: its fill is `surface`, which sits at 1.09:1 on the page in
+                // dark and 1.11:1 in light. With the variant border the whole boundary
+                // measured 2.02:1 and failed WCAG 1.4.11; `outline` puts it at 4.03:1. The
+                // weight stays a hairline, so this is still a surface rather than a frame.
+                .border(BorderStroke(Dimens.Hairline, colors.outline), shape)
                 .clickable(
                     interactionSource = interaction,
                     indication = null,

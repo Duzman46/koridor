@@ -379,11 +379,13 @@
     <string name="nav_profile">प्रोफ़ाइल</string>
     <string name="home_tagline">योजना बनाओ. रोको. जीतो.</string>
     <string name="home_play_subtitle">अभी मैच शुरू करें</string>
-    <string name="home_leaderboard_subtitle">शीर्ष खिलाड़ी देखें</string>
-    <string name="home_friends_subtitle">दोस्तों को बुलाएँ</string>
+    <string name="home_leaderboard_subtitle">शीर्ष खिलाड़ी</string>
+    <string name="home_friends_subtitle">बुलाओ और खेलो</string>
     <string name="home_tutorial_subtitle">कैसे खेलें</string>
-    <string name="home_settings_subtitle">अपनी पसंद प्रबंधित करें</string>
+    <string name="home_settings_subtitle">आपकी पसंद</string>
     <string name="play_online_subtitle">असली खिलाड़ियों से खेलें</string>
     <string name="play_bot_subtitle">कंप्यूटर से खेलें</string>
     <string name="play_local_subtitle">इसी डिवाइस पर दोस्त के साथ खेलें</string>
+    <string name="home_more_subtitle">स्टोर, आँकड़े और अधिक</string>
+    <string name="home_leaderboard_short">लीडरबोर्ड</string>
 </resources>

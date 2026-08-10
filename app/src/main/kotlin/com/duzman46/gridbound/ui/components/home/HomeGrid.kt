@@ -14,29 +14,37 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.AccentPalette
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorJade
 import com.duzman46.gridbound.ui.components.AccentTile
 
 /**
@@ -59,8 +67,31 @@ import com.duzman46.gridbound.ui.components.AccentTile
  *
  * Public for the same reason [com.duzman46.gridbound.ui.components.BlockHeight] is: the home
  * screen divides its height to the dp and cannot do that against a number typed in two files.
+ *
+ * It is a **measurement, not a preference**, and the first version of it was a guess that cost
+ * the budget. `heightIn` sits outside the tile's padding, so it constrains the padded total and
+ * never binds below the content's own height; what the tile actually measures is
+ * `44 tile + 8 gap + 20 title + 2 + 16 subtitle + 32 padding + 2 travel`. Written out as that
+ * sum so the next person to change the padding or the glyph size sees the number move with it.
+ *
+ * The single subtitle line in that sum is why [HomeTile] caps the subtitle at one line and why
+ * the strings are short: a second line is 16 dp, twice, and the whole screen has 6 dp of slack.
  */
-val HomeTileHeight = 116.dp
+/**
+ * The tinted square inside a tile.
+ *
+ * Smaller than the [com.duzman46.gridbound.ui.components.TileSize] a full-width card carries,
+ * and that is the whole difference between the two shapes: at half the screen's width the
+ * glyph is competing with the label for the same line, so it gives way. Two stacked text lines
+ * measure 20 + 2 + 16 = 38, so a 38 dp box is also exactly as tall as the text beside it —
+ * the tile has one content height, not two.
+ *
+ * Declared before [HomeTileHeight] because a file's properties initialise in the order they are
+ * written; below it, the height would be computed against a zero.
+ */
+internal val TileGlyphBox = 38.dp
+
+val HomeTileHeight = TileGlyphBox + (Dimens.SpaceMd * 2) + Dimens.PressTravel
 
 /** Two tiles that share a row and always measure the same height. */
 @Composable
@@ -84,82 +115,3 @@ fun HomeGridRow(
  * Presses exactly the way every other control in the app does — down two pixels quickly, back
  * up slowly — so a grid and a button on the same screen do not feel like two apps.
  */
-@Composable
-fun RowScope.HomeTile(
-    title: String,
-    subtitle: String,
-    glyph: GlyphKind,
-    tone: AccentPalette.Tone,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val travel by animateDpAsState(
-        targetValue = if (pressed) Dimens.PressTravel else 0.dp,
-        animationSpec = tween(durationMillis = if (pressed) 40 else 90, easing = LinearEasing),
-        label = "tileTravel",
-    )
-    val shape = RoundedCornerShape(Dimens.RadiusMd)
-    val spoken = "$title. $subtitle"
-
-    Box(Modifier.weight(1f)) {
-        Column(
-            Modifier
-                .offset { IntOffset(x = 0, y = travel.roundToPx()) }
-                .padding(bottom = Dimens.PressTravel)
-                .fillMaxWidth()
-                .heightIn(min = HomeTileHeight - Dimens.PressTravel)
-                .clip(shape)
-                .background(if (pressed) colors.surfaceVariant else colors.surface)
-                .border(BorderStroke(Dimens.Hairline, colors.outlineVariant), shape)
-                .clickable(
-                    interactionSource = interaction,
-                    indication = null,
-                    role = Role.Button,
-                    onClick = onClick,
-                )
-                .semantics(mergeDescendants = true) { contentDescription = spoken }
-                .padding(Dimens.SpaceLg),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-        ) {
-            AccentTile(glyph, tone)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-/**
- * The line under the wordmark.
- *
- * Three verbs in the order the game is actually played: you plan a route, you block theirs, and
- * one of you gets home first. It is the only sentence on the home screen, and it is there
- * because the name alone does not say what the app is to somebody who has just installed it.
- */
-@Composable
-fun HomeTagline(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.home_tagline),
-        modifier = modifier,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-}

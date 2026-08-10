@@ -1,23 +1,54 @@
 package com.duzman46.gridbound.ui.components.home
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorJade
+import com.duzman46.gridbound.ui.components.BlockHeight
 import com.duzman46.gridbound.ui.components.BlockRank
 import com.duzman46.gridbound.ui.components.KoridorBlock
 
@@ -42,7 +73,7 @@ fun HomeTopBar(
     session: SessionState,
     language: AppLanguage,
     onFriends: () -> Unit,
-    onSettings: () -> Unit,
+    onMore: () -> Unit,
     onLanguage: () -> Unit,
     onProfile: () -> Unit,
     modifier: Modifier = Modifier,
@@ -58,7 +89,11 @@ fun HomeTopBar(
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            HomeIconButton(GlyphKind.SETTINGS, stringResource(R.string.game_settings), onSettings)
+            // "More" rather than "Settings". Settings is now a tile in the grid below, and this
+            // file's own rule is that one destination reachable twice from one screen teaches
+            // the player that neither route is real. More has no tile — it is the drawer of
+            // things nobody looks for by name — so this is its only way in.
+            HomeIconButton(GlyphKind.MORE, stringResource(R.string.menu_more), onMore)
             LanguageChip(language, onLanguage)
             ProfileCrest(session, onProfile)
         }
@@ -78,29 +113,6 @@ fun HomeTopBar(
  * full weight, it is the first thing read on the screen, and it still labels the picture
  * directly beneath it — from above instead of from on top.
  */
-@Composable
-fun HomeWordmark(modifier: Modifier = Modifier) {
-    val density = LocalDensity.current
-    // Sized in dp then converted, so the wordmark keeps a fixed cap height and grows by at
-    // most a quarter at large font scales. Seven Black glyphs cannot clip at 320 dp.
-    val wordmarkSize = with(density) { 30.dp.toSp() } * density.fontScale.coerceAtMost(1.25f)
-    Text(
-        text = stringResource(R.string.app_name).uppercase(),
-        modifier = modifier,
-        fontSize = wordmarkSize,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 2.sp,
-        color = MaterialTheme.colorScheme.onBackground,
-        // Set with the size rather than inherited: body text's 24 sp line box is shorter than
-        // these glyphs are tall, which leaves the wordmark painting outside the space it was
-        // measured for. The home screen divides its height up to the dp, and a row that lies
-        // about how tall it is spends the panel's room.
-        lineHeight = wordmarkSize * 1.2f,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-}
-
 /**
  * The one loud action on a screen — now the block system's PRIMARY at loud size.
  *
@@ -113,16 +125,113 @@ fun PlaySlab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     glyph: GlyphKind = GlyphKind.QUICK_PLAY,
+    subtitle: String? = null,
 ) {
-    KoridorBlock(
-        label = label,
-        onClick = onClick,
-        modifier = modifier,
-        rank = BlockRank.PRIMARY,
-        glyph = glyph,
-        loud = true,
-    )
+    if (subtitle == null) {
+        KoridorBlock(
+            label = label,
+            onClick = onClick,
+            modifier = modifier,
+            rank = BlockRank.PRIMARY,
+            glyph = glyph,
+            loud = true,
+        )
+        return
+    }
+    GradientSlab(label = label, subtitle = subtitle, glyph = glyph, onClick = onClick, modifier = modifier)
 }
+
+/**
+ * The one control on the home screen that is painted rather than filled.
+ *
+ * Every other surface in this app is a flat colour, and that is deliberate — a gradient on a
+ * card is decoration, and decoration on six cards is noise. Exactly one control gets one, and
+ * it is the way into the game: the sweep from jade to violet is what makes it read as the
+ * loudest thing on the screen without being the biggest.
+ *
+ * The two ends are the app's own two accents — the jade a wall is drawn in, and the violet the
+ * bot wears — so the button is not carrying a third palette. It sweeps along the reading
+ * direction, which mirrors to the left in an RTL layout for the same reason the glyphs do: the
+ * gradient points at the label, and in Arabic the label is at the other end.
+ */
+@Composable
+private fun GradientSlab(
+    label: String,
+    subtitle: String,
+    glyph: GlyphKind,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val travel by animateDpAsState(
+        targetValue = if (pressed) Dimens.PressTravel else 0.dp,
+        animationSpec = tween(durationMillis = if (pressed) 40 else 90, easing = LinearEasing),
+        label = "slabTravel",
+    )
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val ends = if (rtl) listOf(SlabViolet, KoridorJade) else listOf(KoridorJade, SlabViolet)
+    // Dimmed as one brush rather than by swapping two more hexes in: a pressed state that
+    // re-specifies the gradient is a second gradient to keep in step with the first.
+    val brush = Brush.horizontalGradient(ends.map { if (pressed) it.copy(alpha = 0.86f) else it })
+    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    val ink = MaterialTheme.colorScheme.onPrimary
+
+    Box(modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .offset { IntOffset(x = 0, y = travel.roundToPx()) }
+                .padding(bottom = Dimens.PressTravel)
+                .fillMaxWidth()
+                .clip(shape)
+                .background(brush)
+                .clickable(
+                    interactionSource = interaction,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                )
+                .semantics(mergeDescendants = true) { contentDescription = "$label. $subtitle" }
+                .heightIn(min = BlockHeight.Loud)
+                .padding(horizontal = 20.dp, vertical = Dimens.SpaceMd),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The glyph rides in a disc of the ink it is drawn against, which is what stops a
+            // jade-on-jade mark from disappearing into the left end of the sweep.
+            Box(
+                Modifier
+                    .size(Dimens.CrestHeight)
+                    .clip(CircleShape)
+                    .background(ink.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                KoridorGlyph(glyph, Modifier.size(Dimens.GlyphLg), tint = ink)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = label.uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    color = ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ink.copy(alpha = 0.82f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+/** The far end of the play button's sweep — the same violet the bot's accent tone is built on. */
+private val SlabViolet = Color(0xFF7C5CE6)
 
 /** A real alternative to the loud action: outlined, never a tinted pill. */
 @Composable

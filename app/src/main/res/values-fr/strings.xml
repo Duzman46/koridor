@@ -382,11 +382,13 @@
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Planifie. Bloque. Gagne.</string>
     <string name="home_play_subtitle">Lance une partie maintenant</string>
-    <string name="home_leaderboard_subtitle">Vois les meilleurs joueurs</string>
-    <string name="home_friends_subtitle">Invite tes amis</string>
+    <string name="home_leaderboard_subtitle">Meilleurs joueurs</string>
+    <string name="home_friends_subtitle">Invite et joue</string>
     <string name="home_tutorial_subtitle">Comment jouer</string>
-    <string name="home_settings_subtitle">Gère tes préférences</string>
+    <string name="home_settings_subtitle">Tes préférences</string>
     <string name="play_online_subtitle">Joue contre de vrais joueurs</string>
     <string name="play_bot_subtitle">Joue contre l\'ordinateur</string>
     <string name="play_local_subtitle">Joue avec un ami sur cet appareil</string>
+    <string name="home_more_subtitle">Boutique, stats et plus</string>
+    <string name="home_leaderboard_short">Classement</string>
 </resources>

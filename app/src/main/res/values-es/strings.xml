@@ -382,11 +382,13 @@
     <string name="nav_profile">Perfil</string>
     <string name="home_tagline">Planea. Bloquea. Gana.</string>
     <string name="home_play_subtitle">Empieza una partida ya</string>
-    <string name="home_leaderboard_subtitle">Mira a los mejores jugadores</string>
-    <string name="home_friends_subtitle">Invita a tus amigos</string>
+    <string name="home_leaderboard_subtitle">Mejores jugadores</string>
+    <string name="home_friends_subtitle">Invita y juega</string>
     <string name="home_tutorial_subtitle">Cómo se juega</string>
-    <string name="home_settings_subtitle">Gestiona tus preferencias</string>
+    <string name="home_settings_subtitle">Tus preferencias</string>
     <string name="play_online_subtitle">Juega contra jugadores reales</string>
     <string name="play_bot_subtitle">Juega contra la máquina</string>
     <string name="play_local_subtitle">Juega con un amigo en este dispositivo</string>
+    <string name="home_more_subtitle">Tienda, estadísticas y más</string>
+    <string name="home_leaderboard_short">Ranking</string>
 </resources>

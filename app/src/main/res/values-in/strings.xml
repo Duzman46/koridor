@@ -379,11 +379,13 @@
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Rencanakan. Hadang. Menang.</string>
     <string name="home_play_subtitle">Mulai pertandingan sekarang</string>
-    <string name="home_leaderboard_subtitle">Lihat pemain terbaik</string>
-    <string name="home_friends_subtitle">Undang temanmu</string>
+    <string name="home_leaderboard_subtitle">Pemain terbaik</string>
+    <string name="home_friends_subtitle">Undang dan main</string>
     <string name="home_tutorial_subtitle">Cara bermain</string>
-    <string name="home_settings_subtitle">Kelola preferensimu</string>
+    <string name="home_settings_subtitle">Preferensimu</string>
     <string name="play_online_subtitle">Main lawan pemain sungguhan</string>
     <string name="play_bot_subtitle">Main lawan komputer</string>
     <string name="play_local_subtitle">Main bersama teman di perangkat ini</string>
+    <string name="home_more_subtitle">Toko, statistik, dan lainnya</string>
+    <string name="home_leaderboard_short">Peringkat</string>
 </resources>

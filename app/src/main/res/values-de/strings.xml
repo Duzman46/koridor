@@ -374,4 +374,16 @@
     <string name="error_not_friends">Du kannst nur Freunde einladen.</string>
     <string name="paint_label">Deine Farbe</string>
     <string name="online_quick_match_hint">Drücken und warten — du wirst mit der wartenden Person verbunden, deren Wertung deiner am nächsten kommt.</string>
+    <string name="nav_home">Start</string>
+    <string name="nav_games">Spiele</string>
+    <string name="nav_profile">Profil</string>
+    <string name="home_tagline">Planen. Blocken. Gewinnen.</string>
+    <string name="home_play_subtitle">Jetzt ein Spiel starten</string>
+    <string name="home_leaderboard_subtitle">Die besten Spieler ansehen</string>
+    <string name="home_friends_subtitle">Freunde einladen</string>
+    <string name="home_tutorial_subtitle">So wird gespielt</string>
+    <string name="home_settings_subtitle">Einstellungen verwalten</string>
+    <string name="play_online_subtitle">Gegen echte Spieler spielen</string>
+    <string name="play_bot_subtitle">Gegen den Computer spielen</string>
+    <string name="play_local_subtitle">Mit einem Freund auf diesem Gerät</string>
 </resources>

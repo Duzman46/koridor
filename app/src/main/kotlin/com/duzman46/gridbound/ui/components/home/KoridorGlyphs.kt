@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.duzman46.gridbound.ui.components.drawPawnMark
@@ -30,6 +31,12 @@ enum class GlyphKind {
     PROFILE,
     MORE,
     REMOVE_ADS,
+    HOME,
+    QUESTS,
+    ACHIEVEMENTS,
+    HELP,
+    ABOUT,
+    UPDATES,
 }
 
 /**
@@ -178,6 +185,60 @@ fun KoridorGlyph(
                 // A tile with the bar lifted off it.
                 tile(s * 0.10f, s * 0.34f, s * 0.52f, muted)
                 bar(s * 0.34f, s * 0.08f, s * 0.56f, s * 0.11f, tint)
+            }
+
+            GlyphKind.HOME -> {
+                // Your starting square: the home rank, with your pawn standing on the middle
+                // of it. Not a house — this game has no houses, and a roof drawn in a set made
+                // of board parts is the one shape that would announce it came from elsewhere.
+                bar(s * 0.06f, s * 0.74f, s * 0.88f, s * 0.11f, muted)
+                tile(s * 0.06f, s * 0.30f, s * 0.24f, muted)
+                tile(s * 0.70f, s * 0.30f, s * 0.24f, muted)
+                drawPawnMark(Offset(s * 0.50f, s * 0.46f), s * 0.56f, tint)
+            }
+
+            GlyphKind.QUESTS -> {
+                // A pawn and the tile it has been asked to reach, with the ground between them
+                // stepping up. A task is a destination you have not arrived at yet, which is
+                // exactly what a board can say without borrowing a checklist.
+                drawPawnMark(Offset(s * 0.22f, s * 0.74f), s * 0.44f, tint)
+                tile(s * 0.40f, s * 0.42f, s * 0.22f, muted)
+                tile(s * 0.70f, s * 0.10f, s * 0.24f, tint)
+            }
+
+            GlyphKind.ACHIEVEMENTS -> {
+                // A tile turned on its corner with a smaller one inside it: a medal built from
+                // the only square this app owns. The podium already belongs to the leaderboard,
+                // so standing on one would have said "ranking" a second time.
+                rotate(45f, Offset(s * 0.5f, s * 0.44f)) {
+                    tile(s * 0.20f, s * 0.14f, s * 0.60f, muted)
+                    tile(s * 0.35f, s * 0.29f, s * 0.30f, tint)
+                }
+                bar(s * 0.24f, s * 0.82f, s * 0.20f, s * 0.10f, tint)
+                bar(s * 0.56f, s * 0.82f, s * 0.20f, s * 0.10f, tint)
+            }
+
+            GlyphKind.HELP -> {
+                // A pawn under a gap in the wall above it — the shape of not knowing which way
+                // to go, rather than a question mark, which is a letterform and not a piece.
+                bar(s * 0.06f, s * 0.16f, s * 0.32f, s * 0.11f, muted)
+                bar(s * 0.62f, s * 0.16f, s * 0.32f, s * 0.11f, muted)
+                tile(s * 0.40f, s * 0.10f, s * 0.20f, tint)
+                drawPawnMark(Offset(s * 0.50f, s * 0.70f), s * 0.52f, tint)
+            }
+
+            GlyphKind.ABOUT -> {
+                // An upright wall with a tile set above it. The information mark, spelled in
+                // the two pieces the game is made of.
+                tile(s * 0.40f, s * 0.08f, s * 0.20f, tint)
+                bar(s * 0.42f, s * 0.36f, s * 0.16f, s * 0.56f, muted)
+            }
+
+            GlyphKind.UPDATES -> {
+                // Three tiles climbing: what is here now, and what is coming.
+                tile(s * 0.06f, s * 0.60f, s * 0.26f, muted)
+                tile(s * 0.37f, s * 0.38f, s * 0.26f, muted)
+                tile(s * 0.68f, s * 0.16f, s * 0.26f, tint)
             }
         }
     }

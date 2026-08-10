@@ -380,4 +380,16 @@
     <string name="error_not_friends">Приглашать можно только друзей.</string>
     <string name="paint_label">Ваш цвет</string>
     <string name="online_quick_match_hint">Нажмите и подождите — вас сведут с ожидающим игроком, чей рейтинг ближе всего к вашему.</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_games">Игры</string>
+    <string name="nav_profile">Профиль</string>
+    <string name="home_tagline">Планируй. Блокируй. Побеждай.</string>
+    <string name="home_play_subtitle">Начать матч сейчас</string>
+    <string name="home_leaderboard_subtitle">Лучшие игроки</string>
+    <string name="home_friends_subtitle">Пригласить друзей</string>
+    <string name="home_tutorial_subtitle">Как играть</string>
+    <string name="home_settings_subtitle">Настройки</string>
+    <string name="play_online_subtitle">Игра с реальными соперниками</string>
+    <string name="play_bot_subtitle">Игра против компьютера</string>
+    <string name="play_local_subtitle">Игра вдвоём на одном устройстве</string>
 </resources>

@@ -390,4 +390,16 @@
     <string name="error_not_friends">يمكنك دعوة الأصدقاء فقط.</string>
     <string name="paint_label">لونك</string>
     <string name="online_quick_match_hint">اضغط وانتظر — ستُقابَل مع اللاعب المنتظر الأقرب إليك في التقييم.</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_games">الألعاب</string>
+    <string name="nav_profile">الملف</string>
+    <string name="home_tagline">خطّط. اعترض. اربح.</string>
+    <string name="home_play_subtitle">ابدأ مباراة الآن</string>
+    <string name="home_leaderboard_subtitle">شاهد أفضل اللاعبين</string>
+    <string name="home_friends_subtitle">ادعُ أصدقاءك</string>
+    <string name="home_tutorial_subtitle">كيف تلعب</string>
+    <string name="home_settings_subtitle">أدر تفضيلاتك</string>
+    <string name="play_online_subtitle">العب ضد لاعبين حقيقيين</string>
+    <string name="play_bot_subtitle">العب ضد الكمبيوتر</string>
+    <string name="play_local_subtitle">العب مع صديق على هذا الجهاز</string>
 </resources>

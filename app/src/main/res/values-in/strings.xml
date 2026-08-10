@@ -374,4 +374,16 @@
     <string name="error_not_friends">Anda hanya bisa mengundang teman.</string>
     <string name="paint_label">Warnamu</string>
     <string name="online_quick_match_hint">Tekan dan tunggu — kamu dipasangkan dengan pemain menunggu yang peringkatnya paling dekat denganmu.</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_games">Permainan</string>
+    <string name="nav_profile">Profil</string>
+    <string name="home_tagline">Rencanakan. Hadang. Menang.</string>
+    <string name="home_play_subtitle">Mulai pertandingan sekarang</string>
+    <string name="home_leaderboard_subtitle">Lihat pemain terbaik</string>
+    <string name="home_friends_subtitle">Undang temanmu</string>
+    <string name="home_tutorial_subtitle">Cara bermain</string>
+    <string name="home_settings_subtitle">Kelola preferensimu</string>
+    <string name="play_online_subtitle">Main lawan pemain sungguhan</string>
+    <string name="play_bot_subtitle">Main lawan komputer</string>
+    <string name="play_local_subtitle">Main bersama teman di perangkat ini</string>
 </resources>

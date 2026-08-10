@@ -377,4 +377,16 @@
     <string name="error_not_friends">Você só pode convidar amigos.</string>
     <string name="paint_label">Sua cor</string>
     <string name="online_quick_match_hint">Toque e aguarde — você será pareado com o jogador em espera cuja pontuação seja a mais próxima da sua.</string>
+    <string name="nav_home">Início</string>
+    <string name="nav_games">Jogos</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="home_tagline">Planeje. Bloqueie. Vença.</string>
+    <string name="home_play_subtitle">Comece uma partida agora</string>
+    <string name="home_leaderboard_subtitle">Veja os melhores jogadores</string>
+    <string name="home_friends_subtitle">Convide seus amigos</string>
+    <string name="home_tutorial_subtitle">Como jogar</string>
+    <string name="home_settings_subtitle">Gerencie suas preferências</string>
+    <string name="play_online_subtitle">Jogue contra jogadores reais</string>
+    <string name="play_bot_subtitle">Jogue contra o computador</string>
+    <string name="play_local_subtitle">Jogue com um amigo neste aparelho</string>
 </resources>

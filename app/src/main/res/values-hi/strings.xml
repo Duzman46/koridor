@@ -374,4 +374,16 @@
     <string name="error_not_friends">आप केवल मित्रों को आमंत्रित कर सकते हैं।</string>
     <string name="paint_label">आपका रंग</string>
     <string name="online_quick_match_hint">दबाएं और प्रतीक्षा करें — प्रतीक्षा कर रहे खिलाड़ियों में से आपकी रेटिंग के सबसे नज़दीकी से मिलान होगा।</string>
+    <string name="nav_home">होम</string>
+    <string name="nav_games">गेम</string>
+    <string name="nav_profile">प्रोफ़ाइल</string>
+    <string name="home_tagline">योजना बनाओ. रोको. जीतो.</string>
+    <string name="home_play_subtitle">अभी मैच शुरू करें</string>
+    <string name="home_leaderboard_subtitle">शीर्ष खिलाड़ी देखें</string>
+    <string name="home_friends_subtitle">दोस्तों को बुलाएँ</string>
+    <string name="home_tutorial_subtitle">कैसे खेलें</string>
+    <string name="home_settings_subtitle">अपनी पसंद प्रबंधित करें</string>
+    <string name="play_online_subtitle">असली खिलाड़ियों से खेलें</string>
+    <string name="play_bot_subtitle">कंप्यूटर से खेलें</string>
+    <string name="play_local_subtitle">इसी डिवाइस पर दोस्त के साथ खेलें</string>
 </resources>

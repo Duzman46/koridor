@@ -39,13 +39,21 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.LocalKoridorColors
 import com.duzman46.gridbound.ui.components.AdBanner
 import com.duzman46.gridbound.ui.components.BlockHeight
+import com.duzman46.gridbound.ui.components.CardChevron
+import com.duzman46.gridbound.ui.components.CardHeight
+import com.duzman46.gridbound.ui.components.KoridorCard
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.LanguagePickerDialog
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.ui.components.home.BoardShowcase
 import com.duzman46.gridbound.ui.components.home.GlyphKind
+import com.duzman46.gridbound.ui.components.home.HomeGridRow
+import com.duzman46.gridbound.ui.components.home.HomeTagline
+import com.duzman46.gridbound.ui.components.home.HomeTile
+import com.duzman46.gridbound.ui.components.home.HomeTileHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.duzman46.gridbound.BuildConfig
@@ -97,8 +105,8 @@ fun SplashScreen(onFinished: () -> Unit) {
     }
 }
 
-/** The secondary choices under the loud one. */
-private const val HOME_CHOICES = 4
+/** Rows of the two-up grid under the loud action. */
+private const val HOME_GRID_ROWS = 2
 
 /**
  * What the round marks in the utility row measure once Material's 48 dp touch floor applies to
@@ -108,6 +116,9 @@ private val HomeUtilityRowHeight = 48.dp
 
 /** One line of the wordmark: the 30 dp size [HomeWordmark] fixes it to, in its 1.2 line box. */
 private val HomeWordmarkHeight = 36.dp
+
+/** The tagline's own line: bodyMedium's 20 sp line box, plus the gap that ties it to the mark. */
+private val HomeTaglineHeight = 20.dp
 
 /**
  * Every fixed row of the home screen added up, at default font scale.
@@ -126,9 +137,11 @@ private val HomeWordmarkHeight = 36.dp
 internal val HomeChrome: Dp =
     Dimens.SpaceMd + HomeUtilityRowHeight +
         Dimens.SpaceLg + HomeWordmarkHeight +
-        Dimens.SpaceSm + // the wordmark's gap to the panel
+        Dimens.SpaceXs + HomeTaglineHeight +
+        Dimens.SpaceSm + // the tagline's gap to the panel
         Dimens.SpaceLg + BlockHeight.Loud + Dimens.PressTravel +
-        (Dimens.SpaceMd + BlockHeight.Wide + Dimens.PressTravel) * HOME_CHOICES +
+        (Dimens.SpaceMd + HomeTileHeight) * HOME_GRID_ROWS +
+        Dimens.SpaceMd + CardHeight.Compact + Dimens.PressTravel +
         Dimens.SpaceLg
 
 /**
@@ -257,36 +270,69 @@ fun MainMenuScreen(
                         // would leave it floating between two things it has nothing to do
                         // with.
                         HomeWordmark()
+                        Spacer(Modifier.height(Dimens.SpaceXs))
+                        // Tight under the mark, because it is the mark's second line and not a
+                        // row of its own. What the game is, for somebody who has just installed
+                        // something called "Koridor" and does not yet know what that means.
+                        HomeTagline()
                         Spacer(Modifier.height(Dimens.SpaceSm))
                         BoardShowcase(hero)
                         Spacer(Modifier.height(Dimens.SpaceLg))
                         PlaySlab(stringResource(R.string.menu_play), onClick = onPlay)
                         Spacer(Modifier.height(Dimens.SpaceMd))
-                        // Learning the game and seeing where you stand are the two things a
-                        // player looks for by name. Buried in a sheet they were never found,
-                        // and the screen had nothing under the slab but empty ground.
-                        HomeChoice(
-                            label = stringResource(R.string.menu_tutorial),
-                            glyph = GlyphKind.TUTORIAL,
-                            onClick = onTutorial,
+                        // Two by two rather than four stacked. The four destinations under the
+                        // slab are peers — none of them is more likely than the others — and a
+                        // column says the opposite by putting one of them first. The grid also
+                        // buys back two rows of height, which is what pays for the subtitles.
+                        val accents = LocalKoridorColors.current.accents
+                        HomeGridRow(
+                            left = {
+                                HomeTile(
+                                    title = stringResource(R.string.leaderboard_title),
+                                    subtitle = stringResource(R.string.home_leaderboard_subtitle),
+                                    glyph = GlyphKind.LEADERBOARD,
+                                    tone = accents.reward,
+                                    onClick = onLeaderboard,
+                                )
+                            },
+                            right = {
+                                HomeTile(
+                                    title = stringResource(R.string.friends_title),
+                                    subtitle = stringResource(R.string.home_friends_subtitle),
+                                    glyph = GlyphKind.FRIENDS,
+                                    tone = accents.social,
+                                    onClick = onFriends,
+                                )
+                            },
                         )
                         Spacer(Modifier.height(Dimens.SpaceMd))
-                        HomeChoice(
-                            label = stringResource(R.string.leaderboard_title),
-                            glyph = GlyphKind.LEADERBOARD,
-                            onClick = onLeaderboard,
+                        HomeGridRow(
+                            left = {
+                                HomeTile(
+                                    title = stringResource(R.string.menu_tutorial),
+                                    subtitle = stringResource(R.string.home_tutorial_subtitle),
+                                    glyph = GlyphKind.TUTORIAL,
+                                    tone = accents.learn,
+                                    onClick = onTutorial,
+                                )
+                            },
+                            right = {
+                                HomeTile(
+                                    title = stringResource(R.string.game_settings),
+                                    subtitle = stringResource(R.string.home_settings_subtitle),
+                                    glyph = GlyphKind.SETTINGS,
+                                    tone = accents.local,
+                                    onClick = onSettings,
+                                )
+                            },
                         )
                         Spacer(Modifier.height(Dimens.SpaceMd))
-                        HomeChoice(
-                            label = stringResource(R.string.game_settings),
-                            glyph = GlyphKind.SETTINGS,
-                            onClick = onSettings,
-                        )
-                        Spacer(Modifier.height(Dimens.SpaceMd))
-                        HomeChoice(
-                            label = stringResource(R.string.menu_more),
+                        KoridorCard(
+                            title = stringResource(R.string.menu_more),
                             glyph = GlyphKind.MORE,
+                            tone = accents.bot,
                             onClick = { openSheet = HomeMenu.MORE },
+                            trailing = { CardChevron() },
                         )
                         Spacer(Modifier.height(Dimens.SpaceLg))
                     }

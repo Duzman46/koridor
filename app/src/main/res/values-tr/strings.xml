@@ -395,4 +395,16 @@
     <string name="error_not_friends">Yalnızca arkadaşlarını davet edebilirsin.</string>
     <string name="paint_label">Rengin</string>
     <string name="online_quick_match_hint">Bas ve bekle — sırada bekleyenler arasından puanı sana en yakın olanla eşleşirsin.</string>
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_games">Oyunlar</string>
+    <string name="nav_profile">Profil</string>
+    <string name="home_tagline">Planla. Engelle. Kazan.</string>
+    <string name="home_play_subtitle">Hemen bir maç başlat</string>
+    <string name="home_leaderboard_subtitle">En iyi oyuncuları gör</string>
+    <string name="home_friends_subtitle">Arkadaşlarını davet et</string>
+    <string name="home_tutorial_subtitle">Nasıl oynanır?</string>
+    <string name="home_settings_subtitle">Tercihlerini yönet</string>
+    <string name="play_online_subtitle">Gerçek oyunculara karşı oyna</string>
+    <string name="play_bot_subtitle">Yapay zekâya karşı oyna</string>
+    <string name="play_local_subtitle">Arkadaşınla aynı cihazda oyna</string>
 </resources>

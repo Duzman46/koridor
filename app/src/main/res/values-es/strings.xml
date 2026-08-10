@@ -377,4 +377,16 @@
     <string name="error_not_friends">Solo puedes invitar a amigos.</string>
     <string name="paint_label">Tu color</string>
     <string name="online_quick_match_hint">Púlsalo y espera: te emparejamos con el jugador en espera cuya puntuación sea la más parecida a la tuya.</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_games">Juegos</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="home_tagline">Planea. Bloquea. Gana.</string>
+    <string name="home_play_subtitle">Empieza una partida ya</string>
+    <string name="home_leaderboard_subtitle">Mira a los mejores jugadores</string>
+    <string name="home_friends_subtitle">Invita a tus amigos</string>
+    <string name="home_tutorial_subtitle">Cómo se juega</string>
+    <string name="home_settings_subtitle">Gestiona tus preferencias</string>
+    <string name="play_online_subtitle">Juega contra jugadores reales</string>
+    <string name="play_bot_subtitle">Juega contra la máquina</string>
+    <string name="play_local_subtitle">Juega con un amigo en este dispositivo</string>
 </resources>

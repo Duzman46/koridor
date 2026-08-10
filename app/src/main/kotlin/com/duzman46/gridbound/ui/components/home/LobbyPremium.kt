@@ -41,7 +41,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -92,6 +94,21 @@ private fun pressScale(pressed: Boolean): Float {
     return scale
 }
 
+/** The press scale and the rounded corner in one graphics layer rather than two. */
+private fun Modifier.pressLayer(scale: Float, shape: Shape): Modifier = graphicsLayer {
+    scaleX = scale
+    scaleY = scale
+    this.shape = shape
+    clip = true
+}
+
+/** The queue card's ground and the gold control's two fills. Built once; they never change. */
+private val QueueCardFill = Brush.verticalGradient(listOf(Color(0xFF12151A), Color(0xFF0C0F13)))
+private val GoldResting =
+    Brush.horizontalGradient(listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47)))
+private val GoldPressed =
+    Brush.horizontalGradient(listOf(Color(0xFFB98F3F), Color(0xFFCEA75B)))
+
 /**
  * The queue, and the only filled gold control in the app.
  *
@@ -118,7 +135,7 @@ fun RankedQueueCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(Color(0xFF12151A), Color(0xFF0C0F13))))
+            .background(QueueCardFill)
             .border(BorderStroke(1.dp, Color(0xFF2A3038)), shape)
             .padding(Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
@@ -167,17 +184,8 @@ private fun GoldButton(label: String, onClick: () -> Unit, busy: Boolean) {
                 onClick = onClick,
             )
             .semantics { contentDescription = label }
-            .scale(pressScale(pressed))
-            .clip(shape)
-            .background(
-                Brush.horizontalGradient(
-                    if (pressed) {
-                        listOf(Color(0xFFB98F3F), Color(0xFFCEA75B))
-                    } else {
-                        listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47))
-                    },
-                ),
-            )
+            .pressLayer(pressScale(pressed), shape)
+            .background(if (pressed) GoldPressed else GoldResting)
             .heightIn(min = 56.dp)
             .padding(horizontal = Dimens.SpaceLg),
         horizontalArrangement = Arrangement.Center,
@@ -236,8 +244,7 @@ fun RowScope.LobbyActionCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = label }
-            .scale(pressScale(pressed))
-            .clip(shape)
+            .pressLayer(pressScale(pressed), shape)
             .background(if (pressed) colors.surfaceVariant else colors.surface)
             .border(BorderStroke(1.dp, colors.outlineVariant), shape)
             .heightIn(min = 70.dp)
@@ -296,8 +303,7 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
                     onClick = onRefresh,
                 )
                 .semantics { contentDescription = refreshLabel }
-                .scale(pressScale(pressed))
-                .clip(CircleShape),
+                .pressLayer(pressScale(pressed), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size(24.dp)) { drawRefresh() }

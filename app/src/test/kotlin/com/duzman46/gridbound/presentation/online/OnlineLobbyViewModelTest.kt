@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.presentation.online
 
+import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.FakeOnlineGameRepository
 import com.duzman46.gridbound.online.model.OnlineRoom
@@ -16,13 +17,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -132,6 +136,7 @@ class OnlineLobbyViewModelTest {
         // poll stayed invisible for fourteen and was usually taken by the time it appeared.
         // Nothing sits between the room being written and it being on screen now.
         val model = viewModel()
+        model.watchOpenRooms()
         assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
 
         val opened = repository.waitingRoom(OnlineRoomStatus.WAITING)
@@ -143,11 +148,50 @@ class OnlineLobbyViewModelTest {
     @Test
     fun `a room that fills leaves the browser the same way`() = runTest(dispatcher) {
         val model = viewModel()
+        model.watchOpenRooms()
         repository.openRooms.value = listOf(repository.waitingRoom(OnlineRoomStatus.WAITING))
         assertEquals(1, model.uiState.value.openRooms.size)
 
         repository.openRooms.value = emptyList()
 
         assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
+    }
+
+    @Test
+    fun `nothing is watched until the lobby is on screen`() = runTest(dispatcher) {
+        // A live listener is a query the database keeps synced for as long as it is attached.
+        // Started in init, it would go on working through the whole match the player walked
+        // into — which is worse than the poll it replaced, not better.
+        val model = viewModel()
+
+        repository.openRooms.value = listOf(repository.waitingRoom(OnlineRoomStatus.WAITING))
+
+        assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
+    }
+
+    @Test
+    fun `and nothing is watched once it leaves`() = runTest(dispatcher) {
+        val model = viewModel()
+        model.watchOpenRooms()
+        model.stopWatchingRooms()
+
+        repository.openRooms.value = listOf(repository.waitingRoom(OnlineRoomStatus.WAITING))
+
+        assertEquals(emptyList<OnlineRoom>(), model.uiState.value.openRooms)
+    }
+
+    @Test
+    fun `the spinner gives up rather than turning forever`() = runTest(dispatcher) {
+        // Firebase's listener does not fail when it cannot reach the database — it simply never
+        // fires. Left alone, that is an indicator animating at sixty frames a second, for as
+        // long as the player sits there, to say nothing.
+        repository.roomsAnswer = false
+        val model = viewModel()
+        model.watchOpenRooms()
+        assertTrue(model.uiState.value.isLoadingRooms)
+
+        advanceTimeBy(Constants.Online.ROOM_BROWSER_FIRST_ANSWER_MILLIS + 1)
+
+        assertFalse(model.uiState.value.isLoadingRooms)
     }
 }

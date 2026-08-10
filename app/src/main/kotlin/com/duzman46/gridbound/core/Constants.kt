@@ -235,15 +235,16 @@ object Constants {
         const val ROOM_BROWSER_PAGE_SIZE = 30
 
         /**
-         * How often the room browser reloads itself while the player is looking at it.
+         * How long the browser will show a spinner before admitting it has no answer.
          *
-         * Rooms appear and are taken within a minute or two, so a list left alone is stale
-         * almost at once, and pulling to refresh is the player doing the app's job. Short
-         * enough that a room opened while you are reading the list turns up before you have
-         * lost interest, long enough that the whole cost is one indexed query of at most
-         * thirty rows every fifteen seconds.
+         * The list is a live listener now rather than a poll, and a listener that cannot reach
+         * the database does not fail — it simply never fires. Without this the indicator spins
+         * for as long as the player sits there: an animation running at sixty frames a second
+         * to say nothing, on a screen that could have shown the empty state instead.
+         *
+         * Long enough to cover a slow first connection, short enough that nobody watches it.
          */
-        const val ROOM_BROWSER_REFRESH_MILLIS = 15_000L
+        const val ROOM_BROWSER_FIRST_ANSWER_MILLIS = 6_000L
 
         /**
          * How far this handset's clock is from the server's, in milliseconds.

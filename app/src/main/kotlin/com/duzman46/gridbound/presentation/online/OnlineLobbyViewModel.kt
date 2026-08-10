@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.AppLog
+import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.game.models.PlayerId
@@ -26,6 +27,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -109,8 +111,9 @@ class OnlineLobbyViewModel @Inject constructor(
 
     init {
         closeIdleMatches()
-        observeOpenRooms()
         observeFriends()
+        // The room listener is not started here. It belongs to the screen being in front of
+        // somebody, and the screen says when — see watchOpenRooms.
     }
 
     /**
@@ -200,20 +203,29 @@ class OnlineLobbyViewModel @Inject constructor(
     }
 
     /**
-     * Watches the open rooms for as long as this view model lives.
+     * Starts watching the open rooms, and keeps watching until [stopWatchingRooms].
      *
-     * There is no polling any more and no reason for the screen to ask. The listener is attached
-     * once, here, and every room that opens or fills reaches the list on its own — which is both
-     * faster than the fifteen-second poll it replaces and cheaper, because a lobby nobody is
-     * changing costs nothing to keep open.
+     * Tied to the lobby being on screen, and that tie is the point. A live listener is a query
+     * the database keeps synced for as long as it is attached, so one left running for the
+     * lifetime of this view model goes on doing work through the whole match the player walked
+     * into — which is worse than the fifteen-second poll it replaced, not better. Attached while
+     * the screen is in front of somebody, detached the moment it is not, is better than both.
      *
      * A failure leaves whatever the list already held rather than blanking it. The rooms on
      * screen were real a moment ago, and a dropped connection is not news that they are gone.
      */
-    private fun observeOpenRooms() {
+    fun watchOpenRooms() {
         roomsJob?.cancel()
         _uiState.update { it.copy(isLoadingRooms = true) }
         roomsJob = viewModelScope.launch {
+            // The spinner cannot be allowed to outlive the answer. Firebase's listener simply
+            // never fires while there is no connection and nothing cached, and the first
+            // version of this left a spinning indicator on screen forever — an animation
+            // running at sixty frames a second to say nothing at all.
+            launch {
+                delay(Constants.Online.ROOM_BROWSER_FIRST_ANSWER_MILLIS)
+                _uiState.update { it.copy(isLoadingRooms = false) }
+            }
             repository.observeOpenRooms()
                 .catch { error ->
                     AppLog.warn("observe-open-rooms", error)
@@ -225,6 +237,13 @@ class OnlineLobbyViewModel @Inject constructor(
         }
     }
 
+    /** Detaches the listener. Called when the lobby leaves the screen, however it leaves. */
+    fun stopWatchingRooms() {
+        roomsJob?.cancel()
+        roomsJob = null
+        _uiState.update { it.copy(isLoadingRooms = false) }
+    }
+
     /**
      * The refresh control.
      *
@@ -232,7 +251,7 @@ class OnlineLobbyViewModel @Inject constructor(
      * is not nothing: it is the one thing that helps when the connection dropped and came back,
      * and it is what a player reaches for when the list looks wrong.
      */
-    fun refreshOpenRooms() = observeOpenRooms()
+    fun refreshOpenRooms() = watchOpenRooms()
 
     fun createRoom() {
         val configuration = _uiState.value.configuration

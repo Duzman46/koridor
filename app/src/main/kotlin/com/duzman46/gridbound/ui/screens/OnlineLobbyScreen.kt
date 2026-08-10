@@ -164,9 +164,15 @@ private fun OnlineLobbyScreen(
     // enough — there is no other exit to catch.
     LifecycleStartEffect(Unit) { onStopOrDispose { viewModel.leaveQueue() } }
 
-    // The list used to be re-fetched here every fifteen seconds. It is a live listener in the
-    // view model now: a room that opens shows up at once, a room that fills leaves at once, and
-    // a lobby nobody is changing costs nothing to sit on. Nothing to tick, nothing to cancel.
+    // The list is a live listener rather than something re-fetched every fifteen seconds: a
+    // room that opens shows up at once and one that fills leaves at once. It is still tied to
+    // the screen being in front of somebody, and for a stronger reason than the poll was — a
+    // listener is a query the database keeps synced, so one left attached goes on working
+    // through the entire match the player walked into.
+    LifecycleResumeEffect(Unit) {
+        viewModel.watchOpenRooms()
+        onPauseOrDispose { viewModel.stopWatchingRooms() }
+    }
 
     state.passwordPromptCode?.let {
         PasswordPromptDialog(

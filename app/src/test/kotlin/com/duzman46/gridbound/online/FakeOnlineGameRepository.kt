@@ -16,6 +16,7 @@ import com.duzman46.gridbound.online.model.RoomConfiguration
 import com.duzman46.gridbound.online.model.RoomTiming
 import com.duzman46.gridbound.online.model.RoomVisibility
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -80,10 +81,20 @@ class FakeOnlineGameRepository : OnlineGameRepository {
 
     override suspend fun loadOpenRooms(): Outcome<List<OnlineRoom>> = Outcome.Success(openRooms.value)
 
-    override fun observeOpenRooms(): Flow<List<OnlineRoom>> = openRooms
+    override fun observeOpenRooms(): Flow<List<OnlineRoom>> =
+        if (roomsAnswer) openRooms else MutableSharedFlow()
 
     /** The browser's live list. Push to it to make a room appear the way the database would. */
     val openRooms = MutableStateFlow<List<OnlineRoom>>(emptyList())
+
+    /**
+     * Set false for a listener that never answers.
+     *
+     * That is not a failure case invented for a test — it is what Firebase does with no
+     * connection and nothing cached. It does not call back with an error; it says nothing at
+     * all, for as long as you leave it attached.
+     */
+    var roomsAnswer = true
 
     override suspend fun closeIdleMatches(userId: String): Outcome<Unit> = Outcome.Success(Unit)
 

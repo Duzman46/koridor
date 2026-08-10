@@ -37,7 +37,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -94,6 +96,39 @@ private fun pressScale(pressed: Boolean): Float {
 }
 
 /**
+ * The press scale and the rounded corner, in one graphics layer instead of two.
+ *
+ * `Modifier.scale(…).clip(…)` reads well and costs double: each is a layer of its own, so every
+ * card on the home screen was allocating and compositing two render targets where one would do.
+ * Eight cards, sixteen layers, on a screen that also carries a full-screen photograph.
+ *
+ * A single `graphicsLayer` does both, because clipping to a shape is something a layer already
+ * knows how to do.
+ */
+private fun Modifier.pressLayer(scale: Float, shape: Shape): Modifier = graphicsLayer {
+    scaleX = scale
+    scaleY = scale
+    this.shape = shape
+    clip = true
+}
+
+/** The play card's two fills. Built once each — they never change, and they are not cheap. */
+private val PlayCardResting = Brush.linearGradient(
+    colors = listOf(Color(0xFF171614), Color(0xFF332816)),
+    start = Offset.Zero,
+    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+)
+private val PlayCardPressed = Brush.linearGradient(
+    colors = listOf(Color(0xFF120F0B), Color(0xFF291F11)),
+    start = Offset.Zero,
+    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+)
+
+/** The leading play-mode card's fill, on the same terms. */
+private val ModeCardLeading =
+    Brush.horizontalGradient(listOf(Color(0xFF14120E), Color(0xFF1F1912)))
+
+/**
  * The one way into a match.
  *
  * Everything about it is calibrated to be the loudest thing on the screen without being the
@@ -129,19 +164,8 @@ fun PrimaryPlayCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .scale(scale)
-            .clip(shape)
-            .background(
-                Brush.linearGradient(
-                    colors = if (pressed) {
-                        listOf(Color(0xFF120F0B), Color(0xFF291F11))
-                    } else {
-                        listOf(Color(0xFF171614), Color(0xFF332816))
-                    },
-                    start = Offset.Zero,
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
-                ),
-            )
+            .pressLayer(scale, shape)
+            .background(if (pressed) PlayCardPressed else PlayCardResting)
             .border(BorderStroke(1.dp, Color(0xFF8D713B)), shape)
             .heightIn(min = 92.dp)
             .padding(horizontal = 22.dp, vertical = Dimens.SpaceMd),
@@ -277,8 +301,7 @@ private fun MenuSurface(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .scale(scale)
-            .clip(shape)
+            .pressLayer(scale, shape)
             .background(if (pressed) colors.surfaceVariant else colors.surface)
             .border(BorderStroke(1.dp, colors.outlineVariant), shape)
             .heightIn(min = minHeight)
@@ -386,11 +409,10 @@ fun PlayModeCard(
                 onClick = onClick,
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
-            .scale(scale)
-            .clip(shape)
+            .pressLayer(scale, shape)
             .background(
                 if (leading) {
-                    Brush.horizontalGradient(listOf(Color(0xFF14120E), Color(0xFF1F1912)))
+                    ModeCardLeading
                 } else {
                     SolidColor(if (pressed) colors.surfaceVariant else colors.surface)
                 },
@@ -561,8 +583,7 @@ private fun RoundControl(icon: PremiumIcon, label: String, onClick: () -> Unit) 
                 onClick = onClick,
             )
             .semantics { contentDescription = label }
-            .scale(pressScale(pressed))
-            .clip(CircleShape)
+            .pressLayer(pressScale(pressed), CircleShape)
             .background(Color(0xFF11151A))
             .border(BorderStroke(1.dp, Color(0xFF242A31)), CircleShape),
         contentAlignment = Alignment.Center,

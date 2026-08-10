@@ -56,28 +56,32 @@ fun HomeHero(modifier: Modifier = Modifier) {
             // "two pawns and three walls" hands the player nothing they can act on.
             .clearAndSetSemantics { },
     ) {
+        // Edge to edge, and under the status bar. The picture is the room the interface stands
+        // in, so it starts where the screen starts.
+        //
+        // It was inset below the top bar for a while, to stop the pale piece colliding with the
+        // two round controls. That worked and cost far too much: the inset ate a third of the
+        // slot, the photograph had to be squeezed into what was left, and the pieces came out
+        // half the size they are meant to be. The scene is the first thing anyone sees and it
+        // cannot be the thing that gives way.
+        //
+        // What keeps the piece clear now is the asset itself. It carries unlit floor above the
+        // composition — that is what the crop is chosen to include — so the bar sits over empty
+        // ground rather than over the piece, and the top fifth fades up into the same near-black
+        // the app paints behind it, so there is no edge where the picture begins.
+        //
+        // Mirrored under RTL like everything else the app draws, so the lamp stays on the side
+        // the reading eye starts from — and *only* under RTL. `Modifier.scale` is a graphics
+        // layer whether or not it changes anything, and this one would wrap a full-screen
+        // photograph on the three screens that show it: a render target that size, allocated,
+        // filled and composited on every frame the scene is invalidated, to multiply by one.
+        // Nine locales in ten were paying for it to do nothing.
         Image(
             painter = painterResource(R.drawable.home_scene),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                // Edge to edge, and under the status bar. The picture is the room the interface
-                // stands in, so it starts where the screen starts.
-                //
-                // It was inset below the top bar for a while, to stop the pale piece colliding
-                // with the two round controls. That worked and cost far too much: the inset ate
-                // a third of the slot, the photograph had to be squeezed into what was left,
-                // and the pieces came out half the size they are meant to be. The scene is the
-                // first thing anyone sees and it cannot be the thing that gives way.
-                //
-                // What keeps the piece clear now is the asset itself. It carries unlit floor
-                // above the composition — that is what the crop is chosen to include — so the
-                // bar sits over empty ground rather than over the piece, and the top fifth
-                // fades up into the same near-black the app paints behind it, so there is no
-                // edge where the picture begins.
-                // Mirrored under RTL like everything else the app draws, so the lamp stays on
-                // the side the reading eye starts from.
-                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
+                .then(if (rtl) Modifier.scale(scaleX = -1f, scaleY = 1f) else Modifier),
             contentScale = ContentScale.Crop,
             // Pinned to the top, and that is what makes the headroom work. The asset carries a
             // strip of unlit floor above the composition so the pale piece lands below the two
@@ -88,12 +92,15 @@ fun HomeHero(modifier: Modifier = Modifier) {
         // A shorter safety net than before. The asset carries its own fade at both ends now, so
         // this only has to cover the case where the box is taller than the picture and the
         // bottom would otherwise be cut rather than faded.
+        //
+        // The brush is a file-level constant. Built inline it was a fresh object on every
+        // composition of every screen that shows the scene, for a gradient that never changes.
         Box(
             Modifier
                 .fillMaxWidth()
                 .fillMaxSize(SCENE_JOIN)
                 .align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, SceneInk))),
+                .background(SceneJoinBrush),
         )
     }
 }
@@ -111,6 +118,9 @@ const val HomeSceneShare = 0.34f
 
 /** What the scene sits on, and what it fades into: the dark scheme's own background. */
 private val SceneInk = Color(0xFF070A0D)
+
+/** The closing fade. Built once — it is the same three values on every screen, every frame. */
+private val SceneJoinBrush = Brush.verticalGradient(listOf(Color.Transparent, SceneInk))
 
 /** How much of the box the closing fade covers. */
 private const val SCENE_JOIN = 0.14f

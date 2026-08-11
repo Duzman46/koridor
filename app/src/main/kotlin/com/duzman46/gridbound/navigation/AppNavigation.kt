@@ -14,7 +14,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,8 +38,11 @@ import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.ui.res.stringResource
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.game.models.Difficulty
@@ -61,6 +68,10 @@ import com.duzman46.gridbound.ui.screens.DifficultyScreen
 import com.duzman46.gridbound.ui.screens.EditProfileScreen
 import com.duzman46.gridbound.ui.screens.FriendsRoute
 import com.duzman46.gridbound.ui.screens.GameRoute
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.ui.components.home.BottomItem
+import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.screens.LeaderboardRoute
 import com.duzman46.gridbound.ui.screens.MainMenuScreen
 import com.duzman46.gridbound.ui.screens.OnlineLobbyRoute
@@ -268,7 +279,18 @@ fun AppNavigation(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    // The bar lives out here, above the host rather than inside each screen.
+    //
+    // It used to be part of whatever destination was showing, which meant every switch animated
+    // it: the row slid and faded along with the content, so the one fixed thing on the screen
+    // was the thing that appeared to be rebuilt. It also meant composing it three times over
+    // for three places that share it.
+    //
+    // Out here it is composed once and never moves. The screens travel underneath it.
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val tab = TAB_ORDER.indexOf(currentRoute)
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
         NavHost(
             navController = navController,
             startDestination = Routes.SPLASH,
@@ -821,6 +843,47 @@ fun AppNavigation(
         )
 
         BillingNotice(message = billing.message, onDismiss = onDismissBillingMessage)
+        }
+        // Shown only where it means something. Everywhere else the screen has the full height,
+        // and the bar does not slide into view on the way to a match.
+        if (tab >= 0) {
+            KoridorBottomBar(
+                items = listOf(
+                    BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE) {
+                        navController.switchTab(Routes.HOME)
+                    },
+                    BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY) {
+                        navController.switchTab(Routes.LEADERBOARD)
+                    },
+                    BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON) {
+                        navController.switchTab(Routes.PROFILE)
+                    },
+                ),
+                selectedIndex = tab,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
+            )
+        }
+    }
+}
+
+/**
+ * Moves to one of the docked bar's places, and brings back what was left there.
+ *
+ * Three things, and the third is why switching stopped feeling like a reload. `launchSingleTop`
+ * stops a second copy of a place a player is already standing in. `popUpTo(HOME) { saveState }`
+ * keeps the row flat instead of stacking Home under Leaderboard under Profile under Home. And
+ * `restoreState` hands the destination back the state it had when it was left — its scroll
+ * position, its selected tab, its view models — so returning to a place is returning rather
+ * than arriving somewhere that happens to look the same.
+ */
+private fun NavHostController.switchTab(route: String) {
+    if (currentDestination?.route == route) return
+    navigate(route) {
+        popUpTo(Routes.HOME) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 

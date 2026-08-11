@@ -226,24 +226,8 @@ fun MainMenuScreen(
         // navigation, and a banner beneath it pushed the bar up into the middle of the content
         // — the one place a navigation bar must never be. Interstitials still run; the home
         // screen simply is not where the app asks for money.
-        bottomBar = {
-            KoridorBottomBar(
-                items = listOf(
-                    // Home is already here, so its tab is a no-op rather than a re-entry that
-                    // would rebuild the screen under the player's finger.
-                    BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE) {},
-                    // The leaderboard, not the play screen: the gold card above already is
-                    // the way into a match, twice as loudly, and a tab that repeats the loudest
-                    // control on its own screen teaches the player that neither route is real.
-                    BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY, onLeaderboard),
-                    BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
-                ),
-                selectedIndex = 0,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
-            )
-        },
+        // The docked bar is drawn once outside the navigation host now, above every place it
+        // switches between, so it no longer animates with the screen under it.
     ) { padding ->
         // No scroll, and no height budget either.
         //

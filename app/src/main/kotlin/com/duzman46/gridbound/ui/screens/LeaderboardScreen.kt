@@ -169,20 +169,8 @@ private fun LeaderboardScreen(
             }
         }
         OwnStandingBar(state, onLinkAccount)
-        // The same three items the home screen shows, in the same order and with the same
-        // words — because it is the same bar. A row that renames itself between two of its own
-        // places is telling the player they have left one thing and arrived at another.
-        KoridorBottomBar(
-            items = listOf(
-                BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE, onHome),
-                BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY) {},
-                BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
-            ),
-            selectedIndex = 1,
-            modifier = Modifier
-                .navigationBarsPadding()
-                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
-        )
+        // The docked bar is not here any more. It is drawn once, outside the navigation host,
+        // above every place it switches between — so it stays put while they change under it.
     }
 }
 

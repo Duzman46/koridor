@@ -59,11 +59,12 @@ import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.LoadingState
+import com.duzman46.gridbound.ui.components.home.BottomItem
 import com.duzman46.gridbound.ui.components.home.ClimbBanner
+import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
 import com.duzman46.gridbound.ui.components.home.PodiumCard
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.ScopeTabs
-import com.duzman46.gridbound.ui.components.home.SeasonChip
 import com.duzman46.gridbound.ui.components.home.StandingRow
 import com.duzman46.gridbound.ui.components.home.StandingsHeader
 import com.duzman46.gridbound.ui.components.home.localeUpper
@@ -79,6 +80,7 @@ fun LeaderboardRoute(
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onLinkAccount: () -> Unit,
+    onProfile: () -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -87,6 +89,7 @@ fun LeaderboardRoute(
         onBack = onBack,
         onOpenProfile = onOpenProfile,
         onLinkAccount = onLinkAccount,
+        onProfile = onProfile,
         onSelectScope = viewModel::selectScope,
         onLoadMore = viewModel::loadMore,
         onRetry = viewModel::retry,
@@ -99,10 +102,13 @@ private fun LeaderboardScreen(
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onLinkAccount: () -> Unit,
+    onProfile: () -> Unit,
     onSelectScope: (LeaderboardScope) -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    // Home is where this screen was opened from, so leaving is the same gesture as going back.
+    val onHome = onBack
     Column(
         Modifier
             .fillMaxSize()
@@ -133,7 +139,8 @@ private fun LeaderboardScreen(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            SeasonChip(stringResource(R.string.leaderboard_season))
+            // No season selector. There is one season, the control offered no second choice,
+            // and a dropdown with nothing in it is a promise the app cannot keep.
         }
 
         ScopeTabs(
@@ -156,6 +163,22 @@ private fun LeaderboardScreen(
             }
         }
         OwnStandingBar(state, onLinkAccount)
+        // The bar the player switched places with. It stays under them here, with this screen
+        // marked, so the leaderboard is a place they are in rather than a page they opened.
+        KoridorBottomBar(
+            items = listOf(
+                BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE, onHome),
+                BottomItem(
+                    stringResource(R.string.home_leaderboard_short),
+                    PremiumIcon.TROPHY,
+                ) {},
+                BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
+            ),
+            selectedIndex = 1,
+            modifier = Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
+        )
     }
 }
 
@@ -249,9 +272,12 @@ private fun LeaderboardList(
                                 initial = entry.username.take(1).uppercase(),
                                 rating = entry.rating.toString(),
                                 wins = entry.wins.toString(),
-                                winsLabel = stringResource(R.string.profile_wins),
+                                // A letter, the way the reference sets it. "Galibiyet" beside
+                                // "Mağlubiyet" in a third of a phone's width printed as
+                                // "GalibiyetXMa" — two words with nowhere to go.
+                                winsLabel = stringResource(R.string.leaderboard_wins_short),
                                 losses = (entry.totalGames - entry.wins).coerceAtLeast(0).toString(),
-                                lossesLabel = stringResource(R.string.profile_losses),
+                                lossesLabel = stringResource(R.string.leaderboard_losses_short),
                                 onClick = { onOpenProfile(entry.userId) },
                             )
                         }
@@ -303,9 +329,7 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.ScreenPadding)
-            .padding(bottom = Dimens.SpaceSm)
-            .navigationBarsPadding(),
+            .padding(horizontal = Dimens.ScreenPadding),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
         when {
@@ -316,11 +340,20 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
 
             state.ownStanding != null -> OwnStandingRow(state.ownStanding)
 
-            else -> ClimbBanner(
+            // Only a guest is offered an account, because only a guest is missing one. A player
+            // who has linked and simply has not been ranked yet was being told to link again,
+            // which is the app not knowing who it is talking to.
+            state.isGuest -> ClimbBanner(
                 title = localeUpper(stringResource(R.string.leaderboard_climb_title)),
                 hint = state.noStandingMessage.asString(),
                 action = stringResource(R.string.leaderboard_climb_action),
                 onAction = onLinkAccount,
+            )
+
+            else -> Text(
+                text = state.noStandingMessage.asString(),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF8B9098),
             )
         }
         Text(

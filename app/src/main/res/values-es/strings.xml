@@ -438,4 +438,6 @@
     <string name="leaderboard_climb_title">Sube en la tabla</string>
     <string name="leaderboard_climb_action">Vincular cuenta</string>
     <string name="leaderboard_live_note">La tabla se actualiza a medida que terminan las partidas.</string>
+    <string name="leaderboard_wins_short">V</string>
+    <string name="leaderboard_losses_short">D</string>
 </resources>

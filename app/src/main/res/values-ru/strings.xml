@@ -441,4 +441,6 @@
     <string name="leaderboard_climb_title">Поднимайтесь в таблице</string>
     <string name="leaderboard_climb_action">Привязать аккаунт</string>
     <string name="leaderboard_live_note">Таблица обновляется по мере завершения матчей.</string>
+    <string name="leaderboard_wins_short">П</string>
+    <string name="leaderboard_losses_short">Пр</string>
 </resources>

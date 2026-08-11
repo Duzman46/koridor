@@ -456,4 +456,6 @@
     <string name="leaderboard_climb_title">Sıralamada yüksel</string>
     <string name="leaderboard_climb_action">Hesabını bağla</string>
     <string name="leaderboard_live_note">Liderlik tablosu canlı olarak güncellenir.</string>
+    <string name="leaderboard_wins_short">G</string>
+    <string name="leaderboard_losses_short">M</string>
 </resources>

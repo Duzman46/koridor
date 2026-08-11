@@ -435,4 +435,6 @@
     <string name="leaderboard_climb_title">Naik di klasemen</string>
     <string name="leaderboard_climb_action">Tautkan akun</string>
     <string name="leaderboard_live_note">Tabel diperbarui saat pertandingan selesai.</string>
+    <string name="leaderboard_wins_short">M</string>
+    <string name="leaderboard_losses_short">K</string>
 </resources>

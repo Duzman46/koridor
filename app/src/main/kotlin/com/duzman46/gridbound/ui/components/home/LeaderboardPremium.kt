@@ -111,58 +111,61 @@ fun RowScope.PodiumCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
+        // The crest, and the head that sits into the bottom of it.
+        //
+        // Overlapped rather than stacked, which is what keeps the card short: the wreath and the
+        // avatar share about a third of their height instead of each taking their own. Every
+        // place is crowned in the reference, not only the winner — the metal does the ranking.
+        val crest = if (first) 76.dp else 66.dp
+        val head = if (first) 32.dp else 28.dp
         Box(
-            Modifier.size(if (first) 92.dp else 78.dp),
-            contentAlignment = Alignment.Center,
+            // Tall enough for the two to overlap by a fraction rather than sit on top of each
+            // other. At the first attempt the head was more than half the wreath and the pair
+            // read as a figure of eight.
+            Modifier.height(crest + head - 8.dp),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            Canvas(Modifier.fillMaxWidth().height(if (first) 92.dp else 78.dp)) {
-                drawLaurelRing(metal, crowned = first)
+            Box(Modifier.size(crest), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.fillMaxWidth().height(crest)) { drawLaurelRing(metal) }
+                Text(
+                    text = "$place",
+                    style = if (first) {
+                        MaterialTheme.typography.titleLarge
+                    } else {
+                        MaterialTheme.typography.titleMedium
+                    },
+                    fontWeight = FontWeight.Bold,
+                    color = metal,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
-            Text(
-                text = "$place",
-                style = if (first) {
-                    MaterialTheme.typography.headlineMedium
-                } else {
-                    MaterialTheme.typography.headlineSmall
-                },
-                fontWeight = FontWeight.Bold,
-                color = metal,
-                modifier = Modifier.padding(top = if (first) 8.dp else 6.dp),
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
             Box(
                 Modifier
-                    .size(26.dp)
+                    .align(Alignment.BottomCenter)
+                    .size(head)
                     .clip(CircleShape)
-                    .background(metal.copy(alpha = 0.9f)),
+                    .background(Color(0xFF10151B))
+                    .border(BorderStroke(2.dp, metal), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = initial,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF12161B),
+                    color = metal,
                 )
             }
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         Row(
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(metal.copy(alpha = 0.14f))
-                .padding(horizontal = Dimens.SpaceSm, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Canvas(Modifier.size(13.dp)) { drawStar(metal) }
@@ -180,12 +183,11 @@ fun RowScope.PodiumCard(
                 .height(Dimens.Hairline)
                 .background(Color(0xFF2A3038)),
         )
-        // Stacked, not side by side. Three cards share a phone's width, so each has about
-        // ninety-six device-independent pixels inside its padding — and "Galibiyet" beside
-        // "Mağlubiyet" in that space printed them as one word with no gap at all.
-        Column(
+        // Two columns, an initial over a number, the way the reference sets them. Its third
+        // column has no data behind it in this app, so it is not invented here.
+        Row(
             Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             PodiumFact(wins, winsLabel, WinGreen) { drawTinyTrophy(WinGreen) }
             PodiumFact(losses, lossesLabel, LossRed) { drawSwords(LossRed) }
@@ -195,27 +197,25 @@ fun RowScope.PodiumCard(
 
 @Composable
 private fun PodiumFact(value: String, label: String, tint: Color, mark: DrawScope.() -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Canvas(Modifier.size(12.dp)) { mark() }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Canvas(Modifier.size(11.dp)) { mark() }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF6F747B),
+                maxLines = 1,
+            )
+        }
         Text(
             text = value,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = tint,
             maxLines = 1,
-        )
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF6F747B),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.End,
         )
     }
 }
@@ -315,7 +315,7 @@ fun StandingsHeader(rankLabel: String, playerLabel: String, modifier: Modifier =
         // The three heads sit over their own columns, at exactly the widths the rows use.
         HeaderMark(WinGreen) { drawTinyTrophy(WinGreen) }
         HeaderMark(LossRed) { drawSwords(LossRed) }
-        HeaderMark(KoridorGold) { drawChartBars(KoridorGold) }
+        HeaderMark(KoridorGold) { drawStar(KoridorGold) }
     }
 }
 
@@ -417,7 +417,7 @@ fun StandingRow(
         )
         StatCell(wins, WinGreen) { drawTinyTrophy(WinGreen) }
         StatCell(losses, LossRed) { drawSwords(LossRed) }
-        StatCell(rating, KoridorGold) { drawChartBars(KoridorGold) }
+        StatCell(rating, KoridorGold) { drawStar(KoridorGold) }
         // No chevron. The whole row is tappable and it was spending the width the names needed.
     }
 }
@@ -493,29 +493,6 @@ fun ClimbBanner(
     }
 }
 
-/** The season selector. One choice today, and a control that can hold more. */
-@Composable
-fun SeasonChip(label: String, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(14.dp)
-    Row(
-        modifier
-            .clip(shape)
-            .background(Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.4f)), shape)
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Canvas(Modifier.size(16.dp)) { drawCalendar(KoridorGold) }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleSmall,
-            color = KoridorGold,
-            maxLines = 1,
-        )
-    }
-}
-
 internal val WinGreen = Color(0xFF5FBF7A)
 internal val LossRed = Color(0xFFD26A5E)
 
@@ -523,35 +500,33 @@ internal val LossRed = Color(0xFFD26A5E)
 // Marks
 // ---------------------------------------------------------------------------------------------
 
-/** A laurel wreath around a ring, with a crown on it when the place is first. */
-private fun DrawScope.drawLaurelRing(metal: Color, crowned: Boolean) {
+/** A laurel wreath around a ring, crowned. Every place wears one; the metal does the ranking. */
+private fun DrawScope.drawLaurelRing(metal: Color) {
     val s = size.minDimension
-    val centre = Offset(s * 0.5f, s * 0.56f)
-    val ring = s * 0.26f
-    drawCircle(metal.copy(alpha = 0.9f), ring, centre, style = Stroke(s * 0.03f))
-    drawCircle(metal.copy(alpha = 0.10f), ring - s * 0.015f, centre)
+    val centre = Offset(s * 0.5f, s * 0.58f)
+    val ring = s * 0.27f
+    drawCircle(metal.copy(alpha = 0.9f), ring, centre, style = Stroke(s * 0.035f))
+    drawCircle(metal.copy(alpha = 0.10f), ring - s * 0.018f, centre)
 
-    if (crowned) {
-        drawPath(
-            Path().apply {
-                moveTo(s * 0.34f, s * 0.20f)
-                lineTo(s * 0.30f, s * 0.05f)
-                lineTo(s * 0.42f, s * 0.15f)
-                lineTo(s * 0.50f, s * 0.01f)
-                lineTo(s * 0.58f, s * 0.15f)
-                lineTo(s * 0.70f, s * 0.05f)
-                lineTo(s * 0.66f, s * 0.20f)
-                close()
-            },
-            metal,
-        )
-    }
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.34f, s * 0.19f)
+            lineTo(s * 0.30f, s * 0.03f)
+            lineTo(s * 0.42f, s * 0.14f)
+            lineTo(s * 0.50f, s * 0.00f)
+            lineTo(s * 0.58f, s * 0.14f)
+            lineTo(s * 0.70f, s * 0.03f)
+            lineTo(s * 0.66f, s * 0.19f)
+            close()
+        },
+        metal,
+    )
 
     // Two arcs of leaves, mirrored, sweeping down from beside the ring to meet under it.
-    val stemRadius = ring + s * 0.085f
+    val stemRadius = ring + s * 0.10f
     listOf(-1f, 1f).forEach { side ->
         for (index in 0 until 5) {
-            val degrees = 42.0 + index * 24.0
+            val degrees = 40.0 + index * 25.0
             val x = centre.x + side * (stemRadius * Math.sin(Math.toRadians(degrees))).toFloat()
             val y = centre.y - (stemRadius * Math.cos(Math.toRadians(degrees))).toFloat()
             rotateLeaf(side, degrees, x, y, s, metal, index)
@@ -573,9 +548,9 @@ private fun DrawScope.rotateLeaf(
         rotate(degrees = side * (degrees.toFloat() + 38f), pivot = Offset.Zero)
     }) {
         drawOval(
-            color = metal.copy(alpha = 0.85f - index * 0.09f),
-            topLeft = Offset(-s * 0.045f, -s * 0.019f),
-            size = Size(s * 0.09f, s * 0.038f),
+            color = metal.copy(alpha = 0.95f - index * 0.07f),
+            topLeft = Offset(-s * 0.055f, -s * 0.024f),
+            size = Size(s * 0.11f, s * 0.048f),
         )
     }
 }
@@ -621,18 +596,6 @@ private fun DrawScope.drawSwords(tint: Color) {
     val line = s * 0.13f
     drawLine(tint, Offset(s * 0.14f, s * 0.86f), Offset(s * 0.82f, s * 0.14f), line, StrokeCap.Round)
     drawLine(tint, Offset(s * 0.86f, s * 0.86f), Offset(s * 0.18f, s * 0.14f), line, StrokeCap.Round)
-}
-
-private fun DrawScope.drawChartBars(tint: Color) {
-    val s = size.minDimension
-    listOf(0.40f, 0.68f, 0.94f).forEachIndexed { index, height ->
-        drawRoundRect(
-            tint,
-            Offset(s * (0.12f + index * 0.30f), s * (1f - height)),
-            Size(s * 0.19f, s * height),
-            androidx.compose.ui.geometry.CornerRadius(s * 0.05f),
-        )
-    }
 }
 
 private fun DrawScope.drawRowChevron() {

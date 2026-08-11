@@ -470,4 +470,6 @@
     <string name="leaderboard_climb_title">Climb the table</string>
     <string name="leaderboard_climb_action">Link account</string>
     <string name="leaderboard_live_note">The table updates as matches finish.</string>
+    <string name="leaderboard_wins_short">W</string>
+    <string name="leaderboard_losses_short">L</string>
 </resources>

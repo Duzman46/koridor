@@ -435,4 +435,6 @@
     <string name="leaderboard_climb_title">Steig in der Tabelle</string>
     <string name="leaderboard_climb_action">Konto verknüpfen</string>
     <string name="leaderboard_live_note">Die Tabelle aktualisiert sich, sobald Partien enden.</string>
+    <string name="leaderboard_wins_short">S</string>
+    <string name="leaderboard_losses_short">N</string>
 </resources>

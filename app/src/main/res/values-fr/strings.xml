@@ -438,4 +438,6 @@
     <string name="leaderboard_climb_title">Grimpe au classement</string>
     <string name="leaderboard_climb_action">Associer un compte</string>
     <string name="leaderboard_live_note">Le classement se met à jour à la fin des parties.</string>
+    <string name="leaderboard_wins_short">V</string>
+    <string name="leaderboard_losses_short">D</string>
 </resources>

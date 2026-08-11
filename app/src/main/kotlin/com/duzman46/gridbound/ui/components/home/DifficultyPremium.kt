@@ -75,8 +75,11 @@ fun BotLevelRow(
             .clip(shape)
             .background(if (chosen) KoridorGold.copy(alpha = 0.07f) else Color(0xFF12161B))
             .border(BorderStroke(if (chosen) 1.5.dp else 1.dp, if (chosen) KoridorGold else FieldEdge), shape)
-            .heightIn(min = 92.dp)
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
+            // A floor, not a height. The screen no longer scrolls, so four of these share what
+            // the scene and the colour cards leave — and on a short phone that is less than the
+            // ninety-two a fixed row would have insisted on.
+            .heightIn(min = 74.dp)
+            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -268,14 +268,17 @@ fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> U
         Column(
             Modifier
                 .fillMaxWidth()
+                // No scroll. Two questions and a button is not a page, and a screen that
+                // scrolls to reach its own start button is a screen that has been overfilled.
+                // The rows give ground instead: they are weighted, so four of them share
+                // whatever is left rather than each insisting on a height of its own.
                 .weight(1f - DIFFICULTY_SCENE_SHARE)
                 .widthIn(max = Dimens.MenuMaxWidth)
                 .align(Alignment.CenterHorizontally)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimens.ScreenPadding)
-                .padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceMd)
+                .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceSm)
                 .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
             FieldLabel(stringResource(R.string.paint_label))
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
@@ -306,6 +309,7 @@ fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> U
                     rank = index + 1,
                     chosen = option == level,
                     onClick = { level = option },
+                    modifier = Modifier.weight(1f),
                 )
             }
 

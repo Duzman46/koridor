@@ -3,6 +3,7 @@ package com.duzman46.gridbound.navigation
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -148,6 +149,34 @@ private const val NAV_ENTER_MILLIS = 280
 private const val NAV_EXIT_MILLIS = 220
 
 /**
+ * The three places the docked bar switches between, in the order it shows them.
+ *
+ * The bar is not a menu of things to open — it is three places side by side, and the order it
+ * draws them in is the only thing that says which way is which.
+ */
+private val TAB_ORDER = listOf(Routes.HOME, Routes.LEADERBOARD, Routes.PROFILE)
+
+/**
+ * Which way, and how far, a move between two docked-bar places travels — or null when the move
+ * is not between two of them.
+ *
+ * A tap on the bar is not the same gesture as opening a screen, and it should not look like
+ * one. Opening pushes: the new screen slides a short way in over the old one, which stays put
+ * and dims, because it is still underneath. Switching tabs slides: both screens travel the full
+ * width together, in the direction the bar is laid out, because neither is on top of the other
+ * — they are beside each other, and the player is moving along the row rather than into it.
+ *
+ * The sign is the difference. Home to Profile is two places to the right, so both screens move
+ * left; Profile to Home moves them right. Every other navigation in the graph falls through to
+ * the push.
+ */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabShift(): Int? {
+    val from = TAB_ORDER.indexOf(initialState.destination.route)
+    val to = TAB_ORDER.indexOf(targetState.destination.route)
+    return if (from >= 0 && to >= 0 && from != to) if (to > from) 1 else -1 else null
+}
+
+/**
  * The curve everything on this screen moves on: quick to leave, slow to arrive.
  *
  * Motion that starts fast and eases out reads as something being placed. A linear slide reads as
@@ -208,16 +237,24 @@ fun AppNavigation(
             // was responsive and it looked broken. The responsiveness never depended on this
             // number anyway — see navigateFrom, where the taps were actually being dropped.
             enterTransition = {
-                slideInHorizontally(navEnterSpec()) { width -> width / 6 } + fadeIn(navEnterFade())
+                tabShift()?.let { shift ->
+                    slideInHorizontally(navEnterSpec()) { width -> shift * width }
+                } ?: (slideInHorizontally(navEnterSpec()) { width -> width / 6 } + fadeIn(navEnterFade()))
             },
             exitTransition = {
-                slideOutHorizontally(navExitSpec()) { width -> -width / 14 } + fadeOut(navExitFade())
+                tabShift()?.let { shift ->
+                    slideOutHorizontally(navExitSpec()) { width -> -shift * width }
+                } ?: (slideOutHorizontally(navExitSpec()) { width -> -width / 14 } + fadeOut(navExitFade()))
             },
             popEnterTransition = {
-                slideInHorizontally(navEnterSpec()) { width -> -width / 6 } + fadeIn(navEnterFade())
+                tabShift()?.let { shift ->
+                    slideInHorizontally(navEnterSpec()) { width -> shift * width }
+                } ?: (slideInHorizontally(navEnterSpec()) { width -> -width / 6 } + fadeIn(navEnterFade()))
             },
             popExitTransition = {
-                slideOutHorizontally(navExitSpec()) { width -> width / 14 } + fadeOut(navExitFade())
+                tabShift()?.let { shift ->
+                    slideOutHorizontally(navExitSpec()) { width -> -shift * width }
+                } ?: (slideOutHorizontally(navExitSpec()) { width -> width / 14 } + fadeOut(navExitFade()))
             },
         ) {
             composable(Routes.SPLASH) {

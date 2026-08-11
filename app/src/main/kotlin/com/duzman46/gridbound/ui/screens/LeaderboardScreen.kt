@@ -163,15 +163,13 @@ private fun LeaderboardScreen(
             }
         }
         OwnStandingBar(state, onLinkAccount)
-        // The bar the player switched places with. It stays under them here, with this screen
-        // marked, so the leaderboard is a place they are in rather than a page they opened.
+        // The same three items the home screen shows, in the same order and with the same
+        // words — because it is the same bar. A row that renames itself between two of its own
+        // places is telling the player they have left one thing and arrived at another.
         KoridorBottomBar(
             items = listOf(
                 BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE, onHome),
-                BottomItem(
-                    stringResource(R.string.home_leaderboard_short),
-                    PremiumIcon.TROPHY,
-                ) {},
+                BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY) {},
                 BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON, onProfile),
             ),
             selectedIndex = 1,
@@ -356,11 +354,8 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
                 color = Color(0xFF8B9098),
             )
         }
-        Text(
-            text = stringResource(R.string.leaderboard_live_note),
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF5C6169),
-        )
+        // No "the table updates live" line. It was a sentence about how the app works, sitting
+        // where the standings should be, on the one screen whose whole content is a list.
     }
 }
 

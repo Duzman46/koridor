@@ -97,7 +97,7 @@ fun RowScope.PodiumCard(
             .semantics(mergeDescendants = true) { contentDescription = "$place. $name. $rating" }
             // The winner stands a step higher. Everything else about the three is the same, so
             // this alone has to carry the ranking before a number is read.
-            .padding(top = if (first) 0.dp else 26.dp)
+            .padding(top = if (first) 0.dp else 18.dp)
             .clip(shape)
             .background(
                 if (first) {
@@ -107,52 +107,48 @@ fun RowScope.PodiumCard(
                 },
             )
             .border(BorderStroke(if (first) 1.5.dp else 1.dp, metal.copy(alpha = if (first) 0.75f else 0.35f)), shape)
-            .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceMd),
+            .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         // The crest, and the head that sits into the bottom of it.
         //
         // Overlapped rather than stacked, which is what keeps the card short: the wreath and the
-        // avatar share about a third of their height instead of each taking their own. Every
-        // place is crowned in the reference, not only the winner — the metal does the ranking.
-        val crest = if (first) 76.dp else 66.dp
-        val head = if (first) 32.dp else 28.dp
+        // avatar share a third of the head's height instead of each taking their own. Every
+        // place is crowned, not only the winner — the metal does the ranking.
+        val crest = if (first) 60.dp else 52.dp
+        val head = if (first) 34.dp else 30.dp
         Box(
-            // Tall enough for the two to overlap by a fraction rather than sit on top of each
-            // other. At the first attempt the head was more than half the wreath and the pair
-            // read as a figure of eight.
-            Modifier.height(crest + head - 8.dp),
+            Modifier.height(crest + head - 12.dp),
             contentAlignment = Alignment.TopCenter,
         ) {
             Box(Modifier.size(crest), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.fillMaxWidth().height(crest)) { drawLaurelRing(metal) }
                 Text(
                     text = "$place",
-                    style = if (first) {
-                        MaterialTheme.typography.titleLarge
-                    } else {
-                        MaterialTheme.typography.titleMedium
-                    },
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = metal,
-                    modifier = Modifier.padding(top = 6.dp),
+                    modifier = Modifier.padding(top = 5.dp),
                 )
             }
+            // The same avatar the rows below use — a filled disc with the initial in it —
+            // rather than an outline in the place's own metal. The people on the stage and the
+            // people on the table are the same people, and they were drawn as two kinds.
             Box(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .size(head)
                     .clip(CircleShape)
-                    .background(Color(0xFF10151B))
-                    .border(BorderStroke(2.dp, metal), CircleShape),
+                    .background(Color(0xFF2F6BE8))
+                    .border(BorderStroke(2.dp, Color(0xFF0D1015)), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = initial,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = metal,
+                    color = Color.White,
                 )
             }
         }
@@ -457,39 +453,72 @@ fun ClimbBanner(
     // is not a phone narrow enough to make it fit: "SIRALAMADA YÜKS…" next to "Hesabını b…" is
     // a banner that explains why you are not on the table, unreadable, beside a button that
     // does not say what it does. The button takes the width it needs on a line of its own.
-    Column(
+    // One row, not three. It was a crest over a title over a sentence over a full-width button,
+    // and on a screen whose whole content is a ranking it was taking the ranking's place. What
+    // it has to say is one line; the offer beside it is a button, not a banner.
+    Row(
         modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.horizontalGradient(listOf(Color(0xFF1A1710), Color(0xFF12161B))))
             .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.35f)), shape)
-            .padding(Dimens.SpaceMd),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Canvas(Modifier.size(30.dp)) { drawCrestedTrophy() }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = hint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF8B9098),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        Canvas(Modifier.size(22.dp)) { drawCrestedTrophy() }
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = KoridorGold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8B9098),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        GoldSubmit(label = action, onClick = onAction)
+        CompactGoldAction(label = action, onClick = onAction)
+    }
+}
+
+/** A gold control at the size a row can spare, rather than the size a page can. */
+@Composable
+private fun CompactGoldAction(label: String, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(11.dp)
+    Box(
+        Modifier
+            .clip(shape)
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47)),
+                ),
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics { contentDescription = label }
+            .heightIn(min = 40.dp)
+            .padding(horizontal = Dimens.SpaceMd),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A1206),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

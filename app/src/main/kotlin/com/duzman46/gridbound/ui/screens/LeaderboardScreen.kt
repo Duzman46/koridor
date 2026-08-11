@@ -61,7 +61,7 @@ import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.home.BottomItem
-import com.duzman46.gridbound.ui.components.home.ClimbBanner
+import com.duzman46.gridbound.ui.components.home.LinkAccountBanner
 import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
 import com.duzman46.gridbound.ui.components.home.PodiumCard
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
@@ -299,7 +299,7 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
             // Only a guest is offered an account, because only a guest is missing one. A player
             // who has linked and simply has not been ranked yet was being told to link again,
             // which is the app not knowing who it is talking to.
-            state.isGuest -> ClimbBanner(
+            state.isGuest -> LinkAccountBanner(
                 title = localeUpper(stringResource(R.string.leaderboard_climb_title)),
                 hint = state.noStandingMessage.asString(),
                 action = stringResource(R.string.leaderboard_climb_action),

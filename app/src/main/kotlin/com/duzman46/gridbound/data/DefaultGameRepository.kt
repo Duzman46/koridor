@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
@@ -52,6 +53,12 @@ class DefaultGameRepository @Inject constructor(
         val mediumLosses = intPreferencesKey(Constants.Data.KEY_MEDIUM_LOSSES)
         val hardLosses = intPreferencesKey(Constants.Data.KEY_HARD_LOSSES)
         val expertLosses = intPreferencesKey(Constants.Data.KEY_EXPERT_LOSSES)
+        val onlineGames = intPreferencesKey(Constants.Data.KEY_ONLINE_GAMES)
+        val onlineWins = intPreferencesKey(Constants.Data.KEY_ONLINE_WINS)
+        val currentStreak = intPreferencesKey(Constants.Data.KEY_CURRENT_STREAK)
+        val bestStreak = intPreferencesKey(Constants.Data.KEY_BEST_STREAK)
+        val fastestWinTurns = intPreferencesKey(Constants.Data.KEY_FASTEST_WIN_TURNS)
+        val seenAchievements = stringSetPreferencesKey(Constants.Data.KEY_SEEN_ACHIEVEMENTS)
     }
 
     private val preferences: Flow<Preferences> = context.gridboundDataStore.data.catch { error ->
@@ -83,6 +90,11 @@ class DefaultGameRepository @Inject constructor(
             totalTurns = values[Keys.totalTurns] ?: 0,
             winsByDifficulty = Difficulty.entries.associateWith { values[winKey(it)] ?: 0 },
             lossesByDifficulty = Difficulty.entries.associateWith { values[lossKey(it)] ?: 0 },
+            onlineGames = values[Keys.onlineGames] ?: 0,
+            onlineWins = values[Keys.onlineWins] ?: 0,
+            currentStreak = values[Keys.currentStreak] ?: 0,
+            bestStreak = values[Keys.bestStreak] ?: 0,
+            fastestWinTurns = values[Keys.fastestWinTurns] ?: 0,
         )
     }
 
@@ -104,6 +116,15 @@ class DefaultGameRepository @Inject constructor(
     override suspend fun setUsernameChosen(chosen: Boolean) =
         update(Keys.usernameChosen, chosen)
 
+    // Read as nullable on purpose: absent is "this install predates the shelf" and empty is
+    // "a new player who has earned nothing yet", and only one of the two should be told about
+    // every badge their record already satisfies.
+    override val seenAchievements: Flow<Set<String>?> =
+        preferences.map { values -> values[Keys.seenAchievements] }
+
+    override suspend fun markAchievementsSeen(ids: Set<String>) =
+        update(Keys.seenAchievements, ids)
+
     override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
     override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)
@@ -119,19 +140,40 @@ class DefaultGameRepository @Inject constructor(
         localPlayer: PlayerId,
         turns: Int,
     ) {
+        val tally = tallyOf(mode, winner, localPlayer)
         context.gridboundDataStore.edit { values ->
             values[Keys.totalGames] = (values[Keys.totalGames] ?: 0) + 1
             values[Keys.totalTurns] = (values[Keys.totalTurns] ?: 0) + turns
-            if (mode == GameMode.LOCAL_TWO_PLAYER) {
+            if (!tally.countsAsResult) {
                 values[Keys.localGames] = (values[Keys.localGames] ?: 0) + 1
-            } else if (winner == localPlayer) {
+                return@edit
+            }
+            if (tally.online) {
+                values[Keys.onlineGames] = (values[Keys.onlineGames] ?: 0) + 1
+            }
+            if (tally.won) {
                 values[Keys.totalWins] = (values[Keys.totalWins] ?: 0) + 1
-                val key = winKey(difficulty)
-                values[key] = (values[key] ?: 0) + 1
+                if (tally.online) values[Keys.onlineWins] = (values[Keys.onlineWins] ?: 0) + 1
+                if (tally.touchesDifficulty) {
+                    val key = winKey(difficulty)
+                    values[key] = (values[key] ?: 0) + 1
+                }
+                val streak = (values[Keys.currentStreak] ?: 0) + 1
+                values[Keys.currentStreak] = streak
+                values[Keys.bestStreak] = maxOf(values[Keys.bestStreak] ?: 0, streak)
+                val fastest = values[Keys.fastestWinTurns] ?: 0
+                // Zero means "no win yet", so the first win always sets the record rather than
+                // losing to a stored nothing.
+                if (turns > 0 && (fastest == 0 || turns < fastest)) {
+                    values[Keys.fastestWinTurns] = turns
+                }
             } else {
                 values[Keys.totalLosses] = (values[Keys.totalLosses] ?: 0) + 1
-                val key = lossKey(difficulty)
-                values[key] = (values[key] ?: 0) + 1
+                if (tally.touchesDifficulty) {
+                    val key = lossKey(difficulty)
+                    values[key] = (values[key] ?: 0) + 1
+                }
+                values[Keys.currentStreak] = 0
             }
         }
     }

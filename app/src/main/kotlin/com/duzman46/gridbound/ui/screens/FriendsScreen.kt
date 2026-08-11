@@ -5,58 +5,49 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
-import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.online.model.OnlineSession
 import com.duzman46.gridbound.presentation.social.FriendsEvent
 import com.duzman46.gridbound.presentation.social.FriendsUiState
@@ -66,13 +57,34 @@ import com.duzman46.gridbound.social.domain.Friend
 import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.RequestKind
-import com.duzman46.gridbound.ui.components.EmptyState
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.FormMessage
-import com.duzman46.gridbound.ui.components.PlayerAvatar
-import com.duzman46.gridbound.ui.components.ScreenBackground
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SecondarySubmitButton
-import com.duzman46.gridbound.ui.components.SubmitButton
+import com.duzman46.gridbound.ui.components.home.FieldLabel
+import com.duzman46.gridbound.ui.components.home.FormHeading
+import com.duzman46.gridbound.ui.components.home.FriendAction
+import com.duzman46.gridbound.ui.components.home.FriendCard
+import com.duzman46.gridbound.ui.components.home.FriendPerk
+import com.duzman46.gridbound.ui.components.home.FriendsEmptyPanel
+import com.duzman46.gridbound.ui.components.home.FriendsSectionHeader
+import com.duzman46.gridbound.ui.components.home.GoldSubmit
+import com.duzman46.gridbound.ui.components.home.InviteCard
+import com.duzman46.gridbound.ui.components.home.LinkAccountBanner
+import com.duzman46.gridbound.ui.components.home.LobbyField
+import com.duzman46.gridbound.ui.components.home.OutlineAction
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import com.duzman46.gridbound.ui.components.home.SheetGrip
+import com.duzman46.gridbound.ui.components.home.drawAddPerson
+import com.duzman46.gridbound.ui.components.home.drawBlockMark
+import com.duzman46.gridbound.ui.components.home.drawCross
+import com.duzman46.gridbound.ui.components.home.drawEllipsisMark
+import com.duzman46.gridbound.ui.components.home.drawHash
+import com.duzman46.gridbound.ui.components.home.drawInviteMark
+import com.duzman46.gridbound.ui.components.home.drawPairMark
+import com.duzman46.gridbound.ui.components.home.drawPersonMark
+import com.duzman46.gridbound.ui.components.home.drawTick
+import com.duzman46.gridbound.ui.components.home.localeUpper
 
 @Composable
 fun FriendsRoute(
@@ -97,6 +109,17 @@ fun FriendsRoute(
     )
 }
 
+/**
+ * The friends screen.
+ *
+ * No tab row. The reference has three tabs and two of them were dropped, and a row with one tab
+ * in it is a heading pretending to be a control. Invitations did not go with the tab — they are a
+ * section of this list while there are any, gold, at the top, because an open seat expires.
+ *
+ * Adding somebody is one control, in the header, present whether the list is full or empty. The
+ * empty panel repeats it as its one gold button, which is the whole point of an empty panel: it
+ * has one thing to say and it should end in the way to do it.
+ */
 @Composable
 private fun FriendsScreen(
     state: FriendsUiState,
@@ -106,6 +129,7 @@ private fun FriendsScreen(
     viewModel: FriendsViewModel,
 ) {
     var confirming by remember { mutableStateOf<PendingConfirmation?>(null) }
+    var addOpen by rememberSaveable { mutableStateOf(false) }
 
     confirming?.let { pending ->
         AlertDialog(
@@ -126,264 +150,461 @@ private fun FriendsScreen(
         )
     }
 
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.friends_title), onBack) }) { padding ->
-        ScreenBackground {
-            if (state.requiresAccount) {
-                // Telling a guest they need an account and then giving them no way to get
-                // one left the screen a dead end reachable from two places in the menu.
-                Column(
-                    Modifier.fillMaxSize().padding(padding),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    EmptyState(
-                        stringResource(R.string.friends_requires_account),
-                        modifier = Modifier.weight(1f),
-                    )
-                    SubmitButton(
-                        text = stringResource(R.string.account_title),
-                        onClick = onLinkAccount,
-                        modifier = Modifier
-                            .widthIn(max = 420.dp)
-                            .padding(horizontal = 20.dp, vertical = 24.dp),
-                    )
+    if (addOpen) {
+        AddPlayerSheet(
+            state = state,
+            viewModel = viewModel,
+            onBlock = { confirming = it },
+            onDismiss = { addOpen = false },
+        )
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
+    ) {
+        PremiumHeader(
+            title = stringResource(R.string.friends_title),
+            subtitle = stringResource(R.string.friends_subtitle),
+            onBack = onBack,
+            trailing = {
+                // Not offered to a guest: finding a player needs an account, so a control that
+                // opens a form nobody can submit would be a promise the screen cannot keep.
+                if (!state.requiresAccount) {
+                    FriendAction(
+                        label = stringResource(R.string.friends_add_player),
+                        onClick = { addOpen = true },
+                        accented = true,
+                    ) { drawAddPerson(KoridorGold) }
                 }
-                return@ScreenBackground
-            }
-            state.hostedInvite?.let { hosted ->
-                HostedInvitePanel(
-                    hosted = hosted,
-                    message = state.message,
+            },
+        )
+
+        // Above the list rather than inside it: a message about the action just taken has to be
+        // where the player is looking, and anything inside the list is wherever scrolling left it.
+        state.message?.let { message ->
+            FormMessage(
+                message,
+                Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceXs),
+            )
+        }
+
+        Box(Modifier.weight(1f)) {
+            when {
+                state.hostedInvite != null -> HostedInvitePanel(
+                    hosted = state.hostedInvite,
                     onCancel = viewModel::cancelHostedInvite,
-                    modifier = Modifier.padding(padding),
                 )
-                return@ScreenBackground
+
+                state.isEmpty && state.invites.isEmpty() -> EmptyFriends(
+                    canAdd = !state.requiresAccount,
+                    onAdd = { addOpen = true },
+                )
+
+                else -> FriendsList(
+                    state = state,
+                    viewModel = viewModel,
+                    onJoinInvite = onJoinInvite,
+                    onConfirm = { confirming = it },
+                )
             }
-            // Section headings are resolved here: the LazyColumn content block is not a
-            // composable scope, so stringResource cannot be called inside it.
-            val invitesLabel = stringResource(R.string.invites_title)
-            val incomingLabel = stringResource(R.string.friends_section_incoming)
-            val onlineLabel = stringResource(R.string.friends_section_online)
-            val offlineLabel = stringResource(R.string.friends_section_offline)
-            val outgoingLabel = stringResource(R.string.friends_section_outgoing)
-            val blockedLabel = stringResource(R.string.friends_section_blocked)
-            val emptyLabel = stringResource(R.string.friends_empty)
+        }
 
-            Column(Modifier.fillMaxSize().padding(padding)) {
-                // Outside the list rather than an item in it: a message about the action just
-                // taken has to be where the player is looking, and anything inside a column
-                // holding every invite, request and friend is wherever the scroll left it.
-                state.message?.let { message ->
-                    FormMessage(message, Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
-                }
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    item { SearchCard(state, viewModel, onBlock = { confirming = it }) }
-
-                    if (state.invites.isNotEmpty()) {
-                        section(invitesLabel)
-                        items(state.invites, key = FriendsRowKey::invite) { invite ->
-                            InviteRow(
-                                invite = invite,
-                                onJoin = { onJoinInvite(invite.roomCode) },
-                                onDismiss = { viewModel.dismissInvite(invite.fromUserId) },
-                            )
-                        }
-                    }
-
-                    if (state.incomingRequests.isNotEmpty()) {
-                        section(incomingLabel)
-                        items(state.incomingRequests, key = FriendsRowKey::friend) { friend ->
-                            FriendRow(friend, online = false) {
-                                ActionButton(stringResource(R.string.friends_accept), Icons.Rounded.Check) {
-                                    viewModel.accept(friend.userId)
-                                }
-                                ActionButton(stringResource(R.string.friends_decline), Icons.Rounded.Close) {
-                                    viewModel.decline(friend.userId)
-                                }
-                            }
-                        }
-                    }
-
-                    if (state.onlineFriends.isNotEmpty()) {
-                        section(onlineLabel)
-                        items(state.onlineFriends, key = FriendsRowKey::friend) { friend ->
-                            FriendRow(friend, online = true) {
-                                FriendMenu(friend, viewModel) { confirming = it }
-                            }
-                        }
-                    }
-
-                    if (state.offlineFriends.isNotEmpty()) {
-                        section(offlineLabel)
-                        items(state.offlineFriends, key = FriendsRowKey::friend) { friend ->
-                            FriendRow(friend, online = false) {
-                                FriendMenu(friend, viewModel) { confirming = it }
-                            }
-                        }
-                    }
-
-                    if (state.outgoingRequests.isNotEmpty()) {
-                        section(outgoingLabel)
-                        items(state.outgoingRequests, key = FriendsRowKey::friend) { friend ->
-                            FriendRow(friend, online = false) {
-                                ActionButton(
-                                    stringResource(R.string.friends_cancel_request),
-                                    Icons.Rounded.Close,
-                                ) { viewModel.cancelRequest(friend.userId) }
-                            }
-                        }
-                    }
-
-                    if (state.blocked.isNotEmpty()) {
-                        section(blockedLabel)
-                        items(state.blocked, key = FriendsRowKey::friend) { friend ->
-                            FriendRow(friend, online = false) {
-                                ActionButton(stringResource(R.string.friends_unblock), Icons.Rounded.Check) {
-                                    viewModel.unblock(friend.userId)
-                                }
-                            }
-                        }
-                    }
-
-                    if (state.isEmpty && state.invites.isEmpty()) {
-                        item {
-                            Text(
-                                emptyLabel,
-                                Modifier.padding(24.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
+        // Only a guest, and only at the foot: it is the answer to why this screen is empty, not
+        // a second thing to read before the list.
+        if (state.requiresAccount) {
+            LinkAccountBanner(
+                title = localeUpper(stringResource(R.string.friends_link_title)),
+                hint = stringResource(R.string.friends_link_hint),
+                action = stringResource(R.string.friends_link_action),
+                onAction = onLinkAccount,
+                modifier = Modifier
+                    .padding(horizontal = Dimens.ScreenPadding)
+                    .navigationBarsPadding()
+                    .padding(bottom = Dimens.SpaceMd),
+                mark = { drawPairMark(KoridorGold) },
+            )
         }
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.section(title: String) {
-    item {
-        Text(
-            title,
-            Modifier.padding(top = 10.dp, bottom = 2.dp),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
+@Composable
+private fun EmptyFriends(canAdd: Boolean, onAdd: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .navigationBarsPadding()
+            .padding(horizontal = Dimens.ScreenPadding)
+            .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceLg),
+    ) {
+        FriendsEmptyPanel(
+            title = stringResource(R.string.friends_empty_title),
+            body = stringResource(R.string.friends_empty_body),
+            perks = listOf(
+                FriendPerk(
+                    icon = PremiumIcon.PLUS,
+                    title = stringResource(R.string.friends_perk_add),
+                    body = stringResource(R.string.friends_perk_add_hint),
+                ),
+                FriendPerk(
+                    icon = PremiumIcon.GAMEPAD,
+                    title = stringResource(R.string.friends_perk_play),
+                    body = stringResource(R.string.friends_perk_play_hint),
+                ),
+                FriendPerk(
+                    icon = PremiumIcon.BARS,
+                    title = stringResource(R.string.friends_perk_compare),
+                    body = stringResource(R.string.friends_perk_compare_hint),
+                ),
+            ),
+            action = stringResource(R.string.friends_add_player).takeIf { canAdd },
+            onAction = onAdd,
         )
     }
 }
 
 @Composable
-private fun SearchCard(
+private fun FriendsList(
+    state: FriendsUiState,
+    viewModel: FriendsViewModel,
+    onJoinInvite: (String) -> Unit,
+    onConfirm: (PendingConfirmation) -> Unit,
+) {
+    // Resolved out here: the list content block is not a composable scope, so stringResource
+    // cannot be called inside it.
+    val invitesLabel = stringResource(R.string.invites_title)
+    val incomingLabel = stringResource(R.string.friends_section_incoming)
+    val onlineLabel = stringResource(R.string.friends_section_online)
+    val offlineLabel = stringResource(R.string.friends_section_offline)
+    val outgoingLabel = stringResource(R.string.friends_section_outgoing)
+    val blockedLabel = stringResource(R.string.friends_section_blocked)
+    val onlineStatus = stringResource(R.string.friends_online)
+    val offlineStatus = stringResource(R.string.friends_offline)
+    val joinLabel = stringResource(R.string.invites_join)
+    val dismissLabel = stringResource(R.string.invites_dismiss)
+    val acceptLabel = stringResource(R.string.friends_accept)
+    val declineLabel = stringResource(R.string.friends_decline)
+    val cancelLabel = stringResource(R.string.friends_cancel_request)
+    val unblockLabel = stringResource(R.string.friends_unblock)
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
+        contentPadding = PaddingValues(
+            start = Dimens.ScreenPadding,
+            end = Dimens.ScreenPadding,
+            top = Dimens.SpaceSm,
+            bottom = Dimens.SpaceXl,
+        ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        if (state.invites.isNotEmpty()) {
+            section(invitesLabel, state.invites.size)
+            items(state.invites, key = FriendsRowKey::invite) { invite ->
+                InviteCard(
+                    text = invite.summary(),
+                    joinLabel = joinLabel,
+                    dismissLabel = dismissLabel,
+                    onJoin = { onJoinInvite(invite.roomCode) },
+                    onDismiss = { viewModel.dismissInvite(invite.fromUserId) },
+                )
+            }
+        }
+
+        if (state.incomingRequests.isNotEmpty()) {
+            section(incomingLabel, state.incomingRequests.size)
+            items(state.incomingRequests, key = FriendsRowKey::friend) { friend ->
+                PlayerRow(friend, online = false, status = offlineStatus) {
+                    FriendAction(acceptLabel, { viewModel.accept(friend.userId) }, accented = true) {
+                        drawTick(KoridorGold)
+                    }
+                    FriendAction(declineLabel, { viewModel.decline(friend.userId) }) {
+                        drawCross(Color(0xFF8B9098))
+                    }
+                }
+            }
+        }
+
+        if (state.onlineFriends.isNotEmpty()) {
+            section(onlineLabel, state.onlineFriends.size)
+            items(state.onlineFriends, key = FriendsRowKey::friend) { friend ->
+                PlayerRow(friend, online = true, status = onlineStatus) {
+                    FriendMenu(friend, viewModel, onConfirm)
+                }
+            }
+        }
+
+        if (state.offlineFriends.isNotEmpty()) {
+            section(offlineLabel, state.offlineFriends.size)
+            items(state.offlineFriends, key = FriendsRowKey::friend) { friend ->
+                PlayerRow(friend, online = false, status = offlineStatus) {
+                    FriendMenu(friend, viewModel, onConfirm)
+                }
+            }
+        }
+
+        if (state.outgoingRequests.isNotEmpty()) {
+            section(outgoingLabel, state.outgoingRequests.size)
+            items(state.outgoingRequests, key = FriendsRowKey::friend) { friend ->
+                PlayerRow(friend, online = false, status = offlineStatus) {
+                    FriendAction(cancelLabel, { viewModel.cancelRequest(friend.userId) }) {
+                        drawCross(Color(0xFF8B9098))
+                    }
+                }
+            }
+        }
+
+        if (state.blocked.isNotEmpty()) {
+            section(blockedLabel, state.blocked.size)
+            items(state.blocked, key = FriendsRowKey::friend) { friend ->
+                PlayerRow(friend, online = false, status = offlineStatus) {
+                    FriendAction(unblockLabel, { viewModel.unblock(friend.userId) }) {
+                        drawTick(Color(0xFF8B9098))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.section(title: String, count: Int) {
+    item(key = "head:$title") { FriendsSectionHeader(title, "$count") }
+}
+
+@Composable
+private fun PlayerRow(
+    friend: Friend,
+    online: Boolean,
+    status: String,
+    actions: @Composable RowScope.() -> Unit,
+) {
+    FriendCard(
+        initial = friend.username.take(1).uppercase(),
+        name = friend.username,
+        status = status,
+        online = online,
+        actions = actions,
+    )
+}
+
+/**
+ * What there is to do about a friend: play them, and — behind one more tap — stop being friends.
+ *
+ * Three round controls beside a name is about a hundred and twenty pixels of a row that has three
+ * hundred and sixty, and the name is what gives way. Inviting is the thing anybody does here, so
+ * it keeps its own control; removing and blocking are things done once, so they live behind the
+ * ellipsis where a mis-tap costs nothing.
+ */
+@Composable
+private fun RowScope.FriendMenu(
+    friend: Friend,
+    viewModel: FriendsViewModel,
+    onConfirm: (PendingConfirmation) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val removeLabel = stringResource(R.string.friends_remove)
+    val removeMessage = stringResource(R.string.friends_remove_confirm, friend.username)
+    val blockLabel = stringResource(R.string.friends_block)
+    val blockMessage = stringResource(R.string.friends_block_confirm, friend.username)
+
+    FriendAction(
+        label = stringResource(R.string.friends_invite),
+        onClick = { viewModel.inviteToGame(friend) },
+        accented = true,
+    ) { drawInviteMark(KoridorGold) }
+
+    Box {
+        FriendAction(
+            label = stringResource(R.string.friends_more_actions),
+            onClick = { open = true },
+        ) { drawEllipsisMark(Color(0xFF8B9098)) }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(removeLabel) },
+                onClick = {
+                    open = false
+                    onConfirm(
+                        PendingConfirmation(removeLabel, removeMessage, removeLabel) {
+                            viewModel.removeFriend(friend.userId)
+                        },
+                    )
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(blockLabel) },
+                onClick = {
+                    open = false
+                    onConfirm(
+                        PendingConfirmation(blockLabel, blockMessage, blockLabel) {
+                            viewModel.block(friend.userId)
+                        },
+                    )
+                },
+            )
+        }
+    }
+}
+
+/**
+ * Finding a player, as a sheet rather than a card at the top of the list.
+ *
+ * A search box that is on screen all the time is a search box in the way all the time, on a screen
+ * whose content is the people already found. It opens from the header control, keeps the same
+ * view model, and therefore keeps a half-typed name if it is closed by accident.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddPlayerSheet(
     state: FriendsUiState,
     viewModel: FriendsViewModel,
     onBlock: (PendingConfirmation) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        ),
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        dragHandle = {
+            Box(Modifier.fillMaxWidth().padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceXs)) {
+                SheetGrip(Modifier.align(Alignment.Center))
+            }
+        },
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = viewModel::setQuery,
-                label = { Text(stringResource(R.string.friends_search_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    imeAction = ImeAction.Search,
-                ),
-                trailingIcon = {
-                    IconButton(onClick = viewModel::search, enabled = !state.isSearching) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .navigationBarsPadding()
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceXl),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+        ) {
+            FormHeading(
+                title = stringResource(R.string.friends_add_player),
+                subtitle = stringResource(R.string.friends_add_player_hint),
+                mark = { drawAddPerson(KoridorGold) },
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+                FieldLabel(stringResource(R.string.friends_search_label))
+                LobbyField(
+                    value = state.query,
+                    onValueChange = viewModel::setQuery,
+                    placeholder = stringResource(R.string.friends_search_placeholder),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        imeAction = ImeAction.Search,
+                    ),
+                    leading = { drawPersonMark(KoridorGold) },
+                    trailing = {
                         if (state.isSearching) {
-                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(
-                                Icons.Rounded.Search,
-                                contentDescription = stringResource(R.string.friends_search_label),
-                            )
+                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
+                    },
+                )
+            }
+            GoldSubmit(
+                label = stringResource(R.string.friends_search_action),
+                onClick = viewModel::search,
+                enabled = state.query.isNotBlank(),
+                busy = state.isSearching,
+                mark = { drawHash(Color(0xFF1A1206)) },
             )
 
             state.searchResult?.let { profile ->
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    PlayerAvatar(profile.avatarId, profile.username, size = 40.dp)
-                    Column(Modifier.weight(1f)) {
-                        Text(profile.username, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                        Text(
-                            profile.rating.toString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                val blockLabel = stringResource(R.string.friends_block)
-                val blockMessage = stringResource(R.string.friends_block_confirm, profile.username)
-                when (state.searchStatus) {
-                    FriendshipStatus.NONE -> Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        SubmitButton(
-                            text = stringResource(R.string.friends_add),
-                            onClick = { viewModel.sendRequest(profile.userId) },
-                            isSubmitting = state.isBusy,
-                            leadingIcon = Icons.Rounded.PersonAdd,
-                            modifier = Modifier.weight(1f),
-                        )
-                        ActionButton(blockLabel, Icons.Rounded.Block) {
-                            onBlock(
-                                PendingConfirmation(
-                                    title = blockLabel,
-                                    message = blockMessage,
-                                    confirmLabel = blockLabel,
-                                    onConfirm = { viewModel.block(profile.userId) },
-                                ),
-                            )
-                        }
-                    }
-
-                    FriendshipStatus.REQUEST_RECEIVED -> ActionButton(
-                        stringResource(R.string.friends_accept),
-                        Icons.Rounded.Check,
-                    ) { viewModel.accept(profile.userId) }
-
-                    FriendshipStatus.REQUEST_SENT -> Text(
-                        stringResource(R.string.friends_section_outgoing),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-
-                    FriendshipStatus.FRIENDS -> Text(
-                        stringResource(R.string.friends_title),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-
-                    FriendshipStatus.BLOCKED -> ActionButton(
-                        stringResource(R.string.friends_unblock),
-                        Icons.Rounded.Check,
-                    ) { viewModel.unblock(profile.userId) }
-                }
+                SearchResult(
+                    name = profile.username,
+                    rating = profile.rating.toString(),
+                    status = state.searchStatus,
+                    busy = state.isBusy,
+                    onAdd = { viewModel.sendRequest(profile.userId) },
+                    onAccept = { viewModel.accept(profile.userId) },
+                    onUnblock = { viewModel.unblock(profile.userId) },
+                    onBlock = {
+                        onBlock(it)
+                        onDismiss()
+                    },
+                    blockUsername = profile.username,
+                    blockAction = { viewModel.block(profile.userId) },
+                )
             }
             state.searchMessage?.let { FormMessage(it) }
         }
     }
+}
+
+@Composable
+private fun SearchResult(
+    name: String,
+    rating: String,
+    status: FriendshipStatus,
+    busy: Boolean,
+    onAdd: () -> Unit,
+    onAccept: () -> Unit,
+    onUnblock: () -> Unit,
+    onBlock: (PendingConfirmation) -> Unit,
+    blockUsername: String,
+    blockAction: () -> Unit,
+) {
+    val blockLabel = stringResource(R.string.friends_block)
+    val blockMessage = stringResource(R.string.friends_block_confirm, blockUsername)
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        FriendCard(
+            initial = name.take(1).uppercase(),
+            name = name,
+            status = stringResource(R.string.friends_rating, rating),
+            online = false,
+        ) {
+            if (status == FriendshipStatus.NONE) {
+                FriendAction(blockLabel, {
+                    onBlock(
+                        PendingConfirmation(blockLabel, blockMessage, blockLabel, blockAction),
+                    )
+                }) { drawBlockMark(Color(0xFF8B9098)) }
+            }
+        }
+        when (status) {
+            FriendshipStatus.NONE -> GoldSubmit(
+                label = stringResource(R.string.friends_add),
+                onClick = onAdd,
+                busy = busy,
+                mark = { drawAddPerson(Color(0xFF1A1206)) },
+            )
+
+            FriendshipStatus.REQUEST_RECEIVED -> GoldSubmit(
+                label = stringResource(R.string.friends_accept),
+                onClick = onAccept,
+                busy = busy,
+                mark = { drawTick(Color(0xFF1A1206)) },
+            )
+
+            FriendshipStatus.REQUEST_SENT -> ResultNote(
+                stringResource(R.string.friends_request_pending),
+            )
+
+            FriendshipStatus.FRIENDS -> ResultNote(stringResource(R.string.friends_already_friends))
+
+            FriendshipStatus.BLOCKED -> OutlineAction(
+                label = stringResource(R.string.friends_unblock),
+                onClick = onUnblock,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultNote(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.SpaceSm),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Color(0xFF8B9098),
+        textAlign = TextAlign.Center,
+    )
 }
 
 /**
@@ -392,189 +613,52 @@ private fun SearchCard(
  * It takes the whole screen rather than sitting as a row in the list, because that is what is
  * actually true: a room is open, somebody is expected in it, and scrolling through the rest of
  * the friend list is not something to be doing meanwhile. The code is spelled out for the same
- * reason the lobby spells it out — a notification that never arrives is answered by reading
- * six characters down the phone.
+ * reason the lobby spells it out — a notification that never arrives is answered by reading six
+ * characters down the phone.
  */
 @Composable
-private fun HostedInvitePanel(
-    hosted: HostedInvite,
-    message: UiText?,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier
+private fun HostedInvitePanel(hosted: HostedInvite, onCancel: () -> Unit) {
+    Column(
+        Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        contentAlignment = Alignment.Center,
+            .verticalScroll(rememberScrollState())
+            .navigationBarsPadding()
+            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceLg),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg, Alignment.CenterVertically),
     ) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 4.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 480.dp)
-                .padding(20.dp),
-        ) {
-            Column(
-                Modifier.padding(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                CircularProgressIndicator()
-                Text(
-                    stringResource(R.string.friends_invite_waiting, hosted.friendName),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                SelectionContainer {
-                    Text(
-                        hosted.session.roomCode,
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-                Text(
-                    stringResource(R.string.room_code_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                message?.let { FormMessage(it) }
-                SecondarySubmitButton(
-                    text = stringResource(R.string.room_close),
-                    onClick = onCancel,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FriendMenu(
-    friend: Friend,
-    viewModel: FriendsViewModel,
-    onConfirm: (PendingConfirmation) -> Unit,
-) {
-    ActionButton(stringResource(R.string.friends_invite), Icons.Rounded.SportsEsports) {
-        viewModel.inviteToGame(friend)
-    }
-    val removeLabel = stringResource(R.string.friends_remove)
-    val removeMessage = stringResource(R.string.friends_remove_confirm, friend.username)
-    val blockLabel = stringResource(R.string.friends_block)
-    val blockMessage = stringResource(R.string.friends_block_confirm, friend.username)
-    ActionButton(removeLabel, Icons.Rounded.Close) {
-        onConfirm(
-            PendingConfirmation(removeLabel, removeMessage, removeLabel) {
-                viewModel.removeFriend(friend.userId)
-            },
+        CircularProgressIndicator(color = KoridorGold)
+        Text(
+            text = stringResource(R.string.friends_invite_waiting, hosted.friendName),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
-    }
-    ActionButton(blockLabel, Icons.Rounded.Block) {
-        onConfirm(
-            PendingConfirmation(blockLabel, blockMessage, blockLabel) {
-                viewModel.block(friend.userId)
-            },
+        Text(
+            text = hosted.session.roomCode,
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Black,
+            color = KoridorGold,
+        )
+        Text(
+            text = stringResource(R.string.room_code_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF8B9098),
+            textAlign = TextAlign.Center,
+        )
+        OutlineAction(
+            label = stringResource(R.string.room_close),
+            onClick = onCancel,
         )
     }
 }
 
 @Composable
-private fun FriendRow(
-    friend: Friend,
-    online: Boolean,
-    actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-    ) {
-        Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(contentAlignment = Alignment.BottomEnd) {
-                PlayerAvatar(friend.avatarId, friend.username, size = 40.dp)
-                if (online) {
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                    )
-                }
-            }
-            Column(Modifier.weight(1f)) {
-                Text(
-                    friend.username,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    stringResource(
-                        if (online) R.string.friends_online else R.string.friends_offline,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (online) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
-            actions()
-        }
-    }
-}
-
-@Composable
-private fun InviteRow(invite: PlayerRequest, onJoin: () -> Unit, onDismiss: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                stringResource(
-                    if (invite.kind == RequestKind.REMATCH) {
-                        R.string.requests_rematch_from
-                    } else {
-                        R.string.invites_from
-                    },
-                    invite.fromUsername.ifBlank { invite.roomCode },
-                ),
-                Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            ActionButton(stringResource(R.string.invites_join), Icons.Rounded.Check, onJoin)
-            ActionButton(stringResource(R.string.invites_dismiss), Icons.Rounded.Close, onDismiss)
-        }
-    }
-}
-
-/**
- * Icon-only action with the label carried as its accessibility description, so the rows stay
- * compact on a small screen without becoming unreadable to a screen reader.
- */
-@Composable
-private fun ActionButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
+private fun PlayerRequest.summary(): String = stringResource(
+    if (kind == RequestKind.REMATCH) R.string.requests_rematch_from else R.string.invites_from,
+    fromUsername.ifBlank { roomCode },
+)
 
 private data class PendingConfirmation(
     val title: String,

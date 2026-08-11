@@ -209,6 +209,32 @@ object Constants {
         const val KEY_MEDIUM_LOSSES = "medium_losses"
         const val KEY_HARD_LOSSES = "hard_losses"
         const val KEY_EXPERT_LOSSES = "expert_losses"
+
+        // What the achievements needed and the old counters could not answer.
+        //
+        // An online match was being filed as a medium bot match, because MEDIUM is the difficulty
+        // the online route carries in its arguments and nothing downstream asked what mode it
+        // was. So "beat the machine on medium" was earnable by a player who had never met the
+        // machine. Online has counters of its own now, and the difficulty tallies belong to the
+        // bot alone.
+        const val KEY_ONLINE_GAMES = "online_games"
+        const val KEY_ONLINE_WINS = "online_wins"
+        const val KEY_CURRENT_STREAK = "current_streak"
+        const val KEY_BEST_STREAK = "best_streak"
+
+        /** Turns in the shortest match this player has won, and 0 when they have won none. */
+        const val KEY_FASTEST_WIN_TURNS = "fastest_win_turns"
+
+        /**
+         * Which badges the player has already been told about.
+         *
+         * Absent, rather than empty, before the app has ever looked — and the difference is the
+         * whole point. A badge is earned by the statistics, so an update that adds badges awards
+         * them retroactively; absent means "this player predates the shelf", and everything they
+         * already hold is marked seen without a word. Empty means a genuinely new player, for
+         * whom the first badge is news.
+         */
+        const val KEY_SEEN_ACHIEVEMENTS = "seen_achievements"
     }
 
     object Online {

@@ -404,17 +404,29 @@ class FakeGameRepository : GameRepository {
     private val tutorialState = MutableStateFlow(false)
     private val guestState = MutableStateFlow(false)
     private val usernameChosenState = MutableStateFlow(false)
+    private val statisticsState = MutableStateFlow(GameStatistics())
+    private val seenAchievementsState = MutableStateFlow<Set<String>?>(null)
 
     override val settings: Flow<AppSettings> = settingsState
-    override val statistics: Flow<GameStatistics> = MutableStateFlow(GameStatistics())
+    override val statistics: Flow<GameStatistics> = statisticsState
     override val tutorialCompleted: Flow<Boolean> = tutorialState
     override val guestModeAccepted: Flow<Boolean> = guestState
     override val usernameChosen: Flow<Boolean> = usernameChosenState
+    override val seenAchievements: Flow<Set<String>?> = seenAchievementsState
 
     val currentSettings: AppSettings get() = settingsState.value
     val isTutorialCompleted: Boolean get() = tutorialState.value
     val isGuestModeAccepted: Boolean get() = guestState.value
     val isUsernameChosen: Boolean get() = usernameChosenState.value
+    val seenBadges: Set<String>? get() = seenAchievementsState.value
+
+    fun setStatistics(statistics: GameStatistics) {
+        statisticsState.value = statistics
+    }
+
+    override suspend fun markAchievementsSeen(ids: Set<String>) {
+        seenAchievementsState.value = ids
+    }
 
     override suspend fun setTutorialCompleted(completed: Boolean) {
         tutorialState.value = completed

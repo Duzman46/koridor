@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 
@@ -74,6 +75,21 @@ enum class PremiumIcon {
 
     /** A stretch of time. A calendar with its two rings. */
     CALENDAR,
+
+    /** Speed. A lightning bolt, for the badge earned by finishing a match quickly. */
+    BOLT,
+
+    /** Everything else the app can do. Three dots in a row. */
+    ELLIPSIS,
+
+    /** Getting something back that was already paid for. An arrow turning a full circle. */
+    RESTORE,
+
+    /** Something written down and agreed to. A page with lines on it. */
+    DOCUMENT,
+
+    /** A fact rather than an action. An i in a ring. */
+    INFO,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -100,7 +116,96 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.ROBOT -> robot(s, tint, line)
             PremiumIcon.PLUS -> plus(s, tint, line)
             PremiumIcon.CALENDAR -> calendar(s, tint, line)
+            PremiumIcon.BOLT -> bolt(s, tint)
+            PremiumIcon.ELLIPSIS -> ellipsis(s, tint)
+            PremiumIcon.RESTORE -> restore(s, tint, line)
+            PremiumIcon.DOCUMENT -> document(s, tint, line)
+            PremiumIcon.INFO -> info(s, tint, line)
         }
+    }
+}
+
+/** An arrow turning most of a circle: what was bought once, fetched again. */
+private fun DrawScope.restore(s: Float, tint: Color, line: Float) {
+    drawArc(
+        color = tint,
+        startAngle = -60f,
+        sweepAngle = 290f,
+        useCenter = false,
+        topLeft = Offset(s * 0.14f, s * 0.14f),
+        size = Size(s * 0.72f, s * 0.72f),
+        style = Stroke(width = line, cap = StrokeCap.Round),
+    )
+    // The head, at the open end of the sweep.
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.86f, s * 0.16f)
+            lineTo(s * 0.86f, s * 0.42f)
+            lineTo(s * 0.60f, s * 0.42f)
+            close()
+        },
+        tint,
+    )
+}
+
+/** A page with a folded corner and three lines of text. */
+private fun DrawScope.document(s: Float, tint: Color, line: Float) {
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.20f, s * 0.08f)
+            lineTo(s * 0.62f, s * 0.08f)
+            lineTo(s * 0.82f, s * 0.30f)
+            lineTo(s * 0.82f, s * 0.92f)
+            lineTo(s * 0.20f, s * 0.92f)
+            close()
+        },
+        tint,
+        style = Stroke(width = line, join = StrokeJoin.Round),
+    )
+    listOf(0.50f, 0.64f, 0.78f).forEach { y ->
+        drawLine(
+            tint,
+            Offset(s * 0.32f, s * y),
+            Offset(s * 0.70f, s * y),
+            strokeWidth = line * 0.8f,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+/** An i in a ring, for a line that states something rather than doing something. */
+private fun DrawScope.info(s: Float, tint: Color, line: Float) {
+    drawCircle(tint, s * 0.42f, Offset(s * 0.5f, s * 0.5f), style = Stroke(line))
+    drawCircle(tint, s * 0.055f, Offset(s * 0.5f, s * 0.30f))
+    drawLine(
+        tint,
+        Offset(s * 0.5f, s * 0.44f),
+        Offset(s * 0.5f, s * 0.72f),
+        strokeWidth = line,
+        cap = StrokeCap.Round,
+    )
+}
+
+/** A lightning bolt: one closed shape, no outline, so it holds at 20 dp. */
+private fun DrawScope.bolt(s: Float, tint: Color) {
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.58f, s * 0.04f)
+            lineTo(s * 0.20f, s * 0.56f)
+            lineTo(s * 0.45f, s * 0.56f)
+            lineTo(s * 0.40f, s * 0.96f)
+            lineTo(s * 0.80f, s * 0.42f)
+            lineTo(s * 0.54f, s * 0.42f)
+            close()
+        },
+        tint,
+    )
+}
+
+/** Three dots in a row, for the place everything else lives. */
+private fun DrawScope.ellipsis(s: Float, tint: Color) {
+    listOf(0.20f, 0.50f, 0.80f).forEach { x ->
+        drawCircle(tint, s * 0.10f, Offset(s * x, s * 0.5f))
     }
 }
 

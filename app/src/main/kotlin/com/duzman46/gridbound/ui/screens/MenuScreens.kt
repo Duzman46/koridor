@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.ui.components.ScreenBackground
-import com.duzman46.gridbound.ui.components.home.GlyphKind
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.statusBarsPadding
 import com.duzman46.gridbound.ui.components.home.HomeBrand
@@ -49,22 +48,13 @@ import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.LanguagePickerDialog
 import com.duzman46.gridbound.session.SessionState
-import com.duzman46.gridbound.ui.components.home.BottomItem
 import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.HomeGridRow
 import com.duzman46.gridbound.ui.components.home.HomeMenuCard
-import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
 import com.duzman46.gridbound.ui.components.home.PremiumTopBar
 import com.duzman46.gridbound.ui.components.home.PrimaryPlayCard
 import com.duzman46.gridbound.ui.components.home.WideMenuCard
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.duzman46.gridbound.BuildConfig
-import com.duzman46.gridbound.ui.components.home.HomeSheet
-import com.duzman46.gridbound.ui.components.home.SheetAction
-import com.duzman46.gridbound.ui.components.home.SheetDivider
-import com.duzman46.gridbound.ui.components.home.SheetLink
-import com.duzman46.gridbound.ui.components.home.SheetVersion
 import kotlinx.coroutines.delay
 
 @Composable
@@ -158,23 +148,16 @@ internal val HomeStackUnderScene: Dp =
 fun MainMenuScreen(
     session: SessionState,
     language: AppLanguage,
-    offersAdRemoval: Boolean,
     onLanguage: (AppLanguage) -> Unit,
     onPlay: () -> Unit,
     onFriends: () -> Unit,
     onLeaderboard: () -> Unit,
     onProfile: () -> Unit,
-    onStatistics: () -> Unit,
     onTutorial: () -> Unit,
     onSettings: () -> Unit,
-    onRemoveAds: () -> Unit,
-    onRestorePurchases: () -> Unit,
-    onOpenUrl: (String) -> Unit,
-    showAdBanner: Boolean,
+    onMore: () -> Unit,
 ) {
-    var openSheet by rememberSaveable { mutableStateOf(HomeMenu.NONE) }
     var languagePickerOpen by remember { mutableStateOf(false) }
-    val dismiss = { openSheet = HomeMenu.NONE }
 
     if (languagePickerOpen) {
         LanguagePickerDialog(
@@ -187,39 +170,10 @@ fun MainMenuScreen(
         )
     }
 
-    if (openSheet == HomeMenu.MORE) {
-        HomeSheet(stringResource(R.string.menu_more), dismiss) {
-            // No friends entry here. "More" is where the things nobody looks for by name go,
-            // and friends is a mark in the row at the top of the screen — one destination
-            // reachable twice from one screen teaches the player that neither route is real.
-            //
-            // Hidden once bought: an upgrade you already own is not an offer.
-            if (offersAdRemoval) {
-                SheetAction(stringResource(R.string.store_remove_ads), GlyphKind.REMOVE_ADS, {
-                    dismiss(); onRemoveAds()
-                })
-                // A guest's purchase would be stranded on this device, so the account comes
-                // first. Said here rather than after Play has already taken the money.
-                if (session.isGuest) {
-                    SheetVersion(stringResource(R.string.store_guest_warning))
-                }
-            }
-            SheetLink(stringResource(R.string.store_restore), onClick = { dismiss(); onRestorePurchases() })
-            SheetLink(stringResource(R.string.menu_statistics), onClick = { dismiss(); onStatistics() })
-            SheetDivider()
-            val privacyUrl = BuildConfig.PRIVACY_POLICY_URL
-            val termsUrl = BuildConfig.TERMS_URL
-            // A legal link with no URL configured is not shown at all rather than opening
-            // nothing — Play requires the policy link to work, not merely to exist.
-            if (privacyUrl.isNotBlank()) {
-                SheetLink(stringResource(R.string.account_privacy_policy), onClick = { onOpenUrl(privacyUrl) })
-            }
-            if (termsUrl.isNotBlank()) {
-                SheetLink(stringResource(R.string.account_terms_of_service), onClick = { onOpenUrl(termsUrl) })
-            }
-            SheetVersion(stringResource(R.string.more_about_version, BuildConfig.VERSION_NAME))
-        }
-    }
+    // "More" used to open a bottom sheet from here. It is a screen now — see [MoreScreen] — so
+    // the store, the statistics, the badges and the policy links all have an address a player
+    // can arrive at and go back from, rather than living in a panel that only exists while a
+    // finger is holding it open.
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -346,7 +300,7 @@ fun MainMenuScreen(
                     title = stringResource(R.string.menu_more),
                     subtitle = stringResource(R.string.home_more_subtitle),
                     icon = PremiumIcon.SHIELD_STAR,
-                    onClick = { openSheet = HomeMenu.MORE },
+                    onClick = onMore,
                     accented = true,
                 )
                 Spacer(Modifier.height(Dimens.SpaceMd))
@@ -354,6 +308,3 @@ fun MainMenuScreen(
         }
     }
 }
-
-/** Which sheet is showing. Saved, so a rotation does not close it. */
-private enum class HomeMenu { NONE, MORE }

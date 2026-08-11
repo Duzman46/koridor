@@ -66,9 +66,11 @@ import com.duzman46.gridbound.presentation.profile.RecentGamesViewModel
 import com.duzman46.gridbound.presentation.settings.SettingsViewModel
 import com.duzman46.gridbound.session.SessionState
 import com.duzman46.gridbound.session.SessionStatus
+import com.duzman46.gridbound.ui.components.AchievementAlert
 import com.duzman46.gridbound.ui.components.BillingNotice
 import com.duzman46.gridbound.ui.components.RequestBar
 import com.duzman46.gridbound.ui.screens.AccountScreen
+import com.duzman46.gridbound.ui.screens.AchievementsRoute
 import com.duzman46.gridbound.ui.screens.DifficultyScreen
 import com.duzman46.gridbound.ui.screens.EditProfileScreen
 import com.duzman46.gridbound.ui.screens.FriendsRoute
@@ -79,6 +81,7 @@ import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.screens.LeaderboardRoute
 import com.duzman46.gridbound.ui.screens.MainMenuScreen
+import com.duzman46.gridbound.ui.screens.MoreScreen
 import com.duzman46.gridbound.ui.screens.OnlineLobbyRoute
 import com.duzman46.gridbound.ui.screens.PlayModeScreen
 import com.duzman46.gridbound.ui.screens.PlayerProfileRoute
@@ -109,6 +112,8 @@ private object Routes {
     const val HOME = "home"
     const val SETTINGS = "settings"
     const val STATISTICS = "statistics"
+    const val MORE = "more"
+    const val ACHIEVEMENTS = "achievements"
     const val PROFILE = "profile"
     const val EDIT_PROFILE = "editProfile"
     const val ACCOUNT = "account"
@@ -442,15 +447,24 @@ fun AppNavigation(
                 MainMenuScreen(
                     session = session,
                     language = language,
-                    offersAdRemoval = billing.offersAdRemoval,
                     onLanguage = onLanguage,
                     onPlay = { navController.navigateFrom(entry, Routes.PLAY) },
                     onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
                     onLeaderboard = { navController.navigateFrom(entry, Routes.LEADERBOARD) },
                     onTutorial = { navController.navigateFrom(entry, Routes.TUTORIAL) },
                     onProfile = { navController.navigateFrom(entry, Routes.PROFILE) },
-                    onStatistics = { navController.navigateFrom(entry, Routes.STATISTICS) },
                     onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
+                    onMore = { navController.navigateFrom(entry, Routes.MORE) },
+                )
+            }
+
+            composable(Routes.MORE) { entry ->
+                MoreScreen(
+                    offersAdRemoval = billing.offersAdRemoval,
+                    isGuest = session.isGuest,
+                    onBack = { navController.popFrom(entry) },
+                    onStatistics = { navController.navigateFrom(entry, Routes.STATISTICS) },
+                    onAchievements = { navController.navigateFrom(entry, Routes.ACHIEVEMENTS) },
                     onRemoveAds = {
                         // A guest has no account for Play to attach the purchase to, so it would
                         // not survive a reinstall or follow them to another device. Link first.
@@ -462,8 +476,11 @@ fun AppNavigation(
                     },
                     onRestorePurchases = onRestorePurchases,
                     onOpenUrl = openUrl,
-                    showAdBanner = monetization.adsAllowed,
                 )
+            }
+
+            composable(Routes.ACHIEVEMENTS) { entry ->
+                AchievementsRoute(onBack = { navController.popFrom(entry) })
             }
 
             composable(Routes.PLAY) { entry ->
@@ -856,6 +873,17 @@ fun AppNavigation(
                 }
             },
             onOpenLobby = { roomCode -> navController.navigate(Routes.online(roomCode)) },
+        )
+
+        // Hung beside the graph for the same reason the request bar is: a badge is won by the
+        // move that ends a match, when the app is already on its way from the board to the
+        // winner screen. Silent on the board itself, where a card from the top edge would be
+        // over the one thing that matters.
+        AchievementAlert(
+            enabled = currentRoute != Routes.GAME,
+            onOpen = {
+                navController.navigate(Routes.ACHIEVEMENTS) { launchSingleTop = true }
+            },
         )
 
         BillingNotice(message = billing.message, onDismiss = onDismissBillingMessage)

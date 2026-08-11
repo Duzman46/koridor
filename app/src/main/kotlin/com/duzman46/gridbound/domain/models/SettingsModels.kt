@@ -34,6 +34,19 @@ data class GameStatistics(
     val totalTurns: Int = 0,
     val winsByDifficulty: Map<Difficulty, Int> = Difficulty.entries.associateWith { 0 },
     val lossesByDifficulty: Map<Difficulty, Int> = Difficulty.entries.associateWith { 0 },
+    /** Matches played against another person over the network, and how many of them were won. */
+    val onlineGames: Int = 0,
+    val onlineWins: Int = 0,
+    /** Competitive wins in a row: the run standing now, and the longest one ever stood. */
+    val currentStreak: Int = 0,
+    val bestStreak: Int = 0,
+    /**
+     * Turns in the shortest match this player has won, or 0 when they have won none.
+     *
+     * Zero rather than null because it is a stored counter like the rest, and "no win yet" and
+     * "won in no turns" are the same impossible thing — a match cannot end before it starts.
+     */
+    val fastestWinTurns: Int = 0,
 ) {
     val winRate: Float
         get() {

@@ -437,14 +437,22 @@ private fun StatCell(value: String, tint: Color, mark: DrawScope.() -> Unit) {
     }
 }
 
-/** The line at the foot of the table that says what the table is for. */
+/**
+ * The line at the foot of a screen that says why the screen is short of something, and offers the
+ * one thing that fixes it.
+ *
+ * Two screens have that shape — the table a guest is not on, and the friend list a guest cannot
+ * add to — and both answers are the same account. So the mark is a parameter and the rest is
+ * shared: two banners with the same words in two hand-built layouts is how they drift apart.
+ */
 @Composable
-fun ClimbBanner(
+fun LinkAccountBanner(
     title: String,
     hint: String,
     action: String,
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
+    mark: DrawScope.() -> Unit = { drawCrestedTrophy() },
 ) {
     val shape = RoundedCornerShape(18.dp)
     // Stacked, because the two of them were competing for one line and both lost.
@@ -466,7 +474,7 @@ fun ClimbBanner(
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.size(22.dp)) { drawCrestedTrophy() }
+        Canvas(Modifier.size(22.dp)) { mark() }
         Column(Modifier.weight(1f)) {
             Text(
                 text = title,

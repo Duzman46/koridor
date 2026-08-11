@@ -30,6 +30,15 @@ interface GameRepository {
 
     suspend fun setUsernameChosen(chosen: Boolean)
 
+    /**
+     * Badge ids the player has already been shown, or null before the app has ever recorded any.
+     *
+     * Null is not the same as empty: see [com.duzman46.gridbound.core.Constants.Data.KEY_SEEN_ACHIEVEMENTS].
+     */
+    val seenAchievements: Flow<Set<String>?>
+
+    suspend fun markAchievementsSeen(ids: Set<String>)
+
     suspend fun setLanguage(language: AppLanguage)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setSoundEnabled(enabled: Boolean)

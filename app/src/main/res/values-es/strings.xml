@@ -456,8 +456,8 @@
     <string name="friends_perk_play_hint">Partidas privadas</string>
     <string name="friends_perk_compare">Comparar puntos</string>
     <string name="friends_perk_compare_hint">Mejora tu juego</string>
-    <string name="friends_link_title">Vincula tu cuenta y encuentra amigos</string>
-    <string name="friends_link_hint">Para tener amigos hace falta una cuenta.</string>
+    <string name="friends_link_title">Encuentra amigos</string>
+    <string name="friends_link_hint">Hace falta una cuenta.</string>
     <string name="friends_link_action">Vincular cuenta</string>
     <string name="more_support_title">Apoya a Koridor</string>
     <string name="more_support_body">Quita los anuncios y juega sin interrupciones.</string>

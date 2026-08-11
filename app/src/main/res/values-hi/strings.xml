@@ -453,8 +453,8 @@
     <string name="friends_perk_play_hint">निजी मैच</string>
     <string name="friends_perk_compare">स्कोर मिलाएँ</string>
     <string name="friends_perk_compare_hint">खेल बेहतर करें</string>
-    <string name="friends_link_title">खाता जोड़ें, दोस्त खोजें</string>
-    <string name="friends_link_hint">दोस्तों के लिए खाता ज़रूरी है।</string>
+    <string name="friends_link_title">दोस्त खोजें</string>
+    <string name="friends_link_hint">इसके लिए खाता चाहिए।</string>
     <string name="friends_link_action">खाता जोड़ें</string>
     <string name="more_support_title">Koridor का साथ दें</string>
     <string name="more_support_body">विज्ञापन हटाएँ और बिना रुकावट खेलें।</string>

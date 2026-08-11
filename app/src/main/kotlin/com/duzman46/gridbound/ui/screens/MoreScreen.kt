@@ -104,10 +104,9 @@ fun MoreScreen(
                         onClick = onStatistics,
                     ),
                     MoreEntry(
-                        icon = PremiumIcon.TROPHY,
+                        icon = PremiumIcon.STAR,
                         title = stringResource(R.string.achievements_title),
                         subtitle = stringResource(R.string.more_achievements_hint),
-                        accented = true,
                         onClick = onAchievements,
                     ),
                     MoreEntry(

@@ -453,8 +453,8 @@
     <string name="friends_perk_play_hint">Pertandingan privat</string>
     <string name="friends_perk_compare">Bandingkan skor</string>
     <string name="friends_perk_compare_hint">Tingkatkan permainan</string>
-    <string name="friends_link_title">Tautkan akun, temukan temanmu</string>
-    <string name="friends_link_hint">Fitur teman memerlukan akun.</string>
+    <string name="friends_link_title">Temukan temanmu</string>
+    <string name="friends_link_hint">Perlu akun untuk ini.</string>
     <string name="friends_link_action">Tautkan akun</string>
     <string name="more_support_title">Dukung Koridor</string>
     <string name="more_support_body">Hapus iklan dan main tanpa gangguan.</string>

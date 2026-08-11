@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -112,9 +114,14 @@ fun FriendsEmptyPanel(
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
+        // Intrinsic height, so the two rules run the full depth of the tallest column rather
+        // than a guessed seventy-two pixels. "Skorları karşılaştır" wraps to two lines and
+        // "Birlikte oyna" does not, and with a fixed rule the three columns read as three
+        // unrelated blocks that happen to be next to each other.
         Row(
             Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .padding(top = Dimens.SpaceXs),
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
             verticalAlignment = Alignment.Top,
@@ -124,7 +131,7 @@ fun FriendsEmptyPanel(
                     Box(
                         Modifier
                             .width(Dimens.Hairline)
-                            .height(72.dp)
+                            .fillMaxHeight()
                             .background(Color(0xFF232A32)),
                     )
                 }
@@ -159,12 +166,15 @@ private fun RowScope.PerkColumn(perk: FriendPerk) {
         ) {
             PremiumGlyph(perk.icon, Modifier.size(20.dp), tint = KoridorGold)
         }
+        // Two lines whether it needs them or not, so the sentence under it starts at the same
+        // height in all three columns.
         Text(
             text = perk.title,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            minLines = 2,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -413,30 +423,35 @@ private fun DrawScope.drawFriendsScene() {
     val h = size.height
     val centre = w / 2f
 
-    // The board, drawn as a diamond in perspective under everything else. Faint, because it is
-    // the ground the scene stands on rather than a thing in it.
-    val plate = Path().apply {
-        moveTo(centre, h * 0.60f)
-        lineTo(centre + w * 0.30f, h * 0.80f)
-        lineTo(centre, h * 1.00f)
-        lineTo(centre - w * 0.30f, h * 0.80f)
-        close()
-    }
-    drawPath(plate, KoridorGold.copy(alpha = 0.13f), style = Stroke(width = h * 0.008f))
-    for (index in 1..3) {
-        val t = index / 4f
-        drawLine(
-            KoridorGold.copy(alpha = 0.08f),
-            Offset(centre - w * 0.30f * t, h * (0.60f + 0.20f * t)),
-            Offset(centre + w * 0.30f * (1f - t), h * (0.80f + 0.20f * (1f - t))),
-            strokeWidth = h * 0.006f,
-        )
-        drawLine(
-            KoridorGold.copy(alpha = 0.08f),
-            Offset(centre + w * 0.30f * t, h * (0.60f + 0.20f * t)),
-            Offset(centre - w * 0.30f * (1f - t), h * (0.80f + 0.20f * (1f - t))),
-            strokeWidth = h * 0.006f,
-        )
+    // The board: a square seen in perspective, so a diamond, with its ranks and files ruled
+    // across it. Both families of lines run parallel to an edge of the diamond, which is what
+    // makes it read as a board rather than as cross-hatching — the first attempt drew chords
+    // between opposite edges and produced a scribble.
+    val far = Offset(centre, h * 0.58f)
+    val east = Offset(centre + w * 0.30f, h * 0.78f)
+    val near = Offset(centre, h * 0.98f)
+    val west = Offset(centre - w * 0.30f, h * 0.78f)
+    val ink = KoridorGold.copy(alpha = 0.16f)
+    val rule = KoridorGold.copy(alpha = 0.09f)
+    val weight = h * 0.006f
+
+    drawPath(
+        Path().apply {
+            moveTo(far.x, far.y)
+            lineTo(east.x, east.y)
+            lineTo(near.x, near.y)
+            lineTo(west.x, west.y)
+            close()
+        },
+        ink,
+        style = Stroke(width = h * 0.009f, join = StrokeJoin.Round),
+    )
+    for (index in 1 until BOARD_RANKS) {
+        val t = index.toFloat() / BOARD_RANKS
+        // Parallel to the far-east edge: from a point on west→far to one on near→east.
+        drawLine(rule, lerp(west, far, t), lerp(near, east, t), strokeWidth = weight)
+        // Parallel to the far-west edge: from a point on east→far to one on near→west.
+        drawLine(rule, lerp(east, far, t), lerp(near, west, t), strokeWidth = weight)
     }
 
     // The shield, with the pair of figures cut into it.
@@ -493,9 +508,24 @@ private fun DrawScope.drawFriendsScene() {
         size = Size(markSize * 0.48f, markSize * 0.40f),
     )
 
-    // The two pawns, one of each seat, standing on the plate either side of the shield.
-    drawScenePawn(Offset(centre - w * 0.20f, h * 0.74f), h * 0.30f, Color(0xFF20262E), Color(0xFF39414B))
-    drawScenePawn(Offset(centre + w * 0.20f, h * 0.72f), h * 0.30f, Color(0xFFD8C39A), Color(0xFFF0E2C4))
+    // The two pawns, one of each seat, standing on the board either side of the shield.
+    //
+    // The dark one carries a rim. Without it, a near-black piece on a near-black page is a hole
+    // in the picture rather than a piece — it read as the pale one's shadow.
+    drawScenePawn(
+        foot = Offset(centre - w * 0.20f, h * 0.76f),
+        height = h * 0.30f,
+        body = Color(0xFF262E37),
+        light = Color(0xFF3E4753),
+        rim = Color(0xFF5C6673),
+    )
+    drawScenePawn(
+        foot = Offset(centre + w * 0.20f, h * 0.74f),
+        height = h * 0.30f,
+        body = Color(0xFFD8C39A),
+        light = Color(0xFFF0E2C4),
+        rim = null,
+    )
 
     // A few motes of light, at the edges, where nothing else is.
     listOf(
@@ -508,34 +538,53 @@ private fun DrawScope.drawFriendsScene() {
     }
 }
 
-/** One pawn: a head, a waist and a base, lit from above. */
-private fun DrawScope.drawScenePawn(foot: Offset, height: Float, body: Color, light: Color) {
+/** How many ranks the board in the picture is ruled into. Four reads; nine is a moiré at 150 dp. */
+private const val BOARD_RANKS = 4
+
+private fun lerp(from: Offset, to: Offset, t: Float): Offset =
+    Offset(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t)
+
+/** One pawn: a head, a waist and a base, lit from above, with an optional rim to lift it off. */
+private fun DrawScope.drawScenePawn(
+    foot: Offset,
+    height: Float,
+    body: Color,
+    light: Color,
+    rim: Color?,
+) {
     val width = height * 0.52f
     drawOval(
-        color = body.copy(alpha = 0.55f),
+        color = Color.Black.copy(alpha = 0.35f),
         topLeft = Offset(foot.x - width * 0.60f, foot.y - height * 0.05f),
         size = Size(width * 1.20f, height * 0.13f),
     )
-    drawPath(
-        Path().apply {
-            moveTo(foot.x - width * 0.50f, foot.y)
-            lineTo(foot.x + width * 0.50f, foot.y)
-            lineTo(foot.x + width * 0.34f, foot.y - height * 0.16f)
-            cubicTo(
-                foot.x + width * 0.20f, foot.y - height * 0.42f,
-                foot.x + width * 0.24f, foot.y - height * 0.52f,
-                foot.x + width * 0.16f, foot.y - height * 0.58f,
-            )
-            lineTo(foot.x - width * 0.16f, foot.y - height * 0.58f)
-            cubicTo(
-                foot.x - width * 0.24f, foot.y - height * 0.52f,
-                foot.x - width * 0.20f, foot.y - height * 0.42f,
-                foot.x - width * 0.34f, foot.y - height * 0.16f,
-            )
-            close()
-        },
-        body,
-    )
+    val silhouette = Path().apply {
+        moveTo(foot.x - width * 0.50f, foot.y)
+        lineTo(foot.x + width * 0.50f, foot.y)
+        lineTo(foot.x + width * 0.34f, foot.y - height * 0.16f)
+        cubicTo(
+            foot.x + width * 0.20f, foot.y - height * 0.42f,
+            foot.x + width * 0.24f, foot.y - height * 0.52f,
+            foot.x + width * 0.16f, foot.y - height * 0.58f,
+        )
+        lineTo(foot.x - width * 0.16f, foot.y - height * 0.58f)
+        cubicTo(
+            foot.x - width * 0.24f, foot.y - height * 0.52f,
+            foot.x - width * 0.20f, foot.y - height * 0.42f,
+            foot.x - width * 0.34f, foot.y - height * 0.16f,
+        )
+        close()
+    }
+    drawPath(silhouette, body)
     drawCircle(light, width * 0.34f, Offset(foot.x, foot.y - height * 0.74f))
     drawCircle(body, width * 0.30f, Offset(foot.x + width * 0.04f, foot.y - height * 0.72f))
+    if (rim != null) {
+        drawPath(silhouette, rim, style = Stroke(width = height * 0.018f, join = StrokeJoin.Round))
+        drawCircle(
+            rim,
+            width * 0.34f,
+            Offset(foot.x, foot.y - height * 0.74f),
+            style = Stroke(width = height * 0.018f),
+        )
+    }
 }

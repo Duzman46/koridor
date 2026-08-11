@@ -474,8 +474,8 @@
     <string name="friends_perk_play_hint">Özel maçlar yapın</string>
     <string name="friends_perk_compare">Skorları karşılaştır</string>
     <string name="friends_perk_compare_hint">Performansını geliştir</string>
-    <string name="friends_link_title">Hesabını bağla, arkadaşlarını bul</string>
-    <string name="friends_link_hint">Arkadaş eklemek için bir hesap gerekir.</string>
+    <string name="friends_link_title">Arkadaşlarını bul</string>
+    <string name="friends_link_hint">Bunun için bir hesap gerekir.</string>
     <string name="friends_link_action">Hesap bağla</string>
     <string name="more_support_title">Koridor\'u Destekle</string>
     <string name="more_support_body">Reklamları kaldırarak kesintisiz bir deneyim yaşa.</string>

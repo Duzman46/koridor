@@ -3,11 +3,13 @@ package com.duzman46.gridbound.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -232,37 +234,46 @@ private fun FriendsScreen(
 
 @Composable
 private fun EmptyFriends(canAdd: Boolean, onAdd: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .navigationBarsPadding()
-            .padding(horizontal = Dimens.ScreenPadding)
-            .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceLg),
-    ) {
-        FriendsEmptyPanel(
-            title = stringResource(R.string.friends_empty_title),
-            body = stringResource(R.string.friends_empty_body),
-            perks = listOf(
-                FriendPerk(
-                    icon = PremiumIcon.PLUS,
-                    title = stringResource(R.string.friends_perk_add),
-                    body = stringResource(R.string.friends_perk_add_hint),
+    // Centred in what is left rather than hung from the header, which left a third of the window
+    // empty underneath it. Centring inside a scroll needs the minimum height stated: under
+    // `verticalScroll` a column is measured against an infinite ceiling, so it is exactly as tall
+    // as its content and `Arrangement.Center` has nothing to centre within. Given a floor of one
+    // viewport it centres when it fits and scrolls when a doubled font scale says it does not.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val viewport = maxHeight
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = viewport)
+                .navigationBarsPadding()
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceLg),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            FriendsEmptyPanel(
+                title = stringResource(R.string.friends_empty_title),
+                body = stringResource(R.string.friends_empty_body),
+                perks = listOf(
+                    FriendPerk(
+                        icon = PremiumIcon.PLUS,
+                        title = stringResource(R.string.friends_perk_add),
+                        body = stringResource(R.string.friends_perk_add_hint),
+                    ),
+                    FriendPerk(
+                        icon = PremiumIcon.GAMEPAD,
+                        title = stringResource(R.string.friends_perk_play),
+                        body = stringResource(R.string.friends_perk_play_hint),
+                    ),
+                    FriendPerk(
+                        icon = PremiumIcon.BARS,
+                        title = stringResource(R.string.friends_perk_compare),
+                        body = stringResource(R.string.friends_perk_compare_hint),
+                    ),
                 ),
-                FriendPerk(
-                    icon = PremiumIcon.GAMEPAD,
-                    title = stringResource(R.string.friends_perk_play),
-                    body = stringResource(R.string.friends_perk_play_hint),
-                ),
-                FriendPerk(
-                    icon = PremiumIcon.BARS,
-                    title = stringResource(R.string.friends_perk_compare),
-                    body = stringResource(R.string.friends_perk_compare_hint),
-                ),
-            ),
-            action = stringResource(R.string.friends_add_player).takeIf { canAdd },
-            onAction = onAdd,
-        )
+                action = stringResource(R.string.friends_add_player).takeIf { canAdd },
+                onAction = onAdd,
+            )
+        }
     }
 }
 

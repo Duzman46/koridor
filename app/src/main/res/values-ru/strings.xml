@@ -459,8 +459,8 @@
     <string name="friends_perk_play_hint">Частные партии</string>
     <string name="friends_perk_compare">Сравнить очки</string>
     <string name="friends_perk_compare_hint">Играйте лучше</string>
-    <string name="friends_link_title">Привяжите аккаунт и найдите друзей</string>
-    <string name="friends_link_hint">Для друзей нужен аккаунт.</string>
+    <string name="friends_link_title">Найдите друзей</string>
+    <string name="friends_link_hint">Для этого нужен аккаунт.</string>
     <string name="friends_link_action">Привязать аккаунт</string>
     <string name="more_support_title">Поддержать Koridor</string>
     <string name="more_support_body">Уберите рекламу и играйте без перерывов.</string>

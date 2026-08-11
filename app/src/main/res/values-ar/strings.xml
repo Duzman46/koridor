@@ -469,8 +469,8 @@
     <string name="friends_perk_play_hint">مباريات خاصة</string>
     <string name="friends_perk_compare">قارن النقاط</string>
     <string name="friends_perk_compare_hint">طوّر مستواك</string>
-    <string name="friends_link_title">اربط حسابك وابحث عن أصدقائك</string>
-    <string name="friends_link_hint">الأصدقاء يحتاجون إلى حساب.</string>
+    <string name="friends_link_title">ابحث عن أصدقائك</string>
+    <string name="friends_link_hint">يلزم وجود حساب.</string>
     <string name="friends_link_action">ربط حساب</string>
     <string name="more_support_title">ادعم كوريدور</string>
     <string name="more_support_body">أزل الإعلانات والعب دون انقطاع.</string>

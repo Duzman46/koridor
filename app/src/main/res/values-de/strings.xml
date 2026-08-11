@@ -453,8 +453,8 @@
     <string name="friends_perk_play_hint">Private Partien</string>
     <string name="friends_perk_compare">Punkte vergleichen</string>
     <string name="friends_perk_compare_hint">Besser werden</string>
-    <string name="friends_link_title">Konto verknüpfen, Freunde finden</string>
-    <string name="friends_link_hint">Für Freunde wird ein Konto gebraucht.</string>
+    <string name="friends_link_title">Freunde finden</string>
+    <string name="friends_link_hint">Dafür braucht es ein Konto.</string>
     <string name="friends_link_action">Konto verknüpfen</string>
     <string name="more_support_title">Koridor unterstützen</string>
     <string name="more_support_body">Entferne die Werbung und spiele ohne Unterbrechung.</string>

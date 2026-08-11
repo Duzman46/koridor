@@ -90,6 +90,9 @@ enum class PremiumIcon {
 
     /** A fact rather than an action. An i in a ring. */
     INFO,
+
+    /** A badge earned. Five points, filled. */
+    STAR,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -121,8 +124,23 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.RESTORE -> restore(s, tint, line)
             PremiumIcon.DOCUMENT -> document(s, tint, line)
             PremiumIcon.INFO -> info(s, tint, line)
+            PremiumIcon.STAR -> star(s, tint)
         }
     }
+}
+
+/** A five-pointed star, filled. The mark for a badge earned. */
+private fun DrawScope.star(s: Float, tint: Color) {
+    val path = Path()
+    for (index in 0 until 10) {
+        val radius = if (index % 2 == 0) s * 0.48f else s * 0.20f
+        val angle = Math.toRadians((-90 + index * 36).toDouble())
+        val x = s * 0.5f + (radius * Math.cos(angle)).toFloat()
+        val y = s * 0.5f + (radius * Math.sin(angle)).toFloat()
+        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    }
+    path.close()
+    drawPath(path, tint)
 }
 
 /** An arrow turning most of a circle: what was bought once, fetched again. */

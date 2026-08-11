@@ -61,7 +61,6 @@ data class MoreEntry(
     val subtitle: String? = null,
     /** Shown at the trailing edge instead of a chevron. A row with one of these does nothing. */
     val value: String? = null,
-    val accented: Boolean = false,
     val onClick: (() -> Unit)? = null,
 )
 
@@ -125,11 +124,11 @@ private fun MoreRow(entry: MoreEntry) {
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumGlyph(
-            entry.icon,
-            Modifier.size(24.dp),
-            tint = if (entry.accented) KoridorGold else Color(0xFF9AA0A8),
-        )
+        // Every mark is gold here, and this is the one screen where that is right. The gold
+        // ration on the home screen exists because the cards there compete — one of them is the
+        // way into a game. Nothing on this page competes: it is a directory, the marks are its
+        // alphabet, and one gold entry among seven grey ones would say that entry matters more.
+        PremiumGlyph(entry.icon, Modifier.size(24.dp), tint = KoridorGold)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = entry.title,

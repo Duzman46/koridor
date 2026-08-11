@@ -488,7 +488,7 @@
     <string name="friends_perk_play_hint">Private matches</string>
     <string name="friends_perk_compare">Compare scores</string>
     <string name="friends_perk_compare_hint">Sharpen your game</string>
-    <string name="friends_link_title">Link your account, find your friends</string>
+    <string name="friends_link_title">Find your friends</string>
     <string name="friends_link_hint">Friends need an account.</string>
     <string name="friends_link_action">Link account</string>
     <string name="more_support_title">Support Koridor</string>

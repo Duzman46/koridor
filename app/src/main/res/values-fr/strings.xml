@@ -456,8 +456,8 @@
     <string name="friends_perk_play_hint">Parties privées</string>
     <string name="friends_perk_compare">Comparer les scores</string>
     <string name="friends_perk_compare_hint">Progresser</string>
-    <string name="friends_link_title">Liez votre compte, retrouvez vos amis</string>
-    <string name="friends_link_hint">Les amis nécessitent un compte.</string>
+    <string name="friends_link_title">Trouvez vos amis</string>
+    <string name="friends_link_hint">Il faut un compte.</string>
     <string name="friends_link_action">Lier un compte</string>
     <string name="more_support_title">Soutenir Koridor</string>
     <string name="more_support_body">Retirez la publicité et jouez sans interruption.</string>

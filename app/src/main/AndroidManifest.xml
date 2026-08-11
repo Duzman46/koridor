@@ -3,6 +3,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!--
+      Asked for the first time the player switches notifications on in Settings, never on first
+      launch: a permission dialog shown before anything has been offered is a dialog everyone
+      denies, and Android only lets you ask twice.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
       VIBRATE is deliberately absent. The one haptic in the app is Compose's
       LocalHapticFeedback, which is View.performHapticFeedback: the system server performs the
       vibration under its own identity, and the platform requires the permission of

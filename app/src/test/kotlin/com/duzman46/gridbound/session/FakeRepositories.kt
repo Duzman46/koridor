@@ -448,8 +448,16 @@ class FakeGameRepository : GameRepository {
         settingsState.value = settingsState.value.copy(themeMode = mode)
     }
 
-    override suspend fun setSoundEnabled(enabled: Boolean) {
-        settingsState.value = settingsState.value.copy(soundEnabled = enabled)
+    override suspend fun setSoundVolume(percent: Int) {
+        settingsState.value = settingsState.value.copy(soundVolume = percent.coerceIn(0, 100))
+    }
+
+    override suspend fun setMusicEnabled(enabled: Boolean) {
+        settingsState.value = settingsState.value.copy(musicEnabled = enabled)
+    }
+
+    override suspend fun setNotificationsEnabled(enabled: Boolean) {
+        settingsState.value = settingsState.value.copy(notificationsEnabled = enabled)
     }
 
     override suspend fun setHapticsEnabled(enabled: Boolean) {

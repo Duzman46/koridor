@@ -8,11 +8,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -26,26 +29,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
+import kotlin.math.roundToInt
 
 /**
  * The card-of-rows that Settings and More are both made of.
@@ -67,6 +78,9 @@ data class OptionEntry(
     /** Non-null makes this a switch, and the whole row toggles it. */
     val checked: Boolean? = null,
     val onCheckedChange: ((Boolean) -> Unit)? = null,
+    /** Non-null makes this a level from 0 to 100, shown as a slider with its reading beside it. */
+    val level: Int? = null,
+    val onLevelChange: ((Int) -> Unit)? = null,
     val onClick: (() -> Unit)? = null,
 )
 
@@ -133,11 +147,20 @@ private fun OptionRow(entry: OptionEntry) {
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Gold, always, and that is a decision about what these screens are. The home screen
-        // rations gold because its cards compete — one of them is the way into a game. A list of
-        // settings competes with nothing: the marks are its alphabet, and one gold entry among
-        // seven grey ones would say that entry matters more than the rest.
-        PremiumGlyph(entry.icon, Modifier.size(24.dp), tint = KoridorGold)
+        // In a tile rather than bare on the row. A mark alone on a wide row has nothing to sit
+        // against and drifts; the tile gives the column of them a common edge, and the faint
+        // gold ground under each is what makes a list of settings read as a set of objects
+        // rather than as a page of text with pictures in the margin.
+        Box(
+            Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(KoridorGold.copy(alpha = 0.10f))
+                .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.30f)), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PremiumGlyph(entry.icon, Modifier.size(21.dp), tint = KoridorGold)
+        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = entry.title,
@@ -157,7 +180,10 @@ private fun OptionRow(entry: OptionEntry) {
                 )
             }
         }
+        val level = entry.level
+        val onLevel = entry.onLevelChange
         when {
+            level != null && onLevel != null -> LevelSlider(level, onLevel)
             toggle != null -> GoldSwitch(toggle)
             entry.value != null -> Text(
                 text = entry.value,
@@ -170,6 +196,88 @@ private fun OptionRow(entry: OptionEntry) {
         }
     }
 }
+
+/**
+ * A level from nought to a hundred, and its reading.
+ *
+ * Material's slider brings a tick row, a value label that pops up over your thumb, and a ripple
+ * the width of the track — three things to switch off before it looks like anything else on this
+ * screen. What is left is a rail, a filled part, and a knob.
+ *
+ * Silence is nought rather than a separate switch. One control cannot disagree with itself, and
+ * a slider at zero beside a toggle that says "on" is a screen lying to somebody.
+ */
+@Composable
+private fun RowScope.LevelSlider(level: Int, onChange: (Int) -> Unit) {
+    val reading = "%$level"
+    var width by remember { mutableIntStateOf(1) }
+    val knob = with(LocalDensity.current) { KNOB.toPx() }
+
+    // The knob's centre travels between the two ends *inset by its own radius*, so at nought and
+    // at a hundred it sits inside the rail rather than half off it. The reading therefore has to
+    // be worked out over that shorter run, or the last few per cent are unreachable.
+    val set: (Float) -> Unit = { x ->
+        val travel = (width - knob).coerceAtLeast(1f)
+        onChange((((x - knob / 2f) / travel) * 100f).roundToInt().coerceIn(0, 100))
+    }
+
+    Box(
+        // A shade under the text's share: the name and the line under it are what the row is
+        // for, and a slider that takes half the width leaves "Hamle, duvar ve sonuç sesleri"
+        // wrapping to three lines.
+        Modifier
+            .weight(0.85f)
+            .height(40.dp)
+            .onSizeChanged { width = it.width.coerceAtLeast(1) }
+            // Two gestures, because a slider has to answer both: a tap anywhere on the rail
+            // jumps to that value, and a drag follows the finger. One detector cannot do both —
+            // detectTapGestures consumes the down event a drag would have needed.
+            .pointerInput(Unit) { detectTapGestures { set(it.x) } }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { change, _ -> set(change.position.x) }
+            }
+            .semantics { contentDescription = reading },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Canvas(Modifier.fillMaxWidth().height(KNOB)) {
+            val radius = knob / 2f
+            val travel = (size.width - knob).coerceAtLeast(1f)
+            val centre = radius + travel * (level / 100f).coerceIn(0f, 1f)
+            val y = size.height / 2f
+            val rail = RAIL.toPx()
+            drawLine(
+                Color(0xFF2A3038),
+                Offset(radius, y),
+                Offset(size.width - radius, y),
+                strokeWidth = rail,
+                cap = StrokeCap.Round,
+            )
+            if (centre > radius) {
+                drawLine(
+                    KoridorGold,
+                    Offset(radius, y),
+                    Offset(centre, y),
+                    strokeWidth = rail,
+                    cap = StrokeCap.Round,
+                )
+            }
+            drawCircle(KoridorGold, radius, Offset(centre, y))
+        }
+    }
+    Text(
+        text = reading,
+        modifier = Modifier.width(46.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = KoridorGold,
+        textAlign = TextAlign.End,
+        maxLines = 1,
+    )
+}
+
+/** The knob, and the rail it runs on. */
+private val KNOB = 18.dp
+private val RAIL = 4.dp
 
 /**
  * The switch, drawn rather than themed.

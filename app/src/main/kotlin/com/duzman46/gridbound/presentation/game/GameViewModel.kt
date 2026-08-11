@@ -126,7 +126,7 @@ class GameViewModel @Inject constructor(
             settingsManager.settings.collectLatest { settings ->
                 _uiState.update {
                     it.copy(
-                        soundEnabled = settings.soundEnabled,
+                        soundVolume = settings.soundVolume,
                         hapticsEnabled = settings.hapticsEnabled,
                         matchMessagesEnabled = settings.matchMessagesEnabled,
                     )
@@ -281,7 +281,7 @@ class GameViewModel @Inject constructor(
             mode = mode,
             difficulty = difficulty,
             localPlayer = localPlayer,
-            soundEnabled = prior.soundEnabled,
+            soundVolume = prior.soundVolume,
             hapticsEnabled = prior.hapticsEnabled,
             matchMessagesEnabled = prior.matchMessagesEnabled,
         )
@@ -752,7 +752,7 @@ class GameViewModel @Inject constructor(
 
     private fun feedback(effect: SoundEffect) {
         val state = _uiState.value
-        soundManager.play(effect, state.soundEnabled)
+        soundManager.play(effect, state.soundVolume)
         _events.tryEmit(GameEvent.Feedback(effect, state.hapticsEnabled))
     }
 

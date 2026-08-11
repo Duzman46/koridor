@@ -108,6 +108,12 @@ enum class PremiumIcon {
 
     /** Advertising, refused. A circle with a bar through it. */
     NO_ADS,
+
+    /** The loop under the menus. Two quavers beamed together. */
+    MUSIC,
+
+    /** Something the app wants to tell you when you are not looking. A bell. */
+    BELL,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -156,7 +162,64 @@ fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
             PremiumIcon.SPEAKER -> speaker(s, tint, line)
             PremiumIcon.VIBRATE -> vibrate(s, tint, line)
         PremiumIcon.NO_ADS -> noAds(s, tint, line)
+        PremiumIcon.MUSIC -> music(s, tint, line)
+        PremiumIcon.BELL -> bell(s, tint, line)
     }
+}
+
+/** Two quavers under one beam: the mark everybody reads as music without reading music. */
+private fun DrawScope.music(s: Float, tint: Color, line: Float) {
+    val stem = line * 0.85f
+    drawLine(tint, Offset(s * 0.36f, s * 0.74f), Offset(s * 0.36f, s * 0.18f), stem, StrokeCap.Round)
+    drawLine(tint, Offset(s * 0.80f, s * 0.62f), Offset(s * 0.80f, s * 0.10f), stem, StrokeCap.Round)
+    // The beam, thicker than the stems, sloping the way a printed one does.
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.34f, s * 0.18f)
+            lineTo(s * 0.82f, s * 0.10f)
+            lineTo(s * 0.82f, s * 0.26f)
+            lineTo(s * 0.34f, s * 0.34f)
+            close()
+        },
+        tint,
+    )
+    drawOval(
+        color = tint,
+        topLeft = Offset(s * 0.14f, s * 0.62f),
+        size = Size(s * 0.24f, s * 0.20f),
+    )
+    drawOval(
+        color = tint,
+        topLeft = Offset(s * 0.58f, s * 0.50f),
+        size = Size(s * 0.24f, s * 0.20f),
+    )
+}
+
+/** A bell: a dome on a rim, with the clapper below it. */
+private fun DrawScope.bell(s: Float, tint: Color, line: Float) {
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.22f, s * 0.68f)
+            cubicTo(s * 0.30f, s * 0.62f, s * 0.28f, s * 0.52f, s * 0.28f, s * 0.44f)
+            cubicTo(s * 0.28f, s * 0.24f, s * 0.38f, s * 0.14f, s * 0.50f, s * 0.14f)
+            cubicTo(s * 0.62f, s * 0.14f, s * 0.72f, s * 0.24f, s * 0.72f, s * 0.44f)
+            cubicTo(s * 0.72f, s * 0.52f, s * 0.70f, s * 0.62f, s * 0.78f, s * 0.68f)
+            close()
+        },
+        tint,
+        style = Stroke(width = line, join = StrokeJoin.Round),
+    )
+    // The handle on top and the clapper under: without them a bell reads as a hill.
+    drawLine(tint, Offset(s * 0.44f, s * 0.13f), Offset(s * 0.56f, s * 0.13f), line, StrokeCap.Round)
+    drawArc(
+        color = tint,
+        startAngle = 0f,
+        sweepAngle = 180f,
+        useCenter = false,
+        topLeft = Offset(s * 0.40f, s * 0.70f),
+        size = Size(s * 0.20f, s * 0.20f),
+        style = Stroke(width = line, cap = StrokeCap.Round),
+    )
 }
 
 /** A circle with one half filled: the light-or-dark choice, drawn as the thing itself. */
@@ -173,29 +236,44 @@ private fun DrawScope.contrast(s: Float, tint: Color, line: Float) {
     )
 }
 
-/** A speaker cone with two arcs of sound coming off it. */
+/**
+ * A speaker: a square box at the back, a cone opening from it, and two arcs of sound.
+ *
+ * The first attempt was one six-sided path — a box and a cone drawn as a single silhouette —
+ * and at 21 dp it read as an arrowhead with two loose brackets beside it. The shape a speaker
+ * needs is the *notch* where the box meets the cone; the outline alone does not show it, so the
+ * box is drawn as its own rectangle and the cone as its own triangle, with the arcs concentric
+ * on the cone's mouth rather than on the middle of the icon.
+ */
 private fun DrawScope.speaker(s: Float, tint: Color, line: Float) {
+    // The box: short, centred on the axis, with the corners eased.
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.06f, s * 0.36f),
+        size = Size(s * 0.20f, s * 0.28f),
+        cornerRadius = CornerRadius(s * 0.04f),
+    )
+    // The cone, opening away from it.
     drawPath(
         Path().apply {
-            moveTo(s * 0.08f, s * 0.36f)
-            lineTo(s * 0.26f, s * 0.36f)
-            lineTo(s * 0.48f, s * 0.14f)
-            lineTo(s * 0.48f, s * 0.86f)
-            lineTo(s * 0.26f, s * 0.64f)
-            lineTo(s * 0.08f, s * 0.64f)
+            moveTo(s * 0.24f, s * 0.42f)
+            lineTo(s * 0.50f, s * 0.12f)
+            lineTo(s * 0.50f, s * 0.88f)
+            lineTo(s * 0.24f, s * 0.58f)
             close()
         },
         tint,
     )
-    listOf(0.20f to 0.62f, 0.34f to 0.90f).forEach { (inset, extent) ->
+    // Two arcs sharing the cone's mouth as their centre, so they read as one sound spreading.
+    listOf(0.19f to 0.32f, 0.34f to 0.46f).forEach { (radius, _) ->
         drawArc(
             color = tint,
-            startAngle = -55f,
-            sweepAngle = 110f,
+            startAngle = -52f,
+            sweepAngle = 104f,
             useCenter = false,
-            topLeft = Offset(s * (0.60f - inset), s * (0.5f - extent / 2f)),
-            size = Size(s * extent, s * extent),
-            style = Stroke(width = line * 0.9f, cap = StrokeCap.Round),
+            topLeft = Offset(s * (0.56f - radius), s * (0.5f - radius)),
+            size = Size(s * radius * 2f, s * radius * 2f),
+            style = Stroke(width = line * 0.95f, cap = StrokeCap.Round),
         )
     }
 }

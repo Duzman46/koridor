@@ -549,4 +549,12 @@
     <string name="settings_account_hint">Sign in, link and delete</string>
     <string name="settings_ad_privacy_hint">Manage your advertising choices</string>
     <string name="settings_remove_ads_hint">Play without interruption</string>
+    <string name="settings_music">Music</string>
+    <string name="settings_music_description">A quiet loop under the menus</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_description">Rare. A nudge if you have been away a while</string>
+    <string name="notification_channel_name">Reminders</string>
+    <string name="notification_channel_description">The occasional nudge when you have not played for a while.</string>
+    <string name="notification_come_back_title">The board is still set</string>
+    <string name="notification_come_back_body">It has been a while. One match?</string>
 </resources>

@@ -164,7 +164,15 @@ object Constants {
     }
 
     object Audio {
-        const val VOLUME_PERCENT = 72
+        /**
+         * How loud the menu loop plays, as a fraction of full.
+         *
+         * A third, and not out of timidity: the effects carry information — a move landed, a
+         * wall was refused, the clock is running out — and a pad at equal volume buries them.
+         * Music you notice you are hearing is music somebody turns off.
+         */
+        const val MUSIC_LEVEL = 0.34f
+
         const val MOVE_DURATION_MILLIS = 90
         const val WALL_DURATION_MILLIS = 120
         const val ERROR_DURATION_MILLIS = 150
@@ -193,6 +201,9 @@ object Constants {
         const val KEY_LANGUAGE = "language"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_SOUND_ENABLED = "sound_enabled"
+        const val KEY_SOUND_VOLUME = "sound_volume"
+        const val KEY_MUSIC_ENABLED = "music_enabled"
+        const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         const val KEY_HAPTICS_ENABLED = "haptics_enabled"
         const val KEY_MATCH_MESSAGES_ENABLED = "match_messages_enabled"
         const val KEY_DIFFICULTY = "difficulty"
@@ -235,6 +246,10 @@ object Constants {
          * whom the first badge is news.
          */
         const val KEY_SEEN_ACHIEVEMENTS = "seen_achievements"
+
+        /** When the app was last opened, and when it last said anything while it was closed. */
+        const val KEY_LAST_OPENED = "last_opened_at"
+        const val KEY_LAST_NUDGED = "last_nudged_at"
     }
 
     object Online {

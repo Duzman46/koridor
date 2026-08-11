@@ -1,24 +1,45 @@
 package com.duzman46.gridbound
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.duzman46.gridbound.data.SettingsBootstrap
+import com.duzman46.gridbound.game.audio.MusicManager
 import com.duzman46.gridbound.navigation.AppNavigation
+import com.duzman46.gridbound.notifications.ComeBackWorker
+import com.duzman46.gridbound.notifications.Notifications
 import com.duzman46.gridbound.presentation.AppViewModel
 import com.duzman46.gridbound.theme.GridboundTheme
 import com.duzman46.gridbound.ui.localization.LocaleController
 import com.duzman46.gridbound.ui.localization.ProvideAppLocale
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var music: MusicManager
+
+    /**
+     * Asked for once, when the player turns notifications on and the system has not been asked.
+     *
+     * The answer is not stored anywhere: the setting is what the player wants and this is what
+     * the operating system allows, and the app reads the second directly every time rather than
+     * keeping a copy that can go stale the moment somebody changes it in system settings.
+     */
+    private val askNotifications =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     /**
      * Applies the stored language before any resource is read.
@@ -35,6 +56,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Notifications.ensureChannel(this)
+        // Stamps "the app was opened" and makes sure the daily check is scheduled. Both live
+        // together in the worker's companion, because the timestamp is the only thing the
+        // schedule reads.
+        lifecycleScope.launch { ComeBackWorker.onAppOpened(this@MainActivity) }
         setContent {
             val viewModel: AppViewModel = hiltViewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -44,6 +70,11 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(viewModel) {
                 viewModel.initializeMonetization(this@MainActivity)
+            }
+            // The loop follows the setting; whether the app is on screen is the activity's own
+            // answer, given in onStart and onStop below. Both have to agree before it plays.
+            LaunchedEffect(settings.musicEnabled) {
+                music.setEnabled(settings.musicEnabled)
             }
             // A guest who first launched offline gets a backend identity on the next start.
             LaunchedEffect(session.status) {
@@ -63,6 +94,15 @@ class MainActivity : ComponentActivity() {
                         onBuy = { entitlement -> viewModel.buy(this@MainActivity, entitlement) },
                         onDismissBillingMessage = viewModel::dismissBillingMessage,
                         onPrivacyOptions = { viewModel.showPrivacyOptions(this@MainActivity) },
+                        // Asked from the settings row and nowhere else. On the first launch of
+                        // a new install nobody has been offered anything yet, and a permission
+                        // dialog shown then is the one everybody denies — after which Android
+                        // allows exactly one more ask, ever.
+                        onRequestNotifications = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        },
                         onCompletedMatchExit = { onFinished ->
                             viewModel.showInterstitialAfterCompletedMatch(this@MainActivity, onFinished)
                         },
@@ -70,5 +110,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // The loop is background to looking at the app, so it goes away when the app does. No
+    // media session, no foreground service, nothing to find in the shade.
+    override fun onStart() {
+        super.onStart()
+        music.setVisible(true)
+    }
+
+    override fun onStop() {
+        music.setVisible(false)
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        if (isFinishing) music.release()
+        super.onDestroy()
     }
 }

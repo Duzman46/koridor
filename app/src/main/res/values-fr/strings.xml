@@ -517,4 +517,12 @@
     <string name="settings_account_hint">Connexion, liaison et suppression</string>
     <string name="settings_ad_privacy_hint">Gérer vos choix publicitaires</string>
     <string name="settings_remove_ads_hint">Jouer sans interruption</string>
+    <string name="settings_music">Musique</string>
+    <string name="settings_music_description">Une boucle discrète sous les menus</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_description">Rares. Un rappel après une longue absence</string>
+    <string name="notification_channel_name">Rappels</string>
+    <string name="notification_channel_description">Le rappel occasionnel quand vous n’avez pas joué depuis un moment.</string>
+    <string name="notification_come_back_title">Le plateau est toujours prêt</string>
+    <string name="notification_come_back_body">Cela fait un moment. Une partie ?</string>
 </resources>

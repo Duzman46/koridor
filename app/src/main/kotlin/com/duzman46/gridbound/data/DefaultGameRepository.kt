@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppSettings
+import com.duzman46.gridbound.domain.models.DEFAULT_SOUND_VOLUME
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.ThemeMode
@@ -33,6 +34,9 @@ class DefaultGameRepository @Inject constructor(
         val language = stringPreferencesKey(Constants.Data.KEY_LANGUAGE)
         val themeMode = stringPreferencesKey(Constants.Data.KEY_THEME_MODE)
         val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
+        val soundVolume = intPreferencesKey(Constants.Data.KEY_SOUND_VOLUME)
+        val musicEnabled = booleanPreferencesKey(Constants.Data.KEY_MUSIC_ENABLED)
+        val notificationsEnabled = booleanPreferencesKey(Constants.Data.KEY_NOTIFICATIONS_ENABLED)
         val hapticsEnabled = booleanPreferencesKey(Constants.Data.KEY_HAPTICS_ENABLED)
         val matchMessagesEnabled =
             booleanPreferencesKey(Constants.Data.KEY_MATCH_MESSAGES_ENABLED)
@@ -74,7 +78,13 @@ class DefaultGameRepository @Inject constructor(
             // AppSettings() and SettingsBootstrap, which have always defaulted to SYSTEM.
             language = enumValueOrDefault(values[Keys.language], AppLanguage.SYSTEM),
             themeMode = enumValueOrDefault(values[Keys.themeMode], ThemeMode.SYSTEM),
-            soundEnabled = values[Keys.soundEnabled] ?: true,
+            // The level, or — on an install that only ever saw the old on-off switch — whatever
+            // that switch was set to, read as full or silent. Nobody's choice is thrown away by
+            // the control changing shape.
+            soundVolume = values[Keys.soundVolume]
+                ?: if (values[Keys.soundEnabled] == false) 0 else DEFAULT_SOUND_VOLUME,
+            musicEnabled = values[Keys.musicEnabled] ?: true,
+            notificationsEnabled = values[Keys.notificationsEnabled] ?: true,
             hapticsEnabled = values[Keys.hapticsEnabled] ?: true,
             difficulty = enumValueOrDefault(values[Keys.difficulty], Difficulty.MEDIUM),
             matchMessagesEnabled = values[Keys.matchMessagesEnabled] ?: true,
@@ -127,7 +137,13 @@ class DefaultGameRepository @Inject constructor(
 
     override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
     override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
-    override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)
+    override suspend fun setSoundVolume(percent: Int) =
+        update(Keys.soundVolume, percent.coerceIn(0, 100))
+
+    override suspend fun setMusicEnabled(enabled: Boolean) = update(Keys.musicEnabled, enabled)
+
+    override suspend fun setNotificationsEnabled(enabled: Boolean) =
+        update(Keys.notificationsEnabled, enabled)
     override suspend fun setHapticsEnabled(enabled: Boolean) = update(Keys.hapticsEnabled, enabled)
     override suspend fun setMatchMessagesEnabled(enabled: Boolean) =
         update(Keys.matchMessagesEnabled, enabled)

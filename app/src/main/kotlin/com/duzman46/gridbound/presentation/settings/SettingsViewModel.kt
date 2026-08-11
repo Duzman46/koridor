@@ -39,7 +39,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeMode(mode: ThemeMode) = launchUpdate { settingsManager.setThemeMode(mode) }
     fun setLanguage(language: AppLanguage) = launchUpdate { settingsManager.setLanguage(language) }
-    fun setSoundEnabled(enabled: Boolean) = launchUpdate { settingsManager.setSoundEnabled(enabled) }
+    fun setSoundVolume(percent: Int) = launchUpdate { settingsManager.setSoundVolume(percent) }
+    fun setMusicEnabled(enabled: Boolean) = launchUpdate { settingsManager.setMusicEnabled(enabled) }
+    fun setNotificationsEnabled(enabled: Boolean) =
+        launchUpdate { settingsManager.setNotificationsEnabled(enabled) }
     fun setHapticsEnabled(enabled: Boolean) = launchUpdate { settingsManager.setHapticsEnabled(enabled) }
     fun setMatchMessagesEnabled(enabled: Boolean) =
         launchUpdate { settingsManager.setMatchMessagesEnabled(enabled) }

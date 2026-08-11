@@ -517,4 +517,12 @@
     <string name="settings_account_hint">Entrar, vincular e excluir</string>
     <string name="settings_ad_privacy_hint">Gerencie suas opções de anúncios</string>
     <string name="settings_remove_ads_hint">Jogue sem interrupção</string>
+    <string name="settings_music">Música</string>
+    <string name="settings_music_description">Um loop calmo sob os menus</string>
+    <string name="settings_notifications">Notificações</string>
+    <string name="settings_notifications_description">Raras. Um lembrete se você sumir por um tempo</string>
+    <string name="notification_channel_name">Lembretes</string>
+    <string name="notification_channel_description">O lembrete ocasional quando você fica um tempo sem jogar.</string>
+    <string name="notification_come_back_title">O tabuleiro continua armado</string>
+    <string name="notification_come_back_body">Faz um tempo. Uma partida?</string>
 </resources>

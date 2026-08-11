@@ -26,10 +26,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +41,9 @@ import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.duzman46.gridbound.monetization.MonetizationState
+import com.duzman46.gridbound.notifications.Notifications
 import com.duzman46.gridbound.presentation.settings.SettingsUiState
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.theme.Dimens
@@ -83,9 +87,12 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLanguage: (AppLanguage) -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
-    onSound: (Boolean) -> Unit,
+    onSoundVolume: (Int) -> Unit,
+    onMusic: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onMatchMessages: (Boolean) -> Unit,
+    onNotifications: (Boolean) -> Unit,
+    onRequestNotifications: () -> Unit,
     onAccount: () -> Unit,
     monetization: MonetizationState,
     onPrivacyOptions: () -> Unit,
@@ -98,6 +105,7 @@ fun SettingsScreen(
 ) {
     var languageOpen by rememberSaveable { mutableStateOf(false) }
     var themeOpen by rememberSaveable { mutableStateOf(false) }
+    val notificationsAllowed = rememberNotificationAccess()
 
     // The stored default is still "follow the device"; it is named here as whichever language
     // that actually produces, so the tile always says the language currently on screen.
@@ -170,12 +178,22 @@ fun SettingsScreen(
             SectionLabel(stringResource(R.string.settings_game_experience))
             OptionGroup(
                 listOf(
+                    // A level rather than a switch, and nought is the switch. One control cannot
+                    // disagree with itself, which a slider beside a toggle can and eventually
+                    // does.
                     OptionEntry(
                         icon = PremiumIcon.SPEAKER,
                         title = stringResource(R.string.settings_sounds),
                         subtitle = stringResource(R.string.settings_sounds_description),
-                        checked = state.settings.soundEnabled,
-                        onCheckedChange = onSound,
+                        level = state.settings.soundVolume,
+                        onLevelChange = onSoundVolume,
+                    ),
+                    OptionEntry(
+                        icon = PremiumIcon.MUSIC,
+                        title = stringResource(R.string.settings_music),
+                        subtitle = stringResource(R.string.settings_music_description),
+                        checked = state.settings.musicEnabled,
+                        onCheckedChange = onMusic,
                     ),
                     OptionEntry(
                         icon = PremiumIcon.VIBRATE,
@@ -194,6 +212,22 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_chat_description),
                         checked = state.settings.matchMessagesEnabled,
                         onCheckedChange = onMatchMessages,
+                    ),
+                    // The only setting on this screen whose answer is not entirely the app's to
+                    // give, so the switch shows the truth rather than the wish: it is on when
+                    // the player wants notifications *and* the system allows them. Turning it
+                    // on without the permission asks for the permission, which is the one
+                    // moment where that dialog makes sense — the player is looking at the row
+                    // it is about.
+                    OptionEntry(
+                        icon = PremiumIcon.BELL,
+                        title = stringResource(R.string.settings_notifications),
+                        subtitle = stringResource(R.string.settings_notifications_description),
+                        checked = state.settings.notificationsEnabled && notificationsAllowed,
+                        onCheckedChange = { wanted ->
+                            onNotifications(wanted)
+                            if (wanted && !notificationsAllowed) onRequestNotifications()
+                        },
                     ),
                 ),
             )
@@ -255,6 +289,26 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+/**
+ * Whether the system currently lets this app post anything, re-read every time the screen comes
+ * back to the front.
+ *
+ * Re-read rather than remembered, because the answer is not the app's to keep: the player can
+ * revoke it in system settings while this screen is sitting in the background, and they can grant
+ * it in a dialog that puts this screen in the background to do so. Both of those end with the
+ * activity resuming, which is exactly when this looks again.
+ */
+@Composable
+private fun rememberNotificationAccess(): Boolean {
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(Notifications.permitted(context)) }
+    LifecycleResumeEffect(context) {
+        allowed = Notifications.permitted(context)
+        onPauseOrDispose { }
+    }
+    return allowed
 }
 
 @Composable

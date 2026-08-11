@@ -270,6 +270,7 @@ fun AppNavigation(
     onBuy: (Entitlement) -> Unit,
     onDismissBillingMessage: () -> Unit,
     onPrivacyOptions: () -> Unit,
+    onRequestNotifications: () -> Unit,
     onCompletedMatchExit: (onFinished: () -> Unit) -> Unit,
 ) {
     val navController = rememberNavController()
@@ -811,9 +812,12 @@ fun AppNavigation(
                     onBack = { navController.popFrom(entry) },
                     onLanguage = viewModel::setLanguage,
                     onThemeMode = viewModel::setThemeMode,
-                    onSound = viewModel::setSoundEnabled,
+                    onSoundVolume = viewModel::setSoundVolume,
+                    onMusic = viewModel::setMusicEnabled,
                     onHaptics = viewModel::setHapticsEnabled,
                     onMatchMessages = viewModel::setMatchMessagesEnabled,
+                    onNotifications = viewModel::setNotificationsEnabled,
+                    onRequestNotifications = onRequestNotifications,
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     monetization = monetization,
                     onPrivacyOptions = onPrivacyOptions,

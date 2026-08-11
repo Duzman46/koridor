@@ -3,6 +3,9 @@ package com.duzman46.gridbound.navigation
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -128,6 +131,14 @@ private object Routes {
             "&roomCode=$roomCode&opponentId=${Uri.encode(opponentId)}"
 }
 
+/**
+ * How long one screen takes to become another.
+ *
+ * Short enough that the app is listening again before the finger arrives, long enough that the
+ * change still reads as movement rather than a cut.
+ */
+private const val NAV_FADE_MILLIS = 90
+
 @Composable
 fun AppNavigation(
     session: SessionState,
@@ -158,7 +169,24 @@ fun AppNavigation(
     }
 
     Box(Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        NavHost(
+            navController = navController,
+            startDestination = Routes.SPLASH,
+            // Ninety milliseconds, not seven hundred.
+            //
+            // Navigation-Compose's default transition runs for 700 ms, and the incoming screen
+            // does not take a touch until it has finished arriving. Tap back and then Play, and
+            // nothing happens: the button is there, it is drawn, and the press is thrown away
+            // because the screen is still technically in flight. Two of those back to back is
+            // the second and a half the owner had to wait before the app would listen.
+            //
+            // A cross-fade this short still reads as a change of place rather than a jump cut,
+            // and it is over before a finger can travel from one control to the next.
+            enterTransition = { fadeIn(tween(NAV_FADE_MILLIS)) },
+            exitTransition = { fadeOut(tween(NAV_FADE_MILLIS)) },
+            popEnterTransition = { fadeIn(tween(NAV_FADE_MILLIS)) },
+            popExitTransition = { fadeOut(tween(NAV_FADE_MILLIS)) },
+        ) {
             composable(Routes.SPLASH) {
                 // Hold on the splash until both the intro animation and the first auth state
                 // have landed, so the player is never routed on a LOADING session.

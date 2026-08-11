@@ -264,6 +264,20 @@ object Constants {
         const val CONNECTED_PATH = ".info/connected"
 
         /**
+         * How much of the phone's storage the database may keep for itself.
+         *
+         * The library defaults to ten megabytes and never asks. That is a great deal of room
+         * for a game whose whole state is a nine-by-nine board and a list of walls, and it is
+         * what a player sees when the app's size keeps climbing long after the download
+         * finished: every room ever browsed and every match ever played, held until eviction
+         * gets round to it.
+         *
+         * Two megabytes holds a live match, the rooms on screen and the profiles behind them
+         * several times over.
+         */
+        const val PERSISTENCE_CACHE_BYTES = 2L * 1024 * 1024
+
+        /**
          * The wait the panel quotes while matchmaking.
          *
          * A stated typical figure, not a measurement: nothing in the app knows how many people

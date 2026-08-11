@@ -2,6 +2,7 @@ package com.duzman46.gridbound.online.data
 
 import android.content.Context
 import com.duzman46.gridbound.BuildConfig
+import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.data.firebase.AppCheckProviders
 import com.google.firebase.FirebaseApp
@@ -45,9 +46,26 @@ class FirebaseProvider @Inject constructor(
 
     val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance(app) }
 
+    /**
+     * The database, with a disk cache that has a ceiling.
+     *
+     * Persistence is on because a match must survive a tunnel: without it, a dropped connection
+     * means the board is re-fetched from nothing and a player who came back to signal found an
+     * empty screen instead of their game.
+     *
+     * What it did not have was a limit the app chose. The library's own default is ten
+     * megabytes, which is a great deal of room for a game whose entire state is a nine-by-nine
+     * board and a list of walls — and every room ever browsed, every match ever played and
+     * every profile ever read goes into it and stays until the cache decides to evict. That is
+     * the storage a player watches grow after the download is long finished.
+     *
+     * Two megabytes holds a match, the rooms on screen and the profiles behind them several
+     * times over. Past that, eviction is doing the right thing.
+     */
     val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance(app, BuildConfig.FIREBASE_DATABASE_URL).apply {
             setPersistenceEnabled(true)
+            setPersistenceCacheSizeBytes(Constants.Online.PERSISTENCE_CACHE_BYTES)
         }
     }
 

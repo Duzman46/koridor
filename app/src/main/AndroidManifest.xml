@@ -25,10 +25,24 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${ADMOB_APP_ID}" />
+        <!--
+            Portrait, and only portrait.
+
+            The board is a square that fills the width, the home screen is a photograph with a
+            column of cards under it, and the waiting panel is one tall stack. None of them has
+            a landscape design, and none of them needs one: this is a game played on a phone
+            held upright, on a board whose two players sit at the top and bottom of it.
+
+            `configChanges` still lists orientation because the flag is about who handles a
+            change, not whether one can happen — a foldable, a desk dock or a rotating tablet
+            can still hand the activity a new configuration, and this keeps it from being torn
+            down and rebuilt mid-match when it does.
+        -->
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale|locale|layoutDirection"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Koridor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

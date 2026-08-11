@@ -87,7 +87,6 @@ fun SettingsScreen(
     onHaptics: (Boolean) -> Unit,
     onMatchMessages: (Boolean) -> Unit,
     onAccount: () -> Unit,
-    onReplayTutorial: () -> Unit,
     monetization: MonetizationState,
     onPrivacyOptions: () -> Unit,
     // Read from the billing ledger rather than from [monetization], which mirrors it through a
@@ -96,7 +95,6 @@ fun SettingsScreen(
     offersAdRemoval: Boolean,
     isGuest: Boolean,
     onRemoveAds: () -> Unit,
-    onRestorePurchases: () -> Unit,
 ) {
     var languageOpen by rememberSaveable { mutableStateOf(false) }
     var themeOpen by rememberSaveable { mutableStateOf(false) }
@@ -197,12 +195,6 @@ fun SettingsScreen(
                         checked = state.settings.matchMessagesEnabled,
                         onCheckedChange = onMatchMessages,
                     ),
-                    OptionEntry(
-                        icon = PremiumIcon.MORTARBOARD,
-                        title = stringResource(R.string.settings_tutorial_replay),
-                        subtitle = stringResource(R.string.settings_tutorial_replay_hint),
-                        onClick = onReplayTutorial,
-                    ),
                 ),
             )
 
@@ -232,35 +224,30 @@ fun SettingsScreen(
                 },
             )
 
-            SectionLabel(stringResource(R.string.settings_store))
-            OptionGroup(
-                buildList {
-                    // Hidden once bought: an upgrade you already own is not an offer, and
-                    // leaving it there is what makes a player wonder whether their money
-                    // arrived.
-                    if (offersAdRemoval) {
-                        add(
-                            OptionEntry(
-                                icon = PremiumIcon.NO_ADS,
-                                title = stringResource(R.string.store_remove_ads),
-                                subtitle = stringResource(R.string.settings_remove_ads_hint),
-                                onClick = onRemoveAds,
-                            ),
-                        )
-                    }
-                    // Restoring stays here rather than in More, beside the thing it restores:
-                    // it is what somebody does on a new handset before they think to open a
-                    // menu called More.
-                    add(
+            // No "restore purchases" row, and it is not a feature that went missing.
+            //
+            // Play is asked what this account owns every time billing connects — see
+            // BillingManager.onBillingSetupFinished, which calls refresh() the moment the
+            // client is ready, and queryPurchases() grants the entitlement from the answer. A
+            // reinstall on the same account therefore restores itself before the player reaches
+            // a menu. The button re-ran that same query and its only visible effect was a
+            // "purchases restored" notice for something that had already happened, which is why
+            // the owner read it as doing nothing: it was.
+            //
+            // What is left in this section is the offer, and only while there is one to make.
+            if (offersAdRemoval) {
+                SectionLabel(stringResource(R.string.settings_store))
+                OptionGroup(
+                    listOf(
                         OptionEntry(
-                            icon = PremiumIcon.RESTORE,
-                            title = stringResource(R.string.store_restore),
-                            subtitle = stringResource(R.string.settings_restore_hint),
-                            onClick = onRestorePurchases,
+                            icon = PremiumIcon.NO_ADS,
+                            title = stringResource(R.string.store_remove_ads),
+                            subtitle = stringResource(R.string.settings_remove_ads_hint),
+                            onClick = onRemoveAds,
                         ),
-                    )
-                },
-            )
+                    ),
+                )
+            }
             if (offersAdRemoval && isGuest) {
                 // A guest's purchase would be stranded on this device, so the account comes
                 // first. Said before Play has taken the money, not after.

@@ -306,7 +306,6 @@
     <string name="stats_wins_losses">%1$d S · %2$d N</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">Käufe wiederherstellen</string>
     <string name="store_guest_warning">Du spielst als Gast. Verknüpfe ein Konto, damit deine Käufe auf andere Geräte mitkommen.</string>
 
     <string name="billing_error_unavailable">Der Shop ist gerade nicht verfügbar. Versuche es später erneut.</string>
@@ -512,10 +511,7 @@
     <string name="more_social_hint">Folge dem Spiel</string>
     <string name="settings_subtitle">Mach es zu deinem</string>
     <string name="settings_theme">Design</string>
-    <string name="settings_tutorial_replay">Tutorial noch einmal spielen</string>
-    <string name="settings_tutorial_replay_hint">Die Einführung vom ersten Start</string>
     <string name="settings_account_hint">Anmelden, verknüpfen und löschen</string>
     <string name="settings_ad_privacy_hint">Werbeeinstellungen verwalten</string>
     <string name="settings_remove_ads_hint">Ohne Unterbrechung spielen</string>
-    <string name="settings_restore_hint">Frühere Käufe zurückholen</string>
 </resources>

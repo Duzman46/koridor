@@ -306,7 +306,6 @@
     <string name="stats_wins_losses">%1$d जीत · %2$d हार</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">ख़रीदारी बहाल करें</string>
     <string name="store_guest_warning">आप अतिथि के रूप में खेल रहे हैं। खाता जोड़ें ताकि आपकी ख़रीदारी दूसरे डिवाइस पर भी आपके साथ रहे।</string>
 
     <string name="billing_error_unavailable">स्टोर अभी उपलब्ध नहीं है। बाद में कोशिश करें।</string>
@@ -512,10 +511,7 @@
     <string name="more_social_hint">खेल को फ़ॉलो करें</string>
     <string name="settings_subtitle">अपने हिसाब से बनाएँ</string>
     <string name="settings_theme">थीम</string>
-    <string name="settings_tutorial_replay">ट्यूटोरियल फिर से खेलें</string>
-    <string name="settings_tutorial_replay_hint">पहली बार वाला परिचय</string>
     <string name="settings_account_hint">साइन इन, लिंक और हटाना</string>
     <string name="settings_ad_privacy_hint">विज्ञापन विकल्प प्रबंधित करें</string>
     <string name="settings_remove_ads_hint">बिना रुकावट खेलें</string>
-    <string name="settings_restore_hint">पुरानी खरीद वापस लाएँ</string>
 </resources>

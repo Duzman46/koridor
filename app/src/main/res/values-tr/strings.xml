@@ -325,7 +325,6 @@
     <string name="stats_percentage">%%%1$d</string>
 
     <!-- Mağaza ve satın alımlar -->
-    <string name="store_restore">Satın alımları geri yükle</string>
     <string name="store_guest_warning">Misafir olarak oynuyorsun. Satın alımlarının diğer cihazlarında da kalması için hesabını bağla.</string>
 
     <string name="billing_error_unavailable">Mağaza şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.</string>
@@ -533,10 +532,7 @@
     <string name="more_social_hint">Oyunu takip et</string>
     <string name="settings_subtitle">Deneyimini kişiselleştir</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_tutorial_replay">Öğreticiyi tekrar oyna</string>
-    <string name="settings_tutorial_replay_hint">İlk açılıştaki anlatım</string>
     <string name="settings_account_hint">Giriş, bağlama ve silme</string>
     <string name="settings_ad_privacy_hint">Reklam tercihlerini yönet</string>
     <string name="settings_remove_ads_hint">Kesintisiz oyna</string>
-    <string name="settings_restore_hint">Önceki satın alımlarını geri getir</string>
 </resources>

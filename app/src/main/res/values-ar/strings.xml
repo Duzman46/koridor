@@ -322,7 +322,6 @@
     <string name="stats_wins_losses">%1$d فوز · %2$d خسارة</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">استعادة المشتريات</string>
     <string name="store_guest_warning">أنت تلعب كضيف. اربط حسابًا لتنتقل مشترياتك معك إلى أجهزة أخرى.</string>
 
     <string name="billing_error_unavailable">المتجر غير متاح حاليًا. حاول لاحقًا.</string>
@@ -528,10 +527,7 @@
     <string name="more_social_hint">تابع اللعبة</string>
     <string name="settings_subtitle">اضبطها على ذوقك</string>
     <string name="settings_theme">المظهر</string>
-    <string name="settings_tutorial_replay">أعد تشغيل الشرح</string>
-    <string name="settings_tutorial_replay_hint">شرح البداية الأولى</string>
     <string name="settings_account_hint">الدخول والربط والحذف</string>
     <string name="settings_ad_privacy_hint">إدارة خيارات الإعلانات</string>
     <string name="settings_remove_ads_hint">العب دون انقطاع</string>
-    <string name="settings_restore_hint">استعد عملية شراء سابقة</string>
 </resources>

@@ -306,7 +306,6 @@
     <string name="stats_wins_losses">%1$d M · %2$d K</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">Pulihkan pembelian</string>
     <string name="store_guest_warning">Kamu bermain sebagai tamu. Tautkan akun agar pembelianmu ikut ke perangkat lain.</string>
 
     <string name="billing_error_unavailable">Toko sedang tidak tersedia. Coba lagi nanti.</string>
@@ -512,10 +511,7 @@
     <string name="more_social_hint">Ikuti perkembangan game</string>
     <string name="settings_subtitle">Sesuaikan denganmu</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_tutorial_replay">Main tutorial lagi</string>
-    <string name="settings_tutorial_replay_hint">Panduan dari pembukaan pertama</string>
     <string name="settings_account_hint">Masuk, tautkan, dan hapus</string>
     <string name="settings_ad_privacy_hint">Kelola pilihan iklanmu</string>
     <string name="settings_remove_ads_hint">Main tanpa gangguan</string>
-    <string name="settings_restore_hint">Pulihkan pembelian sebelumnya</string>
 </resources>

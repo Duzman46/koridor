@@ -312,7 +312,6 @@
     <string name="stats_wins_losses">%1$d П · %2$d Пор.</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">Восстановить покупки</string>
     <string name="store_guest_warning">Вы играете как гость. Привяжите аккаунт, чтобы покупки перешли на другие устройства.</string>
 
     <string name="billing_error_unavailable">Магазин сейчас недоступен. Попробуйте позже.</string>
@@ -518,10 +517,7 @@
     <string name="more_social_hint">Следите за игрой</string>
     <string name="settings_subtitle">Настройте под себя</string>
     <string name="settings_theme">Тема</string>
-    <string name="settings_tutorial_replay">Пройти обучение заново</string>
-    <string name="settings_tutorial_replay_hint">Объяснение с первого запуска</string>
     <string name="settings_account_hint">Вход, привязка и удаление</string>
     <string name="settings_ad_privacy_hint">Настройки рекламы</string>
     <string name="settings_remove_ads_hint">Играйте без перерывов</string>
-    <string name="settings_restore_hint">Вернуть прежнюю покупку</string>
 </resources>

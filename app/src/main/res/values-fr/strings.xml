@@ -309,7 +309,6 @@
     <string name="stats_wins_losses">%1$d V · %2$d D</string>
     <string name="stats_percentage">%1$d%%</string>
 
-    <string name="store_restore">Restaurer les achats</string>
     <string name="store_guest_warning">Tu joues en invité. Associe un compte pour que tes achats te suivent sur tes autres appareils.</string>
 
     <string name="billing_error_unavailable">La boutique est indisponible pour l\'instant. Réessaie plus tard.</string>
@@ -515,10 +514,7 @@
     <string name="more_social_hint">Suivez le jeu</string>
     <string name="settings_subtitle">À votre main</string>
     <string name="settings_theme">Thème</string>
-    <string name="settings_tutorial_replay">Rejouer le tutoriel</string>
-    <string name="settings_tutorial_replay_hint">L’explication du premier lancement</string>
     <string name="settings_account_hint">Connexion, liaison et suppression</string>
     <string name="settings_ad_privacy_hint">Gérer vos choix publicitaires</string>
     <string name="settings_remove_ads_hint">Jouer sans interruption</string>
-    <string name="settings_restore_hint">Récupérer un achat précédent</string>
 </resources>

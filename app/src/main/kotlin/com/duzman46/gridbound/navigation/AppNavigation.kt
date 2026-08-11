@@ -268,7 +268,6 @@ fun AppNavigation(
     monetization: MonetizationState,
     billing: BillingState,
     onBuy: (Entitlement) -> Unit,
-    onRestorePurchases: () -> Unit,
     onDismissBillingMessage: () -> Unit,
     onPrivacyOptions: () -> Unit,
     onCompletedMatchExit: (onFinished: () -> Unit) -> Unit,
@@ -816,11 +815,6 @@ fun AppNavigation(
                     onHaptics = viewModel::setHapticsEnabled,
                     onMatchMessages = viewModel::setMatchMessagesEnabled,
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
-                    // The lesson itself, not the gate. Reaching it from here is a replay, so it
-                    // is pushed and backs out to Settings rather than routing on through the
-                    // entry sequence — the tutorial's own "finished" hand-off does that, and it
-                    // pops this entry on its way past.
-                    onReplayTutorial = { navController.navigateFrom(entry, Routes.TUTORIAL) },
                     monetization = monetization,
                     onPrivacyOptions = onPrivacyOptions,
                     offersAdRemoval = billing.offersAdRemoval,
@@ -834,7 +828,6 @@ fun AppNavigation(
                             onBuy(Entitlement.REMOVE_ADS)
                         }
                     },
-                    onRestorePurchases = onRestorePurchases,
                 )
             }
 

@@ -258,9 +258,6 @@ fun MainMenuScreen(
                             subtitle = stringResource(R.string.home_leaderboard_subtitle),
                             icon = PremiumIcon.TROPHY,
                             onClick = onLeaderboard,
-                            // Gold: standings are where a player sees they are getting
-                            // somewhere. The other three are maintenance.
-                            accented = true,
                         )
                     },
                     right = {
@@ -301,7 +298,6 @@ fun MainMenuScreen(
                     subtitle = stringResource(R.string.home_more_subtitle),
                     icon = PremiumIcon.SHIELD_STAR,
                     onClick = onMore,
-                    accented = true,
                 )
                 Spacer(Modifier.height(Dimens.SpaceMd))
             }

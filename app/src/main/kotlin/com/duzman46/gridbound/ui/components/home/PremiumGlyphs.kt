@@ -108,9 +108,6 @@ enum class PremiumIcon {
 
     /** Advertising, refused. A circle with a bar through it. */
     NO_ADS,
-
-    /** Getting something back that was already paid for. An arrow turning a full circle. */
-    RESTORE,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -159,7 +156,6 @@ fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
             PremiumIcon.SPEAKER -> speaker(s, tint, line)
             PremiumIcon.VIBRATE -> vibrate(s, tint, line)
         PremiumIcon.NO_ADS -> noAds(s, tint, line)
-        PremiumIcon.RESTORE -> restore(s, tint, line)
     }
 }
 
@@ -240,28 +236,6 @@ private fun DrawScope.noAds(s: Float, tint: Color, line: Float) {
         Offset(s * 0.78f, s * 0.22f),
         strokeWidth = line,
         cap = StrokeCap.Round,
-    )
-}
-
-/** An arrow turning most of a circle: what was bought once, fetched again. */
-private fun DrawScope.restore(s: Float, tint: Color, line: Float) {
-    drawArc(
-        color = tint,
-        startAngle = -55f,
-        sweepAngle = 285f,
-        useCenter = false,
-        topLeft = Offset(s * 0.14f, s * 0.14f),
-        size = Size(s * 0.72f, s * 0.72f),
-        style = Stroke(width = line, cap = StrokeCap.Round),
-    )
-    drawPath(
-        Path().apply {
-            moveTo(s * 0.88f, s * 0.16f)
-            lineTo(s * 0.88f, s * 0.44f)
-            lineTo(s * 0.60f, s * 0.40f)
-            close()
-        },
-        tint,
     )
 }
 

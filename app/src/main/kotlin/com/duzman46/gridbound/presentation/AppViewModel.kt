@@ -58,7 +58,9 @@ class AppViewModel @Inject constructor(
     fun buy(activity: Activity, entitlement: Entitlement) =
         billingManager.purchase(activity, entitlement)
 
-    fun restorePurchases() = billingManager.restorePurchases()
+    // No restorePurchases() here any more. Nothing in the interface calls it: Play is asked what
+    // this account owns every time billing connects, so a reinstall restores itself. The manager
+    // keeps the method because it still answers ALREADY_OWNED with it.
 
     fun dismissBillingMessage() = billingManager.dismissMessage()
 

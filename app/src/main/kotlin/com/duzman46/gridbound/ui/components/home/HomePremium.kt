@@ -236,14 +236,12 @@ fun RowScope.HomeMenuCard(
     icon: PremiumIcon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    accented: Boolean = false,
 ) {
     Box(modifier.weight(1f)) {
         MenuSurface(
             title = title,
             subtitle = subtitle,
             icon = icon,
-            accented = accented,
             onClick = onClick,
             trailing = null,
             minHeight = 80.dp,
@@ -259,13 +257,11 @@ fun WideMenuCard(
     icon: PremiumIcon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    accented: Boolean = false,
 ) {
     MenuSurface(
         title = title,
         subtitle = subtitle,
         icon = icon,
-        accented = accented,
         onClick = onClick,
         trailing = { Chevron() },
         minHeight = 76.dp,
@@ -278,7 +274,6 @@ private fun MenuSurface(
     title: String,
     subtitle: String,
     icon: PremiumIcon,
-    accented: Boolean,
     onClick: () -> Unit,
     trailing: (@Composable () -> Unit)?,
     minHeight: androidx.compose.ui.unit.Dp,
@@ -309,11 +304,13 @@ private fun MenuSurface(
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumGlyph(
-            icon,
-            Modifier.size(26.dp),
-            tint = if (accented) KoridorGold else Color(0xFF9AA0A8),
-        )
+        // Every mark on this screen is gold, at the owner's call, and the ration moved rather
+        // than went: what is scarce here is the *fill*. Exactly one card is warm and bordered in
+        // brass — the way into a match — and everything else is a grey card with a gold mark on
+        // it. Two of five marks being grey never said "these matter less"; it said the icon set
+        // was inconsistent, because the two that were gold were gold for reasons no player could
+        // read off the screen.
+        PremiumGlyph(icon, Modifier.size(26.dp), tint = KoridorGold)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 // The player's locale, not the invariant one: `uppercase()` alone turns the
@@ -588,7 +585,7 @@ private fun RoundControl(icon: PremiumIcon, label: String, onClick: () -> Unit) 
             .border(BorderStroke(1.dp, Color(0xFF242A31)), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        PremiumGlyph(icon, Modifier.size(21.dp), tint = Color(0xFFD7D9DC))
+        PremiumGlyph(icon, Modifier.size(21.dp), tint = KoridorGold)
     }
 }
 
@@ -623,12 +620,21 @@ fun KoridorBottomBar(
     }
 }
 
-/** One tab of the docked bar. */
+/** What one tab of the docked bar is made of. */
 data class BottomItem(val label: String, val icon: PremiumIcon, val onClick: () -> Unit)
 
+/**
+ * One tab of the docked bar.
+ *
+ * The inactive ones are gold too, at just under half strength, rather than grey. Every mark on
+ * this screen is gold now, and a grey row at the foot of it would be the one place the rule
+ * broke — but a tab still has to say whether it is the place you are standing in, so the
+ * difference is carried three ways at once: the rule above it, the weight of its label, and the
+ * strength of the same colour rather than a different one.
+ */
 @Composable
 private fun BottomTab(item: BottomItem, active: Boolean, modifier: Modifier) {
-    val tint = if (active) KoridorGold else Color(0xFF777C83)
+    val tint = if (active) KoridorGold else KoridorGold.copy(alpha = 0.45f)
     Column(
         modifier
             .clip(RoundedCornerShape(18.dp))

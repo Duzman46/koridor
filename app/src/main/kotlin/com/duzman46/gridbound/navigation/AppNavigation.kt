@@ -3,9 +3,14 @@ package com.duzman46.gridbound.navigation
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -134,10 +139,28 @@ private object Routes {
 /**
  * How long one screen takes to become another.
  *
- * Short enough that the app is listening again before the finger arrives, long enough that the
- * change still reads as movement rather than a cut.
+ * Asymmetric on purpose. The screen being asked for should feel like it is settling into place,
+ * so it takes its time; the one being left has already been dismissed and lingering over it is
+ * how an interface starts to feel slow. Material's own guidance is the same shape, and the
+ * difference is small enough that nobody could name it and large enough that everybody feels it.
  */
-private const val NAV_FADE_MILLIS = 90
+private const val NAV_ENTER_MILLIS = 280
+private const val NAV_EXIT_MILLIS = 220
+
+/**
+ * The curve everything on this screen moves on: quick to leave, slow to arrive.
+ *
+ * Motion that starts fast and eases out reads as something being placed. A linear slide reads as
+ * something being dragged, which is what the previous cross-fade avoided by not moving at all.
+ */
+private fun <T> navEnterSpec() = tween<T>(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing)
+
+private fun <T> navExitSpec() = tween<T>(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing)
+
+/** The fade runs shorter than the slide, so a screen is legible before it stops moving. */
+private fun navEnterFade() = tween<Float>(NAV_ENTER_MILLIS - 80, easing = LinearOutSlowInEasing)
+
+private fun navExitFade() = tween<Float>(NAV_EXIT_MILLIS - 60, easing = FastOutLinearInEasing)
 
 @Composable
 fun AppNavigation(
@@ -172,20 +195,30 @@ fun AppNavigation(
         NavHost(
             navController = navController,
             startDestination = Routes.SPLASH,
-            // Ninety milliseconds, not seven hundred.
+            // Screens travel sideways, and the two of them travel together.
             //
-            // Navigation-Compose's default transition runs for 700 ms, and the incoming screen
-            // does not take a touch until it has finished arriving. Tap back and then Play, and
-            // nothing happens: the button is there, it is drawn, and the press is thrown away
-            // because the screen is still technically in flight. Two of those back to back is
-            // the second and a half the owner had to wait before the app would listen.
+            // The one arriving comes in from the leading edge under a fade; the one leaving
+            // slides a shorter distance the same way and dims as it goes. Unequal distances are
+            // what makes it read as depth rather than as a carousel — the outgoing screen is
+            // being covered, not pushed off. Going back plays the same motion mirrored, so the
+            // graph has a direction a player can feel.
             //
-            // A cross-fade this short still reads as a change of place rather than a jump cut,
-            // and it is over before a finger can travel from one control to the next.
-            enterTransition = { fadeIn(tween(NAV_FADE_MILLIS)) },
-            exitTransition = { fadeOut(tween(NAV_FADE_MILLIS)) },
-            popEnterTransition = { fadeIn(tween(NAV_FADE_MILLIS)) },
-            popExitTransition = { fadeOut(tween(NAV_FADE_MILLIS)) },
+            // 280 ms in, 220 ms out, on the platform's own deceleration curve. That was 90 ms
+            // for a while, which stopped being a transition and started being a cut; the app
+            // was responsive and it looked broken. The responsiveness never depended on this
+            // number anyway — see navigateFrom, where the taps were actually being dropped.
+            enterTransition = {
+                slideInHorizontally(navEnterSpec()) { width -> width / 6 } + fadeIn(navEnterFade())
+            },
+            exitTransition = {
+                slideOutHorizontally(navExitSpec()) { width -> -width / 14 } + fadeOut(navExitFade())
+            },
+            popEnterTransition = {
+                slideInHorizontally(navEnterSpec()) { width -> -width / 6 } + fadeIn(navEnterFade())
+            },
+            popExitTransition = {
+                slideOutHorizontally(navExitSpec()) { width -> width / 14 } + fadeOut(navExitFade())
+            },
         ) {
             composable(Routes.SPLASH) {
                 // Hold on the splash until both the intro animation and the first auth state
@@ -721,13 +754,30 @@ fun AppNavigation(
  * between the winner screen and its exits — legitimately runs while the entry is not resumed
  * and must not be dropped.
  */
+/**
+ * Navigates, unless the screen that asked has already been left.
+ *
+ * The test is stack identity rather than lifecycle state. Both answer "is this still the screen
+ * the player is pressing", and only one of them answers immediately: an entry does not reach
+ * RESUMED until its arrival animation has finished, so guarding on that threw away every tap
+ * made during a transition. See [canLeaveScreen] for the whole of it.
+ */
 private fun NavHostController.navigateFrom(
     entry: NavBackStackEntry,
     route: String,
     builder: NavOptionsBuilder.() -> Unit = {},
 ) {
-    if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) navigate(route, builder)
+    if (isCurrent(entry)) navigate(route, builder)
 }
+
+/**
+ * Whether [entry] is still the top of the stack.
+ *
+ * It stops being so the instant a navigation commits — which is the moment its controls should
+ * stop working, rather than one animation later.
+ */
+private fun NavHostController.isCurrent(entry: NavBackStackEntry): Boolean =
+    currentBackStackEntry?.id == entry.id
 
 /**
  * Leaves a screen because the player pressed its back arrow. The mirror of [navigateFrom], and
@@ -738,8 +788,8 @@ private fun NavHostController.navigateFrom(
  * half of a double tap on a control that is already on its way out.
  */
 private fun NavHostController.popFrom(entry: NavBackStackEntry) {
-    val resumed = entry.lifecycle.currentState == Lifecycle.State.RESUMED
-    if (canLeaveScreen(resumed, previousBackStackEntry?.destination?.route)) popBackStack()
+    val beneath = previousBackStackEntry?.destination?.route
+    if (canLeaveScreen(isCurrent(entry), beneath)) popBackStack()
 }
 
 /**

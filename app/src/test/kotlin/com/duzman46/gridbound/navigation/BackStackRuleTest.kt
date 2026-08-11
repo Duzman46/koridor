@@ -19,7 +19,7 @@ class BackStackRuleTest {
 
     @Test
     fun `a press on the screen the player is looking at leaves it`() {
-        assertTrue(canLeaveScreen(isResumed = true, screenBeneath = "home"))
+        assertTrue(canLeaveScreen(isCurrent = true, screenBeneath = "home"))
     }
 
     @Test
@@ -29,7 +29,7 @@ class BackStackRuleTest {
         // been popped and is merely still drawn. Guarding only on what is left underneath
         // stops the graph emptying and nothing else — so Home, Profile, Friends became Home,
         // with Profile passed through unseen.
-        assertFalse(canLeaveScreen(isResumed = false, screenBeneath = "profile"))
+        assertFalse(canLeaveScreen(isCurrent = false, screenBeneath = "profile"))
     }
 
     @Test
@@ -38,7 +38,24 @@ class BackStackRuleTest {
         // is what the player is left looking at — black, in the night palette — and system
         // back leaves the app rather than returning, because NavController switches off its
         // own callback once the stack is empty.
-        assertFalse(canLeaveScreen(isResumed = true, screenBeneath = null))
+        assertFalse(canLeaveScreen(isCurrent = true, screenBeneath = null))
+    }
+
+    @Test
+    fun `the question is asked of the stack, not of a lifecycle`() {
+        // Both answer "is this still the screen being pressed". Only one answers at once: an
+        // entry does not reach RESUMED until its arrival animation has finished, so sourcing
+        // this from the lifecycle threw away every tap made during a transition — which is what
+        // made the app feel like it was ignoring the first press on every screen.
+        val graph = File("src/main/kotlin/com/duzman46/gridbound/navigation/AppNavigation.kt")
+        assertTrue("AppNavigation.kt not found", graph.exists())
+
+        val lifecycleGuards = graph.readLines()
+            .withIndex()
+            .filter { (_, line) -> "Lifecycle.State.RESUMED" in line }
+            .map { (index, line) -> "${index + 1}: ${line.trim()}" }
+
+        assertEquals("navigation guarded on the animation", emptyList<String>(), lifecycleGuards)
     }
 
     @Test

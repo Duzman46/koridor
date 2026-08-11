@@ -1,24 +1,25 @@
 package com.duzman46.gridbound.ui.screens
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,12 +29,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,12 +54,19 @@ import com.duzman46.gridbound.leaderboard.domain.LeaderboardScope
 import com.duzman46.gridbound.leaderboard.domain.OwnStanding
 import com.duzman46.gridbound.presentation.leaderboard.LeaderboardUiState
 import com.duzman46.gridbound.presentation.leaderboard.LeaderboardViewModel
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.ErrorState
-import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.LoadingState
-import com.duzman46.gridbound.ui.components.PlayerAvatar
-import com.duzman46.gridbound.ui.components.ScreenTopBar
+import com.duzman46.gridbound.ui.components.home.ClimbBanner
+import com.duzman46.gridbound.ui.components.home.PodiumCard
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import com.duzman46.gridbound.ui.components.home.ScopeTabs
+import com.duzman46.gridbound.ui.components.home.SeasonChip
+import com.duzman46.gridbound.ui.components.home.StandingRow
+import com.duzman46.gridbound.ui.components.home.StandingsHeader
+import com.duzman46.gridbound.ui.components.home.localeUpper
 
 private val VISIBLE_SCOPES = listOf(
     LeaderboardScope.GLOBAL,
@@ -61,6 +78,7 @@ private val VISIBLE_SCOPES = listOf(
 fun LeaderboardRoute(
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
+    onLinkAccount: () -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,6 +86,7 @@ fun LeaderboardRoute(
         state = state,
         onBack = onBack,
         onOpenProfile = onOpenProfile,
+        onLinkAccount = onLinkAccount,
         onSelectScope = viewModel::selectScope,
         onLoadMore = viewModel::loadMore,
         onRetry = viewModel::retry,
@@ -79,39 +98,102 @@ private fun LeaderboardScreen(
     state: LeaderboardUiState,
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
+    onLinkAccount: () -> Unit,
     onSelectScope: (LeaderboardScope) -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Scaffold(
-        topBar = { ScreenTopBar(stringResource(R.string.leaderboard_title), onBack) },
-        bottomBar = { OwnStandingBar(state) },
-    ) { padding ->
-        ScreenBackground {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
-                TabRow(selectedTabIndex = VISIBLE_SCOPES.indexOf(state.selectedScope).coerceAtLeast(0)) {
-                    VISIBLE_SCOPES.forEach { scope ->
-                        Tab(
-                            selected = state.selectedScope == scope,
-                            onClick = { onSelectScope(scope) },
-                            text = { Text(scope.label()) },
-                        )
-                    }
-                }
-                val tab = state.current
-                when {
-                    tab.isLoading -> LoadingState()
-                    tab.error != null && tab.entries.isEmpty() ->
-                        ErrorState(tab.error.asString(), onRetry)
-
-                    tab.isEmpty -> EmptyState(state.selectedScope.emptyMessage())
-                    else -> LeaderboardList(state, onOpenProfile, onLoadMore)
-                }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LeaderboardBackArrow(onBack)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = localeUpper(stringResource(R.string.leaderboard_title)),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.leaderboard_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF8B9098),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
+            SeasonChip(stringResource(R.string.leaderboard_season))
+        }
+
+        ScopeTabs(
+            labels = VISIBLE_SCOPES.map { it.label() },
+            icons = listOf(PremiumIcon.TROPHY, PremiumIcon.CALENDAR, PremiumIcon.PEOPLE),
+            selected = VISIBLE_SCOPES.indexOf(state.selectedScope).coerceAtLeast(0),
+            onSelect = { onSelectScope(VISIBLE_SCOPES[it]) },
+            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+        )
+
+        val tab = state.current
+        Box(Modifier.weight(1f)) {
+            when {
+                tab.isLoading -> LoadingState()
+                tab.error != null && tab.entries.isEmpty() ->
+                    ErrorState(tab.error.asString(), onRetry)
+
+                tab.isEmpty -> EmptyState(state.selectedScope.emptyMessage())
+                else -> LeaderboardList(state, onOpenProfile, onLoadMore)
+            }
+        }
+        OwnStandingBar(state, onLinkAccount)
+    }
+}
+
+/** The way back, drawn like the rest of the app's rather than borrowed from Material. */
+@Composable
+private fun LeaderboardBackArrow(onBack: () -> Unit) {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val label = stringResource(R.string.action_back)
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onBack,
+            )
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(
+            Modifier
+                .size(24.dp)
+                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
+        ) {
+            val s = size.minDimension
+            drawPath(
+                Path().apply {
+                    moveTo(s * 0.92f, s * 0.5f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    moveTo(s * 0.44f, s * 0.18f)
+                    lineTo(s * 0.12f, s * 0.5f)
+                    lineTo(s * 0.44f, s * 0.82f)
+                },
+                KoridorGold,
+                style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
     }
 }
@@ -135,15 +217,66 @@ private fun LeaderboardList(
         snapshotFlow { shouldLoadMore }.collect { if (it) onLoadMore() }
     }
 
+    // The first three get the stage and everybody else gets a row. A table that renders its
+    // winner the same way as its fortieth entry is a list, and nobody wants to be on a list.
+    val podium = tab.entries.take(PODIUM_PLACES)
+    val rest = tab.entries.drop(PODIUM_PLACES)
+
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            start = Dimens.ScreenPadding,
+            end = Dimens.ScreenPadding,
+            top = Dimens.SpaceMd,
+            bottom = Dimens.SpaceMd,
+        ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
-        items(tab.entries, key = LeaderboardEntry::userId) { entry ->
-            LeaderboardRow(
-                entry = entry,
+        if (podium.isNotEmpty()) {
+            item(key = "podium") {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = Dimens.SpaceSm),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    // Second, first, third — left to right, the way a podium stands.
+                    listOf(1, 0, 2).forEach { index ->
+                        podium.getOrNull(index)?.let { entry ->
+                            PodiumCard(
+                                place = index + 1,
+                                name = entry.username,
+                                initial = entry.username.take(1).uppercase(),
+                                rating = entry.rating.toString(),
+                                wins = entry.wins.toString(),
+                                winsLabel = stringResource(R.string.profile_wins),
+                                losses = (entry.totalGames - entry.wins).coerceAtLeast(0).toString(),
+                                lossesLabel = stringResource(R.string.profile_losses),
+                                onClick = { onOpenProfile(entry.userId) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (rest.isNotEmpty()) {
+            item(key = "head") {
+                StandingsHeader(
+                    rankLabel = stringResource(R.string.leaderboard_column_rank),
+                    playerLabel = stringResource(R.string.leaderboard_column_player),
+                )
+            }
+        }
+
+        items(rest, key = LeaderboardEntry::userId) { entry ->
+            StandingRow(
+                rank = entry.rank?.toString().orEmpty(),
+                initial = entry.username.take(1).uppercase(),
+                name = entry.username,
+                wins = entry.wins.toString(),
+                losses = (entry.totalGames - entry.wins).coerceAtLeast(0).toString(),
+                rating = entry.rating.toString(),
                 highlighted = entry.userId == state.ownStanding?.entry?.userId,
                 onClick = { onOpenProfile(entry.userId) },
             )
@@ -159,87 +292,6 @@ private fun LeaderboardList(
 }
 
 /**
- * A standing on the table, and — in the list, where the name belongs to someone else — the way
- * to that player's page.
- *
- * The tap lives on the inner row rather than on the [Surface] so the ripple is clipped to the
- * rounded shape instead of washing over a rectangle behind it. A null [onClick] is the pinned
- * own-standing bar: reading your own record is what the profile screen is for, and a row that
- * led you to yourself would be the one row on the table that goes nowhere new.
- */
-@Composable
-private fun LeaderboardRow(
-    entry: LeaderboardEntry,
-    highlighted: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-) {
-    val description = stringResource(
-        R.string.cd_leaderboard_row,
-        entry.rank ?: 0,
-        entry.username,
-        entry.rating,
-    )
-    val openLabel = stringResource(R.string.cd_open_profile)
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp)
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        shape = MaterialTheme.shapes.large,
-        color = if (highlighted) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
-        },
-    ) {
-        Row(
-            Modifier
-                .then(
-                    if (onClick == null) {
-                        Modifier
-                    } else {
-                        Modifier.clickable(onClickLabel = openLabel, onClick = onClick)
-                    },
-                )
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = entry.rank?.toString().orEmpty(),
-                modifier = Modifier.widthIn(min = 34.dp).clearAndSetSemantics { },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            PlayerAvatar(entry.avatarId, entry.username, size = 38.dp)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    entry.username,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    stringResource(R.string.leaderboard_record, entry.wins, entry.totalGames),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Text(
-                entry.rating.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-            )
-        }
-    }
-}
-
-/**
  * The player's own row, pinned so it stays visible however far the list is scrolled.
  *
  * With no row to pin, the bar says why there is none, and
@@ -247,39 +299,35 @@ private fun LeaderboardRow(
  * player's situation, not to this layout.
  */
 @Composable
-private fun OwnStandingBar(state: LeaderboardUiState) {
-    Surface(tonalElevation = 4.dp) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            when {
-                state.isOwnStandingLoading -> CircularProgressIndicator(
-                    Modifier.size(22.dp),
-                    strokeWidth = 2.dp,
-                )
+private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.ScreenPadding)
+            .padding(bottom = Dimens.SpaceSm)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        when {
+            state.isOwnStandingLoading -> Box(
+                Modifier.fillMaxWidth().padding(Dimens.SpaceMd),
+                contentAlignment = Alignment.Center,
+            ) { CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) }
 
-                state.ownStanding != null -> Column(
-                    Modifier.fillMaxWidth().widthIn(max = 720.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        stringResource(R.string.leaderboard_your_rank),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    OwnStandingRow(state.ownStanding)
-                }
+            state.ownStanding != null -> OwnStandingRow(state.ownStanding)
 
-                else -> Text(
-                    state.noStandingMessage.asString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            else -> ClimbBanner(
+                title = localeUpper(stringResource(R.string.leaderboard_climb_title)),
+                hint = state.noStandingMessage.asString(),
+                action = stringResource(R.string.leaderboard_climb_action),
+                onAction = onLinkAccount,
+            )
         }
+        Text(
+            text = stringResource(R.string.leaderboard_live_note),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF5C6169),
+        )
     }
 }
 
@@ -287,24 +335,25 @@ private fun OwnStandingBar(state: LeaderboardUiState) {
 private fun OwnStandingRow(standing: OwnStanding) {
     val entry = standing.entry
     // A capped scan can only prove "at least this far down", so the number is shown as N+.
-    val displayed = if (standing.isApproximate) {
-        entry.copy(rank = null)
+    val rank = if (standing.isApproximate) {
+        stringResource(R.string.leaderboard_rank_capped, entry.rank ?: 0)
     } else {
-        entry
+        entry.rank?.toString().orEmpty()
     }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (standing.isApproximate) {
-            Text(
-                stringResource(R.string.leaderboard_rank_capped, entry.rank ?: 0),
-                modifier = Modifier.widthIn(min = 34.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        LeaderboardRow(displayed, highlighted = true, modifier = Modifier.weight(1f))
-    }
+    StandingRow(
+        rank = rank,
+        initial = entry.username.take(1).uppercase(),
+        name = entry.username,
+        wins = entry.wins.toString(),
+        losses = (entry.totalGames - entry.wins).coerceAtLeast(0).toString(),
+        rating = entry.rating.toString(),
+        highlighted = true,
+        onClick = null,
+    )
 }
+
+/** How many places stand on the podium rather than in the table. */
+private const val PODIUM_PLACES = 3
 
 @Composable
 private fun LeaderboardScope.label(): String = stringResource(

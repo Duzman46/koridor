@@ -374,6 +374,7 @@ fun AppNavigation(
             composable(Routes.LEADERBOARD) { entry ->
                 LeaderboardRoute(
                     onBack = { navController.popFrom(entry) },
+                    onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                     onOpenProfile = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))
                     },

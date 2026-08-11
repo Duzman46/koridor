@@ -463,4 +463,11 @@
     <string name="difficulty_hard_hint">More planned, and more aggressive.</string>
     <string name="difficulty_expert_hint">Long-range strategy, and pressure.</string>
     <string name="difficulty_start">Start the match</string>
+    <string name="leaderboard_subtitle">The best players, at one table.</string>
+    <string name="leaderboard_season">This season</string>
+    <string name="leaderboard_column_rank">RANK</string>
+    <string name="leaderboard_column_player">PLAYER</string>
+    <string name="leaderboard_climb_title">Climb the table</string>
+    <string name="leaderboard_climb_action">Link account</string>
+    <string name="leaderboard_live_note">The table updates as matches finish.</string>
 </resources>

@@ -449,4 +449,11 @@
     <string name="difficulty_hard_hint">Daha planlı ve agresif hamleler.</string>
     <string name="difficulty_expert_hint">İleri seviye strateji ve baskı.</string>
     <string name="difficulty_start">Maçı Başlat</string>
+    <string name="leaderboard_subtitle">En iyi oyuncular, aynı masada.</string>
+    <string name="leaderboard_season">Bu sezon</string>
+    <string name="leaderboard_column_rank">SIRA</string>
+    <string name="leaderboard_column_player">OYUNCU</string>
+    <string name="leaderboard_climb_title">Sıralamada yüksel</string>
+    <string name="leaderboard_climb_action">Hesabını bağla</string>
+    <string name="leaderboard_live_note">Liderlik tablosu canlı olarak güncellenir.</string>
 </resources>

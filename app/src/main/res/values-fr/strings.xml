@@ -431,4 +431,11 @@
     <string name="difficulty_hard_hint">Plus calculé et plus agressif.</string>
     <string name="difficulty_expert_hint">Stratégie de longue haleine et pression.</string>
     <string name="difficulty_start">Lancer la partie</string>
+    <string name="leaderboard_subtitle">Les meilleurs joueurs, à la même table.</string>
+    <string name="leaderboard_season">Cette saison</string>
+    <string name="leaderboard_column_rank">RANG</string>
+    <string name="leaderboard_column_player">JOUEUR</string>
+    <string name="leaderboard_climb_title">Grimpe au classement</string>
+    <string name="leaderboard_climb_action">Associer un compte</string>
+    <string name="leaderboard_live_note">Le classement se met à jour à la fin des parties.</string>
 </resources>

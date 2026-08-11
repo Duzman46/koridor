@@ -71,6 +71,9 @@ enum class PremiumIcon {
 
     /** Making something that did not exist. A plus. */
     PLUS,
+
+    /** A stretch of time. A calendar with its two rings. */
+    CALENDAR,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -96,7 +99,34 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.LANGUAGE -> globe(s, tint, line, withFigure = false)
             PremiumIcon.ROBOT -> robot(s, tint, line)
             PremiumIcon.PLUS -> plus(s, tint, line)
+            PremiumIcon.CALENDAR -> calendar(s, tint, line)
         }
+    }
+}
+
+/** A calendar: a box, a rule under its head, and the two rings it hangs from. */
+private fun DrawScope.calendar(s: Float, tint: Color, line: Float) {
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.10f, s * 0.20f),
+        size = Size(s * 0.80f, s * 0.70f),
+        cornerRadius = CornerRadius(s * 0.12f),
+        style = Stroke(line),
+    )
+    drawLine(
+        tint,
+        Offset(s * 0.10f, s * 0.42f),
+        Offset(s * 0.90f, s * 0.42f),
+        strokeWidth = line * 0.9f,
+    )
+    listOf(0.32f, 0.68f).forEach { x ->
+        drawLine(
+            tint,
+            Offset(s * x, s * 0.08f),
+            Offset(s * x, s * 0.28f),
+            strokeWidth = line,
+            cap = StrokeCap.Round,
+        )
     }
 }
 

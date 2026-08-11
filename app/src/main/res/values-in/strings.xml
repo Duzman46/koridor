@@ -428,4 +428,11 @@
     <string name="difficulty_hard_hint">Lebih terencana dan lebih agresif.</string>
     <string name="difficulty_expert_hint">Strategi jangka panjang dan tekanan.</string>
     <string name="difficulty_start">Mulai pertandingan</string>
+    <string name="leaderboard_subtitle">Pemain terbaik, di satu meja.</string>
+    <string name="leaderboard_season">Musim ini</string>
+    <string name="leaderboard_column_rank">PERINGKAT</string>
+    <string name="leaderboard_column_player">PEMAIN</string>
+    <string name="leaderboard_climb_title">Naik di klasemen</string>
+    <string name="leaderboard_climb_action">Tautkan akun</string>
+    <string name="leaderboard_live_note">Tabel diperbarui saat pertandingan selesai.</string>
 </resources>

@@ -428,4 +428,11 @@
     <string name="difficulty_hard_hint">ज़्यादा सोचा-समझा और आक्रामक।</string>
     <string name="difficulty_expert_hint">दूरगामी रणनीति और दबाव।</string>
     <string name="difficulty_start">मैच शुरू करें</string>
+    <string name="leaderboard_subtitle">बेहतरीन खिलाड़ी, एक ही मेज़ पर।</string>
+    <string name="leaderboard_season">इस सीज़न</string>
+    <string name="leaderboard_column_rank">क्रम</string>
+    <string name="leaderboard_column_player">खिलाड़ी</string>
+    <string name="leaderboard_climb_title">तालिका में ऊपर चढ़ें</string>
+    <string name="leaderboard_climb_action">खाता जोड़ें</string>
+    <string name="leaderboard_live_note">मैच खत्म होते ही तालिका अपडेट होती है।</string>
 </resources>

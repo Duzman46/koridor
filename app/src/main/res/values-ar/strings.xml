@@ -444,4 +444,11 @@
     <string name="difficulty_hard_hint">أكثر تخطيطًا وأكثر عدوانية.</string>
     <string name="difficulty_expert_hint">استراتيجية بعيدة المدى وضغط متواصل.</string>
     <string name="difficulty_start">ابدأ المباراة</string>
+    <string name="leaderboard_subtitle">أفضل اللاعبين على طاولة واحدة.</string>
+    <string name="leaderboard_season">هذا الموسم</string>
+    <string name="leaderboard_column_rank">الترتيب</string>
+    <string name="leaderboard_column_player">اللاعب</string>
+    <string name="leaderboard_climb_title">ارتقِ في الترتيب</string>
+    <string name="leaderboard_climb_action">اربط حسابك</string>
+    <string name="leaderboard_live_note">يتحدّث الجدول مع انتهاء المباريات.</string>
 </resources>

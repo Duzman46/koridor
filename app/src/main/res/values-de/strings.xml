@@ -428,4 +428,11 @@
     <string name="difficulty_hard_hint">Planvoller und aggressiver.</string>
     <string name="difficulty_expert_hint">Weitreichende Strategie und Druck.</string>
     <string name="difficulty_start">Partie starten</string>
+    <string name="leaderboard_subtitle">Die besten Spieler, an einem Tisch.</string>
+    <string name="leaderboard_season">Diese Saison</string>
+    <string name="leaderboard_column_rank">PLATZ</string>
+    <string name="leaderboard_column_player">SPIELER</string>
+    <string name="leaderboard_climb_title">Steig in der Tabelle</string>
+    <string name="leaderboard_climb_action">Konto verknüpfen</string>
+    <string name="leaderboard_live_note">Die Tabelle aktualisiert sich, sobald Partien enden.</string>
 </resources>

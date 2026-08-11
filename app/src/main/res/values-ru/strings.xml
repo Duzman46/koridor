@@ -434,4 +434,11 @@
     <string name="difficulty_hard_hint">Расчётливее и агрессивнее.</string>
     <string name="difficulty_expert_hint">Дальний расчёт и давление.</string>
     <string name="difficulty_start">Начать матч</string>
+    <string name="leaderboard_subtitle">Лучшие игроки за одним столом.</string>
+    <string name="leaderboard_season">Этот сезон</string>
+    <string name="leaderboard_column_rank">МЕСТО</string>
+    <string name="leaderboard_column_player">ИГРОК</string>
+    <string name="leaderboard_climb_title">Поднимайтесь в таблице</string>
+    <string name="leaderboard_climb_action">Привязать аккаунт</string>
+    <string name="leaderboard_live_note">Таблица обновляется по мере завершения матчей.</string>
 </resources>

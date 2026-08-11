@@ -11,18 +11,15 @@ enum class ThemeMode {
 data class AppSettings(
     val language: AppLanguage = AppLanguage.SYSTEM,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    /**
-     * How loud the move, wall and result sounds are, from 0 to 100.
-     *
-     * A level rather than a switch, and the switch it replaced is [soundEnabled] below: silence
-     * is nought per cent, so the control is one thing rather than a toggle and a slider that can
-     * disagree with each other. An install that had the old switch keeps its answer — see
-     * DefaultGameRepository, which reads the switch when there is no level stored yet.
-     */
-    val soundVolume: Int = DEFAULT_SOUND_VOLUME,
-    val musicEnabled: Boolean = true,
+    val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
-    /** Whether the app may put anything in the notification shade at all. */
+    /**
+     * Whether the app may put anything in the notification shade.
+     *
+     * On by default. The one notice this app sends arrives at most once a fortnight and only
+     * after a week away, so the cost of it being on for somebody who did not ask is close to
+     * nothing — and the switch is one screen away for anybody who would rather it were not.
+     */
     val notificationsEnabled: Boolean = true,
     val difficulty: Difficulty = Difficulty.MEDIUM,
     /**
@@ -35,13 +32,7 @@ data class AppSettings(
      * answer to tiresome is to stop hearing it.
      */
     val matchMessagesEnabled: Boolean = true,
-) {
-    /** Whether anything is audible. Everything that used to ask the old switch still asks this. */
-    val soundEnabled: Boolean get() = soundVolume > 0
-}
-
-/** Loud enough to be heard over a room, quiet enough not to be the first thing turned off. */
-const val DEFAULT_SOUND_VOLUME = 80
+)
 
 data class GameStatistics(
     val totalGames: Int = 0,

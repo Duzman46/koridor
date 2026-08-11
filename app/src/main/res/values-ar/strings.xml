@@ -530,8 +530,6 @@
     <string name="settings_account_hint">الدخول والربط والحذف</string>
     <string name="settings_ad_privacy_hint">إدارة خيارات الإعلانات</string>
     <string name="settings_remove_ads_hint">العب دون انقطاع</string>
-    <string name="settings_music">الموسيقى</string>
-    <string name="settings_music_description">لحن هادئ يعمل خلف القوائم</string>
     <string name="settings_notifications">الإشعارات</string>
     <string name="settings_notifications_description">نادرة. تذكير إذا غبت مدة طويلة</string>
     <string name="notification_channel_name">التذكيرات</string>

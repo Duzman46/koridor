@@ -517,8 +517,6 @@
     <string name="settings_account_hint">Connexion, liaison et suppression</string>
     <string name="settings_ad_privacy_hint">Gérer vos choix publicitaires</string>
     <string name="settings_remove_ads_hint">Jouer sans interruption</string>
-    <string name="settings_music">Musique</string>
-    <string name="settings_music_description">Une boucle discrète sous les menus</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_description">Rares. Un rappel après une longue absence</string>
     <string name="notification_channel_name">Rappels</string>

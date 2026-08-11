@@ -517,8 +517,6 @@
     <string name="settings_account_hint">Entrar, vincular e excluir</string>
     <string name="settings_ad_privacy_hint">Gerencie suas opções de anúncios</string>
     <string name="settings_remove_ads_hint">Jogue sem interrupção</string>
-    <string name="settings_music">Música</string>
-    <string name="settings_music_description">Um loop calmo sob os menus</string>
     <string name="settings_notifications">Notificações</string>
     <string name="settings_notifications_description">Raras. Um lembrete se você sumir por um tempo</string>
     <string name="notification_channel_name">Lembretes</string>

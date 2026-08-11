@@ -80,7 +80,7 @@ class TutorialViewModel @Inject constructor(
             is TutorialOutcome.Advance -> solve(outcome.board)
             // The rejection is the lesson: show the wall in its invalid styling and pass.
             TutorialOutcome.AdvanceOnRejection -> {
-                soundManager.play(SoundEffect.ERROR, state.board.soundVolume)
+                soundManager.play(SoundEffect.ERROR, state.board.soundEnabled)
                 _uiState.update {
                     it.copy(
                         board = it.board.copy(invalidWallPreview = wall, validWalls = emptySet()),
@@ -133,7 +133,7 @@ class TutorialViewModel @Inject constructor(
 
     private fun solve(board: com.duzman46.gridbound.game.models.BoardState) {
         val state = _uiState.value
-        soundManager.play(SoundEffect.MOVE, state.board.soundVolume)
+        soundManager.play(SoundEffect.MOVE, state.board.soundEnabled)
         _uiState.update {
             it.copy(
                 board = it.board.copy(
@@ -152,7 +152,7 @@ class TutorialViewModel @Inject constructor(
 
     private fun hint() {
         val state = _uiState.value
-        soundManager.play(SoundEffect.ERROR, state.board.soundVolume)
+        soundManager.play(SoundEffect.ERROR, state.board.soundEnabled)
         _uiState.update { it.copy(hint = UiText.Res(R.string.tutorial_hint_wrong_move)) }
     }
 }

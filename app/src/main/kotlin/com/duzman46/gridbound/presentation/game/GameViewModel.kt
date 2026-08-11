@@ -13,6 +13,7 @@ import com.duzman46.gridbound.data.StatisticsManager
 import com.duzman46.gridbound.game.ai.AIEngineFactory
 import com.duzman46.gridbound.game.animation.AnimationManager
 import com.duzman46.gridbound.game.audio.SoundEffect
+import com.duzman46.gridbound.game.audio.HapticsManager
 import com.duzman46.gridbound.game.audio.SoundManager
 import com.duzman46.gridbound.game.engine.GameManager
 import com.duzman46.gridbound.game.models.ActionResult
@@ -63,6 +64,7 @@ class GameViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
     private val statisticsManager: StatisticsManager,
     private val soundManager: SoundManager,
+    private val hapticsManager: HapticsManager,
     private val animationManager: AnimationManager,
     private val onlineRepository: OnlineGameRepository,
     private val matchRepository: MatchRepository,
@@ -126,7 +128,7 @@ class GameViewModel @Inject constructor(
             settingsManager.settings.collectLatest { settings ->
                 _uiState.update {
                     it.copy(
-                        soundVolume = settings.soundVolume,
+                        soundEnabled = settings.soundEnabled,
                         hapticsEnabled = settings.hapticsEnabled,
                         matchMessagesEnabled = settings.matchMessagesEnabled,
                     )
@@ -281,7 +283,7 @@ class GameViewModel @Inject constructor(
             mode = mode,
             difficulty = difficulty,
             localPlayer = localPlayer,
-            soundVolume = prior.soundVolume,
+            soundEnabled = prior.soundEnabled,
             hapticsEnabled = prior.hapticsEnabled,
             matchMessagesEnabled = prior.matchMessagesEnabled,
         )
@@ -752,9 +754,18 @@ class GameViewModel @Inject constructor(
 
     private fun feedback(effect: SoundEffect) {
         val state = _uiState.value
-        soundManager.play(effect, state.soundVolume)
+        soundManager.play(effect, state.soundEnabled)
         _events.tryEmit(GameEvent.Feedback(effect, state.hapticsEnabled))
     }
+
+    /**
+     * The vibration for one event, played from the screen rather than from here.
+     *
+     * It stays an event rather than becoming a direct call because a vibration belongs to a
+     * screen the player is looking at: a board left behind mid-animation should not still be
+     * buzzing in somebody's pocket.
+     */
+    fun vibrate(effect: SoundEffect) = hapticsManager.play(effect)
 
     private companion object {
         /**

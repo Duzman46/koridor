@@ -109,9 +109,6 @@ enum class PremiumIcon {
     /** Advertising, refused. A circle with a bar through it. */
     NO_ADS,
 
-    /** The loop under the menus. Two quavers beamed together. */
-    MUSIC,
-
     /** Something the app wants to tell you when you are not looking. A bell. */
     BELL,
 }
@@ -162,37 +159,8 @@ fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
             PremiumIcon.SPEAKER -> speaker(s, tint, line)
             PremiumIcon.VIBRATE -> vibrate(s, tint, line)
         PremiumIcon.NO_ADS -> noAds(s, tint, line)
-        PremiumIcon.MUSIC -> music(s, tint, line)
         PremiumIcon.BELL -> bell(s, tint, line)
     }
-}
-
-/** Two quavers under one beam: the mark everybody reads as music without reading music. */
-private fun DrawScope.music(s: Float, tint: Color, line: Float) {
-    val stem = line * 0.85f
-    drawLine(tint, Offset(s * 0.36f, s * 0.74f), Offset(s * 0.36f, s * 0.18f), stem, StrokeCap.Round)
-    drawLine(tint, Offset(s * 0.80f, s * 0.62f), Offset(s * 0.80f, s * 0.10f), stem, StrokeCap.Round)
-    // The beam, thicker than the stems, sloping the way a printed one does.
-    drawPath(
-        Path().apply {
-            moveTo(s * 0.34f, s * 0.18f)
-            lineTo(s * 0.82f, s * 0.10f)
-            lineTo(s * 0.82f, s * 0.26f)
-            lineTo(s * 0.34f, s * 0.34f)
-            close()
-        },
-        tint,
-    )
-    drawOval(
-        color = tint,
-        topLeft = Offset(s * 0.14f, s * 0.62f),
-        size = Size(s * 0.24f, s * 0.20f),
-    )
-    drawOval(
-        color = tint,
-        topLeft = Offset(s * 0.58f, s * 0.50f),
-        size = Size(s * 0.24f, s * 0.20f),
-    )
 }
 
 /** A bell: a dome on a rim, with the clapper below it. */

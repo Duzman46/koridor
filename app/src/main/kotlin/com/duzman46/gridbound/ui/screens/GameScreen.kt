@@ -114,11 +114,15 @@ fun GameRoute(
     viewModel: GameViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val haptics = LocalHapticFeedback.current
+    // Not LocalHapticFeedback. That is View.performHapticFeedback, which the platform silently
+    // drops whenever the system-wide touch-feedback switch is off — and on the owner's handset
+    // it is, so every move in the game was asking for a vibration that never happened. See
+    // HapticsManager for why driving the vibrator directly is the correct fix and not a
+    // workaround.
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             if (event is GameEvent.Feedback && event.hapticsEnabled) {
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.vibrate(event.effect)
             }
         }
     }

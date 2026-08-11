@@ -75,10 +75,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
+import com.duzman46.gridbound.game.audio.LocalHapticsManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -844,7 +843,9 @@ private fun WaitingPanel(
 @Composable
 private fun RoomCodePlate(roomCode: String) {
     val clipboard = LocalClipboardManager.current
-    val haptics = LocalHapticFeedback.current
+    // The app's own vibrator rather than LocalHapticFeedback: the platform drops that one
+    // wherever the phone-wide touch-feedback switch is off. See HapticsManager.
+    val haptics = LocalHapticsManager.current
     val context = LocalContext.current
     val copied = stringResource(R.string.room_code_copied)
     val shape = RoundedCornerShape(16.dp)
@@ -860,7 +861,7 @@ private fun RoomCodePlate(roomCode: String) {
                 onLongClickLabel = copied,
                 onLongClick = {
                     clipboard.setText(AnnotatedString(roomCode))
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptics.tick()
                     // Android 13 and later show their own confirmation for anything put on the
                     // clipboard, and a second one on top of it is the app talking over the
                     // system. Older versions say nothing at all, so we do.
@@ -870,7 +871,7 @@ private fun RoomCodePlate(roomCode: String) {
                 },
                 onClick = {
                     clipboard.setText(AnnotatedString(roomCode))
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptics.tick()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
                     }

@@ -9,12 +9,18 @@
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
-      VIBRATE is deliberately absent. The one haptic in the app is Compose's
-      LocalHapticFeedback, which is View.performHapticFeedback: the system server performs the
-      vibration under its own identity, and the platform requires the permission of
-      android.os.Vibrator alone. Declaring it would put a permission on the store listing that
-      nothing here is able to use.
+      VIBRATE was deliberately absent, on the reasoning that the app's only haptic went through
+      Compose's LocalHapticFeedback — View.performHapticFeedback, which the system server carries
+      out under its own identity and which therefore needs no permission here.
+
+      That was true and it did not work. The platform gates performHapticFeedback on
+      Settings.System.haptic_feedback_enabled, the phone-wide *touch feedback* switch, and every
+      move in the game was being dropped on any handset where somebody had turned it off. A pawn
+      landing is not touch feedback — it is the game reporting what happened, the same category
+      as its sounds — so it is driven from the vibrator now, under the app's own switch, and that
+      needs the permission.
     -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".GridboundApplication"

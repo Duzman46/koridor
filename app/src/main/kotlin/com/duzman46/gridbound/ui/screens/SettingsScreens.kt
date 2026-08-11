@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,8 +88,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLanguage: (AppLanguage) -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
-    onSoundVolume: (Int) -> Unit,
-    onMusic: (Boolean) -> Unit,
+    onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onMatchMessages: (Boolean) -> Unit,
     onNotifications: (Boolean) -> Unit,
@@ -106,6 +106,17 @@ fun SettingsScreen(
     var languageOpen by rememberSaveable { mutableStateOf(false) }
     var themeOpen by rememberSaveable { mutableStateOf(false) }
     val notificationsAllowed = rememberNotificationAccess()
+
+    // Asked once, the first time this screen is opened while the switch is on and the system
+    // has not been asked. Not on first launch: nobody has been offered anything then, that is
+    // the dialog everybody denies, and Android allows exactly one more ask afterwards.
+    var asked by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.settings.notificationsEnabled, notificationsAllowed) {
+        if (!asked && state.settings.notificationsEnabled && !notificationsAllowed) {
+            asked = true
+            onRequestNotifications()
+        }
+    }
 
     // The stored default is still "follow the device"; it is named here as whichever language
     // that actually produces, so the tile always says the language currently on screen.
@@ -178,22 +189,12 @@ fun SettingsScreen(
             SectionLabel(stringResource(R.string.settings_game_experience))
             OptionGroup(
                 listOf(
-                    // A level rather than a switch, and nought is the switch. One control cannot
-                    // disagree with itself, which a slider beside a toggle can and eventually
-                    // does.
                     OptionEntry(
                         icon = PremiumIcon.SPEAKER,
                         title = stringResource(R.string.settings_sounds),
                         subtitle = stringResource(R.string.settings_sounds_description),
-                        level = state.settings.soundVolume,
-                        onLevelChange = onSoundVolume,
-                    ),
-                    OptionEntry(
-                        icon = PremiumIcon.MUSIC,
-                        title = stringResource(R.string.settings_music),
-                        subtitle = stringResource(R.string.settings_music_description),
-                        checked = state.settings.musicEnabled,
-                        onCheckedChange = onMusic,
+                        checked = state.settings.soundEnabled,
+                        onCheckedChange = onSound,
                     ),
                     OptionEntry(
                         icon = PremiumIcon.VIBRATE,
@@ -213,17 +214,19 @@ fun SettingsScreen(
                         checked = state.settings.matchMessagesEnabled,
                         onCheckedChange = onMatchMessages,
                     ),
-                    // The only setting on this screen whose answer is not entirely the app's to
-                    // give, so the switch shows the truth rather than the wish: it is on when
-                    // the player wants notifications *and* the system allows them. Turning it
-                    // on without the permission asks for the permission, which is the one
-                    // moment where that dialog makes sense — the player is looking at the row
-                    // it is about.
+                    // On from the start, and the switch shows the player's own answer rather
+                    // than the system's. Showing the system's would mean a brand-new install
+                    // reads "off" until somebody grants a permission they have not been asked
+                    // for yet, which is the opposite of arriving switched on.
+                    //
+                    // The permission is asked for the first time this screen is opened with the
+                    // switch on — see the effect below. That is the one moment the dialog makes
+                    // sense: the row saying "Bildirimler: açık" is on screen behind it.
                     OptionEntry(
                         icon = PremiumIcon.BELL,
                         title = stringResource(R.string.settings_notifications),
                         subtitle = stringResource(R.string.settings_notifications_description),
-                        checked = state.settings.notificationsEnabled && notificationsAllowed,
+                        checked = state.settings.notificationsEnabled,
                         onCheckedChange = { wanted ->
                             onNotifications(wanted)
                             if (wanted && !notificationsAllowed) onRequestNotifications()

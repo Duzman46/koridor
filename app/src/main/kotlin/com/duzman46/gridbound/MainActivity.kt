@@ -8,13 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.duzman46.gridbound.data.SettingsBootstrap
-import com.duzman46.gridbound.game.audio.MusicManager
+import com.duzman46.gridbound.game.audio.HapticsManager
+import com.duzman46.gridbound.game.audio.LocalHapticsManager
 import com.duzman46.gridbound.navigation.AppNavigation
 import com.duzman46.gridbound.notifications.ComeBackWorker
 import com.duzman46.gridbound.notifications.Notifications
@@ -29,7 +31,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject lateinit var music: MusicManager
+    @Inject lateinit var haptics: HapticsManager
 
     /**
      * Asked for once, when the player turns notifications on and the system has not been asked.
@@ -71,10 +73,10 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(viewModel) {
                 viewModel.initializeMonetization(this@MainActivity)
             }
-            // The loop follows the setting; whether the app is on screen is the activity's own
-            // answer, given in onStart and onStop below. Both have to agree before it plays.
-            LaunchedEffect(settings.musicEnabled) {
-                music.setEnabled(settings.musicEnabled)
+            // Held on the manager rather than passed at every call, so the lobby's long-press
+            // copy — which is nowhere near the game state — obeys the same switch as the board.
+            LaunchedEffect(settings.hapticsEnabled) {
+                haptics.enabled = settings.hapticsEnabled
             }
             // A guest who first launched offline gets a backend identity on the next start.
             LaunchedEffect(session.status) {
@@ -85,6 +87,7 @@ class MainActivity : ComponentActivity() {
             // scripts, not just the strings inside them.
             ProvideAppLocale(settings.language) {
                 GridboundTheme(settings) {
+                    CompositionLocalProvider(LocalHapticsManager provides haptics) {
                     AppNavigation(
                         session = session,
                         language = settings.language,
@@ -107,25 +110,10 @@ class MainActivity : ComponentActivity() {
                             viewModel.showInterstitialAfterCompletedMatch(this@MainActivity, onFinished)
                         },
                     )
+                    }
                 }
             }
         }
     }
 
-    // The loop is background to looking at the app, so it goes away when the app does. No
-    // media session, no foreground service, nothing to find in the shade.
-    override fun onStart() {
-        super.onStart()
-        music.setVisible(true)
-    }
-
-    override fun onStop() {
-        music.setVisible(false)
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        if (isFinishing) music.release()
-        super.onDestroy()
-    }
 }

@@ -13,7 +13,6 @@ import com.duzman46.gridbound.game.models.WallOrientation
 import com.duzman46.gridbound.online.model.MatchChatEntry
 import com.duzman46.gridbound.online.model.MatchMessageKind
 import com.duzman46.gridbound.online.model.RoomEndReason
-import com.duzman46.gridbound.domain.models.DEFAULT_SOUND_VOLUME
 
 data class GameUiState(
     val boardState: BoardState = BoardState.initial(),
@@ -82,7 +81,7 @@ data class GameUiState(
      * match and the control that set it is the control that clears it.
      */
     val matchMessagesMuted: Boolean = false,
-    val soundVolume: Int = DEFAULT_SOUND_VOLUME,
+    val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val canUndo: Boolean = false,
 ) {

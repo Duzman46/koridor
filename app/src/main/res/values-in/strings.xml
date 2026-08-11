@@ -514,8 +514,6 @@
     <string name="settings_account_hint">Masuk, tautkan, dan hapus</string>
     <string name="settings_ad_privacy_hint">Kelola pilihan iklanmu</string>
     <string name="settings_remove_ads_hint">Main tanpa gangguan</string>
-    <string name="settings_music">Musik</string>
-    <string name="settings_music_description">Alunan tenang di balik menu</string>
     <string name="settings_notifications">Notifikasi</string>
     <string name="settings_notifications_description">Jarang. Pengingat kalau kamu lama tidak mampir</string>
     <string name="notification_channel_name">Pengingat</string>

@@ -520,8 +520,6 @@
     <string name="settings_account_hint">Вход, привязка и удаление</string>
     <string name="settings_ad_privacy_hint">Настройки рекламы</string>
     <string name="settings_remove_ads_hint">Играйте без перерывов</string>
-    <string name="settings_music">Музыка</string>
-    <string name="settings_music_description">Тихая петля под меню</string>
     <string name="settings_notifications">Уведомления</string>
     <string name="settings_notifications_description">Редко. Напоминание, если вас давно не было</string>
     <string name="notification_channel_name">Напоминания</string>

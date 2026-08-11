@@ -21,22 +21,18 @@ enum class SoundEffect {
 /**
  * The move, wall and result sounds.
  *
- * A [ToneGenerator] takes its volume when it is built and never again, so a level the player can
- * move means building a new one each time they move it. That is cheap and it happens while a
- * finger is on a slider, so it is done lazily — the generator is replaced on the next sound
- * rather than on the drag, and a drag from eighty to twenty therefore costs one rebuild rather
- * than sixty.
+ * The generator is built on the first sound rather than in the constructor, and a device that
+ * refuses to hand one out — every audio session taken — makes the app silent rather than making
+ * it crash on a move.
  */
 @Singleton
 class SoundManager @Inject constructor() {
     private var generator: ToneGenerator? = null
-    private var builtAt = -1
 
     @Synchronized
-    fun play(effect: SoundEffect, volumePercent: Int) {
-        val volume = volumePercent.coerceIn(0, 100)
-        if (volume == 0) return
-        val tones = generatorAt(volume) ?: return
+    fun play(effect: SoundEffect, enabled: Boolean) {
+        if (!enabled) return
+        val tones = tones() ?: return
         val (tone, duration) = when (effect) {
             SoundEffect.MOVE -> ToneGenerator.TONE_PROP_BEEP to Constants.Audio.MOVE_DURATION_MILLIS
             SoundEffect.WALL -> ToneGenerator.TONE_PROP_ACK to Constants.Audio.WALL_DURATION_MILLIS
@@ -51,15 +47,11 @@ class SoundManager @Inject constructor() {
             .onFailure { AppLog.warn("tone-start", it) }
     }
 
-    private fun generatorAt(volume: Int): ToneGenerator? {
-        if (builtAt == volume) return generator
-        runCatching { generator?.release() }
-        // A device can refuse to hand one out when every audio session is taken. Silence is the
-        // right answer to that, not a crash on a move.
-        generator = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, volume) }
-            .onFailure { AppLog.warn("tone-generator", it) }
-            .getOrNull()
-        builtAt = if (generator != null) volume else -1
+    private fun tones(): ToneGenerator? {
+        generator?.let { return it }
+        generator = runCatching {
+            ToneGenerator(AudioManager.STREAM_MUSIC, Constants.Audio.VOLUME_PERCENT)
+        }.onFailure { AppLog.warn("tone-generator", it) }.getOrNull()
         return generator
     }
 }

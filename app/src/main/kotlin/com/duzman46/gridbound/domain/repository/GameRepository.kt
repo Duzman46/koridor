@@ -41,8 +41,7 @@ interface GameRepository {
 
     suspend fun setLanguage(language: AppLanguage)
     suspend fun setThemeMode(mode: ThemeMode)
-    suspend fun setSoundVolume(percent: Int)
-    suspend fun setMusicEnabled(enabled: Boolean)
+    suspend fun setSoundEnabled(enabled: Boolean)
     suspend fun setNotificationsEnabled(enabled: Boolean)
     suspend fun setHapticsEnabled(enabled: Boolean)
     suspend fun setMatchMessagesEnabled(enabled: Boolean)

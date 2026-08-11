@@ -535,8 +535,6 @@
     <string name="settings_account_hint">Giriş, bağlama ve silme</string>
     <string name="settings_ad_privacy_hint">Reklam tercihlerini yönet</string>
     <string name="settings_remove_ads_hint">Kesintisiz oyna</string>
-    <string name="settings_music">Müzik</string>
-    <string name="settings_music_description">Menülerin altında sakin bir döngü</string>
     <string name="settings_notifications">Bildirimler</string>
     <string name="settings_notifications_description">Nadiren. Uzun süre uğramazsan bir hatırlatma</string>
     <string name="notification_channel_name">Hatırlatmalar</string>

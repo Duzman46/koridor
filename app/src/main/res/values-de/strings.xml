@@ -514,8 +514,6 @@
     <string name="settings_account_hint">Anmelden, verknüpfen und löschen</string>
     <string name="settings_ad_privacy_hint">Werbeeinstellungen verwalten</string>
     <string name="settings_remove_ads_hint">Ohne Unterbrechung spielen</string>
-    <string name="settings_music">Musik</string>
-    <string name="settings_music_description">Eine ruhige Schleife unter den Menüs</string>
     <string name="settings_notifications">Benachrichtigungen</string>
     <string name="settings_notifications_description">Selten. Ein Anstoß, wenn du länger weg warst</string>
     <string name="notification_channel_name">Erinnerungen</string>

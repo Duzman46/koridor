@@ -463,7 +463,6 @@
     <string name="more_invite_friends">Undang teman</string>
     <string name="more_invite_friends_hint">Ajak seseorang bermain</string>
     <string name="more_invite_message">Main Koridor bersamaku: %1$s</string>
-    <string name="more_restore_hint">Pulihkan pembelian sebelumnya</string>
     <string name="more_privacy_hint">Baca cara datamu disimpan</string>
     <string name="more_terms_hint">Baca ketentuan yang kamu setujui</string>
     <string name="more_version">Versi</string>
@@ -506,4 +505,9 @@
     <string name="achievement_swift">Kilat</string>
     <string name="achievement_unlocked">Pencapaian diraih</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">Kontak</string>
+    <string name="more_contact_hint">Tulis soal apa pun</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">Media sosial</string>
+    <string name="more_social_hint">Ikuti perkembangan game</string>
 </resources>

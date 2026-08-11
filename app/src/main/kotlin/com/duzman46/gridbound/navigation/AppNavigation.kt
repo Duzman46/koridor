@@ -474,7 +474,6 @@ fun AppNavigation(
                             onBuy(Entitlement.REMOVE_ADS)
                         }
                     },
-                    onRestorePurchases = onRestorePurchases,
                     onOpenUrl = openUrl,
                 )
             }

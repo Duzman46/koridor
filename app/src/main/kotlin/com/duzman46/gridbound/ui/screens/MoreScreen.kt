@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.net.toUri
 import com.duzman46.gridbound.BuildConfig
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppLog
@@ -46,7 +47,6 @@ fun MoreScreen(
     onStatistics: () -> Unit,
     onAchievements: () -> Unit,
     onRemoveAds: () -> Unit,
-    onRestorePurchases: () -> Unit,
     onOpenUrl: (String) -> Unit,
     isGuest: Boolean,
 ) {
@@ -54,6 +54,10 @@ fun MoreScreen(
     val inviteSubject = stringResource(R.string.app_name)
     val inviteText = stringResource(R.string.more_invite_message, storeUrl())
     val chooserTitle = stringResource(R.string.more_invite_friends)
+    val chooserMail = stringResource(R.string.more_contact)
+    // The version goes in the subject line, because the first question about any report is
+    // which build it came from and the player should not have to be asked.
+    val mailSubject = stringResource(R.string.more_contact_subject, BuildConfig.VERSION_NAME)
 
     Column(
         Modifier
@@ -120,13 +124,32 @@ fun MoreScreen(
 
             MoreGroup(
                 buildList {
-                    if (BuildConfig.MONETIZATION_CONFIGURED) {
+                    // Restoring a purchase lives in Settings, beside the thing it restores, and
+                    // it is not here as well: one destination reachable twice from one screen
+                    // teaches the player that neither route is real.
+                    //
+                    // Both of the next two are drawn only once there is somewhere for them to
+                    // go. Configured in app.properties; see the note there about the address
+                    // being public.
+                    val email = BuildConfig.SUPPORT_EMAIL
+                    if (email.isNotBlank()) {
                         add(
                             MoreEntry(
-                                icon = PremiumIcon.RESTORE,
-                                title = stringResource(R.string.store_restore),
-                                subtitle = stringResource(R.string.more_restore_hint),
-                                onClick = onRestorePurchases,
+                                icon = PremiumIcon.ENVELOPE,
+                                title = stringResource(R.string.more_contact),
+                                subtitle = stringResource(R.string.more_contact_hint),
+                                onClick = { context.mail(email, mailSubject, chooserMail) },
+                            ),
+                        )
+                    }
+                    val social = BuildConfig.SOCIAL_URL
+                    if (social.isNotBlank()) {
+                        add(
+                            MoreEntry(
+                                icon = PremiumIcon.CHAT,
+                                title = stringResource(R.string.more_social),
+                                subtitle = stringResource(R.string.more_social_hint),
+                                onClick = { onOpenUrl(social) },
                             ),
                         )
                     }
@@ -197,5 +220,29 @@ private fun Context.share(chooserTitle: String, subject: String, text: String) {
         // A device with nothing at all that can send text. Nothing to recover, and nothing worth
         // interrupting the player over.
         AppLog.warn("share-invite", error)
+    }
+}
+
+/**
+ * Opens a mail app with the address and subject filled in, and the body left alone.
+ *
+ * `ACTION_SENDTO` on a `mailto:` rather than `ACTION_SEND`: the second offers every app that
+ * can send anything, which on a phone means the chooser is mostly chat apps that cannot reach
+ * an email address at all.
+ */
+private fun Context.mail(address: String, subject: String, chooserTitle: String) {
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = "mailto:".toUri()
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
+        putExtra(Intent.EXTRA_SUBJECT, subject)
+    }
+    try {
+        startActivity(
+            Intent.createChooser(intent, chooserTitle)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    } catch (error: android.content.ActivityNotFoundException) {
+        // No mail app on the device. There is nothing useful to offer instead.
+        AppLog.warn("contact-mail", error)
     }
 }

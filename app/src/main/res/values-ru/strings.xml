@@ -469,7 +469,6 @@
     <string name="more_invite_friends">Пригласить друзей</string>
     <string name="more_invite_friends_hint">Позовите кого-нибудь в игру</string>
     <string name="more_invite_message">Сыграй со мной в Koridor: %1$s</string>
-    <string name="more_restore_hint">Вернуть прежнюю покупку</string>
     <string name="more_privacy_hint">Как хранятся ваши данные</string>
     <string name="more_terms_hint">Условия, которые вы приняли</string>
     <string name="more_version">Версия</string>
@@ -512,4 +511,9 @@
     <string name="achievement_swift">Молния</string>
     <string name="achievement_unlocked">Достижение получено</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">Связаться</string>
+    <string name="more_contact_hint">Напишите нам о чём угодно</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">Соцсети</string>
+    <string name="more_social_hint">Следите за игрой</string>
 </resources>

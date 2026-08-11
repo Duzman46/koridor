@@ -96,6 +96,11 @@ android {
         buildConfigField("boolean", "APP_CHECK_ENABLED", appCheckEnabled.toString())
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"${appValue("KORIDOR_PRIVACY_POLICY_URL")}\"")
         buildConfigField("String", "TERMS_URL", "\"${appValue("KORIDOR_TERMS_URL")}\"")
+        // Both blank until there is somewhere real to send people. "More" draws neither row
+        // while its value is empty, on the same rule the legal links follow: a row that opens
+        // nothing is worse than no row.
+        buildConfigField("String", "SUPPORT_EMAIL", "\"${appValue("KORIDOR_SUPPORT_EMAIL")}\"")
+        buildConfigField("String", "SOCIAL_URL", "\"${appValue("KORIDOR_SOCIAL_URL")}\"")
         buildConfigField("String", "PREMIUM_PRODUCT_ID", "\"$premiumProductId\"")
         buildConfigField("boolean", "MONETIZATION_CONFIGURED", monetizationConfigured.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

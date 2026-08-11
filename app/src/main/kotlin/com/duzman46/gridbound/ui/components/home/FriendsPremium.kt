@@ -2,6 +2,7 @@ package com.duzman46.gridbound.ui.components.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,9 +10,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,9 +37,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
 
@@ -86,17 +90,43 @@ fun FriendsEmptyPanel(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(Color(0xFF141A20), Color(0xFF0D1116))))
-            .border(BorderStroke(1.dp, FieldEdge), shape)
-            .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
+            // Three stops, and the first one is the picture's own black.
+            //
+            // The artwork runs edge to edge across the top of this card, and it is darker than
+            // any card in the app. Starting the card at the same black is what makes the two
+            // one surface: there is no line where the picture stops, because on three sides it
+            // does not stop — it meets the card's border. The ground warms to the usual charcoal
+            // by the time the text begins, which is where the artwork has already faded out.
+            .background(
+                Brush.verticalGradient(
+                    0f to Color(0xFF040507),
+                    HERO_SHARE to Color(0xFF141A20),
+                    1f to Color(0xFF0D1116),
+                ),
+            )
+            .border(BorderStroke(1.dp, FieldEdge), shape),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
-        Canvas(
-            Modifier
+        // Edge to edge, outside the text's padding, and that is what the feathered border on
+        // the asset buys: the picture has no rectangle to see, so it can run right into the
+        // card's own corners instead of sitting inside them as a black patch.
+        //
+        // The drawing that was here is gone. It was a stand-in for exactly this.
+        Image(
+            painter = painterResource(R.drawable.friends_empty),
+            // Decorative: the heading under it says what it is, and a screen reader announcing
+            // the picture as well would say the same thing twice.
+            contentDescription = null,
+            modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp),
-        ) { drawFriendsScene() }
+                .aspectRatio(HERO_RATIO),
+            contentScale = ContentScale.FillWidth,
+        )
+        Column(
+            Modifier.padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
@@ -146,8 +176,21 @@ fun FriendsEmptyPanel(
                 mark = { drawAddPerson(Color(0xFF1A1206)) },
             )
         }
+        }
     }
 }
+
+/** The hero asset's own proportions, so the card reserves exactly its height and no more. */
+private const val HERO_RATIO = 1050f / 600f
+
+/**
+ * Roughly how much of the card the picture takes, and therefore where its ground has finished
+ * warming from the artwork's black to the card's charcoal.
+ *
+ * Approximate on purpose: the text under it is three sizes at any font scale, so the exact share
+ * is not knowable at build time. It only has to land inside the stretch the artwork fades over.
+ */
+private const val HERO_SHARE = 0.40f
 
 @Composable
 private fun RowScope.PerkColumn(perk: FriendPerk) {
@@ -415,176 +458,4 @@ internal fun DrawScope.drawBlockMark(tint: Color) {
     val line = s * 0.11f
     drawCircle(tint, s * 0.42f, Offset(s * 0.5f, s * 0.5f), style = Stroke(line))
     drawLine(tint, Offset(s * 0.22f, s * 0.78f), Offset(s * 0.78f, s * 0.22f), line, StrokeCap.Round)
-}
-
-/** A shield with two figures in it, over a board, between two pawns. The empty screen's picture. */
-private fun DrawScope.drawFriendsScene() {
-    val w = size.width
-    val h = size.height
-    val centre = w / 2f
-
-    // The board: a square seen in perspective, so a diamond, with its ranks and files ruled
-    // across it. Both families of lines run parallel to an edge of the diamond, which is what
-    // makes it read as a board rather than as cross-hatching — the first attempt drew chords
-    // between opposite edges and produced a scribble.
-    val far = Offset(centre, h * 0.58f)
-    val east = Offset(centre + w * 0.30f, h * 0.78f)
-    val near = Offset(centre, h * 0.98f)
-    val west = Offset(centre - w * 0.30f, h * 0.78f)
-    val ink = KoridorGold.copy(alpha = 0.16f)
-    val rule = KoridorGold.copy(alpha = 0.09f)
-    val weight = h * 0.006f
-
-    drawPath(
-        Path().apply {
-            moveTo(far.x, far.y)
-            lineTo(east.x, east.y)
-            lineTo(near.x, near.y)
-            lineTo(west.x, west.y)
-            close()
-        },
-        ink,
-        style = Stroke(width = h * 0.009f, join = StrokeJoin.Round),
-    )
-    for (index in 1 until BOARD_RANKS) {
-        val t = index.toFloat() / BOARD_RANKS
-        // Parallel to the far-east edge: from a point on west→far to one on near→east.
-        drawLine(rule, lerp(west, far, t), lerp(near, east, t), strokeWidth = weight)
-        // Parallel to the far-west edge: from a point on east→far to one on near→west.
-        drawLine(rule, lerp(east, far, t), lerp(near, west, t), strokeWidth = weight)
-    }
-
-    // The shield, with the pair of figures cut into it.
-    val shieldW = h * 0.54f
-    val shieldH = h * 0.66f
-    val left = centre - shieldW / 2f
-    val top = h * 0.04f
-    val shield = Path().apply {
-        moveTo(centre, top)
-        lineTo(left + shieldW, top + shieldH * 0.22f)
-        lineTo(left + shieldW, top + shieldH * 0.58f)
-        cubicTo(
-            left + shieldW, top + shieldH * 0.86f,
-            centre + shieldW * 0.22f, top + shieldH * 0.98f,
-            centre, top + shieldH,
-        )
-        cubicTo(
-            centre - shieldW * 0.22f, top + shieldH * 0.98f,
-            left, top + shieldH * 0.86f,
-            left, top + shieldH * 0.58f,
-        )
-        lineTo(left, top + shieldH * 0.22f)
-        close()
-    }
-    drawPath(shield, Color(0xFF171C22))
-    drawPath(
-        shield,
-        KoridorGold.copy(alpha = 0.65f),
-        style = Stroke(width = h * 0.011f, join = StrokeJoin.Round),
-    )
-    val markSize = shieldH * 0.40f
-    val markLeft = centre - markSize / 2f
-    val markTop = top + shieldH * 0.28f
-    drawCircle(KoridorGold, markSize * 0.16f, Offset(markLeft + markSize * 0.34f, markTop + markSize * 0.24f))
-    drawCircle(
-        KoridorGold.copy(alpha = 0.85f),
-        markSize * 0.14f,
-        Offset(markLeft + markSize * 0.70f, markTop + markSize * 0.27f),
-    )
-    drawArc(
-        color = KoridorGold,
-        startAngle = 180f,
-        sweepAngle = 180f,
-        useCenter = true,
-        topLeft = Offset(markLeft + markSize * 0.08f, markTop + markSize * 0.48f),
-        size = Size(markSize * 0.52f, markSize * 0.44f),
-    )
-    drawArc(
-        color = KoridorGold.copy(alpha = 0.85f),
-        startAngle = 180f,
-        sweepAngle = 180f,
-        useCenter = true,
-        topLeft = Offset(markLeft + markSize * 0.46f, markTop + markSize * 0.52f),
-        size = Size(markSize * 0.48f, markSize * 0.40f),
-    )
-
-    // The two pawns, one of each seat, standing on the board either side of the shield.
-    //
-    // The dark one carries a rim. Without it, a near-black piece on a near-black page is a hole
-    // in the picture rather than a piece — it read as the pale one's shadow.
-    drawScenePawn(
-        foot = Offset(centre - w * 0.20f, h * 0.76f),
-        height = h * 0.30f,
-        body = Color(0xFF262E37),
-        light = Color(0xFF3E4753),
-        rim = Color(0xFF5C6673),
-    )
-    drawScenePawn(
-        foot = Offset(centre + w * 0.20f, h * 0.74f),
-        height = h * 0.30f,
-        body = Color(0xFFD8C39A),
-        light = Color(0xFFF0E2C4),
-        rim = null,
-    )
-
-    // A few motes of light, at the edges, where nothing else is.
-    listOf(
-        Offset(w * 0.14f, h * 0.22f) to 0.30f,
-        Offset(w * 0.86f, h * 0.30f) to 0.24f,
-        Offset(w * 0.24f, h * 0.50f) to 0.18f,
-        Offset(w * 0.78f, h * 0.14f) to 0.20f,
-    ).forEach { (at, alpha) ->
-        drawCircle(KoridorGold.copy(alpha = alpha), h * 0.012f, at)
-    }
-}
-
-/** How many ranks the board in the picture is ruled into. Four reads; nine is a moiré at 150 dp. */
-private const val BOARD_RANKS = 4
-
-private fun lerp(from: Offset, to: Offset, t: Float): Offset =
-    Offset(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t)
-
-/** One pawn: a head, a waist and a base, lit from above, with an optional rim to lift it off. */
-private fun DrawScope.drawScenePawn(
-    foot: Offset,
-    height: Float,
-    body: Color,
-    light: Color,
-    rim: Color?,
-) {
-    val width = height * 0.52f
-    drawOval(
-        color = Color.Black.copy(alpha = 0.35f),
-        topLeft = Offset(foot.x - width * 0.60f, foot.y - height * 0.05f),
-        size = Size(width * 1.20f, height * 0.13f),
-    )
-    val silhouette = Path().apply {
-        moveTo(foot.x - width * 0.50f, foot.y)
-        lineTo(foot.x + width * 0.50f, foot.y)
-        lineTo(foot.x + width * 0.34f, foot.y - height * 0.16f)
-        cubicTo(
-            foot.x + width * 0.20f, foot.y - height * 0.42f,
-            foot.x + width * 0.24f, foot.y - height * 0.52f,
-            foot.x + width * 0.16f, foot.y - height * 0.58f,
-        )
-        lineTo(foot.x - width * 0.16f, foot.y - height * 0.58f)
-        cubicTo(
-            foot.x - width * 0.24f, foot.y - height * 0.52f,
-            foot.x - width * 0.20f, foot.y - height * 0.42f,
-            foot.x - width * 0.34f, foot.y - height * 0.16f,
-        )
-        close()
-    }
-    drawPath(silhouette, body)
-    drawCircle(light, width * 0.34f, Offset(foot.x, foot.y - height * 0.74f))
-    drawCircle(body, width * 0.30f, Offset(foot.x + width * 0.04f, foot.y - height * 0.72f))
-    if (rim != null) {
-        drawPath(silhouette, rim, style = Stroke(width = height * 0.018f, join = StrokeJoin.Round))
-        drawCircle(
-            rim,
-            width * 0.34f,
-            Offset(foot.x, foot.y - height * 0.74f),
-            style = Stroke(width = height * 0.018f),
-        )
-    }
 }

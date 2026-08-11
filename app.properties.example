@@ -6,3 +6,8 @@
 # Markdown sources for both documents live in docs/.
 KORIDOR_PRIVACY_POLICY_URL=
 KORIDOR_TERMS_URL=
+
+# Where 'More' sends a player who wants to talk to you. Both are hidden while empty.
+# The address is shown to every player in the world, so use one you are happy to publish.
+KORIDOR_SUPPORT_EMAIL=
+KORIDOR_SOCIAL_URL=

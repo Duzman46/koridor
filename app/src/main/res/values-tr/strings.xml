@@ -484,7 +484,6 @@
     <string name="more_invite_friends">Arkadaşlarını Davet Et</string>
     <string name="more_invite_friends_hint">Arkadaşlarını oyuna davet et</string>
     <string name="more_invite_message">Koridor\'da benimle oyna: %1$s</string>
-    <string name="more_restore_hint">Önceki satın alımlarını geri getir</string>
     <string name="more_privacy_hint">Verilerin nasıl korunduğunu oku</string>
     <string name="more_terms_hint">Kabul ettiğin koşulları oku</string>
     <string name="more_version">Sürüm</string>
@@ -527,4 +526,9 @@
     <string name="achievement_swift">Yıldırım</string>
     <string name="achievement_unlocked">Başarım kazanıldı</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">İletişim</string>
+    <string name="more_contact_hint">Bize her konuda yaz</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">Sosyal Medya</string>
+    <string name="more_social_hint">Oyunu takip et</string>
 </resources>

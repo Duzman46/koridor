@@ -466,7 +466,6 @@
     <string name="more_invite_friends">Inviter des amis</string>
     <string name="more_invite_friends_hint">Faites venir quelqu\'un</string>
     <string name="more_invite_message">Joue à Koridor avec moi : %1$s</string>
-    <string name="more_restore_hint">Récupérer un achat précédent</string>
     <string name="more_privacy_hint">Lire comment vos données sont conservées</string>
     <string name="more_terms_hint">Lire les conditions acceptées</string>
     <string name="more_version">Version</string>
@@ -509,4 +508,9 @@
     <string name="achievement_swift">Éclair</string>
     <string name="achievement_unlocked">Succès obtenu</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">Contact</string>
+    <string name="more_contact_hint">Écrivez-nous, quoi que ce soit</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">Réseaux sociaux</string>
+    <string name="more_social_hint">Suivez le jeu</string>
 </resources>

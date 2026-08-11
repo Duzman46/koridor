@@ -82,9 +82,6 @@ enum class PremiumIcon {
     /** Everything else the app can do. Three dots in a row. */
     ELLIPSIS,
 
-    /** Getting something back that was already paid for. An arrow turning a full circle. */
-    RESTORE,
-
     /** Something written down and agreed to. A page with lines on it. */
     DOCUMENT,
 
@@ -93,6 +90,12 @@ enum class PremiumIcon {
 
     /** A badge earned. Five points, filled. */
     STAR,
+
+    /** Writing to the people who made this. An envelope. */
+    ENVELOPE,
+
+    /** Where the game is talked about. A speech bubble. */
+    CHAT,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -121,11 +124,55 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.CALENDAR -> calendar(s, tint, line)
             PremiumIcon.BOLT -> bolt(s, tint)
             PremiumIcon.ELLIPSIS -> ellipsis(s, tint)
-            PremiumIcon.RESTORE -> restore(s, tint, line)
             PremiumIcon.DOCUMENT -> document(s, tint, line)
             PremiumIcon.INFO -> info(s, tint, line)
             PremiumIcon.STAR -> star(s, tint)
+            PremiumIcon.ENVELOPE -> envelope(s, tint, line)
+            PremiumIcon.CHAT -> chat(s, tint, line)
         }
+    }
+}
+
+/** An envelope: the box, and the flap folded down into it. */
+private fun DrawScope.envelope(s: Float, tint: Color, line: Float) {
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.08f, s * 0.22f),
+        size = Size(s * 0.84f, s * 0.56f),
+        cornerRadius = CornerRadius(s * 0.10f),
+        style = Stroke(line),
+    )
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.12f, s * 0.28f)
+            lineTo(s * 0.50f, s * 0.56f)
+            lineTo(s * 0.88f, s * 0.28f)
+        },
+        tint,
+        style = Stroke(width = line, cap = StrokeCap.Round, join = StrokeJoin.Round),
+    )
+}
+
+/** A speech bubble with three dots in it, and a tail on the leading side. */
+private fun DrawScope.chat(s: Float, tint: Color, line: Float) {
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.08f, s * 0.16f),
+        size = Size(s * 0.84f, s * 0.58f),
+        cornerRadius = CornerRadius(s * 0.18f),
+        style = Stroke(line),
+    )
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.26f, s * 0.72f)
+            lineTo(s * 0.24f, s * 0.94f)
+            lineTo(s * 0.46f, s * 0.74f)
+            close()
+        },
+        tint,
+    )
+    listOf(0.32f, 0.50f, 0.68f).forEach { x ->
+        drawCircle(tint, s * 0.055f, Offset(s * x, s * 0.45f))
     }
 }
 
@@ -141,29 +188,6 @@ private fun DrawScope.star(s: Float, tint: Color) {
     }
     path.close()
     drawPath(path, tint)
-}
-
-/** An arrow turning most of a circle: what was bought once, fetched again. */
-private fun DrawScope.restore(s: Float, tint: Color, line: Float) {
-    drawArc(
-        color = tint,
-        startAngle = -60f,
-        sweepAngle = 290f,
-        useCenter = false,
-        topLeft = Offset(s * 0.14f, s * 0.14f),
-        size = Size(s * 0.72f, s * 0.72f),
-        style = Stroke(width = line, cap = StrokeCap.Round),
-    )
-    // The head, at the open end of the sweep.
-    drawPath(
-        Path().apply {
-            moveTo(s * 0.86f, s * 0.16f)
-            lineTo(s * 0.86f, s * 0.42f)
-            lineTo(s * 0.60f, s * 0.42f)
-            close()
-        },
-        tint,
-    )
 }
 
 /** A page with a folded corner and three lines of text. */

@@ -463,7 +463,6 @@
     <string name="more_invite_friends">दोस्तों को बुलाएँ</string>
     <string name="more_invite_friends_hint">किसी को खेल में लाएँ</string>
     <string name="more_invite_message">मेरे साथ Koridor खेलो: %1$s</string>
-    <string name="more_restore_hint">पुरानी खरीद वापस लाएँ</string>
     <string name="more_privacy_hint">पढ़ें कि आपका डेटा कैसे रखा जाता है</string>
     <string name="more_terms_hint">स्वीकार की गई शर्तें पढ़ें</string>
     <string name="more_version">संस्करण</string>
@@ -506,4 +505,9 @@
     <string name="achievement_swift">बिजली</string>
     <string name="achievement_unlocked">उपलब्धि मिली</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">संपर्क</string>
+    <string name="more_contact_hint">किसी भी बात पर लिखें</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">सोशल मीडिया</string>
+    <string name="more_social_hint">खेल को फ़ॉलो करें</string>
 </resources>

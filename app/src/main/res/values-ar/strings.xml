@@ -479,7 +479,6 @@
     <string name="more_invite_friends">دعوة الأصدقاء</string>
     <string name="more_invite_friends_hint">ادعُ أحدهم إلى اللعبة</string>
     <string name="more_invite_message">العب كوريدور معي: %1$s</string>
-    <string name="more_restore_hint">استعد عملية شراء سابقة</string>
     <string name="more_privacy_hint">اقرأ كيف تُحفظ بياناتك</string>
     <string name="more_terms_hint">اقرأ الشروط التي وافقت عليها</string>
     <string name="more_version">الإصدار</string>
@@ -522,4 +521,9 @@
     <string name="achievement_swift">برق</string>
     <string name="achievement_unlocked">تم إحراز إنجاز</string>
     <string name="achievement_unlocked_more">+%1$d</string>
+    <string name="more_contact">تواصل معنا</string>
+    <string name="more_contact_hint">اكتب لنا في أي أمر</string>
+    <string name="more_contact_subject">Koridor %1$s</string>
+    <string name="more_social">التواصل الاجتماعي</string>
+    <string name="more_social_hint">تابع اللعبة</string>
 </resources>

@@ -457,4 +457,10 @@
     <string name="room_browser_players_caption">Players</string>
     <string name="report_note">Your report is kept private.</string>
     <string name="room_code_copied">Room code copied</string>
+    <string name="difficulty_level_label">Bot level</string>
+    <string name="difficulty_easy_hint">An easy pace, for a first game.</string>
+    <string name="difficulty_medium_hint">Balanced, and it teaches as it plays.</string>
+    <string name="difficulty_hard_hint">More planned, and more aggressive.</string>
+    <string name="difficulty_expert_hint">Long-range strategy, and pressure.</string>
+    <string name="difficulty_start">Start the match</string>
 </resources>

@@ -438,4 +438,10 @@
     <string name="room_browser_players_caption">لاعبون</string>
     <string name="report_note">بلاغك يبقى سريًا.</string>
     <string name="room_code_copied">تم نسخ رمز الغرفة</string>
+    <string name="difficulty_level_label">مستوى الروبوت</string>
+    <string name="difficulty_easy_hint">إيقاع هادئ لأول مباراة.</string>
+    <string name="difficulty_medium_hint">متوازن ويعلّمك أثناء اللعب.</string>
+    <string name="difficulty_hard_hint">أكثر تخطيطًا وأكثر عدوانية.</string>
+    <string name="difficulty_expert_hint">استراتيجية بعيدة المدى وضغط متواصل.</string>
+    <string name="difficulty_start">ابدأ المباراة</string>
 </resources>

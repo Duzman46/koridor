@@ -443,4 +443,10 @@
     <string name="room_browser_players_caption">Oyuncu</string>
     <string name="report_note">Bildirimin gizli tutulur.</string>
     <string name="room_code_copied">Oda kodu kopyalandı</string>
+    <string name="difficulty_level_label">Bot seviyesi</string>
+    <string name="difficulty_easy_hint">Yeni başlayanlar için rahat tempo.</string>
+    <string name="difficulty_medium_hint">Dengeli ve öğretici mücadele.</string>
+    <string name="difficulty_hard_hint">Daha planlı ve agresif hamleler.</string>
+    <string name="difficulty_expert_hint">İleri seviye strateji ve baskı.</string>
+    <string name="difficulty_start">Maçı Başlat</string>
 </resources>

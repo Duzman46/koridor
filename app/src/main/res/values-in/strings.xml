@@ -422,4 +422,10 @@
     <string name="room_browser_players_caption">Pemain</string>
     <string name="report_note">Laporanmu dirahasiakan.</string>
     <string name="room_code_copied">Kode ruang disalin</string>
+    <string name="difficulty_level_label">Level bot</string>
+    <string name="difficulty_easy_hint">Tempo santai untuk permainan pertama.</string>
+    <string name="difficulty_medium_hint">Seimbang, dan mengajari sambil bermain.</string>
+    <string name="difficulty_hard_hint">Lebih terencana dan lebih agresif.</string>
+    <string name="difficulty_expert_hint">Strategi jangka panjang dan tekanan.</string>
+    <string name="difficulty_start">Mulai pertandingan</string>
 </resources>

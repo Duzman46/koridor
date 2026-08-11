@@ -422,4 +422,10 @@
     <string name="room_browser_players_caption">Spieler</string>
     <string name="report_note">Deine Meldung bleibt vertraulich.</string>
     <string name="room_code_copied">Raumcode kopiert</string>
+    <string name="difficulty_level_label">Bot-Stufe</string>
+    <string name="difficulty_easy_hint">Ruhiges Tempo für die erste Partie.</string>
+    <string name="difficulty_medium_hint">Ausgewogen, und lehrreich im Spiel.</string>
+    <string name="difficulty_hard_hint">Planvoller und aggressiver.</string>
+    <string name="difficulty_expert_hint">Weitreichende Strategie und Druck.</string>
+    <string name="difficulty_start">Partie starten</string>
 </resources>

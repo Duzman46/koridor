@@ -428,4 +428,10 @@
     <string name="room_browser_players_caption">Игроки</string>
     <string name="report_note">Ваша жалоба остаётся конфиденциальной.</string>
     <string name="room_code_copied">Код скопирован</string>
+    <string name="difficulty_level_label">Уровень бота</string>
+    <string name="difficulty_easy_hint">Спокойный темп для первой партии.</string>
+    <string name="difficulty_medium_hint">Сбалансированно и поучительно.</string>
+    <string name="difficulty_hard_hint">Расчётливее и агрессивнее.</string>
+    <string name="difficulty_expert_hint">Дальний расчёт и давление.</string>
+    <string name="difficulty_start">Начать матч</string>
 </resources>

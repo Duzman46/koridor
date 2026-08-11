@@ -422,4 +422,10 @@
     <string name="room_browser_players_caption">खिलाड़ी</string>
     <string name="report_note">आपकी रिपोर्ट गोपनीय रहती है।</string>
     <string name="room_code_copied">कमरा कोड कॉपी हुआ</string>
+    <string name="difficulty_level_label">बॉट का स्तर</string>
+    <string name="difficulty_easy_hint">पहली बाज़ी के लिए आसान गति।</string>
+    <string name="difficulty_medium_hint">संतुलित, और खेलते-खेलते सिखाता है।</string>
+    <string name="difficulty_hard_hint">ज़्यादा सोचा-समझा और आक्रामक।</string>
+    <string name="difficulty_expert_hint">दूरगामी रणनीति और दबाव।</string>
+    <string name="difficulty_start">मैच शुरू करें</string>
 </resources>

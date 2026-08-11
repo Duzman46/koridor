@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -19,10 +20,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.ui.components.home.BotLevelRow
+import com.duzman46.gridbound.ui.components.home.FieldLabel
+import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.HomeSceneShare
 import com.duzman46.gridbound.ui.components.home.PlayModeCard
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import com.duzman46.gridbound.ui.components.home.SeatCard
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -222,13 +227,128 @@ fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> U
     // and a solo player who never touches this control should get the same board every time
     // rather than one that silently changes who opens.
     var seat by rememberSaveable { mutableStateOf(PlayerId.PLAYER_ONE) }
-    ModeColumn(stringResource(R.string.difficulty_title), onBack) {
-        SeatPicker(selected = seat, onSelect = { seat = it })
-        HomeChoice(stringResource(R.string.difficulty_easy), GlyphKind.QUICK_PLAY, onClick = { onSelected(Difficulty.EASY, seat) })
-        HomeChoice(stringResource(R.string.difficulty_medium), GlyphKind.VS_BOT, onClick = { onSelected(Difficulty.MEDIUM, seat) })
-        HomeChoice(stringResource(R.string.difficulty_hard), GlyphKind.LEADERBOARD, onClick = { onSelected(Difficulty.HARD, seat) })
-        HomeChoice(stringResource(R.string.difficulty_expert), GlyphKind.EXPERT, onClick = { onSelected(Difficulty.EXPERT, seat) })
+
+    // Chosen, then started — rather than started by the act of choosing.
+    //
+    // Tapping a difficulty used to launch the match. That is one tap fewer and it costs the
+    // screen its whole purpose: a player who wanted red and hard had to pick the colour first
+    // and could never change their mind about it afterwards, because the second choice was
+    // already the door out. Two decisions and one door now.
+    var level by rememberSaveable { mutableStateOf(Difficulty.MEDIUM) }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(DIFFICULTY_SCENE_SHARE),
+        ) {
+            HomeHero(Modifier.fillMaxSize())
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BackArrow(onBack)
+                Text(
+                    text = stringResource(R.string.difficulty_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f - DIFFICULTY_SCENE_SHARE)
+                .widthIn(max = Dimens.MenuMaxWidth)
+                .align(Alignment.CenterHorizontally)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceMd)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        ) {
+            FieldLabel(stringResource(R.string.paint_label))
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
+                PlayerId.entries.forEach { option ->
+                    SeatCard(
+                        swatch = SeatColors.pawn(option),
+                        name = stringResource(
+                            if (option == PlayerId.PLAYER_ONE) {
+                                R.string.game_player_blue
+                            } else {
+                                R.string.game_player_red
+                            },
+                        ),
+                        role = stringResource(
+                            if (option == seat) R.string.paint_yours else R.string.paint_rivals,
+                        ),
+                        chosen = option == seat,
+                        onClick = { seat = option },
+                    )
+                }
+            }
+
+            FieldLabel(stringResource(R.string.difficulty_level_label))
+            Difficulty.entries.forEachIndexed { index, option ->
+                BotLevelRow(
+                    title = stringResource(option.label),
+                    subtitle = stringResource(option.hint),
+                    rank = index + 1,
+                    chosen = option == level,
+                    onClick = { level = option },
+                )
+            }
+
+            GoldSubmit(
+                label = stringResource(R.string.difficulty_start),
+                onClick = { onSelected(level, seat) },
+                mark = { drawStartTriangle(Color(0xFF1A1206)) },
+            )
+        }
     }
+}
+
+/** How much of the window the scene keeps here — the same share the online screen settles on. */
+private const val DIFFICULTY_SCENE_SHARE = 0.20f
+
+private val Difficulty.label: Int
+    get() = when (this) {
+        Difficulty.EASY -> R.string.difficulty_easy
+        Difficulty.MEDIUM -> R.string.difficulty_medium
+        Difficulty.HARD -> R.string.difficulty_hard
+        Difficulty.EXPERT -> R.string.difficulty_expert
+    }
+
+private val Difficulty.hint: Int
+    get() = when (this) {
+        Difficulty.EASY -> R.string.difficulty_easy_hint
+        Difficulty.MEDIUM -> R.string.difficulty_medium_hint
+        Difficulty.HARD -> R.string.difficulty_hard_hint
+        Difficulty.EXPERT -> R.string.difficulty_expert_hint
+    }
+
+/** The same triangle the home screen's play card wears, at the size a button label needs. */
+private fun DrawScope.drawStartTriangle(tint: Color) {
+    val s = size.minDimension
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.20f, s * 0.10f)
+            lineTo(s * 0.86f, s * 0.50f)
+            lineTo(s * 0.20f, s * 0.90f)
+            close()
+        },
+        tint,
+    )
 }
 
 /**

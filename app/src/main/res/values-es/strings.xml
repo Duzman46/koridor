@@ -425,4 +425,10 @@
     <string name="room_browser_players_caption">Jugadores</string>
     <string name="report_note">Tu denuncia se mantiene privada.</string>
     <string name="room_code_copied">Código copiado</string>
+    <string name="difficulty_level_label">Nivel del bot</string>
+    <string name="difficulty_easy_hint">Un ritmo tranquilo para empezar.</string>
+    <string name="difficulty_medium_hint">Equilibrado, y enseña mientras juega.</string>
+    <string name="difficulty_hard_hint">Más calculado y más agresivo.</string>
+    <string name="difficulty_expert_hint">Estrategia de largo alcance y presión.</string>
+    <string name="difficulty_start">Empezar partida</string>
 </resources>

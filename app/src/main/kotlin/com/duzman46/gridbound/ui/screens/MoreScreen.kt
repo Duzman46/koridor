@@ -24,8 +24,8 @@ import com.duzman46.gridbound.BuildConfig
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.ui.components.home.MoreEntry
-import com.duzman46.gridbound.ui.components.home.MoreGroup
+import com.duzman46.gridbound.ui.components.home.OptionEntry
+import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.SupportCard
@@ -99,21 +99,21 @@ fun MoreScreen(
                 }
             }
 
-            MoreGroup(
+            OptionGroup(
                 listOf(
-                    MoreEntry(
+                    OptionEntry(
                         icon = PremiumIcon.BARS,
                         title = stringResource(R.string.menu_statistics),
                         subtitle = stringResource(R.string.more_statistics_hint),
                         onClick = onStatistics,
                     ),
-                    MoreEntry(
+                    OptionEntry(
                         icon = PremiumIcon.STAR,
                         title = stringResource(R.string.achievements_title),
                         subtitle = stringResource(R.string.more_achievements_hint),
                         onClick = onAchievements,
                     ),
-                    MoreEntry(
+                    OptionEntry(
                         icon = PremiumIcon.PEOPLE,
                         title = chooserTitle,
                         subtitle = stringResource(R.string.more_invite_friends_hint),
@@ -122,7 +122,7 @@ fun MoreScreen(
                 ),
             )
 
-            MoreGroup(
+            OptionGroup(
                 buildList {
                     // Restoring a purchase lives in Settings, beside the thing it restores, and
                     // it is not here as well: one destination reachable twice from one screen
@@ -134,7 +134,7 @@ fun MoreScreen(
                     val email = BuildConfig.SUPPORT_EMAIL
                     if (email.isNotBlank()) {
                         add(
-                            MoreEntry(
+                            OptionEntry(
                                 icon = PremiumIcon.ENVELOPE,
                                 title = stringResource(R.string.more_contact),
                                 subtitle = stringResource(R.string.more_contact_hint),
@@ -145,7 +145,7 @@ fun MoreScreen(
                     val social = BuildConfig.SOCIAL_URL
                     if (social.isNotBlank()) {
                         add(
-                            MoreEntry(
+                            OptionEntry(
                                 icon = PremiumIcon.CHAT,
                                 title = stringResource(R.string.more_social),
                                 subtitle = stringResource(R.string.more_social_hint),
@@ -158,7 +158,7 @@ fun MoreScreen(
                     val privacy = BuildConfig.PRIVACY_POLICY_URL
                     if (privacy.isNotBlank()) {
                         add(
-                            MoreEntry(
+                            OptionEntry(
                                 icon = PremiumIcon.SHIELD_STAR,
                                 title = stringResource(R.string.account_privacy_policy),
                                 subtitle = stringResource(R.string.more_privacy_hint),
@@ -169,7 +169,7 @@ fun MoreScreen(
                     val terms = BuildConfig.TERMS_URL
                     if (terms.isNotBlank()) {
                         add(
-                            MoreEntry(
+                            OptionEntry(
                                 icon = PremiumIcon.DOCUMENT,
                                 title = stringResource(R.string.account_terms_of_service),
                                 subtitle = stringResource(R.string.more_terms_hint),
@@ -178,7 +178,7 @@ fun MoreScreen(
                         )
                     }
                     add(
-                        MoreEntry(
+                        OptionEntry(
                             icon = PremiumIcon.INFO,
                             title = stringResource(R.string.more_version),
                             value = BuildConfig.VERSION_NAME,

@@ -526,4 +526,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">التواصل الاجتماعي</string>
     <string name="more_social_hint">تابع اللعبة</string>
+    <string name="settings_subtitle">اضبطها على ذوقك</string>
+    <string name="settings_theme">المظهر</string>
+    <string name="settings_tutorial_replay">أعد تشغيل الشرح</string>
+    <string name="settings_tutorial_replay_hint">شرح البداية الأولى</string>
+    <string name="settings_account_hint">الدخول والربط والحذف</string>
+    <string name="settings_ad_privacy_hint">إدارة خيارات الإعلانات</string>
+    <string name="settings_remove_ads_hint">العب دون انقطاع</string>
+    <string name="settings_restore_hint">استعد عملية شراء سابقة</string>
 </resources>

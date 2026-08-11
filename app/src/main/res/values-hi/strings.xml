@@ -510,4 +510,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">सोशल मीडिया</string>
     <string name="more_social_hint">खेल को फ़ॉलो करें</string>
+    <string name="settings_subtitle">अपने हिसाब से बनाएँ</string>
+    <string name="settings_theme">थीम</string>
+    <string name="settings_tutorial_replay">ट्यूटोरियल फिर से खेलें</string>
+    <string name="settings_tutorial_replay_hint">पहली बार वाला परिचय</string>
+    <string name="settings_account_hint">साइन इन, लिंक और हटाना</string>
+    <string name="settings_ad_privacy_hint">विज्ञापन विकल्प प्रबंधित करें</string>
+    <string name="settings_remove_ads_hint">बिना रुकावट खेलें</string>
+    <string name="settings_restore_hint">पुरानी खरीद वापस लाएँ</string>
 </resources>

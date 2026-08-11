@@ -513,4 +513,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">Réseaux sociaux</string>
     <string name="more_social_hint">Suivez le jeu</string>
+    <string name="settings_subtitle">À votre main</string>
+    <string name="settings_theme">Thème</string>
+    <string name="settings_tutorial_replay">Rejouer le tutoriel</string>
+    <string name="settings_tutorial_replay_hint">L’explication du premier lancement</string>
+    <string name="settings_account_hint">Connexion, liaison et suppression</string>
+    <string name="settings_ad_privacy_hint">Gérer vos choix publicitaires</string>
+    <string name="settings_remove_ads_hint">Jouer sans interruption</string>
+    <string name="settings_restore_hint">Récupérer un achat précédent</string>
 </resources>

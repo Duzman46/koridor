@@ -510,4 +510,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">Soziale Medien</string>
     <string name="more_social_hint">Folge dem Spiel</string>
+    <string name="settings_subtitle">Mach es zu deinem</string>
+    <string name="settings_theme">Design</string>
+    <string name="settings_tutorial_replay">Tutorial noch einmal spielen</string>
+    <string name="settings_tutorial_replay_hint">Die Einführung vom ersten Start</string>
+    <string name="settings_account_hint">Anmelden, verknüpfen und löschen</string>
+    <string name="settings_ad_privacy_hint">Werbeeinstellungen verwalten</string>
+    <string name="settings_remove_ads_hint">Ohne Unterbrechung spielen</string>
+    <string name="settings_restore_hint">Frühere Käufe zurückholen</string>
 </resources>

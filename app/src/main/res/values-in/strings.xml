@@ -510,4 +510,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">Media sosial</string>
     <string name="more_social_hint">Ikuti perkembangan game</string>
+    <string name="settings_subtitle">Sesuaikan denganmu</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_tutorial_replay">Main tutorial lagi</string>
+    <string name="settings_tutorial_replay_hint">Panduan dari pembukaan pertama</string>
+    <string name="settings_account_hint">Masuk, tautkan, dan hapus</string>
+    <string name="settings_ad_privacy_hint">Kelola pilihan iklanmu</string>
+    <string name="settings_remove_ads_hint">Main tanpa gangguan</string>
+    <string name="settings_restore_hint">Pulihkan pembelian sebelumnya</string>
 </resources>

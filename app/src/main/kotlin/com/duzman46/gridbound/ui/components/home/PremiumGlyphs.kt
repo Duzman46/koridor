@@ -96,6 +96,21 @@ enum class PremiumIcon {
 
     /** Where the game is talked about. A speech bubble. */
     CHAT,
+
+    /** Light or dark. A circle half filled, which is what the choice actually is. */
+    CONTRAST,
+
+    /** Sound. A speaker with two waves coming off it. */
+    SPEAKER,
+
+    /** Vibration. A handset with a stroke either side of it. */
+    VIBRATE,
+
+    /** Advertising, refused. A circle with a bar through it. */
+    NO_ADS,
+
+    /** Getting something back that was already paid for. An arrow turning a full circle. */
+    RESTORE,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -103,10 +118,21 @@ private const val STROKE = 0.085f
 
 @Composable
 fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) {
-    Canvas(modifier) {
-        val s = size.minDimension
-        val line = s * STROKE
-        when (icon) {
+    Canvas(modifier) { drawPremiumIcon(icon, tint) }
+}
+
+/**
+ * The same set, for the places that take a drawing rather than a composable.
+ *
+ * The forms in this app pass their marks as `DrawScope.() -> Unit` lambdas — a field's leading
+ * mark, a dialog's crest, the tick inside a choice — so a `Canvas` composable cannot be handed to
+ * them. Rather than draw a second set of icons for those, the whole `when` lives here and the
+ * composable is three lines around it.
+ */
+fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
+    val s = size.minDimension
+    val line = s * STROKE
+    when (icon) {
             PremiumIcon.TROPHY -> trophy(s, tint, line)
             PremiumIcon.PEOPLE -> people(s, tint)
             PremiumIcon.MORTARBOARD -> mortarboard(s, tint, line)
@@ -129,8 +155,114 @@ fun PremiumGlyph(icon: PremiumIcon, modifier: Modifier = Modifier, tint: Color) 
             PremiumIcon.STAR -> star(s, tint)
             PremiumIcon.ENVELOPE -> envelope(s, tint, line)
             PremiumIcon.CHAT -> chat(s, tint, line)
-        }
+            PremiumIcon.CONTRAST -> contrast(s, tint, line)
+            PremiumIcon.SPEAKER -> speaker(s, tint, line)
+            PremiumIcon.VIBRATE -> vibrate(s, tint, line)
+        PremiumIcon.NO_ADS -> noAds(s, tint, line)
+        PremiumIcon.RESTORE -> restore(s, tint, line)
     }
+}
+
+/** A circle with one half filled: the light-or-dark choice, drawn as the thing itself. */
+private fun DrawScope.contrast(s: Float, tint: Color, line: Float) {
+    val radius = s * 0.40f
+    drawCircle(tint, radius, Offset(s * 0.5f, s * 0.5f), style = Stroke(line))
+    drawArc(
+        color = tint,
+        startAngle = 90f,
+        sweepAngle = 180f,
+        useCenter = true,
+        topLeft = Offset(s * 0.5f - radius, s * 0.5f - radius),
+        size = Size(radius * 2f, radius * 2f),
+    )
+}
+
+/** A speaker cone with two arcs of sound coming off it. */
+private fun DrawScope.speaker(s: Float, tint: Color, line: Float) {
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.08f, s * 0.36f)
+            lineTo(s * 0.26f, s * 0.36f)
+            lineTo(s * 0.48f, s * 0.14f)
+            lineTo(s * 0.48f, s * 0.86f)
+            lineTo(s * 0.26f, s * 0.64f)
+            lineTo(s * 0.08f, s * 0.64f)
+            close()
+        },
+        tint,
+    )
+    listOf(0.20f to 0.62f, 0.34f to 0.90f).forEach { (inset, extent) ->
+        drawArc(
+            color = tint,
+            startAngle = -55f,
+            sweepAngle = 110f,
+            useCenter = false,
+            topLeft = Offset(s * (0.60f - inset), s * (0.5f - extent / 2f)),
+            size = Size(s * extent, s * extent),
+            style = Stroke(width = line * 0.9f, cap = StrokeCap.Round),
+        )
+    }
+}
+
+/** A handset, with a short stroke either side of it saying that it is moving. */
+private fun DrawScope.vibrate(s: Float, tint: Color, line: Float) {
+    drawRoundRect(
+        color = tint,
+        topLeft = Offset(s * 0.32f, s * 0.14f),
+        size = Size(s * 0.36f, s * 0.72f),
+        cornerRadius = CornerRadius(s * 0.09f),
+        style = Stroke(line),
+    )
+    drawLine(
+        tint,
+        Offset(s * 0.44f, s * 0.24f),
+        Offset(s * 0.56f, s * 0.24f),
+        strokeWidth = line * 0.8f,
+        cap = StrokeCap.Round,
+    )
+    listOf(0.14f, 0.86f).forEach { x ->
+        drawLine(
+            tint,
+            Offset(s * x, s * 0.36f),
+            Offset(s * x, s * 0.64f),
+            strokeWidth = line,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+/** A circle with a bar through it: advertising, refused. */
+private fun DrawScope.noAds(s: Float, tint: Color, line: Float) {
+    drawCircle(tint, s * 0.40f, Offset(s * 0.5f, s * 0.5f), style = Stroke(line))
+    drawLine(
+        tint,
+        Offset(s * 0.22f, s * 0.78f),
+        Offset(s * 0.78f, s * 0.22f),
+        strokeWidth = line,
+        cap = StrokeCap.Round,
+    )
+}
+
+/** An arrow turning most of a circle: what was bought once, fetched again. */
+private fun DrawScope.restore(s: Float, tint: Color, line: Float) {
+    drawArc(
+        color = tint,
+        startAngle = -55f,
+        sweepAngle = 285f,
+        useCenter = false,
+        topLeft = Offset(s * 0.14f, s * 0.14f),
+        size = Size(s * 0.72f, s * 0.72f),
+        style = Stroke(width = line, cap = StrokeCap.Round),
+    )
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.88f, s * 0.16f)
+            lineTo(s * 0.88f, s * 0.44f)
+            lineTo(s * 0.60f, s * 0.40f)
+            close()
+        },
+        tint,
+    )
 }
 
 /** An envelope: the box, and the flap folded down into it. */

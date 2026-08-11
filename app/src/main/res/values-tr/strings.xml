@@ -531,4 +531,12 @@
     <string name="more_contact_subject">Koridor %1$s</string>
     <string name="more_social">Sosyal Medya</string>
     <string name="more_social_hint">Oyunu takip et</string>
+    <string name="settings_subtitle">Deneyimini kişiselleştir</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_tutorial_replay">Öğreticiyi tekrar oyna</string>
+    <string name="settings_tutorial_replay_hint">İlk açılıştaki anlatım</string>
+    <string name="settings_account_hint">Giriş, bağlama ve silme</string>
+    <string name="settings_ad_privacy_hint">Reklam tercihlerini yönet</string>
+    <string name="settings_remove_ads_hint">Kesintisiz oyna</string>
+    <string name="settings_restore_hint">Önceki satın alımlarını geri getir</string>
 </resources>

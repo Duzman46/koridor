@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import com.duzman46.gridbound.ui.components.home.HomeBrand
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.core.Constants
+import com.duzman46.gridbound.navigation.DockedBarSpace
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.components.KoridorMark
@@ -241,7 +242,8 @@ fun MainMenuScreen(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(bottom = padding.calculateBottomPadding()),
+                .navigationBarsPadding()
+                .padding(bottom = DockedBarSpace),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(

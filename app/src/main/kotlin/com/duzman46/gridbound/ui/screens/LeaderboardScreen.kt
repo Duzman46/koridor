@@ -49,6 +49,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.asString
+import com.duzman46.gridbound.navigation.DockedBarSpace
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardEntry
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardScope
 import com.duzman46.gridbound.leaderboard.domain.OwnStanding
@@ -282,7 +283,9 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.ScreenPadding),
+            .padding(horizontal = Dimens.ScreenPadding)
+            .navigationBarsPadding()
+            .padding(bottom = DockedBarSpace),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
         when {

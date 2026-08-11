@@ -4,6 +4,9 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -26,8 +29,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -289,8 +294,19 @@ fun AppNavigation(
     // Out here it is composed once and never moves. The screens travel underneath it.
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val tab = TAB_ORDER.indexOf(currentRoute)
-    Column(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxWidth().weight(1f)) {
+    // Laid over the host, not stacked above it.
+    //
+    // In a Column the bar's arrival and departure changed the height of everything below it,
+    // and the route flips the instant a navigation commits — so leaving home for the play
+    // screen made both screens grow eighty-two pixels taller on the first frame of the
+    // transition and re-lay out while they slid. That is the "something strange happens" the
+    // owner reported: not the motion, the screens changing size underneath it.
+    //
+    // Over the top, the host is always the full height and nothing it holds ever resizes. The
+    // bar slides in and out across the bottom, and the three places it belongs to leave it room
+    // with their own padding.
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = Routes.SPLASH,
@@ -846,20 +862,28 @@ fun AppNavigation(
         }
         // Shown only where it means something. Everywhere else the screen has the full height,
         // and the bar does not slide into view on the way to a match.
-        if (tab >= 0) {
+        AnimatedVisibility(
+            visible = tab >= 0,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(tabSpec()) { it } + fadeIn(tabFadeIn()),
+            exit = slideOutVertically(tabSpec()) { it } + fadeOut(tabFadeOut()),
+        ) {
             KoridorBottomBar(
                 items = listOf(
                     BottomItem(stringResource(R.string.nav_home), PremiumIcon.HOUSE) {
                         navController.switchTab(Routes.HOME)
                     },
-                    BottomItem(stringResource(R.string.leaderboard_title), PremiumIcon.TROPHY) {
+                    // The short word. "Liderlik Tablosu" is the screen's title and belongs at
+                    // the top of the screen; a tab is a place, and a place needs a name a third
+                    // of a phone's width can hold.
+                    BottomItem(stringResource(R.string.home_leaderboard_short), PremiumIcon.TROPHY) {
                         navController.switchTab(Routes.LEADERBOARD)
                     },
                     BottomItem(stringResource(R.string.nav_profile), PremiumIcon.PERSON) {
                         navController.switchTab(Routes.PROFILE)
                     },
                 ),
-                selectedIndex = tab,
+                selectedIndex = tab.coerceAtLeast(0),
                 modifier = Modifier
                     .navigationBarsPadding()
                     .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
@@ -869,22 +893,36 @@ fun AppNavigation(
 }
 
 /**
+ * How much room the docked bar needs at the foot of the three places it belongs to.
+ *
+ * The bar itself and the padding it floats in — the system's navigation inset is *not* in here,
+ * because the bar applies that itself and a screen that wants this must apply it too. Leaving it
+ * out of the number was what put the bar over the top of the home screen's last card.
+ *
+ * It is drawn over them rather than under them, so nothing reserves this automatically — each of
+ * the three has to leave it, and it is one number so they cannot drift apart.
+ */
+val DockedBarSpace = 82.dp
+
+/**
  * Moves to one of the docked bar's places, and brings back what was left there.
  *
- * Three things, and the third is why switching stopped feeling like a reload. `launchSingleTop`
- * stops a second copy of a place a player is already standing in. `popUpTo(HOME) { saveState }`
- * keeps the row flat instead of stacking Home under Leaderboard under Profile under Home. And
- * `restoreState` hands the destination back the state it had when it was left — its scroll
- * position, its selected tab, its view models — so returning to a place is returning rather
- * than arriving somewhere that happens to look the same.
+ * Two cases, and the first is the one that matters: if the place is already on the stack, go
+ * back to it. That is what "Ana Sayfa" is from anywhere else, and popping to a live entry hands
+ * back the screen itself — its scroll position, its selected tab, its view models — rather than
+ * a copy that looks the same.
+ *
+ * The first attempt used the documented bottom-bar recipe, `popUpTo(HOME) { saveState }` with
+ * `restoreState`, and it did nothing at all when the destination *was* HOME: popping up to a
+ * route and then navigating to that same route leaves `launchSingleTop` with nothing to do, so
+ * the tap fell on the floor. The owner found it in a minute; it took three to work out why.
+ *
+ * The stack cannot grow, because a place is only ever pushed when it is not already on it.
  */
 private fun NavHostController.switchTab(route: String) {
     if (currentDestination?.route == route) return
-    navigate(route) {
-        popUpTo(Routes.HOME) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
-    }
+    if (popBackStack(route, inclusive = false)) return
+    navigate(route) { launchSingleTop = true }
 }
 
 /**

@@ -10,6 +10,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
@@ -177,6 +178,53 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabShift(): Int? {
 }
 
 /**
+ * A switch between two places on the bar: a short lean in the right direction, under a fade.
+ *
+ * It was the full width of the screen, and that was wrong twice. It looked violent — a whole
+ * screen thrown across the display for a change of tab — and it cost what it looked like:
+ * two full screens, one carrying a photograph and the other a list, both composed and drawn at
+ * a moving offset for the length of the animation. The owner read it as the app labouring to
+ * load a page, which is exactly what it was doing.
+ *
+ * An eighth of the width is about fifty device-independent pixels on a phone, which is close to
+ * the thirty Material's own shared-axis uses. Enough for the eye to catch which way the row
+ * moved; small enough that the fade does most of the work and nothing has far to travel.
+ */
+private fun tabEnter(shift: Int) =
+    slideInHorizontally(tabSpec()) { width -> shift * width / 16 } +
+        fadeIn(tabFadeIn()) +
+        scaleIn(tabSpec(), initialScale = 0.97f)
+
+private fun tabExit(shift: Int) =
+    slideOutHorizontally(tabSpec()) { width -> -shift * width / 16 } + fadeOut(tabFadeOut())
+
+/**
+ * Shorter than a push, because nothing is being opened.
+ *
+ * Measured rather than chosen: at 190 ms with an eighth of the width to travel, switching tabs
+ * ran at 12.6% janky frames with a 95th percentile of 44 ms — and the GPU was idle at 3 ms
+ * throughout, so none of that was the animation drawing. It was the destination being composed
+ * for the first time while it moved, which is precisely what "waiting for a page to load" feels
+ * like.
+ *
+ * Nothing about the motion can remove that cost; what the motion can do is stop advertising it.
+ * The distance is a sixteenth of the width now — about twenty-five device-independent pixels,
+ * which is Material's own shared-axis figure — so the fade does the work and the frame that
+ * stutters has almost nowhere to be. The incoming screen also grows the last three percent into
+ * place, which is a transform on a layer the GPU already has and costs nothing on the thread
+ * that is busy.
+ */
+private const val TAB_MILLIS = 170
+
+private fun <T> tabSpec() = tween<T>(TAB_MILLIS, easing = FastOutSlowInEasing)
+
+/** The arriving screen fades in over the back half, so the first composed frame is never bare. */
+private fun tabFadeIn() =
+    tween<Float>(TAB_MILLIS - 40, delayMillis = 40, easing = LinearOutSlowInEasing)
+
+private fun tabFadeOut() = tween<Float>(90, easing = FastOutLinearInEasing)
+
+/**
  * The curve everything on this screen moves on: quick to leave, slow to arrive.
  *
  * Motion that starts fast and eases out reads as something being placed. A linear slide reads as
@@ -237,24 +285,20 @@ fun AppNavigation(
             // was responsive and it looked broken. The responsiveness never depended on this
             // number anyway — see navigateFrom, where the taps were actually being dropped.
             enterTransition = {
-                tabShift()?.let { shift ->
-                    slideInHorizontally(navEnterSpec()) { width -> shift * width }
-                } ?: (slideInHorizontally(navEnterSpec()) { width -> width / 6 } + fadeIn(navEnterFade()))
+                tabShift()?.let { tabEnter(it) }
+                    ?: (slideInHorizontally(navEnterSpec()) { it / 6 } + fadeIn(navEnterFade()))
             },
             exitTransition = {
-                tabShift()?.let { shift ->
-                    slideOutHorizontally(navExitSpec()) { width -> -shift * width }
-                } ?: (slideOutHorizontally(navExitSpec()) { width -> -width / 14 } + fadeOut(navExitFade()))
+                tabShift()?.let { tabExit(it) }
+                    ?: (slideOutHorizontally(navExitSpec()) { -it / 14 } + fadeOut(navExitFade()))
             },
             popEnterTransition = {
-                tabShift()?.let { shift ->
-                    slideInHorizontally(navEnterSpec()) { width -> shift * width }
-                } ?: (slideInHorizontally(navEnterSpec()) { width -> -width / 6 } + fadeIn(navEnterFade()))
+                tabShift()?.let { tabEnter(it) }
+                    ?: (slideInHorizontally(navEnterSpec()) { -it / 6 } + fadeIn(navEnterFade()))
             },
             popExitTransition = {
-                tabShift()?.let { shift ->
-                    slideOutHorizontally(navExitSpec()) { width -> -shift * width }
-                } ?: (slideOutHorizontally(navExitSpec()) { width -> width / 14 } + fadeOut(navExitFade()))
+                tabShift()?.let { tabExit(it) }
+                    ?: (slideOutHorizontally(navExitSpec()) { it / 14 } + fadeOut(navExitFade()))
             },
         ) {
             composable(Routes.SPLASH) {

@@ -115,13 +115,19 @@ private fun LeaderboardScreen(
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding(),
     ) {
+        // No back arrow.
+        //
+        // This is one of the three places the docked bar switches between, and there is no
+        // "back" from a place — there is only the place next to it, which is what the bar is
+        // for. An arrow here claimed the screen was something the player had opened and would
+        // return from, sitting where the title of a destination belongs. System back still
+        // works and still pops, for whoever arrived by the card on the home screen.
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LeaderboardBackArrow(onBack)
             Column(Modifier.weight(1f)) {
                 Text(
                     text = localeUpper(stringResource(R.string.leaderboard_title)),
@@ -177,45 +183,6 @@ private fun LeaderboardScreen(
                 .navigationBarsPadding()
                 .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
         )
-    }
-}
-
-/** The way back, drawn like the rest of the app's rather than borrowed from Material. */
-@Composable
-private fun LeaderboardBackArrow(onBack: () -> Unit) {
-    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val label = stringResource(R.string.action_back)
-    Box(
-        Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.Button,
-                onClick = onBack,
-            )
-            .semantics { contentDescription = label },
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(
-            Modifier
-                .size(24.dp)
-                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
-        ) {
-            val s = size.minDimension
-            drawPath(
-                Path().apply {
-                    moveTo(s * 0.92f, s * 0.5f)
-                    lineTo(s * 0.12f, s * 0.5f)
-                    moveTo(s * 0.44f, s * 0.18f)
-                    lineTo(s * 0.12f, s * 0.5f)
-                    lineTo(s * 0.44f, s * 0.82f)
-                },
-                KoridorGold,
-                style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
-        }
     }
 }
 

@@ -188,12 +188,17 @@ def base_anchor(image):
     """
     solid = np.asarray(image.getchannel("A")).astype(float) > 128
     widths = solid.sum(axis=1)
-    widest = float(np.nonzero(widths >= widths.max() * 0.985)[0].mean())
-    # The widest row is the centre of the base's TOP ellipse; below it is the base's own side
-    # wall, down to the sprite's last row, which is the front of the ellipse it actually stands
-    # on. The contact ellipse's centre is between the two — which is the point that belongs over
-    # the middle of a tile. Taking the widest row alone sat every piece a third of a base high.
-    return (widest + image.height) / 2.0 / float(image.height)
+    plateau = np.nonzero(widths >= widths.max() * 0.985)[0]
+
+    # The base is a cylinder, so the silhouette holds its full width for a run of rows: that run
+    # begins at the TOP rim's centre and ends at the BOTTOM rim's centre, and the bottom rim is
+    # the one standing on the tile. Below it there is still picture — the front of the bottom
+    # ellipse curving away — which is why the sprite's last row is not the answer either.
+    #
+    # Both of those wrong answers were tried on the phone. Anchoring on the widest row alone sat
+    # every piece a third of a base too low; splitting the difference with the sprite's last row
+    # put them ten pixels too high, which is what "not quite centred" looked like.
+    return float(plateau.max()) / float(image.height)
 
 
 def trim(image):

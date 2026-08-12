@@ -542,10 +542,12 @@ class CanvasRenderer @Inject constructor() {
      * whatever tile the piece is standing on rather than being baked into a picture that also
      * gets drawn over the goal rows.
      *
-     * The sprite is placed by its BASE, not its middle and not its bottom. These pieces are
-     * photographed from above, so what stands on the square is the contact ellipse under the
-     * base — which is neither the picture's centre nor its last row, but a measured point
-     * between the two. See [Constants.Board.PAWN_BASE_ANCHOR].
+     * The sprite is CENTRED on its square. The board is drawn straight down and has no
+     * perspective in it at all, so there is no direction for a piece to lean into; standing one
+     * up from its base put its head in the square above and left its own square empty
+     * underneath, which is exactly what a player reads as a piece that is off centre.
+     * [Constants.Board.PAWN_BASE_ANCHOR] is still needed, but only to find where the base is so
+     * the shadow can fall under it rather than under the middle of the picture.
      */
     private fun DrawScope.drawPawnSprite(
         geometry: BoardGeometry,
@@ -575,25 +577,26 @@ class CanvasRenderer @Inject constructor() {
             )
         }
 
-        // Under the base rather than under the picture, and still vector: the shadow belongs to
-        // the board, so it has to fall on whichever tile the piece is standing on.
+        val top = center.y - height / 2f
+        // Where the base actually meets the board, which is not the middle of the picture.
+        val foot = top + height * Constants.Board.PAWN_BASE_ANCHOR
+
+        // Under the base, and still vector: the shadow belongs to the board, so it has to fall
+        // on whichever tile the piece is standing on rather than be baked into the sprite.
         drawOval(
             brush = Brush.radialGradient(
                 0f to Color.Black.copy(alpha = 0.52f),
                 1f to Color.Transparent,
-                center = Offset(center.x + base * 0.14f, center.y + base * 0.06f),
+                center = Offset(center.x + base * 0.14f, foot + base * 0.06f),
                 radius = base * 1.15f,
             ),
-            topLeft = Offset(center.x - base * 1.20f, center.y - base * 0.36f),
+            topLeft = Offset(center.x - base * 1.20f, foot - base * 0.36f),
             size = Size(base * 2.40f, base * 0.78f),
         )
 
         drawImage(
             image = sprite,
-            dstOffset = IntOffset(
-                (center.x - width / 2f).roundToInt(),
-                (center.y - height * Constants.Board.PAWN_BASE_ANCHOR).roundToInt(),
-            ),
+            dstOffset = IntOffset((center.x - width / 2f).roundToInt(), top.roundToInt()),
             dstSize = IntSize(width.roundToInt(), height.roundToInt()),
             filterQuality = FilterQuality.High,
         )

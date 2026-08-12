@@ -48,27 +48,35 @@ object Constants {
          * How much of a tile's width a pawn's base covers.
          *
          * Width and not height, because the pieces are photographed from above: what says
-         * whether a piece is the right size for a square is how much of the square its base sits
-         * on, and the height then follows from the sprite's own proportions. Sizing by height
-         * was right for the tall ivory piece it replaced and wrong for these — it left a base
-         * crowding the tile it stood on and a piece towering over the two beside it.
+         * whether a piece suits a square is how much of the square its base sits on, and the
+         * height then follows from the sprite's own proportions. Sizing by height was right for
+         * the tall ivory piece these replaced and wrong for them — it left a base crowding the
+         * tile it stood on and a piece towering over the two beside it.
          *
-         * There is a ceiling on it and this is under it. A piece is anchored on its base and
-         * stands up from there, so a piece on the top row needs [PAWN_BASE_ANCHOR] of its height
-         * to fit between the board's edge and that row's centre — which is [FRAME_RATIO] plus
-         * half a tile. With this sprite's proportions that caps the ratio at 0.707, and the
-         * frame is thin now, so the cap is real: at 0.74 the top row's piece lost its head.
+         * Kept low enough that the whole piece is about the height of a tile. Since the sprite
+         * is centred on its square rather than stood up from its base, anything much taller
+         * hangs out of the square at both ends, and the bottom end is a wall channel.
          */
-        const val PAWN_WIDTH_RATIO = 0.68f
+        const val PAWN_WIDTH_RATIO = 0.66f
 
         /**
-         * How far down a pawn sprite its base's contact ellipse sits, as a fraction of its
-         * height. Measured by `docs/store/pieces.py`, which prints it; both pieces agree.
+         * How far down a pawn sprite the bottom rim of its base sits, as a fraction of its
+         * height. Measured by `docs/store/pieces.py`, which prints it for both pieces.
          *
-         * This is the point that goes over the middle of a tile. Centring the picture instead
-         * puts a piece a third of a base too high and it reads as hovering.
+         * The sprite itself is **centred** on its square and this does not place it. The board
+         * is drawn straight down — square tiles, circular studs, no perspective anywhere in it —
+         * so there is no direction for a piece to lean into, and a piece stood up from its base
+         * put its head in the square above and left its own square empty underneath. That is
+         * what "not quite centred" looked like on the handset.
+         *
+         * What this still places is the contact shadow, which has to fall under the base rather
+         * than under the middle of the picture. Finding it took two wrong answers: the base is a
+         * cylinder, so the silhouette holds its full width from the top rim down to the bottom
+         * one, and below the bottom rim there is still picture — the front of the ellipse curving
+         * away. The top rim alone is a third of a base too high, the sprite's last row is too
+         * low, and this is the rim between them.
          */
-        const val PAWN_BASE_ANCHOR = 0.848f
+        const val PAWN_BASE_ANCHOR = 0.750f
     }
 
     object Ai {

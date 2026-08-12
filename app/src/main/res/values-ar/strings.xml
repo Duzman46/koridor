@@ -556,4 +556,6 @@
     <string name="account_terms_note">الشروط التي وافقت عليها.</string>
     <string name="account_or">أو</string>
     <string name="account_link_email_note">حدِّد بريدًا وكلمة مرور</string>
+    <string name="account_sign_up">إنشاء حساب</string>
+    <string name="account_sign_up_note">تصنيفك وإحصاءاتك وأصدقاؤك ينتقلون معك</string>
 </resources>

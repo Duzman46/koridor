@@ -561,4 +561,6 @@
     <string name="account_terms_note">Kabul ettiğin koşullar.</string>
     <string name="account_or">veya</string>
     <string name="account_link_email_note">E-posta ve şifre belirle</string>
+    <string name="account_sign_up">Kayıt ol</string>
+    <string name="account_sign_up_note">Puanın, istatistiklerin ve arkadaşların seninle gelir</string>
 </resources>

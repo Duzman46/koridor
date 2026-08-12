@@ -178,25 +178,25 @@ fun AccountScreen(
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
             ) {
                 if (session.isGuest) {
-                    AccountHeadline(
-                        title = stringResource(R.string.auth_link_title),
-                        body = stringResource(R.string.auth_link_explainer),
-                    )
-                    LinkRows(
+                    // One card rather than a heading floating above a group of rows. The title
+                    // is what the card is for, so it belongs inside its border; loose above it,
+                    // it read as a heading for the whole page and the page is about more.
+                    LinkCard(
                         googleAvailable = session.isGoogleSignInAvailable,
                         enabled = !state.isSubmitting,
                         onLinkGoogle = onLinkGoogle,
-                        onEmailRow = { emailSheetOpen = true },
+                        onSignUp = { emailSheetOpen = true },
                     )
                 }
 
+                // No "Account" section on the account page. What the row actually does is sign
+                // out, so that is what it says; the address it signs you out of is the subtitle.
                 OptionGroup(
                     listOf(
                         OptionEntry(
                             icon = PremiumIcon.PERSON,
-                            title = session.user?.email
-                                ?: stringResource(R.string.account_title),
-                            subtitle = stringResource(R.string.account_manage_note),
+                            title = stringResource(R.string.auth_sign_out),
+                            subtitle = session.user?.email,
                             onClick = { signOutRequested = true },
                         ),
                     ),
@@ -242,24 +242,64 @@ fun AccountScreen(
     }
 }
 
-/** The gold line and the sentence under it, at the top of a page that is asking for something. */
+/**
+ * Everything about becoming a real account, inside one border.
+ *
+ * The heading used to sit loose above the rows, where it read as a title for the whole page —
+ * and the page also holds signing out, two legal documents and a deletion, none of which are
+ * about protecting progress.
+ */
 @Composable
-private fun AccountHeadline(title: String, body: String) {
+private fun LinkCard(
+    googleAvailable: Boolean,
+    enabled: Boolean,
+    onLinkGoogle: () -> Unit,
+    onSignUp: () -> Unit,
+) {
     Column(
-        Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(Color(0xFF12161B))
+            .border(1.dp, Color(0xFF2A3038), RoundedCornerShape(Dimens.RadiusMd))
+            .padding(Dimens.SpaceLg),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
         Text(
-            text = title.uppercase(),
+            text = stringResource(R.string.auth_link_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = KoridorGold,
-            letterSpacing = 1.2.sp,
         )
         Text(
-            text = body,
-            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(R.string.auth_link_explainer),
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (googleAvailable) {
+            LinkRow(
+                mark = { GoogleMark(Modifier.size(22.dp)) },
+                title = stringResource(R.string.auth_link_with_google),
+                subtitle = null,
+                accented = true,
+                enabled = enabled,
+                onClick = onLinkGoogle,
+            )
+            OrDivider()
+        }
+        // "Sign up", not "link with e-mail". Linking is the mechanism; what the player is doing
+        // is making an account. The subtitle says the thing they actually want to know, which is
+        // that nothing they have played is lost — linkGuestWithEmail upgrades the anonymous user
+        // in place and keeps the same user id, so rating, statistics and friends come with it.
+        LinkRow(
+            mark = {
+                PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Color(0xFF9AA0A6))
+            },
+            title = stringResource(R.string.account_sign_up),
+            subtitle = stringResource(R.string.account_sign_up_note),
+            accented = false,
+            enabled = enabled,
+            onClick = onSignUp,
         )
     }
 }
@@ -445,7 +485,7 @@ private fun EmailLinkDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.auth_link_with_email)) },
+        title = { Text(stringResource(R.string.account_sign_up)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
                 OutlinedTextField(
@@ -476,7 +516,7 @@ private fun EmailLinkDialog(
         },
         confirmButton = {
             TextButton(onClick = onSubmit, enabled = !state.isSubmitting) {
-                Text(stringResource(R.string.auth_link_account))
+                Text(stringResource(R.string.account_sign_up))
             }
         },
         dismissButton = {

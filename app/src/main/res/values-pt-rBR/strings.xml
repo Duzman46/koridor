@@ -543,4 +543,6 @@
     <string name="account_terms_note">Os termos que você aceitou.</string>
     <string name="account_or">ou</string>
     <string name="account_link_email_note">Defina um e-mail e uma senha</string>
+    <string name="account_sign_up">Criar conta</string>
+    <string name="account_sign_up_note">Sua pontuação, estatísticas e amigos vão junto</string>
 </resources>

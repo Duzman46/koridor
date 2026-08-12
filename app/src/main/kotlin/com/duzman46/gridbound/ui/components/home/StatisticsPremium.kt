@@ -25,9 +25,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.material3.Text
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
 
@@ -101,21 +103,26 @@ fun RowScope.StatsHeadlineCard(icon: PremiumIcon, value: String, label: String) 
             .clip(RoundedCornerShape(Dimens.RadiusMd))
             .background(CardFill)
             .border(1.dp, Hairline, RoundedCornerShape(Dimens.RadiusMd))
-            .padding(vertical = Dimens.SpaceLg, horizontal = Dimens.SpaceSm),
+            .padding(vertical = Dimens.SpaceMd, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        PremiumGlyph(icon, Modifier.size(Dimens.GlyphMd), KoridorGold)
+        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
+        // A quarter of a phone wide, not a third. These were sized when the row held three
+        // cards; the win rate joined it and "Kazanma oranı" ran off the edge of the fourth.
+        // Everything steps down one, and the value is allowed to shrink rather than clip --
+        // a four-digit rating and a two-digit percentage do not want the same type size.
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
+            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
+            softWrap = false,
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.labelSmall,
             color = Muted,
             textAlign = TextAlign.Center,
             maxLines = 2,

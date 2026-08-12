@@ -540,4 +540,6 @@
     <string name="account_terms_note">Ketentuan yang kamu setujui.</string>
     <string name="account_or">atau</string>
     <string name="account_link_email_note">Tetapkan alamat dan kata sandi</string>
+    <string name="account_sign_up">Daftar</string>
+    <string name="account_sign_up_note">Peringkat, statistik, dan temanmu ikut serta</string>
 </resources>

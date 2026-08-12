@@ -540,4 +540,6 @@
     <string name="account_terms_note">Die zugestimmten Bedingungen.</string>
     <string name="account_or">oder</string>
     <string name="account_link_email_note">Adresse und Passwort festlegen</string>
+    <string name="account_sign_up">Registrieren</string>
+    <string name="account_sign_up_note">Wertung, Statistiken und Freunde kommen mit</string>
 </resources>

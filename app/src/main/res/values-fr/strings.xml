@@ -543,4 +543,6 @@
     <string name="account_terms_note">Les conditions que vous avez acceptées.</string>
     <string name="account_or">ou</string>
     <string name="account_link_email_note">Définissez une adresse et un mot de passe</string>
+    <string name="account_sign_up">Créer un compte</string>
+    <string name="account_sign_up_note">Votre classement, vos stats et vos amis vous suivent</string>
 </resources>

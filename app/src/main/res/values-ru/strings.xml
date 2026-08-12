@@ -546,4 +546,6 @@
     <string name="account_terms_note">Условия, которые вы приняли.</string>
     <string name="account_or">или</string>
     <string name="account_link_email_note">Задайте адрес и пароль</string>
+    <string name="account_sign_up">Регистрация</string>
+    <string name="account_sign_up_note">Рейтинг, статистика и друзья переносятся с вами</string>
 </resources>

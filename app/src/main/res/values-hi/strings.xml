@@ -540,4 +540,6 @@
     <string name="account_terms_note">वे शर्तें जो आपने मानी थीं।</string>
     <string name="account_or">या</string>
     <string name="account_link_email_note">पता और पासवर्ड सेट करें</string>
+    <string name="account_sign_up">साइन अप करें</string>
+    <string name="account_sign_up_note">आपकी रेटिंग, आँकड़े और दोस्त साथ आते हैं</string>
 </resources>

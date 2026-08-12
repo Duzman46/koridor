@@ -103,6 +103,17 @@ import com.duzman46.gridbound.presentation.game.MatchChatBubble
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.game.GameBoard
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.Role
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
 
 @Composable
 fun GameRoute(
@@ -280,44 +291,37 @@ private fun GameScreen(
         )
     }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(stringResource(R.string.app_name), fontWeight = FontWeight.Black)
-                        Text(
-                            stringResource(R.string.game_turn, state.boardState.turnNumber),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { showExitConfirmation = true }) {
-                        Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.game_home))
-                    }
-                },
-                actions = {
+            GameTopBar(
+                turn = state.boardState.turnNumber,
+                onHome = { showExitConfirmation = true },
+                onSettings = onSettings,
+                trailing = {
                     if (state.mode != GameMode.ONLINE) {
-                        IconButton(onClick = onUndo, enabled = state.canUndo && !state.isAiThinking) {
-                            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.game_undo))
-                        }
+                        GameBarButton(
+                            icon = Icons.AutoMirrored.Rounded.Undo,
+                            label = stringResource(R.string.game_undo),
+                            enabled = state.canUndo && !state.isAiThinking,
+                            onClick = onUndo,
+                        )
                         // Held while the bot thinks, exactly as undo is. Restarting mid-search
                         // abandons a turn that is already running and starts another, and at the
                         // expert tier that is a second of work per press — enough that a player
                         // tapping an unresponsive-looking button decides the app has hung.
-                        IconButton(onClick = onRestart, enabled = !state.isAiThinking) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.game_restart))
-                        }
+                        GameBarButton(
+                            icon = Icons.Rounded.Refresh,
+                            label = stringResource(R.string.game_restart),
+                            enabled = !state.isAiThinking,
+                            onClick = onRestart,
+                        )
                     } else if (state.boardState.status == GameStatus.IN_PROGRESS) {
-                        IconButton(onClick = { showResignConfirmation = true }) {
-                            Icon(
-                                Icons.Rounded.Flag,
-                                contentDescription = stringResource(R.string.game_resign),
-                            )
-                        }
-                    }
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.game_settings))
+                        GameBarButton(
+                            icon = Icons.Rounded.Flag,
+                            label = stringResource(R.string.game_resign),
+                            enabled = true,
+                            onClick = { showResignConfirmation = true },
+                        )
                     }
                 },
             )
@@ -852,8 +856,14 @@ private fun CompactGameControls(
                 Text(message.asString(), Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.bodySmall)
             }
         }
-        Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 3.dp) {
-            Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Dimens.RadiusMd))
+                .background(Color(0xFF0E1216))
+                .border(1.dp, KoridorGold.copy(alpha = 0.35f), RoundedCornerShape(Dimens.RadiusMd)),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 WallControls(
                     state = state,
                     enabled = state.acceptsHumanInput,
@@ -1061,12 +1071,18 @@ private fun TurnSummary(
         animationSpec = infiniteRepeatable(tween(720), RepeatMode.Reverse),
         label = "turnBeaconAlpha",
     )
-    Surface(
-        modifier = Modifier.border(2.dp, activeColor.copy(alpha = beaconAlpha), RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        tonalElevation = 3.dp,
+    // Gold border, seat-coloured beacon. The whole card used to be outlined in the seat colour
+    // and pulsed with it, which put a two-pixel red rectangle around the most important panel
+    // on the screen for half of every match. The dot is what says whose turn it is; the frame
+    // is the app's, and it stays the app's.
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(Color(0xFF0E1216))
+            .border(1.dp, KoridorGold.copy(alpha = 0.45f), RoundedCornerShape(Dimens.RadiusMd)),
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1090,11 +1106,16 @@ private fun TurnSummary(
                     )
                 }
                 if (state.isAiThinking || state.isOnlineSyncing || (state.mode == GameMode.ONLINE && !state.isOnlineConnected)) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(Dimens.SpaceSm))
                 }
-                IconButton(onClick = onHistory) {
-                    Icon(Icons.Rounded.Info, contentDescription = stringResource(R.string.game_history))
-                }
+                GameBarButton(
+                    icon = Icons.Rounded.Info,
+                    label = stringResource(R.string.game_history),
+                    enabled = true,
+                    onClick = onHistory,
+                    size = 36.dp,
+                )
             }
             // Half the row each at most, but only as much of it as they need: short labels
             // still sit apart on the two edges, while a sixteen-character username next to
@@ -1213,4 +1234,115 @@ private fun Difficulty.label(): String = when (this) {
     Difficulty.MEDIUM -> stringResource(R.string.difficulty_medium)
     Difficulty.HARD -> stringResource(R.string.difficulty_hard)
     Difficulty.EXPERT -> stringResource(R.string.difficulty_expert)
+}
+
+/**
+ * The board screen's own top bar.
+ *
+ * A CenterAlignedTopAppBar stood here and was the last Material chrome in the app: a flat
+ * surface, a Black-weight title and four tint-less icon buttons. The board under it is the most
+ * finished thing the app draws, and the row above it looked borrowed.
+ *
+ * The rules either side of the name are drawn rather than typed. A middle dot in the string
+ * would be a character the ten translations have to carry, and a divider that has to be
+ * translated is a divider somebody will eventually delete.
+ */
+@Composable
+private fun GameTopBar(
+    turn: Int,
+    onHome: () -> Unit,
+    onSettings: () -> Unit,
+    trailing: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GameBarButton(
+            icon = Icons.Rounded.Home,
+            label = stringResource(R.string.game_home),
+            enabled = true,
+            onClick = onHome,
+        )
+        Column(
+            Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TitleRule()
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                )
+                TitleRule()
+            }
+            Text(
+                text = stringResource(R.string.game_turn, turn),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        trailing()
+    }
+}
+
+/** A short rule with a diamond on its inner end, one either side of the name. */
+@Composable
+private fun TitleRule() {
+    Canvas(Modifier.size(width = 26.dp, height = 8.dp)) {
+        val mid = size.height / 2f
+        drawLine(
+            color = KoridorGold.copy(alpha = 0.45f),
+            start = Offset(0f, mid),
+            end = Offset(size.width - size.height, mid),
+            strokeWidth = size.height * 0.14f,
+        )
+        val r = size.height * 0.3f
+        val cx = size.width - r
+        drawPath(
+            androidx.compose.ui.graphics.Path().apply {
+                moveTo(cx, mid - r)
+                lineTo(cx + r, mid)
+                lineTo(cx, mid + r)
+                lineTo(cx - r, mid)
+                close()
+            },
+            KoridorGold,
+        )
+    }
+}
+
+/** A gold-edged square control, which is what every button on this screen is. */
+@Composable
+private fun GameBarButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    size: Dp = 44.dp,
+) {
+    val tint = if (enabled) KoridorGold else Color(0xFF5C6169)
+    Box(
+        Modifier
+            .size(size)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF12161B))
+            .border(1.dp, tint.copy(alpha = 0.45f), RoundedCornerShape(14.dp))
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.45f))
+    }
 }

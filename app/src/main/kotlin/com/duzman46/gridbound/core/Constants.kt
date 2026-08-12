@@ -53,11 +53,15 @@ object Constants {
          * the tall ivory piece these replaced and wrong for them — it left a base crowding the
          * tile it stood on and a piece towering over the two beside it.
          *
-         * Kept low enough that the whole piece is about the height of a tile. Since the sprite
-         * is centred on its square rather than stood up from its base, anything much taller
-         * hangs out of the square at both ends, and the bottom end is a wall channel.
+         * Kept low enough that the piece clears the square on **all four** sides, which is a
+         * tighter bound than merely fitting. At 0.66 the piece was already centred to within a
+         * pixel — measured on the handset against the board's own studs — and still read as off,
+         * because it filled the square vertically while leaving a gap either side, and an eye
+         * takes that mismatch for misalignment rather than for proportion. At 0.56 the sprite is
+         * about nine tenths of a tile tall and a little over half of it wide, so the margin is
+         * even the whole way round and the piece sits in its square instead of straining at it.
          */
-        const val PAWN_WIDTH_RATIO = 0.66f
+        const val PAWN_WIDTH_RATIO = 0.56f
 
         /**
          * How far down a pawn sprite the bottom rim of its base sits, as a fraction of its

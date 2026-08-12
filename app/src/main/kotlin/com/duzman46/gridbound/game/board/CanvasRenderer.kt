@@ -32,6 +32,19 @@ data class BoardPalette(
     val valid: Color,
     val invalid: Color,
     val wall: Color,
+    /**
+     * The empty wall slot.
+     *
+     * Its own colour rather than [valid]'s, and gold rather than green. The two were the same
+     * for as long as both meant "you may put something here", but they are not the same thing
+     * to look at: a move target is one mark on one square, and the slots are forty bars laid
+     * across the whole board at once. In green, over a board of rosewood and brass, forty of
+     * them read as pinstripes drawn on top of the table rather than as slots cut into it.
+     *
+     * The wording survives the change. "Tap the green square" is about the move targets, which
+     * are still green circles; a wall slot was never what that sentence pointed at.
+     */
+    val slot: Color,
     val playerOne: Color,
     val playerTwo: Color,
     val selection: Color,
@@ -130,7 +143,7 @@ class CanvasRenderer @Inject constructor() {
         // may go before the player starts hunting for it.
         validWalls.asSequence()
             .filter { it.orientation == wallOrientation }
-            .forEach { wall -> drawWallHint(geometry, wall, palette.valid) }
+            .forEach { wall -> drawWallHint(geometry, wall, palette.slot) }
 
         state.walls.forEach { wall ->
             val progress = if (wall == recentWall) recentWallProgress else 1f
@@ -341,15 +354,26 @@ class CanvasRenderer @Inject constructor() {
      * These went through [drawWall] and came out looking more solid than the walls actually on
      * the board — a lit top face and a specular are drawn at fixed alphas, so passing a colour
      * at 22% did nothing to them and forty green columns stood over the game. A hint is a thin
-     * flat bar, half the thickness of the real thing, and it is allowed to be nothing else.
+     * flat bar, and it is allowed to be nothing else.
+     *
+     * Thinner than it was, because the wall it stands in for is thicker than it was: at a third
+     * of a wall's thickness the bar was ten pixels of the sixteen a real piece fills, which is
+     * close enough to a wall to be mistaken for one. A quarter reads as a slot rather than a
+     * piece, and there is no confusing the two — a placed wall is four times this thick and made
+     * of rosewood.
+     *
+     * Nearly opaque, which is not what it was when it was green. Gold on a board of brass and
+     * dark wood has almost no contrast of its own to spend, so the first gold version at 30 %
+     * disappeared into the surface entirely: prettier than the green pinstripes it replaced and
+     * useless, because the one thing this mark has to do is tell a player where a wall may go.
      */
     private fun DrawScope.drawWallHint(geometry: BoardGeometry, wall: Wall, color: Color) {
         val rect = geometry.wallRect(wall)
-        val slim = geometry.wallThickness * 0.34f
+        val slim = geometry.wallThickness * 0.24f
         val horizontal = rect.width >= rect.height
-        val size = if (horizontal) Size(rect.width * 0.86f, slim) else Size(slim, rect.height * 0.86f)
+        val size = if (horizontal) Size(rect.width * 0.82f, slim) else Size(slim, rect.height * 0.82f)
         drawRoundRect(
-            color = color.copy(alpha = 0.16f),
+            color = color.copy(alpha = 0.85f),
             topLeft = Offset(rect.center.x - size.width / 2f, rect.center.y - size.height / 2f),
             size = size,
             cornerRadius = CornerRadius(slim / 2f),

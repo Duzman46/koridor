@@ -90,6 +90,7 @@ object HomePalette {
         valid = Color(0xFF32D583),
         invalid = Color(0xFFE5484D),
         wall = Accent,
+        slot = Accent,
         playerOne = SeatColors.pawn(PlayerId.PLAYER_ONE),
         playerTwo = SeatColors.pawn(PlayerId.PLAYER_TWO),
         selection = Accent,

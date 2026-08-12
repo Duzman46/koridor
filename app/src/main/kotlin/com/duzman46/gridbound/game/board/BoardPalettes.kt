@@ -3,6 +3,7 @@ package com.duzman46.gridbound.game.board
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import com.duzman46.gridbound.game.models.PlayerId
+import com.duzman46.gridbound.theme.KoridorGold
 
 /**
  * The board's colours.
@@ -24,6 +25,9 @@ fun boardPalette(colors: ColorScheme): BoardPalette = BoardPalette(
     valid = Color(0xFF32D583),
     invalid = colors.error,
     wall = colors.secondary,
+    // The board's own metal, not the theme's: the surface under these slots is a render
+    // and does not change with the theme, so a slot that did would disagree with it.
+    slot = KoridorGold,
     playerOne = SeatColors.pawn(PlayerId.PLAYER_ONE),
     playerTwo = SeatColors.pawn(PlayerId.PLAYER_TWO),
     selection = colors.primary,

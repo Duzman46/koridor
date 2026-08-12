@@ -38,6 +38,9 @@ object Notifications {
 
     const val CHANNEL_ID = "koridor_nudges"
 
+    /** KoridorGold, as a plain int: this is a system API, a long way from the Compose theme. */
+    private const val BADGE = 0xFFD0A653.toInt()
+
     /** Ids, so a second notice of the same kind replaces the first rather than stacking. */
     private const val ID_COME_BACK = 1001
 
@@ -81,6 +84,10 @@ object Notifications {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            // The app's gold. Android tints the badge the icon sits in with this, and on One UI
+            // that badge is a filled circle — so without it the one thing of ours in the shade
+            // arrives in the system's default blue.
+            .setColor(BADGE)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

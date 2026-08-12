@@ -542,8 +542,10 @@ class CanvasRenderer @Inject constructor() {
      * whatever tile the piece is standing on rather than being baked into a picture that also
      * gets drawn over the goal rows.
      *
-     * The sprite is placed by its FOOT, not its middle. A piece stands on a square; centring the
-     * image would sit it half a head too high and it would read as hovering.
+     * The sprite is placed by its BASE, not its middle and not its bottom. These pieces are
+     * photographed from above, so what stands on the square is the contact ellipse under the
+     * base — which is neither the picture's centre nor its last row, but a measured point
+     * between the two. See [Constants.Board.PAWN_BASE_ANCHOR].
      */
     private fun DrawScope.drawPawnSprite(
         geometry: BoardGeometry,
@@ -553,44 +555,44 @@ class CanvasRenderer @Inject constructor() {
         selectionColor: Color,
     ) {
         val unit = geometry.tileSize
-        val radius = unit * Constants.Board.PAWN_RADIUS_RATIO
+
+        // Width first, height from the bitmap's own proportions. What decides whether a piece
+        // suits a square is how much of the square its base covers; the rest of the piece
+        // follows from that, and never the other way round. Sizing by height was right for the
+        // tall ivory piece these replaced and wrong for them — it left a base crowding its own
+        // tile and a piece towering over the two beside it.
+        val width = unit * Constants.Board.PAWN_WIDTH_RATIO
+        val height = width * sprite.height / sprite.width
+        val base = width * 0.5f
 
         if (selected) {
-            drawCircle(selectionColor.copy(alpha = 0.28f), radius * 1.5f, center)
+            drawCircle(selectionColor.copy(alpha = 0.28f), base * 1.24f, center)
             drawCircle(
                 color = selectionColor,
-                radius = radius * 1.5f,
+                radius = base * 1.24f,
                 center = center,
                 style = Stroke(width = unit * 0.045f),
             )
         }
 
-        val foot = center.y + radius * 0.78f
+        // Under the base rather than under the picture, and still vector: the shadow belongs to
+        // the board, so it has to fall on whichever tile the piece is standing on.
         drawOval(
             brush = Brush.radialGradient(
                 0f to Color.Black.copy(alpha = 0.52f),
                 1f to Color.Transparent,
-                center = Offset(center.x + radius * 0.16f, foot - radius * 0.06f),
-                radius = radius * 1.10f,
+                center = Offset(center.x + base * 0.14f, center.y + base * 0.06f),
+                radius = base * 1.15f,
             ),
-            topLeft = Offset(center.x - radius * 1.15f, foot - radius * 0.34f),
-            size = Size(radius * 2.30f, radius * 0.62f),
+            topLeft = Offset(center.x - base * 1.20f, center.y - base * 0.36f),
+            size = Size(base * 2.40f, base * 0.78f),
         )
 
-        // Height first, aspect from the bitmap. The sprite is cropped to the piece, so its
-        // proportions are the pawn's and not a square's — asking for a square here is what put
-        // a pawn half a tile wide in the middle of a tile-sized box.
-        //
-        // 3.15 and not 2.74: the piece is a chess pawn with a wide turned base, and at the
-        // smaller figure its base covered three quarters of a tile, which reads as a counter
-        // sitting on a square rather than a piece standing on it. A real set fills the square.
-        val height = radius * 3.15f
-        val width = height * sprite.width / sprite.height
         drawImage(
             image = sprite,
             dstOffset = IntOffset(
                 (center.x - width / 2f).roundToInt(),
-                (foot - height).roundToInt(),
+                (center.y - height * Constants.Board.PAWN_BASE_ANCHOR).roundToInt(),
             ),
             dstSize = IntSize(width.roundToInt(), height.roundToInt()),
             filterQuality = FilterQuality.High,

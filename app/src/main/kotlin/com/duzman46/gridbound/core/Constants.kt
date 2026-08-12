@@ -41,8 +41,34 @@ object Constants {
          * the two lattices have to be the same lattice. Change the artwork, re-run the script,
          * copy both numbers back; do not tune either by eye.
          */
-        const val FRAME_RATIO = 0.07949f
+        const val FRAME_RATIO = 0.04191f
         const val PAWN_RADIUS_RATIO = 0.40f
+
+        /**
+         * How much of a tile's width a pawn's base covers.
+         *
+         * Width and not height, because the pieces are photographed from above: what says
+         * whether a piece is the right size for a square is how much of the square its base sits
+         * on, and the height then follows from the sprite's own proportions. Sizing by height
+         * was right for the tall ivory piece it replaced and wrong for these — it left a base
+         * crowding the tile it stood on and a piece towering over the two beside it.
+         *
+         * There is a ceiling on it and this is under it. A piece is anchored on its base and
+         * stands up from there, so a piece on the top row needs [PAWN_BASE_ANCHOR] of its height
+         * to fit between the board's edge and that row's centre — which is [FRAME_RATIO] plus
+         * half a tile. With this sprite's proportions that caps the ratio at 0.707, and the
+         * frame is thin now, so the cap is real: at 0.74 the top row's piece lost its head.
+         */
+        const val PAWN_WIDTH_RATIO = 0.68f
+
+        /**
+         * How far down a pawn sprite its base's contact ellipse sits, as a fraction of its
+         * height. Measured by `docs/store/pieces.py`, which prints it; both pieces agree.
+         *
+         * This is the point that goes over the middle of a tile. Centring the picture instead
+         * puts a piece a third of a base too high and it reads as hovering.
+         */
+        const val PAWN_BASE_ANCHOR = 0.848f
     }
 
     object Ai {

@@ -59,14 +59,16 @@ FRAME = (34, 39, 1215, 1211)
 #: The render's moulding is 11.7 % of the board on every side, so the grid it surrounds is only
 #: 77 % of the picture — and on a 1080 px handset, where the board can never be wider than the
 #: screen, that left a 71 px tile inside a 1001 px board. Shrinking the frame is the only place
-#: the grid can grow from.
+#: the grid can grow from, and by now it is nearly spent: at 0.30 the moulding is under 4 % of
+#: the board, the board is already the full width of the phone, and the whole of what is left to
+#: win by deleting the frame outright is another eight per cent on a tile.
 #:
 #: **Nothing is distorted by this, and that is why it is a scale rather than a crop.** The frame
 #: is taken in nine patches: each edge band is resampled only *across* itself, where a moulding
 #: is a constant profile and cannot show it; each corner is resampled by the same factor on both
 #: axes, so the gold ornament in it keeps its shape exactly and merely gets smaller. Cropping
 #: instead would have cut the ornaments in half.
-FRAME_SCALE = 0.62
+FRAME_SCALE = 0.30
 
 #: The master's side, and the densities it ships at.
 MASTER = 1234

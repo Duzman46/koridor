@@ -1,23 +1,31 @@
 # -*- coding: utf-8 -*-
-"""Cuts the board pieces out of the supplied renders and colours them for the two seats.
+"""Cuts the board pieces out of the supplied renders.
 
     python docs/store/pieces.py
 
 The pawn used to be computed here — a profile spun about an axis and shaded per pixel with a
-real normal. That was the right answer while there was nothing better, and there now is:
-`reference/pawn.png` is a rendered piece with real materials, marble against brushed gold, and
-no amount of Blinn-Phong reaches that. The arithmetic is gone; what is left is a cut-out and a
-recolour, both of which have to stay reproducible from the repository.
+real normal. That was the right answer while there was nothing better; the renders are better.
+What is left is a cut-out, and it has to stay reproducible from the repository.
 
-**Why the ivory render twice rather than the ivory and the dark one.** Two pawns were supplied.
-Using them as the two seats would rename the seats: blue and red are written into the tutorial,
-into the turn banner and into the colour a player is offered when a room is made, in ten
-languages. Tinting one piece keeps every one of those sentences true — and it is also how a real
-set works: one mould, two finishes, the same metal on both.
+**The two seats are now two renders, and nothing is tinted any more.** An ivory piece was
+supplied first and used twice, dyed blue and dyed red, because blue and red are written into the
+tutorial, into the turn banner and into the colour a host is offered when a room is made, in ten
+languages — and a second render of a *black* piece could not be called "red". `pawn-blue.png` and
+`pawn-red.png` settle that by being the same piece in the two named colours: one mould, gunmetal
+and gold, a sapphire in one head and a ruby in the other. No duotone, no knee to tune, no gold
+gate to keep the metal out of the dye. The materials arrive as they were rendered.
 
-**The gold is not tinted.** A seat colour that swallowed the hardware would leave two pieces
-differing in nothing but hue. Keeping the metal means they read as the same object in two
-colours, which is exactly what they are.
+**They are also seen from much higher up, which is the real reason they replaced the ivory one.**
+The board is drawn straight down — its tiles are square, its studs are circles, there is no
+perspective in it at all — and a tall piece photographed from the side is the one object on the
+table disagreeing with that. These are photographed from above, so they sit in the projection the
+board is already in.
+
+**The cut is by edge, not by threshold.** These pieces are gunmetal on a dark grey ground and the
+body is *darker* than the ground behind it, so no luminance gate separates them — one that cleared
+the background would take the body with it. What does separate them is that the ground is smooth
+and the piece has an outline: flood the low-gradient country in from the four corners and it stops
+at the silhouette, and everything it could not reach is the piece.
 """
 import os
 
@@ -28,18 +36,18 @@ from scipy import ndimage
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 RES = os.path.join(ROOT, "app", "src", "main", "res")
-SOURCE = os.path.join(ROOT, "reference", "pawn.png")
 WALL_SOURCE = os.path.join(ROOT, "reference", "wall.png")
 
-#: Seat colours, and they are SeatColors' own. Literals rather than parsed out of Kotlin: a
-#: sprite that silently followed a token would be a sprite nobody remembered to re-render.
-SEATS = {
-    "blue": (0x3A, 0x7C, 0xFA),
-    "red": (0xEC, 0x42, 0x38),
+#: The two seats, as the two renders. Seat one is blue and seat two is red, everywhere and by
+#: name — see SeatColors — so the files are named for the seats rather than for the stones.
+PAWNS = {
+    "blue": os.path.join(ROOT, "reference", "pawn-blue.png"),
+    "red": os.path.join(ROOT, "reference", "pawn-red.png"),
 }
 
-#: Height the sprite is mastered at, before the density downsample.
-MASTER_HEIGHT = 512
+#: Width the pawn is mastered at, before the density downsample. Width and not height: a piece
+#: seen from above is sized on the board by how much of a tile its base covers.
+MASTER_WIDTH = 512
 
 #: Densities it ships at, as (folder, fraction of the master).
 DENSITIES = (("xhdpi", 0.25), ("xxhdpi", 0.375), ("xxxhdpi", 0.5))
@@ -52,91 +60,45 @@ GAP_RATIO = 0.15590
 WALL_THICKNESS_RATIO = 1.91
 WALL_HEIGHT = 128
 
-#: Luminance either side of the piece's edge.
+#: How steep a luminance slope has to be to count as the piece's outline.
 #:
-#: Set ABOVE the bloom rather than at the background. The render sits on black with a warm halo
-#: around the piece, and a threshold that merely cleared the corners left that halo at partial
-#: alpha — which the recolour below then dyed, giving each pawn a coloured aura on the board.
-#: The piece is rim-lit all the way round its silhouette, so a gate this high still finds its
-#: whole outline while the bloom falls entirely outside it.
-EDGE_LOW, EDGE_HIGH = 104.0, 138.0
+#: Chosen off a contact sheet rather than guessed. At 8 the ground's own texture leaks in and the
+#: contact shadow comes with the piece; at 22 the outline breaks where the body is closest in
+#: value to the ground and the flood pours into the piece, taking its top off. 14 closes all the
+#: way round on both renders.
+EDGE_GATE = 14.0
 
-#: How gold a pixel has to be, as red minus blue, to be left alone by the recolour. The ivory
-#: runs about 25 and the metal about 157, so the gate sits between them with room either side.
-GOLD_GATE = 62.0
-
-
-def cut_out(image):
-    """Alpha for the piece: the bloom behind it discarded, its own dark parts kept."""
-    pixels = np.asarray(image.convert("RGB")).astype(float)
-    lum = pixels.mean(axis=2)
-
-    # A soft edge rather than a hard one — at sprite size a binary cut reads as a sticker.
-    alpha = np.clip((lum - EDGE_LOW) / (EDGE_HIGH - EDGE_LOW), 0.0, 1.0)
-
-    # The piece has dark parts of its own: the shadowed underside, the grooves between the gold
-    # rings. They are below the threshold and they are also *enclosed*, so they are found by
-    # asking what the background can reach rather than by how bright anything is.
-    reachable = Image.new("L", image.size)
-    reachable.putdata((alpha.reshape(-1) * 255).astype(np.uint8).tolist())
-    for corner in ((0, 0), (image.width - 1, 0), (0, image.height - 1),
-                   (image.width - 1, image.height - 1)):
-        ImageDraw.floodfill(reachable, corner, 255, thresh=40)
-    outside = np.asarray(reachable).astype(float) >= 255
-
-    return np.clip(np.where(outside, alpha, 1.0), 0.0, 1.0)
+#: Colour is a barrier too, so the gold rings and the stone hold the outline where the gunmetal
+#: is too close in value to the ground to hold it alone.
+COLOUR_GATE = 22.0
 
 
-def recolour(image, alpha, tint):
-    """The ivory taken to [tint], the gold left alone, the speculars left white.
+def cut_piece(image):
+    """Alpha for a pawn: the ground flooded away from the corners, the piece left behind.
 
-    A duotone and not a multiply. Multiplying the render's luminance by the seat colour was the
-    obvious thing and it made two plastic beads: the ivory sits between 200 and 240, so dividing
-    by a mid tone put the whole body at or above the tint's full value and every surface came out
-    the same saturated hue. Marble does not do that — it goes pale where the light hits and keeps
-    its hue only in the mid tones. So the ramp runs dark-tint → tint → nearly-white, and the piece
-    keeps the modelling that made the render worth using.
+    The blur first is not cosmetic — the render's ground is textured, and Sobel on the raw pixels
+    finds that texture as readily as it finds the piece.
     """
-    pixels = np.asarray(image.convert("RGB")).astype(float)
-    lum = pixels.mean(axis=2)
-    goldness = pixels[:, :, 0] - pixels[:, :, 2]
+    blurred = np.asarray(image.filter(ImageFilter.GaussianBlur(2.0))).astype(float)
+    lum = blurred.mean(axis=2)
+    saturation = blurred.max(axis=2) - blurred.min(axis=2)
 
-    # 0 where the pixel is ivory, 1 where it is metal, ramped between the two so the boundary
-    # does not become a hard line the recolour draws attention to.
-    metal = np.clip((goldness - GOLD_GATE * 0.55) / (GOLD_GATE * 0.9), 0.0, 1.0)[:, :, None]
+    slope = np.hypot(ndimage.sobel(lum, axis=1), ndimage.sobel(lum, axis=0))
+    barrier = (slope > EDGE_GATE) | (saturation > COLOUR_GATE)
 
-    hue = np.array(tint, dtype=float)
-    shadow = hue * 0.13
-    # Not white: a highlight that goes all the way to paper leaves two pale pieces that have to
-    # be told apart by their mid tones alone, and the board is dark enough that the mid tones are
-    # the smallest part of the piece.
-    highlight = hue + (255.0 - hue) * 0.44
+    labels, _ = ndimage.label(~barrier)
+    corners = {labels[3, 3], labels[3, -4], labels[-4, 3], labels[-4, -4]}
+    corners.discard(0)
+    assert corners, "the corners are on the barrier — the gates are too low"
+    piece = ndimage.binary_fill_holes(~np.isin(labels, sorted(corners)))
 
-    #: Where the ramp turns from "gaining the hue" to "losing it to the light".
-    #:
-    #: High, and that is the whole trick. The render's ivory sits between 0.6 and 0.94 of full
-    #: luminance — it is a *pale* material — so a knee at two thirds put almost the entire piece
-    #: on the far side of it and produced a baby blue pawn and a pink one. At 0.86 only the top
-    #: of the dome and the lit shoulder cross over, which is exactly where a real piece goes pale.
-    KNEE = 0.86
-    t = np.clip(lum / 255.0, 0.0, 1.0)
-    low = t / KNEE
-    high = (t - KNEE) / (1.0 - KNEE)
-    ramped = np.where(
-        (t < KNEE)[:, :, None],
-        shadow[None, None, :] + (hue - shadow)[None, None, :] * np.clip(low, 0, 1)[:, :, None],
-        hue[None, None, :] + (highlight - hue)[None, None, :] * np.clip(high, 0, 1)[:, :, None],
-    )
-
-    # A specular is white on any material. Without this the highlight takes the seat colour and
-    # the piece stops looking wet.
-    gloss = np.clip((lum - 243.0) / 12.0, 0.0, 1.0)[:, :, None]
-    tinted = ramped * (1.0 - gloss) + 255.0 * gloss
-
-    blended = tinted * (1.0 - metal) + pixels * metal
-    return Image.fromarray(
-        np.dstack([np.clip(blended, 0, 255), alpha * 255.0]).astype(np.uint8)
-    )
+    # The outline is a ridge two or three pixels wide, so closing it seals the pinholes the
+    # flood would otherwise have crawled through, and the second fill takes the interior back.
+    piece = ndimage.binary_fill_holes(ndimage.binary_closing(piece, np.ones((9, 9))))
+    labels, count = ndimage.label(piece)
+    assert count, "nothing survived the cut"
+    areas = ndimage.sum(piece, labels, range(1, count + 1))
+    return labels == (1 + int(np.argmax(areas)))
 
 
 def piece_mask(pixels):
@@ -217,6 +179,23 @@ def flatten_wall():
     return out
 
 
+def base_anchor(image):
+    """How far down the sprite the base's own centre sits, as a fraction of its height.
+
+    A piece seen from above stands on its base, and its base is a disc: what belongs over the
+    middle of a tile is the middle of that disc, not the middle of the picture. The disc is the
+    widest thing in the sprite, so its centre is the middle of the widest run of rows.
+    """
+    solid = np.asarray(image.getchannel("A")).astype(float) > 128
+    widths = solid.sum(axis=1)
+    widest = float(np.nonzero(widths >= widths.max() * 0.985)[0].mean())
+    # The widest row is the centre of the base's TOP ellipse; below it is the base's own side
+    # wall, down to the sprite's last row, which is the front of the ellipse it actually stands
+    # on. The contact ellipse's centre is between the two — which is the point that belongs over
+    # the middle of a tile. Taking the widest row alone sat every piece a third of a base high.
+    return (widest + image.height) / 2.0 / float(image.height)
+
+
 def trim(image):
     """Cropped to the piece, so the renderer scales a pawn and not a box with a pawn in it."""
     box = image.getbbox()
@@ -237,19 +216,19 @@ def save(image, folder, name):
 
 
 if __name__ == "__main__":
-    master = Image.open(SOURCE)
-    mask = cut_out(master)
-    for seat, tint in SEATS.items():
-        piece = recolour(master, mask, tint)
-        # Soften what the flood fill left blocky, before anything is scaled.
+    for seat, path in PAWNS.items():
+        master = Image.open(path).convert("RGB")
+        piece = master.copy()
+        piece.putalpha(Image.fromarray((cut_piece(master) * 255).astype(np.uint8)))
+        # Soften what the fill left blocky, before anything is scaled.
         piece.putalpha(piece.getchannel("A").filter(ImageFilter.GaussianBlur(1.2)))
         piece = trim(piece)
-        print("pawn_%s  master %dx%d" % (seat, piece.width, piece.height))
+        base = base_anchor(piece)
+        print("pawn_%-5s master %dx%d  base centre %.1f%% down" % (seat, piece.width, piece.height, 100 * base))
         for folder, fraction in DENSITIES:
-            height = max(1, int(round(MASTER_HEIGHT * fraction)))
-            width = max(1, int(round(piece.width * height / piece.height)))
-            save(piece.resize((width, height), Image.LANCZOS),
-                 "drawable-" + folder, "pawn_%s.webp" % seat)
+            width = max(1, int(round(MASTER_WIDTH * fraction)))
+            height = max(1, int(round(piece.height * width / piece.width)))
+            save(piece.resize((width, height), Image.LANCZOS), "drawable-" + folder, "pawn_%s.webp" % seat)
 
     wall = flatten_wall()
     for folder, fraction in DENSITIES:

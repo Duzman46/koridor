@@ -533,4 +533,6 @@
     <string name="profile_recent_letter_win">V</string>
     <string name="profile_recent_letter_loss">D</string>
     <string name="profile_recent_letter_draw">N</string>
+    <string name="stats_ranked">Bilan classé</string>
+    <string name="profile_recent_empty_title">Aucune partie en ligne</string>
 </resources>

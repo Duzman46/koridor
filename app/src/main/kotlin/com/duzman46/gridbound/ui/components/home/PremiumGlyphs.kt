@@ -118,8 +118,8 @@ enum class PremiumIcon {
     /** Something aimed at and hit. Two rings and a dart through the middle of them. */
     TARGET,
 
-    /** A run kept alive. A calendar with a flame where the date would be. */
-    CALENDAR_FLAME,
+    /** A run kept alive. A flame. */
+    FLAME,
 
     /** Time already spent. A dial with two hands on it. */
     CLOCK,
@@ -174,7 +174,7 @@ fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
         PremiumIcon.BELL -> bell(s, tint, line)
         PremiumIcon.PUZZLE -> puzzle(s, tint)
         PremiumIcon.TARGET -> target(s, tint, line)
-        PremiumIcon.CALENDAR_FLAME -> calendarFlame(s, tint, line)
+        PremiumIcon.FLAME -> flame(s, tint)
         PremiumIcon.CLOCK -> clock(s, tint, line)
     }
 }
@@ -781,32 +781,38 @@ private fun DrawScope.cog(s: Float, tint: Color, line: Float) {
 }
 
 /**
- * A jigsaw piece: a square with a tab pushed out of the top and a socket bitten out of the left.
+ * A jigsaw piece: a square with a round tab on the top edge and a round socket in the left one.
  *
- * Filled rather than stroked, unlike most of this set. A jigsaw piece read at 24dp is carried
- * entirely by its silhouette — the tab and the socket are the whole idea — and an outline turns
- * the two round features into a pair of thin circles that close up at that size.
+ * The tab and the socket are drawn as whole circles — added to the shape and punched out of it —
+ * rather than as cubics bulging off the outline. The first version used cubics and at 21dp the
+ * bulge flattened into a nub on a slab; a circle keeps its curvature however small it gets, and
+ * curvature is the entire difference between a jigsaw piece and a rounded rectangle.
  */
 private fun DrawScope.puzzle(s: Float, tint: Color) {
-    val left = s * 0.16f
-    val right = s * 0.84f
-    val top = s * 0.22f
-    val bottom = s * 0.84f
-    val knob = s * 0.115f
-    val path = Path().apply {
-        moveTo(left, top)
-        // Out of the top: along to the tab, over it, and on to the corner.
-        lineTo(s * 0.38f, top)
-        cubicTo(s * 0.34f, top - knob * 1.5f, s * 0.66f, top - knob * 1.5f, s * 0.62f, top)
-        lineTo(right, top)
-        lineTo(right, bottom)
-        lineTo(left, bottom)
-        // Back up the left: in to the socket, around it, and on to the start.
-        lineTo(left, s * 0.66f)
-        cubicTo(left + knob * 1.5f, s * 0.70f, left + knob * 1.5f, s * 0.40f, left, s * 0.44f)
-        close()
-    }
-    drawPath(path, tint)
+    val left = s * 0.20f
+    val right = s * 0.86f
+    val top = s * 0.26f
+    val bottom = s * 0.86f
+    val knob = s * 0.125f
+    drawPath(
+        Path().apply {
+            addRoundRect(
+                androidx.compose.ui.geometry.RoundRect(
+                    left, top, right, bottom,
+                    CornerRadius(s * 0.07f),
+                ),
+            )
+            addOval(
+                androidx.compose.ui.geometry.Rect(
+                    androidx.compose.ui.geometry.Offset(s * 0.53f - knob, top - knob),
+                    knob,
+                ),
+            )
+        },
+        tint,
+    )
+    // The socket, punched with the tile behind it. Same reason the flame's core is punched.
+    drawCircle(Color(0xFF12161B), knob, Offset(left, s * 0.58f))
 }
 
 /** Two rings and a dart in the middle: something aimed at, and hit. */
@@ -840,47 +846,42 @@ private fun DrawScope.target(s: Float, tint: Color, line: Float) {
 }
 
 /**
- * A calendar with a flame standing where the date would be.
+ * A flame: an outer body with a brighter tongue inside it.
  *
- * The plate is the same rectangle, rings and rule as [calendar], deliberately: this is that icon
- * with something happening on it, and if the two plates disagreed they would read as unrelated
- * marks. The flame is filled for the reason the jigsaw is — a stroked teardrop at this size is a
- * ring, not a fire.
+ * This was a calendar with a flame on it, and on the handset the flame was gone — the plate's
+ * border, its two rings and its rule left the fire six pixels of clear space at 21dp and it read
+ * as a calendar with a smudge. A streak is drawn as a flame everywhere else in the world, so the
+ * plate went and the flame got the whole box.
+ *
+ * Filled, and the inner tongue is punched with the card's own fill rather than a lighter tint,
+ * because the caller passes one colour and the shape has to work in whichever one it gets.
  */
-private fun DrawScope.calendarFlame(s: Float, tint: Color, line: Float) {
-    drawRoundRect(
-        color = tint,
-        topLeft = Offset(s * 0.10f, s * 0.20f),
-        size = Size(s * 0.80f, s * 0.70f),
-        cornerRadius = CornerRadius(s * 0.12f),
-        style = Stroke(line),
-    )
-    drawLine(
+private fun DrawScope.flame(s: Float, tint: Color) {
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.50f, s * 0.06f)
+            cubicTo(s * 0.50f, s * 0.30f, s * 0.86f, s * 0.36f, s * 0.84f, s * 0.60f)
+            cubicTo(s * 0.82f, s * 0.82f, s * 0.66f, s * 0.94f, s * 0.50f, s * 0.94f)
+            cubicTo(s * 0.34f, s * 0.94f, s * 0.16f, s * 0.82f, s * 0.16f, s * 0.60f)
+            cubicTo(s * 0.16f, s * 0.40f, s * 0.34f, s * 0.32f, s * 0.34f, s * 0.16f)
+            cubicTo(s * 0.42f, s * 0.22f, s * 0.46f, s * 0.14f, s * 0.50f, s * 0.06f)
+            close()
+        },
         tint,
-        Offset(s * 0.10f, s * 0.42f),
-        Offset(s * 0.90f, s * 0.42f),
-        strokeWidth = line * 0.9f,
     )
-    listOf(0.32f, 0.68f).forEach { x ->
-        drawLine(
-            tint,
-            Offset(s * x, s * 0.08f),
-            Offset(s * x, s * 0.28f),
-            strokeWidth = line,
-            cap = StrokeCap.Round,
-        )
-    }
-    val flame = Path().apply {
-        moveTo(s * 0.50f, s * 0.50f)
-        cubicTo(s * 0.70f, s * 0.62f, s * 0.66f, s * 0.70f, s * 0.62f, s * 0.75f)
-        cubicTo(s * 0.60f, s * 0.82f, s * 0.40f, s * 0.82f, s * 0.38f, s * 0.75f)
-        cubicTo(s * 0.34f, s * 0.70f, s * 0.34f, s * 0.60f, s * 0.50f, s * 0.50f)
-        close()
-    }
-    drawPath(flame, tint)
+    // The hot core, cut out so the silhouette keeps a waist at small sizes.
+    drawPath(
+        Path().apply {
+            moveTo(s * 0.50f, s * 0.48f)
+            cubicTo(s * 0.62f, s * 0.58f, s * 0.64f, s * 0.68f, s * 0.60f, s * 0.76f)
+            cubicTo(s * 0.56f, s * 0.84f, s * 0.44f, s * 0.84f, s * 0.40f, s * 0.76f)
+            cubicTo(s * 0.36f, s * 0.68f, s * 0.40f, s * 0.58f, s * 0.50f, s * 0.48f)
+            close()
+        },
+        Color(0xFF12161B),
+    )
 }
 
-/** A dial with two hands: the mark for a list of things that already happened. */
 private fun DrawScope.clock(s: Float, tint: Color, line: Float) {
     val centre = Offset(s * 0.5f, s * 0.5f)
     drawCircle(tint, s * 0.38f, centre, style = Stroke(line))

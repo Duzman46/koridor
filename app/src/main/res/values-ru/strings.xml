@@ -536,4 +536,6 @@
     <string name="profile_recent_letter_win">П</string>
     <string name="profile_recent_letter_loss">Пр</string>
     <string name="profile_recent_letter_draw">Н</string>
+    <string name="stats_ranked">Рейтинговая статистика</string>
+    <string name="profile_recent_empty_title">Онлайн-матчей пока нет</string>
 </resources>

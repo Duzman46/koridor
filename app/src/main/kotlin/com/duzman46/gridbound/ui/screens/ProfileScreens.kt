@@ -88,7 +88,9 @@ import com.duzman46.gridbound.ui.components.home.BadgeAccent
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.PremiumIconButton
-import com.duzman46.gridbound.ui.components.home.ProfileEmptyNote
+import com.duzman46.gridbound.ui.components.home.OptionEntry
+import com.duzman46.gridbound.ui.components.home.OptionGroup
+import com.duzman46.gridbound.ui.components.home.ProfileEmptyGames
 import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
 import com.duzman46.gridbound.ui.components.home.ProfilePips
@@ -181,6 +183,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAccount: () -> Unit,
+    onFriends: () -> Unit,
     onSettings: () -> Unit,
     onAchievements: () -> Unit,
     onStatistics: () -> Unit,
@@ -261,6 +264,7 @@ fun ProfileScreen(
                         rating = profile.rating,
                         games = profile.totalGames,
                         wins = profile.wins,
+                        losses = profile.losses,
                     )
                     Row(
                         Modifier.fillMaxWidth(),
@@ -297,7 +301,7 @@ fun ProfileScreen(
                             },
                         )
                         ProfileFeatureCard(
-                            icon = PremiumIcon.CALENDAR_FLAME,
+                            icon = PremiumIcon.FLAME,
                             accent = KoridorGold,
                             title = stringResource(R.string.profile_win_streak),
                             headline = profile.currentWinStreak.toString(),
@@ -312,13 +316,26 @@ fun ProfileScreen(
                             },
                         )
                     }
+                    // People, under the player's own numbers and above the people they have
+                    // played. It was a button on this page before the redesign and dropping it
+                    // was the one removal that cost something: the friend list is reachable
+                    // from the home screen and nowhere else, and this is the page about who
+                    // you are.
+                    OptionGroup(
+                        listOf(
+                            OptionEntry(
+                                icon = PremiumIcon.PEOPLE,
+                                title = stringResource(R.string.friends_title),
+                                onClick = onFriends,
+                            ),
+                        ),
+                    )
                     // The heading lives inside the card now, with the clock and the expander,
                     // the way the reference draws it — so there is no floating label above an
                     // empty note when a player has not finished an online match yet.
                     when {
                         recentGames.isLoading -> LoadingState()
-                        recentGames.matches.isEmpty() ->
-                            ProfileEmptyNote(stringResource(R.string.profile_recent_empty))
+                        recentGames.matches.isEmpty() -> ProfileEmptyGames()
                         else -> RecentGamesPremium(
                             matches = recentGames.matches,
                             rating = profile.rating,

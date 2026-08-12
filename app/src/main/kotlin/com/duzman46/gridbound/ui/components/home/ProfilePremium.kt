@@ -216,12 +216,21 @@ private fun PencilBadge(modifier: Modifier = Modifier, size: androidx.compose.ui
     }
 }
 
-/** Rating, matches, wins — the three numbers the game keeps about a player. */
+/**
+ * Rating, matches, wins, losses — the four numbers the game keeps about a player.
+ *
+ * Deliberately quiet. The first version set the values at `headlineSmall` with a 20dp mark
+ * beside each and 16dp of air above and below, and on the handset the strip was the loudest
+ * thing on a page whose subject is the person, not their rating. The numbers are the same size
+ * as the name above them now, and the marks sit over them rather than beside them, which is
+ * also the only arrangement in which four cells fit across a phone without the labels eliding.
+ */
 @Composable
 fun ProfileStatStrip(
     rating: Int,
     games: Int,
     wins: Int,
+    losses: Int,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -231,7 +240,7 @@ fun ProfileStatStrip(
             .clip(RoundedCornerShape(Dimens.RadiusMd))
             .background(CardFill)
             .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd))
-            .padding(vertical = Dimens.SpaceLg),
+            .padding(vertical = Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StatCell(PremiumIcon.STAR, rating.toString(), stringResource(R.string.profile_rating))
@@ -239,33 +248,36 @@ fun ProfileStatStrip(
         StatCell(PremiumIcon.GAMEPAD, games.toString(), stringResource(R.string.profile_games))
         StripDivider()
         StatCell(PremiumIcon.TROPHY, wins.toString(), stringResource(R.string.profile_wins))
+        StripDivider()
+        StatCell(PremiumIcon.SHIELD_STAR, losses.toString(), stringResource(R.string.profile_losses))
     }
 }
 
 @Composable
 private fun RowScope.StatCell(icon: PremiumIcon, value: String, label: String) {
     Column(
-        Modifier.weight(1f),
+        Modifier.weight(1f).padding(horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
-            Text(
-                text = value,
-                // Tabular figures, so a rating that changes by one digit does not shuffle the
-                // three cells sideways. It belongs to the style rather than to Text, which has
-                // no parameter for it.
-                style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-            )
-        }
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Muted, maxLines = 1)
+        PremiumGlyph(icon, Modifier.size(15.dp), KoridorGold)
+        Text(
+            text = value,
+            // Tabular figures, so a rating that changes by one digit does not shuffle the cells
+            // sideways. It belongs to the style rather than to Text, which has no parameter.
+            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Muted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -314,16 +326,10 @@ fun RowScope.ProfileFeatureCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Box(
-                Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                PremiumGlyph(icon, Modifier.size(21.dp), accent)
-            }
+        // The badge sits in its own row above the mark rather than on top of it. Aligned to the
+        // card's trailing edge it landed across the glyph — a card this narrow has no corner
+        // free — and a label overlapping the icon it labels reads as a rendering fault.
+        Box(Modifier.fillMaxWidth().height(BADGE_ROW), contentAlignment = Alignment.CenterEnd) {
             badge?.let {
                 Text(
                     text = it,
@@ -332,12 +338,20 @@ fun RowScope.ProfileFeatureCard(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
                         .clip(RoundedCornerShape(50))
                         .background(accent)
                         .padding(horizontal = 6.dp, vertical = 1.dp),
                 )
             }
+        }
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(accent.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PremiumGlyph(icon, Modifier.size(21.dp), accent)
         }
         Text(
             text = title,
@@ -379,8 +393,19 @@ fun RowScope.ProfileFeatureCard(
     }
 }
 
-/** All three cards, so their buttons line up without measuring anything. */
-private val FEATURE_CARD_HEIGHT = 158.dp
+/**
+ * All three cards, so their buttons line up without measuring anything.
+ *
+ * Sized for the worst case rather than the average, because the consequence of getting it wrong
+ * is invisible in code and obvious on a handset: at 158dp the two-line titles pushed "Görüntüle"
+ * and "Detaylar" past the bottom edge and both buttons shipped sliced in half. The worst case is
+ * badge row + mark + a title that wraps to two lines + a headline + a detail + the button, and
+ * every gap between them.
+ */
+private val FEATURE_CARD_HEIGHT = 200.dp
+
+/** Kept even on the cards with no badge, so all three marks sit on the same line. */
+private val BADGE_ROW = 18.dp
 
 /** A bar that fills left to right, for "badges earned out of all of them". */
 @Composable
@@ -610,19 +635,72 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
     }
 }
 
-/** The card the profile uses where a row of numbers would be, when there are no numbers yet. */
+/**
+ * What stands in for the match list before there is one.
+ *
+ * It was one grey sentence in a bordered box, which is the shape of an error rather than of a
+ * beginning — the first thing a new player sees on their own page should not look like something
+ * went wrong. So: the same clock the list header carries, ringed and dimmed to say *empty* rather
+ * than *broken*, a line naming what will appear here, and a line saying what fills it.
+ *
+ * The heading is inside this card too, so an empty list and a full one have the same top edge.
+ */
 @Composable
-fun ProfileEmptyNote(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = Muted,
-        textAlign = TextAlign.Center,
-        modifier = modifier
+fun ProfileEmptyGames(modifier: Modifier = Modifier) {
+    Column(
+        modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
             .background(CardFill)
-            .border(BorderStroke(1.dp, FieldEdge), RoundedCornerShape(Dimens.RadiusMd))
-            .padding(Dimens.SpaceLg),
-    )
+            .border(BorderStroke(1.dp, FieldEdge), RoundedCornerShape(Dimens.RadiusMd)),
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Muted)
+            Text(
+                text = stringResource(R.string.profile_recent_games),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+            )
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF20262D)))
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceXl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        ) {
+            Box(
+                Modifier
+                    .size(58.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF171C22))
+                    .border(1.dp, Color(0xFF262C33), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                PremiumGlyph(PremiumIcon.GLOBE, Modifier.size(26.dp), Color(0xFF5C6169))
+            }
+            Text(
+                text = stringResource(R.string.profile_recent_empty_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.profile_recent_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }

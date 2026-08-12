@@ -582,7 +582,8 @@ fun AppNavigation(
                     onBack = { navController.popFrom(entry) },
                     onEdit = { navController.navigateFrom(entry, Routes.EDIT_PROFILE) },
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
-                    // The gear on the banner. Account moved inside Settings when Settings was
+                    onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
+                    // The gear in the header. Account moved inside Settings when Settings was
                     // redrawn, so the two buttons this screen used to stack are one row apart.
                     onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
                     onAchievements = { navController.navigateFrom(entry, Routes.ACHIEVEMENTS) },
@@ -848,7 +849,16 @@ fun AppNavigation(
             composable(Routes.STATISTICS) { entry ->
                 val viewModel: SettingsViewModel = hiltViewModel()
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                StatisticsScreen(state.statistics) { navController.popFrom(entry) }
+                // Two sources, because there are two careers: the handset's totals from
+                // settings, and the account's ranked record from the session. A guest has the
+                // first and not the second, and the screen draws only what it is given.
+                val profileViewModel: ProfileViewModel = hiltViewModel()
+                val session by profileViewModel.session.collectAsStateWithLifecycle()
+                StatisticsScreen(
+                    statistics = state.statistics,
+                    profile = session.profile,
+                    onBack = { navController.popFrom(entry) },
+                )
             }
         }
 

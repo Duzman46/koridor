@@ -530,4 +530,6 @@
     <string name="profile_recent_letter_win">S</string>
     <string name="profile_recent_letter_loss">N</string>
     <string name="profile_recent_letter_draw">U</string>
+    <string name="stats_ranked">Gewertete Bilanz</string>
+    <string name="profile_recent_empty_title">Noch keine Online-Partien</string>
 </resources>

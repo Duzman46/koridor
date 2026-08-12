@@ -546,4 +546,6 @@
     <string name="profile_recent_letter_win">ف</string>
     <string name="profile_recent_letter_loss">خ</string>
     <string name="profile_recent_letter_draw">ت</string>
+    <string name="stats_ranked">السجل المصنَّف</string>
+    <string name="profile_recent_empty_title">لا توجد مباريات عبر الإنترنت بعد</string>
 </resources>

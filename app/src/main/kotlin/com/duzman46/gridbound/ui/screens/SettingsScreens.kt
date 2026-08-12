@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.GameStatistics
+import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
@@ -323,8 +324,25 @@ private fun ThemeMode.label(): String = stringResource(
     },
 )
 
+/**
+ * The career, in two halves that are not the same career.
+ *
+ * [statistics] is this handset's: every match played on it, bots included, counted in DataStore
+ * and gone with the app. [profile] is the account's, kept by the server and reachable from any
+ * device. They are deliberately not added together — one counts practice against a bot, the
+ * other decides where the player stands on the board — so the ranked figures sit in a card of
+ * their own rather than being folded into the totals above.
+ *
+ * A guest has no [profile] and gets no such card. Nothing is being hidden from them; there is
+ * simply no server row, and a card of zeroes would imply their play was being recorded somewhere
+ * it is not.
+ */
 @Composable
-fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
+fun StatisticsScreen(
+    statistics: GameStatistics,
+    profile: UserProfile?,
+    onBack: () -> Unit,
+) {
     Scaffold(topBar = { ScreenTopBar(stringResource(R.string.menu_statistics), onBack) }) { padding ->
         ScreenBackground {
             LazyColumn(
@@ -355,6 +373,28 @@ fun StatisticsScreen(statistics: GameStatistics, onBack: () -> Unit) {
                             StatLine(stringResource(R.string.stats_losses), statistics.totalLosses)
                             StatLine(stringResource(R.string.stats_local_games), statistics.localGames)
                             StatLine(stringResource(R.string.stats_total_turns), statistics.totalTurns)
+                        }
+                        // The two figures the profile page used to carry and no longer has room
+                        // for. They are the account's, not the handset's, which is why they are
+                        // in a card that says so instead of beside the local totals.
+                        profile?.let { account ->
+                            SettingsCard(stringResource(R.string.stats_ranked)) {
+                                StatLine(stringResource(R.string.profile_rating), account.rating)
+                                StatLine(
+                                    stringResource(R.string.profile_highest_rating),
+                                    account.highestRating,
+                                )
+                                StatLine(
+                                    stringResource(R.string.profile_win_streak),
+                                    account.currentWinStreak,
+                                )
+                                StatLine(
+                                    stringResource(R.string.profile_best_streak),
+                                    account.bestWinStreak,
+                                )
+                                StatLine(stringResource(R.string.profile_losses), account.losses)
+                                StatLine(stringResource(R.string.profile_draws), account.draws)
+                            }
                         }
                         SettingsCard(stringResource(R.string.stats_by_difficulty)) {
                             Difficulty.entries.forEach { difficulty ->

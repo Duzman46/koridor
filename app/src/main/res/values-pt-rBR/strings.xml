@@ -533,4 +533,6 @@
     <string name="profile_recent_letter_win">V</string>
     <string name="profile_recent_letter_loss">D</string>
     <string name="profile_recent_letter_draw">E</string>
+    <string name="stats_ranked">Histórico ranqueado</string>
+    <string name="profile_recent_empty_title">Ainda sem partidas on-line</string>
 </resources>

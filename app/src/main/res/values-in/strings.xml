@@ -530,4 +530,6 @@
     <string name="profile_recent_letter_win">M</string>
     <string name="profile_recent_letter_loss">K</string>
     <string name="profile_recent_letter_draw">S</string>
+    <string name="stats_ranked">Rekor berperingkat</string>
+    <string name="profile_recent_empty_title">Belum ada pertandingan daring</string>
 </resources>

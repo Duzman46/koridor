@@ -112,6 +112,20 @@ class FirebaseAuthRepository @Inject constructor(
             firebase.auth.createUserWithEmailAndPassword(email.trim(), password).await().user
         }
 
+    override suspend fun verifyEmailCredential(email: String, password: String): Outcome<Unit> {
+        if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
+        val proven = firebase.withScratchAuth { scratch ->
+            try {
+                scratch.signInWithEmailAndPassword(email.trim(), password).await()
+                Outcome.Success(Unit)
+            } catch (error: Exception) {
+                AppLog.warn("verify-email-credential", error)
+                Outcome.Failure(error.toAppError())
+            }
+        }
+        return proven ?: Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
+    }
+
     override suspend fun sendPasswordReset(email: String): Outcome<Unit> {
         if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
         return try {

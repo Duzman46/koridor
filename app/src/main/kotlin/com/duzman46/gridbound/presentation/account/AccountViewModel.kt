@@ -38,6 +38,12 @@ data class AccountUiState(
      * were.
      */
     val existingAccountWarning: Boolean = false,
+    /**
+     * True while the player is being asked whether to give up their guest progress in order to
+     * sign in to an e-mail account they already have. Nothing has happened yet; the password is
+     * not even checked until they say yes, and declining leaves them exactly as they were.
+     */
+    val emailSignInWarning: Boolean = false,
     val privacyPolicyUrl: String = BuildConfig.PRIVACY_POLICY_URL,
     val termsUrl: String = BuildConfig.TERMS_URL,
 ) {
@@ -122,6 +128,34 @@ class AccountViewModel @Inject constructor(
      * [SessionManager.signInToExistingAccount] succeeds on nothing weaker. A hand-over that
      * did not land says so, in the failure the player can read and act on.
      */
+    /** Puts the cost in front of the player. Nothing is checked or erased until they agree. */
+    fun requestEmailSignIn() {
+        _uiState.update { it.copy(emailSignInWarning = true, error = null, info = null) }
+    }
+
+    fun dismissEmailSignInWarning() {
+        _uiState.update { it.copy(emailSignInWarning = false) }
+    }
+
+    /**
+     * Accepts that loss and hands the device over.
+     *
+     * The password is proven before a single row is deleted -- see
+     * [SessionManager.signInWithExistingEmail] -- so a typo here costs nothing but the attempt.
+     */
+    fun signInWithExistingEmail() = submit {
+        _uiState.update { it.copy(emailSignInWarning = false) }
+        val current = _uiState.value
+        if (!EmailRules.isValid(current.email)) return@submit fail(AppError.EMAIL_INVALID)
+        if (current.password.isBlank()) return@submit fail(AppError.INVALID_CREDENTIALS)
+        when (val result = sessionManager.signInWithExistingEmail(current.email, current.password)) {
+            is Outcome.Success ->
+                announceAccount(R.string.auth_existing_account_success, result.value)
+
+            is Outcome.Failure -> fail(result.error)
+        }
+    }
+
     fun signInToExistingAccount() = submit {
         _uiState.update { it.copy(existingAccountWarning = false) }
         when (val result = sessionManager.signInToExistingAccount()) {

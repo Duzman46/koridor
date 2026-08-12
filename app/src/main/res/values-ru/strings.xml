@@ -548,4 +548,9 @@
     <string name="account_link_email_note">Задайте адрес и пароль</string>
     <string name="account_sign_up">Регистрация</string>
     <string name="account_sign_up_note">Рейтинг, статистика и друзья переносятся с вами</string>
+    <string name="account_sign_in">Войти</string>
+    <string name="account_sign_in_note">Если у вас уже есть аккаунт</string>
+    <string name="account_sign_in_warning_title">Прогресс гостя будет удалён</string>
+    <string name="account_sign_in_warning">Вход в этот аккаунт навсегда удалит всё, что вы сыграли как гость — рейтинг, статистику и друзей. Вместо этого вернётся история того аккаунта. Ничто не объединяется.</string>
+    <string name="account_sign_in_confirm">Всё равно войти</string>
 </resources>

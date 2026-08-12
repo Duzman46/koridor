@@ -558,4 +558,9 @@
     <string name="account_link_email_note">حدِّد بريدًا وكلمة مرور</string>
     <string name="account_sign_up">إنشاء حساب</string>
     <string name="account_sign_up_note">تصنيفك وإحصاءاتك وأصدقاؤك ينتقلون معك</string>
+    <string name="account_sign_in">تسجيل الدخول</string>
+    <string name="account_sign_in_note">إذا كان لديك حساب بالفعل</string>
+    <string name="account_sign_in_warning_title">سيُمحى تقدمك كضيف</string>
+    <string name="account_sign_in_warning">تسجيل الدخول إلى ذلك الحساب يحذف نهائيًا كل ما لعبته كضيف — تصنيفك وإحصاءاتك وأصدقاؤك. يعود سجل ذلك الحساب بدلاً منه. لا يُدمج شيء.</string>
+    <string name="account_sign_in_confirm">سجّل الدخول على أي حال</string>
 </resources>

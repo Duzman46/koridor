@@ -271,7 +271,43 @@ class SessionManager @Inject constructor(
      * from [state], so [state] is the only thing whose agreement means the hand-over
      * happened.
      */
-    suspend fun signInToExistingAccount(): Outcome<UserProfile> {
+/**
+     * Hands the device over to an e-mail account that already exists.
+     *
+     * The same erasure and the same order as [signInToExistingAccount], with one step in front
+     * of it: the password is proven against a throwaway auth instance first. That is what makes
+     * this safe to offer at all — the guest's rows are deleted before the sign-in, so without
+     * the proof a mistyped password would take the guest's account and give nothing back.
+     *
+     * Nothing merges. The player has to have been told that in words before this runs.
+     */
+    suspend fun signInWithExistingEmail(email: String, password: String): Outcome<UserProfile> {
+        val proven = authRepository.verifyEmailCredential(email, password)
+        if (proven is Outcome.Failure) return proven
+
+        val guestId = state.value.takeIf { it.isGuest }?.user?.userId
+        if (guestId != null) {
+            val erased = profileRepository.deleteAccountData(guestId)
+            // Stop rather than orphan, exactly as the other hand-over does.
+            if (erased is Outcome.Failure) return erased
+            authRepository.discardGuestIdentity()
+        }
+        gameRepository.setGuestModeAccepted(false)
+        gameRepository.setUsernameChosen(false)
+        val account = when (val signedIn = authRepository.signInWithEmail(email, password)) {
+            is Outcome.Failure -> return signedIn
+            is Outcome.Success -> signedIn.value
+        }
+        val profile = profileRepository.ensureProfile(account)
+        if (profile is Outcome.Failure) return profile
+        return if (awaitIdentity(account.userId)) {
+            profile
+        } else {
+            Outcome.Failure(AppError.ACCOUNT_SWITCH_FAILED)
+        }
+    }
+
+        suspend fun signInToExistingAccount(): Outcome<UserProfile> {
         if (!authRepository.hasCredentialForExistingAccount) {
             return Outcome.Failure(AppError.UNKNOWN)
         }

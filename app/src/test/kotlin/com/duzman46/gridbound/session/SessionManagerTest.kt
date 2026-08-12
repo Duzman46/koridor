@@ -391,6 +391,49 @@ class SessionManagerTest {
     }
 
     @Test
+    fun `a wrong password destroys nothing`() = runTest {
+        // The reason e-mail sign-in was refused for so long. The hand-over deletes the guest's
+        // rows BEFORE it signs in, so without a password checked first a typo would take the
+        // guest's account and hand back nothing. This is that check doing its job.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val guestId = session.state.value.user!!.userId
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        auth.credentialAccepted = false
+        val refused = session.signInWithExistingEmail("koray@example.com", "wrong")
+        advanceUntilIdle()
+
+        assertTrue(refused is Outcome.Failure)
+        // Nothing erased, nothing discarded, and the player is still exactly who they were.
+        assertEquals(emptyList<String>(), profiles.deletedUserIds)
+        assertEquals(emptyList<String>(), auth.discardedGuestIds)
+        assertEquals(guestId, session.state.value.user?.userId)
+        assertTrue(session.state.value.isGuest)
+    }
+
+    @Test
+    fun `a proven password hands the device over the same way Google does`() = runTest {
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val guestId = session.state.value.user!!.userId
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+
+        val handedOver = session.signInWithExistingEmail("koray@example.com", "right")
+        advanceUntilIdle()
+
+        assertTrue(handedOver is Outcome.Success)
+        // Checked before anything was touched, and with the pair the caller was given.
+        assertEquals(listOf("koray@example.com" to "right"), auth.verifiedCredentials)
+        // Then the same order as the other hand-over: erase, discard, sign in.
+        assertEquals(listOf(guestId), profiles.deletedUserIds)
+        assertEquals(listOf(guestId), auth.discardedGuestIds)
+        assertFalse(session.state.value.isGuest)
+    }
+
+    @Test
     fun `a hand-over the session never carries is not reported as success`() = runTest {
         // The one failure that matters most, because it is the one that used to be reported
         // as a success: every call along the way answers, and the player is still not in the

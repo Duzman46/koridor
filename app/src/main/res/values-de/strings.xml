@@ -542,4 +542,9 @@
     <string name="account_link_email_note">Adresse und Passwort festlegen</string>
     <string name="account_sign_up">Registrieren</string>
     <string name="account_sign_up_note">Wertung, Statistiken und Freunde kommen mit</string>
+    <string name="account_sign_in">Anmelden</string>
+    <string name="account_sign_in_note">Wenn du schon ein Konto hast</string>
+    <string name="account_sign_in_warning_title">Dein Gastfortschritt wird gelöscht</string>
+    <string name="account_sign_in_warning">Die Anmeldung an diesem Konto löscht dauerhaft alles, was du als Gast gespielt hast — Wertung, Statistiken und Freunde. Stattdessen kehrt die Historie dieses Kontos zurück. Nichts wird zusammengeführt.</string>
+    <string name="account_sign_in_confirm">Trotzdem anmelden</string>
 </resources>

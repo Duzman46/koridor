@@ -47,6 +47,37 @@ class FirebaseProvider @Inject constructor(
     val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance(app) }
 
     /**
+     * Runs [block] against a second, throwaway auth instance, so a sign-in can be *attempted*
+     * without changing who is signed in on the real one.
+     *
+     * This exists for one job: proving an address and password belong together before anything
+     * irreversible is done on their behalf. Firebase offers no way to check a password without
+     * signing in, and signing in on [auth] would replace the guest whose data has not been
+     * handed over yet.
+     *
+     * App Check is installed on the scratch app too. Without it an enforced project rejects the
+     * sign-in and the check reports a wrong password for a right one.
+     *
+     * The app is deleted in a `finally`, signed in or not. A second FirebaseApp left registered
+     * holds a token and a listener for an account the player never asked to stay as.
+     */
+    suspend fun <T> withScratchAuth(block: suspend (FirebaseAuth) -> T): T? {
+        if (!isConfigured) return null
+        // A leftover from a killed attempt would be re-used with its previous user still in it.
+        FirebaseApp.getApps(context).firstOrNull { it.name == SCRATCH_APP_NAME }?.delete()
+        val scratch = runCatching {
+            FirebaseApp.initializeApp(context, app.options, SCRATCH_APP_NAME)
+        }.getOrNull() ?: return null
+        installAppCheck(scratch)
+        return try {
+            block(FirebaseAuth.getInstance(scratch))
+        } finally {
+            runCatching { FirebaseAuth.getInstance(scratch).signOut() }
+            runCatching { scratch.delete() }
+        }
+    }
+
+    /**
      * The database, with a disk cache that has a ceiling.
      *
      * Persistence is on because a match must survive a tunnel: without it, a dropped connection
@@ -91,6 +122,6 @@ class FirebaseProvider @Inject constructor(
 
     private companion object {
         const val APP_NAME = "gridbound-online"
+        const val SCRATCH_APP_NAME = "koridor-credential-check"
     }
 }
-

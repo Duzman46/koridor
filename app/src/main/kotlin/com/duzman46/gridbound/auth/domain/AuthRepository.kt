@@ -36,6 +36,15 @@ interface AuthRepository {
 
     suspend fun createAccountWithEmail(email: String, password: String): Outcome<AuthUser>
 
+    /**
+     * Proves an address and password belong together, changing nothing about who is signed in.
+     *
+     * The caller is about to erase a guest's rows and then sign in as somebody else. That order
+     * is the safe one for the database and the dangerous one for the player, and this is what
+     * makes it safe for both: a wrong password fails here, before anything is destroyed.
+     */
+    suspend fun verifyEmailCredential(email: String, password: String): Outcome<Unit>
+
     suspend fun sendPasswordReset(email: String): Outcome<Unit>
 
     /** @param activityContext must be an Activity; Credential Manager renders UI over it. */

@@ -545,4 +545,9 @@
     <string name="account_link_email_note">Define un correo y una contraseña</string>
     <string name="account_sign_up">Crear cuenta</string>
     <string name="account_sign_up_note">Tu puntuación, estadísticas y amigos te acompañan</string>
+    <string name="account_sign_in">Iniciar sesión</string>
+    <string name="account_sign_in_note">Si ya tienes una cuenta</string>
+    <string name="account_sign_in_warning_title">Tu progreso de invitado se borrará</string>
+    <string name="account_sign_in_warning">Iniciar sesión en esa cuenta borra para siempre todo lo que jugaste como invitado: tu puntuación, tus estadísticas y tus amigos. En su lugar vuelve el historial de esa cuenta. No se combina nada.</string>
+    <string name="account_sign_in_confirm">Iniciar sesión igualmente</string>
 </resources>

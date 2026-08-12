@@ -545,4 +545,9 @@
     <string name="account_link_email_note">Définissez une adresse et un mot de passe</string>
     <string name="account_sign_up">Créer un compte</string>
     <string name="account_sign_up_note">Votre classement, vos stats et vos amis vous suivent</string>
+    <string name="account_sign_in">Se connecter</string>
+    <string name="account_sign_in_note">Si vous avez déjà un compte</string>
+    <string name="account_sign_in_warning_title">Votre progression d’invité sera effacée</string>
+    <string name="account_sign_in_warning">Se connecter à ce compte supprime définitivement tout ce que vous avez joué en invité : classement, statistiques et amis. L’historique de ce compte revient à la place. Rien n’est fusionné.</string>
+    <string name="account_sign_in_confirm">Se connecter quand même</string>
 </resources>

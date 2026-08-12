@@ -563,4 +563,9 @@
     <string name="account_link_email_note">E-posta ve şifre belirle</string>
     <string name="account_sign_up">Kayıt ol</string>
     <string name="account_sign_up_note">Puanın, istatistiklerin ve arkadaşların seninle gelir</string>
+    <string name="account_sign_in">Giriş yap</string>
+    <string name="account_sign_in_note">Zaten bir hesabın varsa</string>
+    <string name="account_sign_in_warning_title">Misafir ilerlemen silinecek</string>
+    <string name="account_sign_in_warning">O hesaba giriş yaparsan misafirken oynadığın her şey — puanın, istatistiklerin ve arkadaşların — kalıcı olarak silinir. Onun yerine o hesabın kendi geçmişi gelir. Hiçbir şey birleştirilmez.</string>
+    <string name="account_sign_in_confirm">Yine de giriş yap</string>
 </resources>

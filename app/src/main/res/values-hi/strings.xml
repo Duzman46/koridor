@@ -542,4 +542,9 @@
     <string name="account_link_email_note">पता और पासवर्ड सेट करें</string>
     <string name="account_sign_up">साइन अप करें</string>
     <string name="account_sign_up_note">आपकी रेटिंग, आँकड़े और दोस्त साथ आते हैं</string>
+    <string name="account_sign_in">साइन इन करें</string>
+    <string name="account_sign_in_note">यदि आपका पहले से खाता है</string>
+    <string name="account_sign_in_warning_title">आपकी गेस्ट प्रगति मिट जाएगी</string>
+    <string name="account_sign_in_warning">उस खाते में साइन इन करने पर गेस्ट के रूप में खेला सब कुछ — रेटिंग, आँकड़े और दोस्त — हमेशा के लिए मिट जाएगा। उसकी जगह उस खाते का इतिहास लौटेगा। कुछ भी मर्ज नहीं होता।</string>
+    <string name="account_sign_in_confirm">फिर भी साइन इन करें</string>
 </resources>

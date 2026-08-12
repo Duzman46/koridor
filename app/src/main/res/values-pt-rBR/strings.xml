@@ -545,4 +545,9 @@
     <string name="account_link_email_note">Defina um e-mail e uma senha</string>
     <string name="account_sign_up">Criar conta</string>
     <string name="account_sign_up_note">Sua pontuação, estatísticas e amigos vão junto</string>
+    <string name="account_sign_in">Entrar</string>
+    <string name="account_sign_in_note">Se você já tem uma conta</string>
+    <string name="account_sign_in_warning_title">Seu progresso de convidado será apagado</string>
+    <string name="account_sign_in_warning">Entrar nessa conta apaga para sempre tudo o que você jogou como convidado — pontuação, estatísticas e amigos. O histórico daquela conta volta no lugar. Nada é mesclado.</string>
+    <string name="account_sign_in_confirm">Entrar mesmo assim</string>
 </resources>

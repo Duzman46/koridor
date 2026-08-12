@@ -88,21 +88,58 @@ fun AccountScreen(
     onLinkEmail: () -> Unit,
     onSignInToExistingAccount: () -> Unit,
     onDismissExistingAccount: () -> Unit,
+    onRequestEmailSignIn: () -> Unit,
+    onSignInWithEmail: () -> Unit,
+    onDismissEmailSignInWarning: () -> Unit,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onOpenUrl: (String) -> Unit,
 ) {
     var signOutRequested by remember { mutableStateOf(false) }
     var emailSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var signInSheetOpen by rememberSaveable { mutableStateOf(false) }
     var deleteRequested by remember { mutableStateOf(false) }
 
     // Closed by the link succeeding, not by the button: onLinkEmail is several round trips
     // long and the answer arrives in state.error or state.info, so dismissing on tap would hide
     // the field the player has to correct.
     if (emailSheetOpen && !session.isGuest) emailSheetOpen = false
+    if (signInSheetOpen && !session.isGuest) signInSheetOpen = false
+    if (signInSheetOpen) {
+        EmailLinkDialog(
+            state = state,
+            title = stringResource(R.string.account_sign_in),
+            action = stringResource(R.string.account_sign_in),
+            onEmail = onEmail,
+            onPassword = onPassword,
+            // The warning first. onRequestEmailSignIn checks nothing and erases nothing; it
+            // only puts the cost on screen.
+            onSubmit = { signInSheetOpen = false; onRequestEmailSignIn() },
+            onDismiss = { signInSheetOpen = false },
+        )
+    }
+    if (state.emailSignInWarning) {
+        AlertDialog(
+            onDismissRequest = onDismissEmailSignInWarning,
+            title = { Text(stringResource(R.string.account_sign_in_warning_title)) },
+            text = { Text(stringResource(R.string.account_sign_in_warning)) },
+            confirmButton = {
+                TextButton(onClick = onSignInWithEmail) {
+                    Text(stringResource(R.string.account_sign_in_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissEmailSignInWarning) {
+                    Text(stringResource(R.string.auth_existing_account_cancel))
+                }
+            },
+        )
+    }
     if (emailSheetOpen) {
         EmailLinkDialog(
             state = state,
+            title = stringResource(R.string.account_sign_up),
+            action = stringResource(R.string.account_sign_up),
             onEmail = onEmail,
             onPassword = onPassword,
             onSubmit = onLinkEmail,
@@ -186,6 +223,7 @@ fun AccountScreen(
                         enabled = !state.isSubmitting,
                         onLinkGoogle = onLinkGoogle,
                         onSignUp = { emailSheetOpen = true },
+                        onSignIn = { signInSheetOpen = true },
                     )
                 }
 
@@ -255,6 +293,7 @@ private fun LinkCard(
     enabled: Boolean,
     onLinkGoogle: () -> Unit,
     onSignUp: () -> Unit,
+    onSignIn: () -> Unit,
 ) {
     Column(
         Modifier
@@ -300,6 +339,18 @@ private fun LinkCard(
             accented = false,
             enabled = enabled,
             onClick = onSignUp,
+        )
+        // Signing in to an account you already have is the opposite trade to the one above it,
+        // and the subtitle says so rather than leaving the player to find out.
+        LinkRow(
+            mark = {
+                PremiumGlyph(PremiumIcon.PERSON, Modifier.size(20.dp), Color(0xFF9AA0A6))
+            },
+            title = stringResource(R.string.account_sign_in),
+            subtitle = stringResource(R.string.account_sign_in_note),
+            accented = false,
+            enabled = enabled,
+            onClick = onSignIn,
         )
     }
 }
@@ -478,6 +529,8 @@ private fun OrDivider() {
 @Composable
 private fun EmailLinkDialog(
     state: AccountUiState,
+    title: String,
+    action: String,
     onEmail: (String) -> Unit,
     onPassword: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -485,7 +538,7 @@ private fun EmailLinkDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.account_sign_up)) },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
                 OutlinedTextField(
@@ -516,7 +569,7 @@ private fun EmailLinkDialog(
         },
         confirmButton = {
             TextButton(onClick = onSubmit, enabled = !state.isSubmitting) {
-                Text(stringResource(R.string.account_sign_up))
+                Text(action)
             }
         },
         dismissButton = {

@@ -651,6 +651,9 @@ fun AppNavigation(
                     onLinkEmail = viewModel::linkWithEmail,
                     onSignInToExistingAccount = viewModel::signInToExistingAccount,
                     onDismissExistingAccount = viewModel::dismissExistingAccountWarning,
+                    onRequestEmailSignIn = viewModel::requestEmailSignIn,
+                    onSignInWithEmail = viewModel::signInWithExistingEmail,
+                    onDismissEmailSignInWarning = viewModel::dismissEmailSignInWarning,
                     onSignOut = viewModel::signOut,
                     // Passed through even when it is null: an Activity that cannot be found
                     // is something the player needs told, not a tap that quietly does nothing.

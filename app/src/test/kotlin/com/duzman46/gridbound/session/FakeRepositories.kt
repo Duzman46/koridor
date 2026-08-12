@@ -130,6 +130,25 @@ class FakeAuthRepository(
     override suspend fun createAccountWithEmail(email: String, password: String): Outcome<AuthUser> =
         complete { AuthUser("email-user", email, AccountType.EMAIL, false) }
 
+    /**
+     * Whether a password check passes, and a record of every pair it was asked about.
+     *
+     * Separate from [nextFailure] on purpose: the whole point of the check is that it runs
+     * BEFORE the guest's rows are deleted, so a test has to be able to fail the verification
+     * while leaving the sign-in that follows it perfectly capable of succeeding.
+     */
+    var credentialAccepted: Boolean = true
+    val verifiedCredentials = mutableListOf<Pair<String, String>>()
+
+    override suspend fun verifyEmailCredential(email: String, password: String): Outcome<Unit> {
+        verifiedCredentials += email to password
+        return if (credentialAccepted) {
+            Outcome.Success(Unit)
+        } else {
+            Outcome.Failure(AppError.INVALID_CREDENTIALS)
+        }
+    }
+
     override suspend fun sendPasswordReset(email: String): Outcome<Unit> =
         nextFailure?.let { Outcome.Failure(it) } ?: Outcome.Success(Unit)
 

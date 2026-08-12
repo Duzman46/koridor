@@ -577,4 +577,9 @@
     <string name="account_link_email_note">Set an address and a password</string>
     <string name="account_sign_up">Sign up</string>
     <string name="account_sign_up_note">Your rating, statistics and friends come with you</string>
+    <string name="account_sign_in">Sign in</string>
+    <string name="account_sign_in_note">If you already have an account</string>
+    <string name="account_sign_in_warning_title">Your guest progress will be erased</string>
+    <string name="account_sign_in_warning">Signing in to that account permanently deletes everything you played as a guest — your rating, your statistics and your friends. That account’s own history comes back instead. Nothing is merged.</string>
+    <string name="account_sign_in_confirm">Sign in anyway</string>
 </resources>

@@ -542,4 +542,9 @@
     <string name="account_link_email_note">Tetapkan alamat dan kata sandi</string>
     <string name="account_sign_up">Daftar</string>
     <string name="account_sign_up_note">Peringkat, statistik, dan temanmu ikut serta</string>
+    <string name="account_sign_in">Masuk</string>
+    <string name="account_sign_in_note">Jika kamu sudah punya akun</string>
+    <string name="account_sign_in_warning_title">Progres tamu kamu akan dihapus</string>
+    <string name="account_sign_in_warning">Masuk ke akun itu menghapus permanen semua yang kamu mainkan sebagai tamu — peringkat, statistik, dan teman. Riwayat akun itu yang kembali. Tidak ada yang digabungkan.</string>
+    <string name="account_sign_in_confirm">Tetap masuk</string>
 </resources>

@@ -524,14 +524,11 @@
     <string name="notification_come_back_title">El tablero sigue puesto</string>
     <string name="notification_come_back_body">Ha pasado un tiempo. ¿Una partida?</string>
     <string name="profile_puzzle_title">Reto diario</string>
-    <string name="profile_puzzle_body">Un tablero nuevo que resolver cada día.</string>
     <string name="profile_puzzle_action">Resolver</string>
     <string name="profile_soon_badge">Pronto</string>
     <string name="profile_puzzle_soon_title">Aún no está listo</string>
     <string name="profile_puzzle_soon_body">El reto diario está en camino. La tarjeta está aquí para que sepas que llegará: hoy no hay nada que resolver.</string>
-    <string name="profile_badges_body">Todos los logros y lo que falta para el resto.</string>
     <string name="profile_badges_action">Ver</string>
-    <string name="profile_streak_best">Mejor: %1$d</string>
     <string name="profile_streak_action">Detalles</string>
     <string name="profile_recent_letter_win">V</string>
     <string name="profile_recent_letter_loss">D</string>

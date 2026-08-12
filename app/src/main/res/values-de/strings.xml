@@ -521,14 +521,11 @@
     <string name="notification_come_back_title">Das Brett steht noch</string>
     <string name="notification_come_back_body">Es ist eine Weile her. Eine Partie?</string>
     <string name="profile_puzzle_title">Tagesrätsel</string>
-    <string name="profile_puzzle_body">Jeden Tag ein neues Brett zum Lösen.</string>
     <string name="profile_puzzle_action">Lösen</string>
     <string name="profile_soon_badge">Bald</string>
     <string name="profile_puzzle_soon_title">Noch nicht fertig</string>
     <string name="profile_puzzle_soon_body">Das Tagesrätsel ist in Arbeit. Die Karte steht hier, damit du davon weißt — heute gibt es noch nichts zu lösen.</string>
-    <string name="profile_badges_body">Alle Abzeichen und wie weit der Rest entfernt ist.</string>
     <string name="profile_badges_action">Ansehen</string>
-    <string name="profile_streak_best">Beste: %1$d</string>
     <string name="profile_streak_action">Details</string>
     <string name="profile_recent_letter_win">S</string>
     <string name="profile_recent_letter_loss">N</string>

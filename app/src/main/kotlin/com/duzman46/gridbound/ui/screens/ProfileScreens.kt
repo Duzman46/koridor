@@ -6,7 +6,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -89,7 +88,6 @@ import com.duzman46.gridbound.ui.components.home.BadgeAccent
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.PremiumIconButton
-import com.duzman46.gridbound.ui.components.home.ProfileBanner
 import com.duzman46.gridbound.ui.components.home.ProfileEmptyNote
 import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
@@ -98,7 +96,6 @@ import com.duzman46.gridbound.ui.components.home.ProfileProgressBar
 import com.duzman46.gridbound.ui.components.home.ProfileStatStrip
 import com.duzman46.gridbound.ui.components.home.PuzzleAccent
 import com.duzman46.gridbound.ui.components.home.RecentGamesPremium
-import com.duzman46.gridbound.ui.components.home.SectionLabel
 import java.text.DateFormat
 import java.util.Date
 
@@ -230,23 +227,22 @@ fun ProfileScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
             ) {
-                // No Scaffold, and that is what lets the picture start at the top of the window:
-                // a topBar slot would have reserved a strip above the banner with nothing to put
-                // in it. The header sits on the picture instead and takes the inset itself.
-                ProfileBanner {
-                    PremiumHeader(
-                        title = stringResource(R.string.profile_title),
-                        onBack = onBack,
-                        modifier = Modifier.statusBarsPadding(),
-                        trailing = {
-                            PremiumIconButton(
-                                icon = PremiumIcon.COG,
-                                label = stringResource(R.string.game_settings),
-                                onClick = onSettings,
-                            )
-                        },
-                    )
-                }
+                // No Scaffold and no banner. A band of board ran across the top for one build
+                // and it cost 196dp of a 891dp window to say nothing the screen did not already
+                // say — with it there, the recent matches ended up underneath the docked bar and
+                // there were 78 pixels of scroll to reach them with.
+                PremiumHeader(
+                    title = stringResource(R.string.profile_title),
+                    onBack = onBack,
+                    modifier = Modifier.statusBarsPadding(),
+                    trailing = {
+                        PremiumIconButton(
+                            icon = PremiumIcon.COG,
+                            label = stringResource(R.string.game_settings),
+                            onClick = onSettings,
+                        )
+                    },
+                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -267,30 +263,26 @@ fun ProfileScreen(
                         wins = profile.wins,
                     )
                     Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                     ) {
                         // Marked "soon" rather than given the reference's red dot. A dot means
                         // something is waiting for the player; nothing is, and the button opens
                         // a notice that says so.
                         ProfileFeatureCard(
-                            icon = PremiumIcon.CALENDAR,
+                            icon = PremiumIcon.PUZZLE,
                             accent = PuzzleAccent,
                             title = stringResource(R.string.profile_puzzle_title),
                             headline = null,
-                            body = stringResource(R.string.profile_puzzle_body),
                             action = stringResource(R.string.profile_puzzle_action),
                             onAction = { puzzleNotice = true },
                             badge = stringResource(R.string.profile_soon_badge),
                         )
                         ProfileFeatureCard(
-                            icon = PremiumIcon.SHIELD_STAR,
+                            icon = PremiumIcon.TARGET,
                             accent = BadgeAccent,
                             title = stringResource(R.string.achievements_title),
                             headline = "$achievementsUnlocked / $achievementsTotal",
-                            body = stringResource(R.string.profile_badges_body),
                             action = stringResource(R.string.profile_badges_action),
                             onAction = onAchievements,
                             detail = {
@@ -305,14 +297,10 @@ fun ProfileScreen(
                             },
                         )
                         ProfileFeatureCard(
-                            icon = PremiumIcon.BOLT,
+                            icon = PremiumIcon.CALENDAR_FLAME,
                             accent = KoridorGold,
                             title = stringResource(R.string.profile_win_streak),
                             headline = profile.currentWinStreak.toString(),
-                            body = stringResource(
-                                R.string.profile_streak_best,
-                                profile.bestWinStreak,
-                            ),
                             action = stringResource(R.string.profile_streak_action),
                             onAction = onStatistics,
                             detail = {
@@ -324,12 +312,18 @@ fun ProfileScreen(
                             },
                         )
                     }
-                    SectionLabel(stringResource(R.string.profile_recent_games))
+                    // The heading lives inside the card now, with the clock and the expander,
+                    // the way the reference draws it — so there is no floating label above an
+                    // empty note when a player has not finished an online match yet.
                     when {
                         recentGames.isLoading -> LoadingState()
                         recentGames.matches.isEmpty() ->
                             ProfileEmptyNote(stringResource(R.string.profile_recent_empty))
-                        else -> RecentGamesPremium(recentGames.matches, onOpenPlayer)
+                        else -> RecentGamesPremium(
+                            matches = recentGames.matches,
+                            rating = profile.rating,
+                            onOpenPlayer = onOpenPlayer,
+                        )
                     }
                     // The docked bar floats over the NavHost rather than sitting under it, so
                     // every tab has to leave its own room. This screen never did, and the last

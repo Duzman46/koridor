@@ -542,14 +542,11 @@
     <string name="notification_come_back_title">Tahta hâlâ kurulu</string>
     <string name="notification_come_back_body">Bir süre oldu. Bir maç?</string>
     <string name="profile_puzzle_title">Günlük bulmaca</string>
-    <string name="profile_puzzle_body">Her gün çözülecek yeni bir tahta.</string>
     <string name="profile_puzzle_action">Çöz</string>
     <string name="profile_soon_badge">Yakında</string>
     <string name="profile_puzzle_soon_title">Henüz hazır değil</string>
     <string name="profile_puzzle_soon_body">Günlük bulmaca yolda. Kart, geleceğini bilesin diye burada — bugün çözülecek bir şey yok.</string>
-    <string name="profile_badges_body">Tüm başarımlar ve kalanlara ne kadar kaldığı.</string>
     <string name="profile_badges_action">Görüntüle</string>
-    <string name="profile_streak_best">En iyi: %1$d</string>
     <string name="profile_streak_action">Detaylar</string>
     <string name="profile_recent_letter_win">G</string>
     <string name="profile_recent_letter_loss">M</string>

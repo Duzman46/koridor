@@ -26,7 +26,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,44 +73,6 @@ internal val BadgeAccent = Color(0xFF2FBF9B)
 private val CardFill = Color(0xFF12161B)
 private val Muted = Color(0xFF8B9098)
 
-/**
- * The band of board across the top.
- *
- * The same artwork as the launcher icon, cut wide by docs/store/app-icon.py. It fades into the
- * page rather than stopping at an edge, and the fade is drawn here rather than baked into the
- * asset because it has to land on the theme's background — a baked one would only be right in
- * the dark theme.
- */
-@Composable
-fun ProfileBanner(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    val ground = MaterialTheme.colorScheme.background
-    Box(modifier.fillMaxWidth().height(BANNER_HEIGHT)) {
-        Image(
-            painter = painterResource(R.drawable.profile_banner),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize().clearAndSetSemantics { },
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-        )
-        // Two washes, not one. The vertical fade joins the picture to the page; the top wash is
-        // what keeps the header legible over whatever part of the board happens to be behind it.
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to ground.copy(alpha = 0.72f),
-                        0.35f to ground.copy(alpha = 0.10f),
-                        0.78f to ground.copy(alpha = 0.72f),
-                        1f to ground,
-                    ),
-                ),
-        )
-        content()
-    }
-}
-
-private val BANNER_HEIGHT = 196.dp
 
 /**
  * Who you are: the disc, the name, and whether the name is yours to keep.
@@ -328,9 +294,8 @@ fun RowScope.ProfileFeatureCard(
     accent: Color,
     title: String,
     headline: String?,
-    body: String,
-    action: String?,
-    onAction: (() -> Unit)?,
+    action: String,
+    onAction: () -> Unit,
     modifier: Modifier = Modifier,
     badge: String? = null,
     detail: (@Composable () -> Unit)? = null,
@@ -338,23 +303,26 @@ fun RowScope.ProfileFeatureCard(
     Column(
         modifier
             .weight(1f)
-            .fillMaxHeight()
+            // A fixed height rather than IntrinsicSize.Max on the row. The three cards have to
+            // agree on where their buttons sit, and an intrinsic pass over a column that also
+            // uses weight is both the expensive way and the fragile way to get that.
+            .height(FEATURE_CARD_HEIGHT)
             .clip(RoundedCornerShape(Dimens.RadiusMd))
             .background(CardFill)
             .border(1.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(Dimens.RadiusMd))
-            .padding(Dimens.SpaceMd),
+            .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceMd),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Box(
                 Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(accent.copy(alpha = 0.14f)),
                 contentAlignment = Alignment.Center,
             ) {
-                PremiumGlyph(icon, Modifier.size(Dimens.GlyphMd), accent)
+                PremiumGlyph(icon, Modifier.size(21.dp), accent)
             }
             badge?.let {
                 Text(
@@ -362,21 +330,22 @@ fun RowScope.ProfileFeatureCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF0B0E11),
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .clip(RoundedCornerShape(50))
                         .background(accent)
-                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                        .padding(horizontal = 6.dp, vertical = 1.dp),
                 )
             }
         }
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
         headline?.let {
@@ -389,36 +358,29 @@ fun RowScope.ProfileFeatureCard(
             )
         }
         detail?.invoke()
-        Text(
-            text = body,
-            style = MaterialTheme.typography.bodySmall,
-            color = Muted,
-            textAlign = TextAlign.Center,
-            // Three cards side by side have to agree on where their buttons sit, and the only
-            // thing that can push them apart is this line wrapping to different depths.
-            minLines = 3,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-        )
+        // The sentence of explanation each card carried is gone. Three of them stacked twelve
+        // lines of grey text into the middle of the screen and pushed the recent matches under
+        // the docked bar — the card's own title and number say the same thing in two words.
         Spacer(Modifier.weight(1f))
-        if (action != null && onAction != null) {
-            Text(
-                text = action,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = accent,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accent.copy(alpha = 0.16f))
-                    .clickable(role = Role.Button, onClick = onAction)
-                    .padding(vertical = 10.dp),
-            )
-        }
+        Text(
+            text = action,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = accent,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(accent.copy(alpha = 0.16f))
+                .clickable(role = Role.Button, onClick = onAction)
+                .padding(vertical = 8.dp),
+        )
     }
 }
+
+/** All three cards, so their buttons line up without measuring anything. */
+private val FEATURE_CARD_HEIGHT = 158.dp
 
 /** A bar that fills left to right, for "badges earned out of all of them". */
 @Composable
@@ -466,9 +428,26 @@ fun ProfilePips(filled: Int, total: Int, accent: Color, modifier: Modifier = Mod
 @Composable
 fun RecentGamesPremium(
     matches: List<RecentMatch>,
+    rating: Int,
     onOpenPlayer: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Saveable, so an expanded list survives a rotation and the trip to a rival's page.
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val shown = if (expanded) matches else matches.take(COLLAPSED_ROWS)
+    // What the rating stood at after each match, walked back from what it stands at now. The
+    // list is newest first and every ranked match carries its own delta, so subtracting the
+    // deltas of the matches *above* a row gives that row's number exactly — no second field
+    // and no server change. It holds because nothing but a match moves the rating; if that
+    // ever stops being true, this column becomes an estimate and should go.
+    val after = remember(matches, rating) {
+        var running = rating
+        matches.map { match ->
+            val value = running
+            running -= match.ratingChange ?: 0
+            value
+        }
+    }
     Column(
         modifier
             .fillMaxWidth()
@@ -476,23 +455,59 @@ fun RecentGamesPremium(
             .background(CardFill)
             .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd)),
     ) {
-        matches.forEachIndexed { index, match ->
-            if (index > 0) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 68.dp)
-                        .height(1.dp)
-                        .background(Color(0xFF20262D)),
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Muted)
+            Text(
+                text = stringResource(R.string.profile_recent_games),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (matches.size > COLLAPSED_ROWS) {
+                Text(
+                    text = if (expanded) {
+                        stringResource(R.string.profile_recent_show_fewer)
+                    } else {
+                        stringResource(R.string.profile_recent_show_all, matches.size)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = KoridorGold,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable(role = Role.Button) { expanded = !expanded }
+                        .padding(horizontal = Dimens.SpaceSm, vertical = 4.dp),
                 )
             }
-            RecentGameRow(match, onOpenPlayer)
+        }
+        shown.forEachIndexed { index, match ->
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = if (index == 0) 0.dp else 60.dp)
+                    .height(1.dp)
+                    .background(Color(0xFF20262D)),
+            )
+            RecentGameRow(match, after.getOrNull(index), onOpenPlayer)
         }
     }
 }
 
+/** How many matches the card shows before it has to be asked for the rest. */
+private const val COLLAPSED_ROWS = 4
+
 @Composable
-private fun RecentGameRow(match: RecentMatch, onOpenPlayer: (String) -> Unit) {
+private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String) -> Unit) {
     val tone = when (match.outcome) {
         MatchOutcome.WIN -> Color(0xFF4CC38A)
         MatchOutcome.LOSS -> Color(0xFFE2776C)
@@ -562,12 +577,21 @@ private fun RecentGameRow(match: RecentMatch, onOpenPlayer: (String) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PremiumGlyph(PremiumIcon.TROPHY, Modifier.size(16.dp), KoridorGold)
+                PremiumGlyph(PremiumIcon.TROPHY, Modifier.size(15.dp), KoridorGold)
                 Text(
                     text = if (change >= 0) "+$change" else change.toString(),
                     style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Bold,
                     color = if (change >= 0) Color(0xFF4CC38A) else Color(0xFFE2776C),
+                    maxLines = 1,
+                )
+            }
+            after?.let {
+                Spacer(Modifier.width(Dimens.SpaceMd))
+                Text(
+                    text = it.toString(),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+                    color = Muted,
                     maxLines = 1,
                 )
             }
@@ -580,7 +604,7 @@ private fun RecentGameRow(match: RecentMatch, onOpenPlayer: (String) -> Unit) {
             )
         }
         if (match.hasOpponentProfile) {
-            Spacer(Modifier.width(Dimens.SpaceSm))
+            Spacer(Modifier.width(Dimens.SpaceXs))
             OptionChevron()
         }
     }

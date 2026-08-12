@@ -524,14 +524,11 @@
     <string name="notification_come_back_title">Le plateau est toujours prêt</string>
     <string name="notification_come_back_body">Cela fait un moment. Une partie ?</string>
     <string name="profile_puzzle_title">Énigme du jour</string>
-    <string name="profile_puzzle_body">Un nouveau plateau à résoudre chaque jour.</string>
     <string name="profile_puzzle_action">Résoudre</string>
     <string name="profile_soon_badge">Bientôt</string>
     <string name="profile_puzzle_soon_title">Pas encore prêt</string>
     <string name="profile_puzzle_soon_body">L\'énigme du jour arrive. La carte est là pour que vous le sachiez — il n\'y a rien à résoudre aujourd\'hui.</string>
-    <string name="profile_badges_body">Tous les succès, et ce qu\'il reste à faire.</string>
     <string name="profile_badges_action">Voir</string>
-    <string name="profile_streak_best">Record : %1$d</string>
     <string name="profile_streak_action">Détails</string>
     <string name="profile_recent_letter_win">V</string>
     <string name="profile_recent_letter_loss">D</string>

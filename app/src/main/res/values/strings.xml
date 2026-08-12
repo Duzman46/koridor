@@ -556,14 +556,11 @@
     <string name="notification_come_back_title">The board is still set</string>
     <string name="notification_come_back_body">It has been a while. One match?</string>
     <string name="profile_puzzle_title">Daily puzzle</string>
-    <string name="profile_puzzle_body">A new board to solve every day.</string>
     <string name="profile_puzzle_action">Solve</string>
     <string name="profile_soon_badge">Soon</string>
     <string name="profile_puzzle_soon_title">Not built yet</string>
     <string name="profile_puzzle_soon_body">The daily puzzle is on the way. The card is here so you know it is coming — there is nothing to solve today.</string>
-    <string name="profile_badges_body">Every badge, and how far off the rest are.</string>
     <string name="profile_badges_action">View</string>
-    <string name="profile_streak_best">Best: %1$d</string>
     <string name="profile_streak_action">Details</string>
     <string name="profile_recent_letter_win">W</string>
     <string name="profile_recent_letter_loss">L</string>

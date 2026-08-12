@@ -521,14 +521,11 @@
     <string name="notification_come_back_title">बिसात अब भी लगी है</string>
     <string name="notification_come_back_body">काफ़ी समय हो गया। एक मैच?</string>
     <string name="profile_puzzle_title">रोज़ की पहेली</string>
-    <string name="profile_puzzle_body">हर दिन हल करने के लिए एक नया बोर्ड।</string>
     <string name="profile_puzzle_action">हल करें</string>
     <string name="profile_soon_badge">जल्द</string>
     <string name="profile_puzzle_soon_title">अभी तैयार नहीं</string>
     <string name="profile_puzzle_soon_body">रोज़ की पहेली आ रही है। यह कार्ड इसलिए है कि आपको पता रहे — आज हल करने को कुछ नहीं है।</string>
-    <string name="profile_badges_body">सभी उपलब्धियाँ और बाकी कितनी दूर हैं।</string>
     <string name="profile_badges_action">देखें</string>
-    <string name="profile_streak_best">सर्वश्रेष्ठ: %1$d</string>
     <string name="profile_streak_action">विवरण</string>
     <string name="profile_recent_letter_win">ज</string>
     <string name="profile_recent_letter_loss">ह</string>

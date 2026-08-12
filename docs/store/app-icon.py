@@ -1,44 +1,41 @@
 # -*- coding: utf-8 -*-
 """Cuts every icon the app ships out of the one photograph the home screen already shows.
 
-Run it after `reference/koridor.png` changes, or after the crop below is moved. Nothing here is
-generated: it is one deterministic crop of one file, resampled, so the tile on the launcher, the
-tile on the splash and the tile in the Play listing cannot drift apart from each other or from
-the picture behind the main menu.
+Run it after `reference/koridor.png` changes, or after the framing below is moved. Nothing here
+is generated: it is one deterministic crop of one file, resampled, so the tile on the launcher,
+the tile on the splash and the tile in the Play listing cannot drift apart from each other.
 
     python docs/store/app-icon.py
 
-**Why the crop is where it is.** An adaptive icon is authored on a 108-unit canvas and every
+**The scene, not a piece of it.** An adaptive icon is authored on a 108-unit canvas and every
 launcher throws away everything outside the middle 72 — a third of the width, all the way round.
-So the frame is not chosen by looking at the square; it is chosen by looking at what survives the
-mask at the size a launcher actually draws it. Crops that hold both pawns lose both of them: the
-two pieces sit on the picture's diagonal, 848 pixels apart, and no square that contains them both
-puts either inside the safe circle. What is left is the cream pawn with the near wall behind it,
-close enough to read at 48 pixels and wide enough that the wall is still an object.
+The first version of this file took that as a cropping problem: which square of the photograph
+survives the mask? Every answer was one pawn on its own, because the two pieces sit 848 pixels
+apart on the picture's diagonal and no square that holds them both puts either inside the safe
+circle. So the icon shipped as a single cream pawn, and it was wrong — it says chess, and this
+game is the walls.
 
-**So [WINDOW] is the visible square, not the canvas** — measured off the piece rather than
-guessed. The pawn occupies x 1035..1195, y 255..555 in the source; the window is sized so it
-fills a little over half the height and sits a touch above centre, which leaves the head clear of
-a circle mask and the base clear of the bottom. The first version of this file specified the
-108-canvas instead and the Play listing came back with the head cut off at the top edge, because
-the listing is the *visible* square full-bleed and nothing masks it back.
+The question was the wrong one. The composition does not have to be cropped up until it fits;
+it can be **scaled down into** the safe area. [SCENE] is a square of real photograph holding both
+pawns and the three walls between them, centred on the pieces rather than on the frame, and it is
+laid into the canvas at exactly the size a launcher keeps. Both pawns then clear a circle mask
+with room to spare, and every pixel a player sees is photograph.
 
-**The canvas is then grown outwards from that window** by [PAD], and where the photograph runs
-out — some forty pixels past its right edge — the shortfall is mirrored. Those pixels live in
-the ring no launcher draws; the alternative was sliding the whole composition left to fetch
-board that nobody sees.
+**The ring is not.** [SCENE] already fills the visible square, so the outer sixth — the part only
+the mask ever touches — is the scene's own edge rows pushed outwards, blurred, and pulled down
+towards black at the rim. Replication alone streaks; blur alone leaves the corner as bright as
+the middle and the tile stops having an edge.
 
-**Why the tone is touched at all.** The scene was lit for a six-inch screen. A launcher draws it
-twelve millimetres wide against a wallpaper, and the deepest part of the board — which is where
-the wall's silhouette lives — goes to nothing. [shadow_gamma] opens that end and leaves everything
-above the knee exactly where the photographer put it, so the pawn's highlight and the specular on
-the wall cap are the original pixels. A flat brightness lift was tried first and turned the board
-to charcoal, which is a different app from the one the icon opens.
+**Why the tone is touched.** The scene was lit for a six-inch screen. A launcher draws it twelve
+millimetres wide, and the deepest part of the board — where the dark pawn and the near wall
+live — goes to nothing. [shadow_gamma] opens that end and leaves everything above the knee where
+the photographer put it, so the cream pawn's highlight and the specular on the wall caps are the
+original pixels. A flat brightness lift was tried first and turned the board to charcoal, which
+is a different app from the one the icon opens.
 """
 import os
 
-import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -46,21 +43,25 @@ SOURCE = os.path.join(ROOT, "reference", "koridor.png")
 RES = os.path.join(ROOT, "app", "src", "main", "res")
 STORE = os.path.join(ROOT, "store-assets")
 
-#: Left, top and side of the square a launcher KEEPS, in source pixels. Everything else is
-#: derived from it, so moving the framing is one edit here.
-WINDOW = (835 + 30, 142 + 30, 500)
+#: The square of photograph that becomes the icon: left, top, right, bottom in source pixels.
+#: Square on purpose — a letterboxed scene would have to invent the bands above and below it,
+#: and this crop reaches the real board instead. Centred on the two pieces (they span y 255..800,
+#: midpoint 527) rather than on the frame.
+SCENE = (200, 2, 1250, 1052)
 
 #: The fraction of the 108-unit canvas a launcher mask keeps: 72/108.
 VISIBLE = 72 / 108
 
-#: How far the canvas reaches past [WINDOW] on each side. DERIVED, never chosen: a mask that
-#: keeps 72 of 108 discards a sixth of the *canvas* per side, which is a quarter of the *window*
-#: — 1/VISIBLE is 1.5, so the canvas is one and a half windows and each ring is half of the
-#: remaining half. The first version of this file padded by a sixth of the window instead, which
-#: is the same fraction measured against the wrong side, and every export came out 12% tighter
-#: than the docstring above claims. The exports looked right and the spec was wrong, which is
-#: the harder of the two to notice; the assertion below is here so it cannot happen twice.
-PAD = round(WINDOW[2] * (1 / VISIBLE - 1) / 2)
+#: Working resolution of the 108-unit canvas. A multiple of 108 so the visible square lands on a
+#: whole number of pixels and the round trip below closes exactly.
+CANVAS = 108 * 15
+
+#: How far the canvas reaches past the visible square on each side. DERIVED, never chosen — a
+#: mask that keeps 72 of 108 discards a sixth of the canvas per side. An earlier revision picked
+#: this number by hand as a sixth of the *window* instead, which is the same fraction measured
+#: against the wrong side, and every export came out 12% tighter than this file claimed. The
+#: assertion in [visible_of] is what stops that happening again.
+RING = round(CANVAS * (1 - VISIBLE) / 2)
 
 #: Launcher densities, as (folder suffix, scale). One dp is one pixel at mdpi.
 DENSITIES = (("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4))
@@ -88,30 +89,45 @@ def rounded_mask(size, radius=0.22):
 
 
 def canvas():
-    """The 108-unit square, graded, at source resolution: [WINDOW] grown by [PAD] each way."""
+    """The 108-unit square: [SCENE] filling the visible middle, a fabricated ring around it."""
     photo = Image.open(SOURCE).convert("RGB")
-    left, top, side = WINDOW
-    box = (left - PAD, top - PAD, left + side + PAD, top + side + PAD)
+    side = CANVAS - 2 * RING
+    scene = shadow_gamma(photo.crop(SCENE)).resize((side, side), Image.LANCZOS)
 
-    inside = (max(0, box[0]), max(0, box[1]), min(photo.width, box[2]), min(photo.height, box[3]))
-    pixels = np.asarray(photo.crop(inside))
-    # Reflected rather than repeated or filled: the shortfall is a strip of unlit board, and a
-    # mirror of unlit board is unlit board. A solid fill would put a seam in the outer ring that
-    # a launcher with a wide mask could just about reach.
-    pixels = np.pad(
-        pixels,
-        ((inside[1] - box[1], box[3] - inside[3]), (inside[0] - box[0], box[2] - inside[2]), (0, 0)),
-        mode="reflect",
-    )
-    return shadow_gamma(Image.fromarray(pixels))
+    # Edge-replicate outwards. Pillow will do it without numpy by stretching the one-pixel border
+    # strips, which is the same result and one dependency fewer.
+    plate = Image.new("RGB", (CANVAS, CANVAS))
+    plate.paste(scene.crop((0, 0, 1, side)).resize((RING, side), Image.NEAREST), (0, RING))
+    plate.paste(scene.crop((side - 1, 0, side, side)).resize((RING, side), Image.NEAREST), (CANVAS - RING, RING))
+    plate.paste(scene, (RING, RING))
+    whole = plate.crop((0, RING, CANVAS, RING + side))
+    plate.paste(whole.crop((0, 0, CANVAS, 1)).resize((CANVAS, RING), Image.NEAREST), (0, 0))
+    plate.paste(whole.crop((0, side - 1, CANVAS, side)).resize((CANVAS, RING), Image.NEAREST), (0, CANVAS - RING))
+
+    blurred = plate.filter(ImageFilter.GaussianBlur(CANVAS * 0.035))
+    band = Image.new("L", (CANVAS, CANVAS), 255)
+    ImageDraw.Draw(band).rectangle((RING, RING, CANVAS - RING - 1, CANVAS - RING - 1), fill=0)
+    plate = Image.composite(blurred, plate, band.filter(ImageFilter.GaussianBlur(CANVAS * 0.006)))
+
+    # A vignette that bites only outside the scene, so the ring reaches board-black at the rim
+    # and the tile has an edge even on a launcher whose mask is close to the full square.
+    shade = Image.new("L", (CANVAS, CANVAS), 0)
+    pen = ImageDraw.Draw(shade)
+    steps = 40
+    for step in range(steps):
+        inset = int(CANVAS * 0.5 * step / steps)
+        pen.rectangle((inset, inset, CANVAS - inset, CANVAS - inset), outline=int(120 * (1 - step / steps)))
+    shade = Image.composite(shade.filter(ImageFilter.GaussianBlur(CANVAS * 0.02)),
+                            Image.new("L", (CANVAS, CANVAS), 0), band)
+    return Image.composite(Image.new("RGB", (CANVAS, CANVAS), (2, 3, 4)), plate, shade)
 
 
 def visible_of(square):
-    """What is left of the canvas after a launcher mask: the middle 72 of 108, which is [WINDOW]."""
-    kept = square.crop((PAD, PAD, square.width - PAD, square.height - PAD))
-    # The round trip has to close, or WINDOW stops meaning what the docstring says it means and
-    # the framing drifts silently the next time somebody moves it.
-    assert kept.width == WINDOW[2], "canvas ring and window disagree: %d != %d" % (kept.width, WINDOW[2])
+    """What is left of the canvas after a launcher mask: the middle 72 of 108, i.e. [SCENE]."""
+    kept = square.crop((RING, RING, square.width - RING, square.height - RING))
+    # The round trip has to close, or the framing drifts silently the next time it is moved.
+    expected = round(CANVAS * VISIBLE)
+    assert kept.width == expected, "ring and visible square disagree: %d != %d" % (kept.width, expected)
     return kept
 
 
@@ -121,14 +137,14 @@ def save(image, path, **options):
     print("  %-58s %6.1f KB" % (os.path.relpath(path, ROOT), os.path.getsize(path) / 1024))
 
 
-square = canvas()
-visible = visible_of(square)
+plate = canvas()
+visible = visible_of(plate)
 
 print("adaptive background — the whole 108-unit canvas, opaque, mask applied by the launcher")
 for suffix, scale in DENSITIES:
     size = int(round(108 * scale))
     save(
-        square.resize((size, size), Image.LANCZOS),
+        plate.resize((size, size), Image.LANCZOS),
         os.path.join(RES, "mipmap-" + suffix, "ic_launcher_background.webp"),
         format="WEBP", quality=QUALITY, method=6,
     )
@@ -141,7 +157,7 @@ for suffix, scale in DENSITIES:
     save(
         tile,
         os.path.join(RES, "mipmap-" + suffix, "ic_launcher.webp"),
-        format="WEBP", quality=QUALITY, method=6, lossless=False, exact=True,
+        format="WEBP", quality=QUALITY, method=6, exact=True,
     )
 
 print("splash mark — the masked view, square; the composable rounds it to the launcher's shape")

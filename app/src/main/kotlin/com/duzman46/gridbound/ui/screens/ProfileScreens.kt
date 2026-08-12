@@ -30,7 +30,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -72,7 +71,6 @@ import com.duzman46.gridbound.ui.components.AvatarPalette
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.GateTopBar
-import com.duzman46.gridbound.ui.components.RecentGamesCard
 import com.duzman46.gridbound.ui.components.ReportDialog
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.EmptyState
@@ -93,10 +91,12 @@ import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.ProfileEmptyGames
 import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
+import com.duzman46.gridbound.ui.components.home.ProfileDetailCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
 import com.duzman46.gridbound.ui.components.home.ProfilePips
 import com.duzman46.gridbound.ui.components.home.ProfileProgressBar
 import com.duzman46.gridbound.ui.components.home.ProfileStatStrip
+import com.duzman46.gridbound.ui.components.home.SectionLabel
 import com.duzman46.gridbound.ui.components.home.PuzzleAccent
 import com.duzman46.gridbound.ui.components.home.RecentGamesPremium
 import java.text.DateFormat
@@ -374,8 +374,9 @@ private const val STREAK_PIPS = 5
  * ways into your own things, the other offers a relationship — so one screen would have been a
  * shared header over two bodies of conditionals. Splitting them also turns the rule that
  * matters into a structural fact: there is no branch here that can draw "Edit profile", so no
- * later change to a flag can put the owner's controls on a stranger's page. [ProfileIdentity]
- * and [ProfileStatsCard] are the part that is genuinely shared, and they are shared.
+ * later change to a flag can put the owner's controls on a stranger's page. What is genuinely
+ * shared is shared: both pages draw the same identity block, the same stat strip and the same
+ * recent-match list out of ProfilePremium.kt, and the stranger's simply passes no onEdit.
  */
 @Composable
 fun PlayerProfileRoute(
@@ -442,14 +443,52 @@ private fun PlayerProfileScreen(
                         .fillMaxWidth()
                         .widthIn(max = 620.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(horizontal = Dimens.SpaceLg)
+                        .navigationBarsPadding()
+                        .padding(bottom = Dimens.SpaceXl),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                 ) {
-                    ProfileIdentity(profile)
-                    ProfileStatsCard(profile)
+                    // The owner's own components, with no onEdit. Everything about this page is
+                    // the same record in the same shapes; what it must never grow is a way to
+                    // change any of it, and the absent lambda is what guarantees that.
+                    PremiumProfileIdentity(
+                        username = profile.username,
+                        avatarId = profile.avatarId,
+                        isGuest = profile.isGuest,
+                    )
+                    ProfileStatStrip(
+                        rating = profile.rating,
+                        games = profile.totalGames,
+                        wins = profile.wins,
+                        losses = profile.losses,
+                    )
+                    ProfileDetailCard(
+                        entries = listOf(
+                            stringResource(R.string.profile_win_streak) to
+                                profile.currentWinStreak.toString(),
+                            stringResource(R.string.profile_best_streak) to
+                                profile.bestWinStreak.toString(),
+                            stringResource(R.string.profile_highest_rating) to
+                                profile.highestRating.toString(),
+                        ),
+                        footer = profile.createdAt
+                            .takeIf { it > 0L }
+                            ?.let {
+                                stringResource(R.string.profile_member_since, formatDate(it))
+                            },
+                    )
                     FriendAction(state, onSendRequest, onAccept, onUnblock)
                     SafetyActions(state, onBlock, onReport)
-                    RecentGamesCard(recentGames, onOpenPlayer)
+                    SectionLabel(stringResource(R.string.profile_recent_games))
+                    when {
+                        recentGames.isLoading -> LoadingState()
+                        recentGames.matches.isNotEmpty() -> RecentGamesPremium(
+                            matches = recentGames.matches,
+                            rating = profile.rating,
+                            onOpenPlayer = onOpenPlayer,
+                        )
+                        else -> ProfileEmptyGames()
+                    }
                 }
             }
         }
@@ -778,153 +817,6 @@ private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit)
                 },
             )
         }
-    }
-}
-
-/** Name and account kind on one line, so the record below starts near the top. */
-@Composable
-private fun ProfileIdentity(profile: UserProfile) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        PlayerAvatar(profile.avatarId, profile.username, size = 64.dp)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                profile.username,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            if (profile.isGuest) {
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                ) {
-                    Text(
-                        stringResource(R.string.auth_guest_badge),
-                        Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * The whole record in one card: the three headline numbers, then the rest as a two-column
- * table of label/value rows.
- *
- * Rows rather than a grid of small tiles because a row can wrap a long label — "Niederlagen",
- * "Победная серия" — onto a second line and stay readable, where a tile narrow enough to fit
- * eight of them would have to break the word. That is what keeps this legible at large font
- * scales instead of merely small.
- */
-@Composable
-private fun ProfileStatsCard(profile: UserProfile) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        ),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                StatTile(
-                    label = stringResource(R.string.profile_rating),
-                    value = profile.rating.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-                StatTile(
-                    label = stringResource(R.string.profile_games),
-                    value = profile.totalGames.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-                StatTile(
-                    label = stringResource(R.string.profile_wins),
-                    value = profile.wins.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DetailRowPair(
-                leftLabel = stringResource(R.string.profile_losses),
-                leftValue = profile.losses.toString(),
-                rightLabel = stringResource(R.string.profile_draws),
-                rightValue = profile.draws.toString(),
-            )
-            DetailRowPair(
-                leftLabel = stringResource(R.string.profile_win_streak),
-                leftValue = profile.currentWinStreak.toString(),
-                rightLabel = stringResource(R.string.profile_best_streak),
-                rightValue = profile.bestWinStreak.toString(),
-            )
-            // Five statistics leave one without a partner. Letting it span both columns reads
-            // as a summary line rather than a gap, and the peak rating earns that spot.
-            DetailRow(
-                stringResource(R.string.profile_highest_rating),
-                profile.highestRating.toString(),
-            )
-            if (profile.createdAt > 0L) {
-                Text(
-                    stringResource(R.string.profile_member_since, formatDate(profile.createdAt)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-/** Two statistics side by side, each keeping its value pinned to the end of its own half. */
-@Composable
-private fun DetailRowPair(
-    leftLabel: String,
-    leftValue: String,
-    rightLabel: String,
-    rightValue: String,
-) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        DetailRow(leftLabel, leftValue, Modifier.weight(1f))
-        DetailRow(rightLabel, rightValue, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // The label absorbs the slack so the value lands on the end edge whatever its width.
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-    }
-}
-
-/** The three numbers a player looks for first, so they carry the weight the table does not. */
-@Composable
-private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

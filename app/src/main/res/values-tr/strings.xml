@@ -106,7 +106,6 @@
     <string name="profile_games">Maç</string>
     <string name="profile_wins">Galibiyet</string>
     <string name="profile_losses">Mağlubiyet</string>
-    <string name="profile_draws">Beraberlik</string>
     <string name="profile_win_streak">Galibiyet serisi</string>
     <string name="profile_best_streak">En iyi seri</string>
     <string name="profile_member_since">%1$s tarihinden beri üye</string>
@@ -315,7 +314,7 @@
     <string name="stats_career">Kariyer özeti</string>
     <string name="stats_games">Oyun</string>
     <string name="stats_wins">Galibiyet</string>
-    <string name="stats_rate">Oran</string>
+    <string name="stats_rate">Kazanma oranı</string>
     <string name="stats_details">Detaylar</string>
     <string name="stats_losses">Mağlubiyet</string>
     <string name="stats_local_games">Yerel oyun</string>
@@ -553,4 +552,7 @@
     <string name="profile_recent_letter_draw">B</string>
     <string name="stats_ranked">Dereceli geçmiş</string>
     <string name="profile_recent_empty_title">Henüz çevrim içi maç yok</string>
+    <string name="stats_career_note">Nasıl oynadığını ve nasıl geliştiğini gör.</string>
+    <string name="stats_bot_games">Bota karşı</string>
+    <string name="stats_online_only">Yukarıdaki sayılar yalnızca çevrim içi maçları sayar. Bota karşı oynananlar aşağıdaki basamakta; tek telefonda iki kişinin oynadığı maç ise kimsenin siciline yazılmaz.</string>
 </resources>

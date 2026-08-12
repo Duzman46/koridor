@@ -2,6 +2,7 @@ package com.duzman46.gridbound.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -54,6 +55,15 @@ import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.SectionCard
 import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.home.GroupNote
+import com.duzman46.gridbound.ui.components.home.DifficultyChip
+import com.duzman46.gridbound.ui.components.home.DifficultyTones
+import com.duzman46.gridbound.ui.components.home.StatsCard
+import com.duzman46.gridbound.ui.components.home.StatsDivider
+import com.duzman46.gridbound.ui.components.home.StatsDonut
+import com.duzman46.gridbound.ui.components.home.StatsHeadlineCard
+import com.duzman46.gridbound.ui.components.home.StatsLine
+import com.duzman46.gridbound.ui.components.home.StatsNote
+import com.duzman46.gridbound.ui.components.home.StatsTitle
 import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
@@ -325,17 +335,25 @@ private fun ThemeMode.label(): String = stringResource(
 )
 
 /**
- * The career, in two halves that are not the same career.
+ * The career: the online record first, and everything that is not a ranked match after it.
  *
- * [statistics] is this handset's: every match played on it, bots included, counted in DataStore
- * and gone with the app. [profile] is the account's, kept by the server and reachable from any
- * device. They are deliberately not added together — one counts practice against a bot, the
- * other decides where the player stands on the board — so the ranked figures sit in a card of
- * their own rather than being folded into the totals above.
+ * The three figures at the top used to be every match this handset had ever seen — practice
+ * against the bot and two people passing one phone back and forth, added into the same win rate
+ * as ranked play. That is a number which answers no question anybody has, and it flattered
+ * itself: a player could beat the Easy bot ten times and read a 90% career.
  *
- * A guest has no [profile] and gets no such card. Nothing is being hidden from them; there is
- * simply no server row, and a card of zeroes would imply their play was being recorded somewhere
- * it is not.
+ * So the top is the **online** record, and it is taken from the account when there is one.
+ * `UserProfile.totalGames`, `.wins` and `.losses` are server-owned, and only a reported online
+ * match ever moves them — a bot game and a local game are never reported at all — so those
+ * fields already *are* the online record, and they survive a reinstall, which the handset's
+ * counters do not. A guest has no such row, so the device's own online tally stands in; a guest
+ * cannot play ranked, so it stands in as zero, which is the true answer rather than a hidden one.
+ *
+ * Everything else is below, in the section it belongs to: the bot in the per-difficulty ladder,
+ * the pass-and-play games as their own count. Nothing is hidden — it is separated, because
+ * adding it together was the thing that made it meaningless.
+ *
+ * There is no draw anywhere on this screen. The game has no way to produce one.
  */
 @Composable
 fun StatisticsScreen(
@@ -343,73 +361,150 @@ fun StatisticsScreen(
     profile: UserProfile?,
     onBack: () -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.menu_statistics), onBack) }) { padding ->
-        ScreenBackground {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+    // The account's figures when there is an account, the handset's online tally when there is
+    // not. Resolved once here rather than at four call sites, so the two sources cannot get
+    // mixed halfway down the screen.
+    val games = profile?.totalGames ?: statistics.onlineGames
+    val wins = profile?.wins ?: statistics.onlineWins
+    val losses = profile?.losses ?: statistics.onlineLosses
+    val rate = if (games == 0) 0f else wins.toFloat() / games
+    val percent = stringResource(R.string.stats_percentage, (rate * 100).roundToInt())
+
+    ScreenBackground {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 760.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
             ) {
-                item {
-                    Column(
-                        Modifier.fillMaxWidth().widthIn(max = 760.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                PremiumHeader(
+                    title = stringResource(R.string.menu_statistics),
+                    onBack = onBack,
+                    modifier = Modifier.statusBarsPadding(),
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.SpaceLg)
+                        .navigationBarsPadding()
+                        .padding(bottom = Dimens.SpaceXl),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+                ) {
+                    StatsTitle(
+                        title = stringResource(R.string.stats_career),
+                        note = stringResource(R.string.stats_career_note),
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                     ) {
-                        Text(stringResource(R.string.stats_career), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            StatCard(stringResource(R.string.stats_games), statistics.totalGames.toString(), Modifier.weight(1f))
-                            StatCard(stringResource(R.string.stats_wins), statistics.totalWins.toString(), Modifier.weight(1f))
-                            StatCard(
-                                stringResource(R.string.stats_rate),
-                                stringResource(
-                                    R.string.stats_percentage,
-                                    (statistics.winRate * 100).roundToInt(),
-                                ),
+                        StatsHeadlineCard(
+                            icon = PremiumIcon.GLOBE,
+                            value = games.toString(),
+                            label = stringResource(R.string.stats_games),
+                        )
+                        StatsHeadlineCard(
+                            icon = PremiumIcon.TROPHY,
+                            value = wins.toString(),
+                            label = stringResource(R.string.stats_wins),
+                        )
+                        StatsHeadlineCard(
+                            icon = PremiumIcon.TARGET,
+                            value = percent,
+                            label = stringResource(R.string.stats_rate),
+                        )
+                    }
+
+                    StatsCard(stringResource(R.string.stats_details)) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(
                                 Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+                            ) {
+                                StatsLine(
+                                    icon = PremiumIcon.SHIELD_STAR,
+                                    label = stringResource(R.string.stats_losses),
+                                    value = losses.toString(),
+                                )
+                                StatsDivider()
+                                StatsLine(
+                                    icon = PremiumIcon.ROBOT,
+                                    label = stringResource(R.string.stats_bot_games),
+                                    value = statistics.botGames.toString(),
+                                )
+                                StatsDivider()
+                                StatsLine(
+                                    icon = PremiumIcon.PEOPLE,
+                                    label = stringResource(R.string.stats_local_games),
+                                    value = statistics.localGames.toString(),
+                                )
+                                StatsDivider()
+                                StatsLine(
+                                    icon = PremiumIcon.CLOCK,
+                                    label = stringResource(R.string.stats_total_turns),
+                                    value = statistics.totalTurns.toString(),
+                                )
+                            }
+                            StatsDonut(fraction = rate, caption = percent)
+                        }
+                    }
+
+                    // The account's ranked standing. A guest gets no card rather than a card of
+                    // zeroes, which would imply their play is recorded somewhere it is not.
+                    profile?.let { account ->
+                        StatsCard(stringResource(R.string.stats_ranked)) {
+                            StatsLine(
+                                icon = PremiumIcon.STAR,
+                                label = stringResource(R.string.profile_rating),
+                                value = account.rating.toString(),
+                            )
+                            StatsDivider()
+                            StatsLine(
+                                icon = PremiumIcon.BOLT,
+                                label = stringResource(R.string.profile_highest_rating),
+                                value = account.highestRating.toString(),
+                            )
+                            StatsDivider()
+                            StatsLine(
+                                icon = PremiumIcon.FLAME,
+                                label = stringResource(R.string.profile_win_streak),
+                                value = account.currentWinStreak.toString(),
+                            )
+                            StatsDivider()
+                            StatsLine(
+                                icon = PremiumIcon.TARGET,
+                                label = stringResource(R.string.profile_best_streak),
+                                value = account.bestWinStreak.toString(),
                             )
                         }
-                        SettingsCard(stringResource(R.string.stats_details)) {
-                            StatLine(stringResource(R.string.stats_losses), statistics.totalLosses)
-                            StatLine(stringResource(R.string.stats_local_games), statistics.localGames)
-                            StatLine(stringResource(R.string.stats_total_turns), statistics.totalTurns)
-                        }
-                        // The two figures the profile page used to carry and no longer has room
-                        // for. They are the account's, not the handset's, which is why they are
-                        // in a card that says so instead of beside the local totals.
-                        profile?.let { account ->
-                            SettingsCard(stringResource(R.string.stats_ranked)) {
-                                StatLine(stringResource(R.string.profile_rating), account.rating)
-                                StatLine(
-                                    stringResource(R.string.profile_highest_rating),
-                                    account.highestRating,
-                                )
-                                StatLine(
-                                    stringResource(R.string.profile_win_streak),
-                                    account.currentWinStreak,
-                                )
-                                StatLine(
-                                    stringResource(R.string.profile_best_streak),
-                                    account.bestWinStreak,
-                                )
-                                StatLine(stringResource(R.string.profile_losses), account.losses)
-                                StatLine(stringResource(R.string.profile_draws), account.draws)
-                            }
-                        }
-                        SettingsCard(stringResource(R.string.stats_by_difficulty)) {
-                            Difficulty.entries.forEach { difficulty ->
-                                val wins = statistics.winsByDifficulty[difficulty] ?: 0
-                                val losses = statistics.lossesByDifficulty[difficulty] ?: 0
-                                ListItem(
-                                    headlineContent = { Text(difficulty.label(), fontWeight = FontWeight.SemiBold) },
-                                    supportingContent = {
-                                        Text(stringResource(R.string.stats_wins_losses, wins, losses))
-                                    },
-                                    leadingContent = { Icon(Icons.Rounded.SmartToy, contentDescription = null) },
+                    }
+
+                    StatsCard(stringResource(R.string.stats_by_difficulty)) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                        ) {
+                            Difficulty.entries.forEachIndexed { index, difficulty ->
+                                DifficultyChip(
+                                    tone = DifficultyTones[index % DifficultyTones.size],
+                                    label = difficulty.label(),
+                                    record = stringResource(
+                                        R.string.stats_wins_losses,
+                                        statistics.winsByDifficulty[difficulty] ?: 0,
+                                        statistics.lossesByDifficulty[difficulty] ?: 0,
+                                    ),
                                 )
                             }
                         }
                     }
+
+                    StatsNote(stringResource(R.string.stats_online_only))
                 }
             }
         }

@@ -101,7 +101,6 @@
     <string name="profile_games">Матчи</string>
     <string name="profile_wins">Победы</string>
     <string name="profile_losses">Поражения</string>
-    <string name="profile_draws">Ничьи</string>
     <string name="profile_win_streak">Текущая серия</string>
     <string name="profile_best_streak">Лучшая серия</string>
     <string name="profile_member_since">В игре с %1$s</string>
@@ -303,7 +302,7 @@
     <string name="stats_career">Общий итог</string>
     <string name="stats_games">Матчи</string>
     <string name="stats_wins">Победы</string>
-    <string name="stats_rate">Процент</string>
+    <string name="stats_rate">Доля побед</string>
     <string name="stats_details">Подробности</string>
     <string name="stats_losses">Поражения</string>
     <string name="stats_local_games">Локальные партии</string>
@@ -538,4 +537,7 @@
     <string name="profile_recent_letter_draw">Н</string>
     <string name="stats_ranked">Рейтинговая статистика</string>
     <string name="profile_recent_empty_title">Онлайн-матчей пока нет</string>
+    <string name="stats_career_note">Посмотрите, как вы играете и как это меняется.</string>
+    <string name="stats_bot_games">Против бота</string>
+    <string name="stats_online_only">Цифры выше учитывают только сетевые матчи. Матчи с ботом — в списке ниже, а игра двоих на этом телефоне никому не засчитывается.</string>
 </resources>

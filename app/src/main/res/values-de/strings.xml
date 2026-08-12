@@ -97,7 +97,6 @@
     <string name="profile_games">Partien</string>
     <string name="profile_wins">Siege</string>
     <string name="profile_losses">Niederlagen</string>
-    <string name="profile_draws">Unentschieden</string>
     <string name="profile_win_streak">Aktuelle Serie</string>
     <string name="profile_best_streak">Beste Serie</string>
     <string name="profile_member_since">Mitglied seit %1$s</string>
@@ -297,7 +296,7 @@
     <string name="stats_career">Gesamtübersicht</string>
     <string name="stats_games">Partien</string>
     <string name="stats_wins">Siege</string>
-    <string name="stats_rate">Quote</string>
+    <string name="stats_rate">Siegquote</string>
     <string name="stats_details">Details</string>
     <string name="stats_losses">Niederlagen</string>
     <string name="stats_local_games">Lokale Partien</string>
@@ -532,4 +531,7 @@
     <string name="profile_recent_letter_draw">U</string>
     <string name="stats_ranked">Gewertete Bilanz</string>
     <string name="profile_recent_empty_title">Noch keine Online-Partien</string>
+    <string name="stats_career_note">Sieh, wie du spielst und wie es sich entwickelt.</string>
+    <string name="stats_bot_games">Gegen den Bot</string>
+    <string name="stats_online_only">Die Zahlen oben zählen nur Online-Partien. Partien gegen den Bot stehen in der Leiter darunter, und eine Partie zu zweit an diesem Telefon zählt für niemanden.</string>
 </resources>

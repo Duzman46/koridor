@@ -109,7 +109,6 @@
     <string name="profile_games">المباريات</string>
     <string name="profile_wins">الانتصارات</string>
     <string name="profile_losses">الخسائر</string>
-    <string name="profile_draws">التعادلات</string>
     <string name="profile_win_streak">سلسلة الانتصارات</string>
     <string name="profile_best_streak">أفضل سلسلة</string>
     <string name="profile_member_since">عضو منذ %1$s</string>
@@ -313,7 +312,7 @@
     <string name="stats_career">ملخّص المسيرة</string>
     <string name="stats_games">المباريات</string>
     <string name="stats_wins">الانتصارات</string>
-    <string name="stats_rate">النسبة</string>
+    <string name="stats_rate">نسبة الفوز</string>
     <string name="stats_details">التفاصيل</string>
     <string name="stats_losses">الخسائر</string>
     <string name="stats_local_games">المباريات المحلية</string>
@@ -548,4 +547,7 @@
     <string name="profile_recent_letter_draw">ت</string>
     <string name="stats_ranked">السجل المصنَّف</string>
     <string name="profile_recent_empty_title">لا توجد مباريات عبر الإنترنت بعد</string>
+    <string name="stats_career_note">اطّلع على أدائك وكيف يتغيّر.</string>
+    <string name="stats_bot_games">ضدّ الروبوت</string>
+    <string name="stats_online_only">الأرقام أعلاه تحسب مباريات الإنترنت فقط. مباريات الروبوت في القائمة أدناه، ومباراة بين شخصين على هذا الهاتف لا تُحسب لأحد.</string>
 </resources>

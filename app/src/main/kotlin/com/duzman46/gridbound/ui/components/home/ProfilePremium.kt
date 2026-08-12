@@ -75,19 +75,24 @@ private val Muted = Color(0xFF8B9098)
 
 
 /**
- * Who you are: the disc, the name, and whether the name is yours to keep.
+ * Who somebody is: the disc, the name, and whether the name is theirs to keep.
  *
- * The pencils are the change of substance here. Editing used to be a button below the record,
- * one navigation hop from the two things it edits; putting the affordance on the avatar and on
- * the name means the control is where the thing it changes is.
+ * The pencils are the change of substance on the owner's page. Editing used to be a button below
+ * the record, one navigation hop from the two things it edits; putting the affordance on the
+ * avatar and on the name means the control is where the thing it changes is.
+ *
+ * **[onEdit] is null on a stranger's page, and that is the whole difference between the two.**
+ * Not a flag that hides a pencil while leaving the tap target — with no lambda there is nothing
+ * to call, so no later edit can put the owner's controls on somebody else's page by flipping a
+ * boolean the wrong way.
  */
 @Composable
 fun ProfileIdentity(
     username: String,
     avatarId: String,
     isGuest: Boolean,
-    onEdit: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: (() -> Unit)? = null,
 ) {
     val editLabel = stringResource(R.string.profile_edit_title)
     Row(
@@ -99,13 +104,20 @@ fun ProfileIdentity(
             Modifier
                 .size(84.dp)
                 .clip(CircleShape)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    role = Role.Button,
-                    onClick = onEdit,
-                )
-                .semantics { contentDescription = editLabel },
+                .then(
+                    if (onEdit != null) {
+                        Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                                onClick = onEdit,
+                            )
+                            .semantics { contentDescription = editLabel }
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
             PlayerAvatar(
                 avatarId = avatarId,
@@ -116,18 +128,22 @@ fun ProfileIdentity(
                     .border(2.dp, KoridorGold.copy(alpha = 0.75f), CircleShape),
                 size = 76.dp,
             )
-            PencilBadge(Modifier.align(Alignment.BottomEnd), size = 26.dp)
+            if (onEdit != null) PencilBadge(Modifier.align(Alignment.BottomEnd), size = 26.dp)
         }
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    role = Role.Button,
-                    onClick = onEdit,
-                ),
+                modifier = if (onEdit != null) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        role = Role.Button,
+                        onClick = onEdit,
+                    )
+                } else {
+                    Modifier
+                },
             ) {
                 Text(
                     text = username,
@@ -138,7 +154,7 @@ fun ProfileIdentity(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
-                PencilBadge(size = 26.dp)
+                if (onEdit != null) PencilBadge(size = 26.dp)
             }
             if (isGuest) {
                 Text(
@@ -151,6 +167,71 @@ fun ProfileIdentity(
                         .padding(horizontal = Dimens.SpaceMd, vertical = 5.dp),
                 )
             }
+        }
+    }
+}
+
+/**
+ * The rest of a player's record, in pairs, under the three headline figures.
+ *
+ * There is no draw row. The game cannot end in one, and a row of permanent zeroes is a rule the
+ * reader has to work out is not a rule.
+ */
+@Composable
+fun ProfileDetailCard(
+    entries: List<Pair<String, String>>,
+    modifier: Modifier = Modifier,
+    footer: String? = null,
+) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(CardFill)
+            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd))
+            .padding(Dimens.SpaceLg),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+    ) {
+        // Two to a row, so five entries fill three rows with the last spanning rather than
+        // leaving a hole beside it.
+        entries.chunked(2).forEach { pair ->
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+            ) {
+                pair.forEach { (label, value) ->
+                    Row(
+                        Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Muted,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.bodyLarge
+                                .copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        footer?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+            )
         }
     }
 }

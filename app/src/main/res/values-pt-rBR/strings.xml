@@ -99,7 +99,6 @@
     <string name="profile_games">Partidas</string>
     <string name="profile_wins">Vitórias</string>
     <string name="profile_losses">Derrotas</string>
-    <string name="profile_draws">Empates</string>
     <string name="profile_win_streak">Sequência atual</string>
     <string name="profile_best_streak">Melhor sequência</string>
     <string name="profile_member_since">Membro desde %1$s</string>
@@ -300,7 +299,7 @@
     <string name="stats_career">Resumo da carreira</string>
     <string name="stats_games">Partidas</string>
     <string name="stats_wins">Vitórias</string>
-    <string name="stats_rate">Taxa</string>
+    <string name="stats_rate">Taxa de vitórias</string>
     <string name="stats_details">Detalhes</string>
     <string name="stats_losses">Derrotas</string>
     <string name="stats_local_games">Partidas locais</string>
@@ -535,4 +534,7 @@
     <string name="profile_recent_letter_draw">E</string>
     <string name="stats_ranked">Histórico ranqueado</string>
     <string name="profile_recent_empty_title">Ainda sem partidas on-line</string>
+    <string name="stats_career_note">Veja como você joga e como isso vem mudando.</string>
+    <string name="stats_bot_games">Contra o bot</string>
+    <string name="stats_online_only">Os números acima contam apenas partidas on-line. As partidas contra o bot estão na escala abaixo, e uma partida entre duas pessoas neste celular não conta para ninguém.</string>
 </resources>

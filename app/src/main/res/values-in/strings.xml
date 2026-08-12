@@ -98,7 +98,6 @@
     <string name="profile_games">Pertandingan</string>
     <string name="profile_wins">Menang</string>
     <string name="profile_losses">Kalah</string>
-    <string name="profile_draws">Seri</string>
     <string name="profile_win_streak">Rentetan kemenangan</string>
     <string name="profile_best_streak">Rentetan terbaik</string>
     <string name="profile_member_since">Anggota sejak %1$s</string>
@@ -297,7 +296,7 @@
     <string name="stats_career">Ringkasan karier</string>
     <string name="stats_games">Pertandingan</string>
     <string name="stats_wins">Menang</string>
-    <string name="stats_rate">Rasio</string>
+    <string name="stats_rate">Rasio menang</string>
     <string name="stats_details">Detail</string>
     <string name="stats_losses">Kalah</string>
     <string name="stats_local_games">Permainan lokal</string>
@@ -532,4 +531,7 @@
     <string name="profile_recent_letter_draw">S</string>
     <string name="stats_ranked">Rekor berperingkat</string>
     <string name="profile_recent_empty_title">Belum ada pertandingan daring</string>
+    <string name="stats_career_note">Lihat bagaimana kamu bermain dan bagaimana perkembangannya.</string>
+    <string name="stats_bot_games">Melawan bot</string>
+    <string name="stats_online_only">Angka di atas hanya menghitung pertandingan daring. Pertandingan melawan bot ada di daftar bawah, dan pertandingan dua orang di ponsel ini tidak dihitung untuk siapa pun.</string>
 </resources>

@@ -61,4 +61,25 @@ data class GameStatistics(
             val competitiveGames = totalWins + totalLosses
             return if (competitiveGames == 0) 0f else totalWins.toFloat() / competitiveGames
         }
+
+    /**
+     * Online matches lost, worked out rather than stored — and it is exact, not an estimate.
+     *
+     * `DefaultGameRepository.recordCompletedGame` puts every counted match down exactly one of
+     * two branches, won or lost; there is no third. A local match returns before either, so it
+     * reaches neither [onlineGames] nor this. The game has no draw, so nothing falls between the
+     * two. That makes online games the sum of online wins and online losses, and this the
+     * remainder.
+     *
+     * If a draw is ever added, this stops being true and the counter has to become real.
+     */
+    val onlineLosses: Int get() = (onlineGames - onlineWins).coerceAtLeast(0)
+
+    /** The share of online matches won. The career figures are this game's, not the bot's. */
+    val onlineWinRate: Float
+        get() = if (onlineGames == 0) 0f else onlineWins.toFloat() / onlineGames
+
+    /** Matches against the machine, summed from the per-difficulty tallies that only it feeds. */
+    val botGames: Int
+        get() = winsByDifficulty.values.sum() + lossesByDifficulty.values.sum()
 }

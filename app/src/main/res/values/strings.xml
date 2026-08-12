@@ -111,7 +111,6 @@
     <string name="profile_games">Games</string>
     <string name="profile_wins">Wins</string>
     <string name="profile_losses">Losses</string>
-    <string name="profile_draws">Draws</string>
     <string name="profile_win_streak">Win streak</string>
     <string name="profile_best_streak">Best streak</string>
     <string name="profile_member_since">Member since %1$s</string>
@@ -329,7 +328,7 @@
     <string name="stats_career">Career summary</string>
     <string name="stats_games">Games</string>
     <string name="stats_wins">Wins</string>
-    <string name="stats_rate">Rate</string>
+    <string name="stats_rate">Win rate</string>
     <string name="stats_details">Details</string>
     <string name="stats_losses">Losses</string>
     <string name="stats_local_games">Local games</string>
@@ -567,4 +566,7 @@
     <string name="profile_recent_letter_draw">D</string>
     <string name="stats_ranked">Ranked record</string>
     <string name="profile_recent_empty_title">No online matches yet</string>
+    <string name="stats_career_note">See how you are playing, and how it is changing.</string>
+    <string name="stats_bot_games">Against the bot</string>
+    <string name="stats_online_only">The figures above count online matches only. Games against the bot are in the ladder below, and a game played by two people on this phone settles nobody\u2019s record.</string>
 </resources>

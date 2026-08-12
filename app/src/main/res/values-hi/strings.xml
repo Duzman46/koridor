@@ -97,7 +97,6 @@
     <string name="profile_games">मैच</string>
     <string name="profile_wins">जीत</string>
     <string name="profile_losses">हार</string>
-    <string name="profile_draws">ड्रॉ</string>
     <string name="profile_win_streak">मौजूदा लगातार जीत</string>
     <string name="profile_best_streak">सर्वश्रेष्ठ लगातार जीत</string>
     <string name="profile_member_since">%1$s से सदस्य</string>
@@ -297,7 +296,7 @@
     <string name="stats_career">कुल सारांश</string>
     <string name="stats_games">मैच</string>
     <string name="stats_wins">जीत</string>
-    <string name="stats_rate">दर</string>
+    <string name="stats_rate">जीत दर</string>
     <string name="stats_details">विवरण</string>
     <string name="stats_losses">हार</string>
     <string name="stats_local_games">स्थानीय खेल</string>
@@ -532,4 +531,7 @@
     <string name="profile_recent_letter_draw">ब</string>
     <string name="stats_ranked">रैंक वाला रिकॉर्ड</string>
     <string name="profile_recent_empty_title">अभी कोई ऑनलाइन मैच नहीं</string>
+    <string name="stats_career_note">देखें आप कैसा खेल रहे हैं और यह कैसे बदल रहा है।</string>
+    <string name="stats_bot_games">बॉट के खिलाफ़</string>
+    <string name="stats_online_only">ऊपर के आंकड़े सिर्फ़ ऑनलाइन मैच गिनते हैं। बॉट के मैच नीचे की सूची में हैं, और इस फ़ोन पर दो लोगों का खेल किसी के रिकॉर्ड में नहीं जाता।</string>
 </resources>

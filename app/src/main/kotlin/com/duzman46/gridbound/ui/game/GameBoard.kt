@@ -39,8 +39,10 @@ fun GameBoard(
     onWallTap: (Wall) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val boardSurface = ImageBitmap.imageResource(R.drawable.board_surface)
     val pawnBlue = ImageBitmap.imageResource(R.drawable.pawn_blue)
     val pawnRed = ImageBitmap.imageResource(R.drawable.pawn_red)
+    val wallPiece = ImageBitmap.imageResource(R.drawable.wall_piece)
     val renderer = remember { CanvasRenderer() }
     val touchController = remember { TouchController() }
     // Whose way up the board is drawn. Wherever one person holds one seat — online or against
@@ -101,6 +103,8 @@ fun GameBoard(
         val geometry = BoardGeometry(size.minDimension)
         val renderBoard: DrawScope.() -> Unit = {
             renderer.draw(
+                surface = boardSurface,
+                wallPiece = wallPiece,
                 pawnOne = pawnBlue,
                 pawnTwo = pawnRed,
                 scope = this,

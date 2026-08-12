@@ -2,6 +2,7 @@ package com.duzman46.gridbound.game.board
 
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import kotlin.math.roundToInt
@@ -82,12 +83,48 @@ class CanvasRenderer @Inject constructor() {
          */
         pawnOne: ImageBitmap? = null,
         pawnTwo: ImageBitmap? = null,
-        /** The board's face, or null to fall back to the drawn blocks. */
-        tile: ImageBitmap? = null,
+        /**
+         * The whole board as one rendered surface — frame, grid, channels and both goal rows —
+         * or null to fall back to drawing them.
+         *
+         * A tile was tried here first, repeated across the grid, and it was worse than the
+         * drawing it replaced. A tile render carries its own frame, its own centre inlay and
+         * its own baked highlight, and eighty-one copies carry eighty-one of each: the frames
+         * read as eighty-one objects instead of one board, and every highlight falls the same
+         * way, which is the one thing light on a real surface never does. A board is lit once.
+         * So this is the whole board, lit once, and the only things drawn over it are the ones
+         * that move.
+         *
+         * [BoardGeometry] and this picture have to agree about where the grid is, and they do
+         * by construction: `docs/store/board.py` measures the render's own lattice and prints
+         * the two ratios `Constants.Board` carries.
+         */
+        surface: ImageBitmap? = null,
+        /**
+         * A wall as a piece — rosewood between two brushed gold caps — or null to fall back to
+         * the drawn bar.
+         *
+         * One sprite serves both orientations. It is turned a quarter anticlockwise for a
+         * vertical wall rather than clockwise, so the lit edge it carries ends up on the piece's
+         * left: the board is lit from the top left, and a bar whose bright edge faces right
+         * would be the only object on the table disagreeing about where the lamp is.
+         */
+        wallPiece: ImageBitmap? = null,
     ) = with(scope) {
-        drawFrame(geometry, palette)
-        drawTiles(geometry, palette, validMoves, tile)
-        drawEmptyChannels(geometry, palette)
+        if (surface != null) {
+            val side = geometry.boardSize.roundToInt()
+            drawImage(
+                image = surface,
+                dstOffset = IntOffset.Zero,
+                dstSize = IntSize(side, side),
+                filterQuality = FilterQuality.High,
+            )
+        } else {
+            drawFrame(geometry, palette)
+            drawTiles(geometry, palette)
+            drawEmptyChannels(geometry, palette)
+        }
+        drawMoveTargets(geometry, palette, validMoves)
 
         // Slots the current orientation could legally take, so wall mode shows where a piece
         // may go before the player starts hunting for it.
@@ -97,14 +134,14 @@ class CanvasRenderer @Inject constructor() {
 
         state.walls.forEach { wall ->
             val progress = if (wall == recentWall) recentWallProgress else 1f
-            drawWall(geometry, wall, palette.wall, progress)
+            drawWall(geometry, wall, palette.wall, progress, wallPiece, null)
         }
         pendingWall?.let { wall ->
             drawWallHighlight(geometry, wall, palette.selection)
-            drawWall(geometry, wall, palette.valid, 1f)
+            drawWall(geometry, wall, palette.valid, 1f, wallPiece, palette.valid)
         }
         invalidWall?.let { wall ->
-            drawWall(geometry, wall, palette.invalid.copy(alpha = 0.9f), 1f)
+            drawWall(geometry, wall, palette.invalid.copy(alpha = 0.9f), 1f, wallPiece, palette.invalid)
             // Colour alone would say nothing to a player who cannot separate red from the
             // wall colour, so the refusal also carries a shape.
             drawRefusalCross(geometry, wall, palette.invalid)
@@ -133,7 +170,9 @@ class CanvasRenderer @Inject constructor() {
             sprite = pawnTwo,
         )
 
-        drawVignette(geometry)
+        // Only over the drawing. The render brought its own falloff, and a second one on top of
+        // it would darken the corners twice.
+        if (surface == null) drawVignette(geometry)
     }
 
     /**
@@ -198,79 +237,59 @@ class CanvasRenderer @Inject constructor() {
      * The goal rows are tinted harder than they were. Which end you are running for is the
      * single most important fact on the board, and at 0.28 against a near-black tile the blue
      * and the red were a shade of grey each.
+     *
+     * This is the fallback now — the shipped board is a render. It is kept because previews and
+     * tests draw with no resources loaded, and because a board that only exists as a picture is
+     * a board nobody can change the colours of.
      */
-    private fun DrawScope.drawTiles(
-        geometry: BoardGeometry,
-        palette: BoardPalette,
-        validMoves: Set<Position>,
-        tile: ImageBitmap?,
-    ) {
+    private fun DrawScope.drawTiles(geometry: BoardGeometry, palette: BoardPalette) {
         val radius = CornerRadius(geometry.tileSize * Constants.Board.TILE_CORNER_RADIUS_RATIO)
         val bevel = geometry.tileSize * 0.10f
         for (row in 0 until Constants.Board.SIZE) {
             for (column in 0 until Constants.Board.SIZE) {
-                val position = Position(row, column)
-                val rect = geometry.tileRect(position)
+                val rect = geometry.tileRect(Position(row, column))
                 val base = if ((row + column) % 2 == 0) palette.tile else palette.tileAlternate
                 val color = when (row) {
-                    PlayerId.PLAYER_ONE.goalRow ->
-                        if (tile != null) palette.goalOne else blend(base, palette.goalOne, 0.52f)
-                    PlayerId.PLAYER_TWO.goalRow ->
-                        if (tile != null) palette.goalTwo else blend(base, palette.goalTwo, 0.52f)
+                    PlayerId.PLAYER_ONE.goalRow -> blend(base, palette.goalOne, 0.52f)
+                    PlayerId.PLAYER_TWO.goalRow -> blend(base, palette.goalTwo, 0.52f)
                     else -> base
                 }
 
-                if (tile != null) {
-                    // The face as rendered: wood, gold inlay, marble. Nothing is repainted, so
-                    // the material survives exactly as it was rendered — which is the whole
-                    // reason it is a picture instead of three rounded rectangles.
-                    drawImage(
-                        image = tile,
-                        dstOffset = IntOffset(rect.left.roundToInt(), rect.top.roundToInt()),
-                        dstSize = IntSize(rect.width.roundToInt(), rect.height.roundToInt()),
-                        filterQuality = FilterQuality.High,
-                    )
-                    // A goal row is the single most important fact on the board, so it is said
-                    // over the material rather than instead of it.
-                    if (row == PlayerId.PLAYER_ONE.goalRow || row == PlayerId.PLAYER_TWO.goalRow) {
-                        drawRoundRect(
-                            color = color.copy(alpha = 0.52f),
-                            topLeft = rect.topLeft,
-                            size = rect.size,
-                            cornerRadius = radius,
-                        )
-                    }
-                } else {
-                    // Behind: the lit face. What is left of it after the next rect is the top edge.
-                    drawRoundRect(blend(color, Color.White, 0.34f), rect.topLeft, rect.size, radius)
-                    drawRoundRect(
-                        color = color,
-                        topLeft = Offset(rect.left, rect.top + bevel),
-                        size = Size(rect.width, rect.height - bevel),
-                        cornerRadius = radius,
-                    )
-                    // And the shade the block casts on itself at its foot.
-                    drawRoundRect(
-                        color = blend(color, Color.Black, 0.45f),
-                        topLeft = Offset(rect.left + bevel, rect.bottom - bevel * 1.4f),
-                        size = Size(rect.width - bevel * 2f, bevel * 1.4f),
-                        cornerRadius = CornerRadius(bevel * 0.7f),
-                    )
-                }
-
-                if (position in validMoves) {
-                    drawCircle(
-                        color = palette.valid.copy(alpha = 0.30f),
-                        radius = geometry.tileSize * 0.30f,
-                        center = rect.center,
-                    )
-                    drawCircle(
-                        color = palette.valid,
-                        radius = geometry.tileSize * 0.15f,
-                        center = rect.center,
-                    )
-                }
+                // Behind: the lit face. What is left of it after the next rect is the top edge.
+                drawRoundRect(blend(color, Color.White, 0.34f), rect.topLeft, rect.size, radius)
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(rect.left, rect.top + bevel),
+                    size = Size(rect.width, rect.height - bevel),
+                    cornerRadius = radius,
+                )
+                // And the shade the block casts on itself at its foot.
+                drawRoundRect(
+                    color = blend(color, Color.Black, 0.45f),
+                    topLeft = Offset(rect.left + bevel, rect.bottom - bevel * 1.4f),
+                    size = Size(rect.width - bevel * 2f, bevel * 1.4f),
+                    cornerRadius = CornerRadius(bevel * 0.7f),
+                )
             }
+        }
+    }
+
+    /**
+     * Where the piece may go next.
+     *
+     * Its own pass rather than a branch inside the grid loop, because the grid is a picture now
+     * and these are not — they are the one thing on the board that answers to the game state
+     * rather than to the artwork.
+     */
+    private fun DrawScope.drawMoveTargets(
+        geometry: BoardGeometry,
+        palette: BoardPalette,
+        validMoves: Set<Position>,
+    ) {
+        validMoves.forEach { position ->
+            val center = geometry.tileRect(position).center
+            drawCircle(palette.valid.copy(alpha = 0.30f), geometry.tileSize * 0.30f, center)
+            drawCircle(palette.valid, geometry.tileSize * 0.15f, center)
         }
     }
 
@@ -348,7 +367,14 @@ class CanvasRenderer @Inject constructor() {
      * A brush per wall is affordable — there are at most twenty on a board, against eighty-one
      * tiles a frame.
      */
-    private fun DrawScope.drawWall(geometry: BoardGeometry, wall: Wall, color: Color, progress: Float) {
+    private fun DrawScope.drawWall(
+        geometry: BoardGeometry,
+        wall: Wall,
+        color: Color,
+        progress: Float,
+        sprite: ImageBitmap?,
+        tint: Color?,
+    ) {
         val rect = geometry.wallRect(wall)
         val clamped = progress.coerceIn(0f, 1f)
         val scaledSize = Size(rect.width * clamped, rect.height * clamped)
@@ -361,13 +387,20 @@ class CanvasRenderer @Inject constructor() {
         val alpha = color.alpha * clamped
         val drop = geometry.wallThickness * 0.34f
 
-        // The shadow the piece casts into the channel, before the piece itself.
+        // The shadow the piece casts into the channel, before the piece itself. Drawn for the
+        // sprite too: it belongs to the board rather than to the piece, and baking it into the
+        // picture would put the same shadow under a wall lying along either axis.
         drawRoundRect(
             color = Color.Black.copy(alpha = 0.45f * clamped * color.alpha),
             topLeft = Offset(topLeft.x, topLeft.y + drop),
             size = scaledSize,
             cornerRadius = radius,
         )
+
+        if (sprite != null) {
+            drawWallSprite(sprite, rect, scaledSize, topLeft, clamped, tint)
+            return
+        }
         // The body, falling away from the light.
         drawRoundRect(
             brush = Brush.verticalGradient(
@@ -403,6 +436,51 @@ class CanvasRenderer @Inject constructor() {
                     (scaledSize.height * 0.10f).coerceAtLeast(1f),
                 ),
                 cornerRadius = CornerRadius(scaledSize.height * 0.05f),
+            )
+        }
+    }
+
+    /**
+     * The wall as the render made it: rosewood, a lit top edge, a brushed gold cap at each end.
+     *
+     * The sprite is horizontal, and a vertical wall gets it turned rather than getting a second
+     * asset — a quarter turn anticlockwise, so the lit edge lands on the piece's left and agrees
+     * with the light everything else on the board is under.
+     *
+     * [tint] is how a wall that is not yet a wall is said. A pending piece and a refused piece
+     * are the same object in a different state, so they are the same picture with the state
+     * washed over it, rather than a differently-shaped thing drawn from scratch.
+     */
+    private fun DrawScope.drawWallSprite(
+        sprite: ImageBitmap,
+        rect: Rect,
+        size: Size,
+        topLeft: Offset,
+        progress: Float,
+        tint: Color?,
+    ) {
+        val horizontal = rect.width >= rect.height
+        // Turned about the piece's own centre, so the long side of the sprite lands on the long
+        // side of the slot whichever way the slot runs.
+        val long = if (horizontal) size.width else size.height
+        val short = if (horizontal) size.height else size.width
+        rotate(if (horizontal) 0f else -90f, rect.center) {
+            drawImage(
+                image = sprite,
+                dstOffset = IntOffset(
+                    (rect.center.x - long / 2f).roundToInt(),
+                    (rect.center.y - short / 2f).roundToInt(),
+                ),
+                dstSize = IntSize(long.roundToInt(), short.roundToInt()),
+                filterQuality = FilterQuality.High,
+            )
+        }
+        if (tint != null) {
+            drawRoundRect(
+                color = tint.copy(alpha = 0.55f * progress * tint.alpha),
+                topLeft = topLeft,
+                size = size,
+                cornerRadius = CornerRadius(size.minDimension * 0.34f),
             )
         }
     }
@@ -502,7 +580,11 @@ class CanvasRenderer @Inject constructor() {
         // Height first, aspect from the bitmap. The sprite is cropped to the piece, so its
         // proportions are the pawn's and not a square's — asking for a square here is what put
         // a pawn half a tile wide in the middle of a tile-sized box.
-        val height = radius * 2.74f
+        //
+        // 3.15 and not 2.74: the piece is a chess pawn with a wide turned base, and at the
+        // smaller figure its base covered three quarters of a tile, which reads as a counter
+        // sitting on a square rather than a piece standing on it. A real set fills the square.
+        val height = radius * 3.15f
         val width = height * sprite.width / sprite.height
         drawImage(
             image = sprite,

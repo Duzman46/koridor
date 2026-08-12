@@ -13,14 +13,35 @@ object Constants {
         const val MAX_PLACED_WALLS = STARTING_WALLS * 2
         const val TILE_CORNER_RADIUS_RATIO = 0.16f
 
-        /** Width of the channel between two tiles, as a fraction of a tile. */
-        const val GAP_RATIO = 0.24f
+        /**
+         * Width of the channel between two tiles, as a fraction of a tile.
+         *
+         * Measured off the board render rather than chosen — see [FRAME_RATIO].
+         */
+        const val GAP_RATIO = 0.15590f
 
-        /** How much of that channel a placed wall fills. Below 1 so the slot stays visible. */
-        const val WALL_THICKNESS_RATIO = 0.74f
+        /**
+         * A placed wall's thickness, as a fraction of the channel it drops into.
+         *
+         * Above 1 on purpose. It used to be below 1 so the empty slot stayed visible either
+         * side of the piece, which the drawn board needed because a drawn channel was only
+         * ever a darker rectangle. The rendered board has real grooves with lit walls and gold
+         * studs, so the slot is visible whether a wall is in it or not — and a wall that fits
+         * *inside* the groove reads as paint in a line rather than as a piece. A real one is
+         * thicker than the slot and stands proud of it, which is what this is.
+         */
+        const val WALL_THICKNESS_RATIO = 1.91f
 
-        /** The frame around the grid, as a fraction of the whole board. */
-        const val FRAME_RATIO = 0.022f
+        /**
+         * The frame around the grid, as a fraction of the whole board.
+         *
+         * This and [GAP_RATIO] are not design choices — they are measurements of
+         * `reference/tahta.png`, printed by `docs/store/board.py` and copied here. The renderer
+         * draws that render as the board's face and then puts pawns and walls on top of it, so
+         * the two lattices have to be the same lattice. Change the artwork, re-run the script,
+         * copy both numbers back; do not tune either by eye.
+         */
+        const val FRAME_RATIO = 0.12303f
         const val PAWN_RADIUS_RATIO = 0.40f
     }
 

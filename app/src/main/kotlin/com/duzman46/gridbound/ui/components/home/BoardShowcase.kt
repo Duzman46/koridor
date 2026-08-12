@@ -187,8 +187,10 @@ private fun artLeft(w: Float, side: Float, rtl: Boolean): Float {
 
 @Composable
 private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
+    val boardSurface = ImageBitmap.imageResource(R.drawable.board_surface)
     val pawnBlue = ImageBitmap.imageResource(R.drawable.pawn_blue)
     val pawnRed = ImageBitmap.imageResource(R.drawable.pawn_red)
+    val wallPiece = ImageBitmap.imageResource(R.drawable.wall_piece)
     Canvas(
         Modifier
             .matchParentSize()
@@ -219,6 +221,8 @@ private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
         val left = artLeft(w, side, rtl)
         translate(left, top) {
             renderer.draw(
+                surface = boardSurface,
+                wallPiece = wallPiece,
                 pawnOne = pawnBlue,
                 pawnTwo = pawnRed,
                 scope = this,

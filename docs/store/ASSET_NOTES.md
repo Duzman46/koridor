@@ -18,6 +18,20 @@ Three marks are drawn rather than cut from the artwork, each for a reason the pl
 - **`ic_notification.xml`** — the status bar keeps a small icon's alpha and throws away every pixel of colour it has. Same reason, at 24dp.
 - **`ic_launcher_foreground.xml`** — one fully transparent path, which draws nothing and is deliberate twice over. A launcher parallaxes the foreground across the background, so a full-bleed picture has to be the *background* layer or it slides off its own edges; and the layer cannot be a genuinely empty `<vector>`, because `VectorDrawable` throws `no path defined in <vector>` and takes the whole icon down with it. That shipped for one build and every launcher fell back to Android's grid-and-robot placeholder.
 
+The board's pawns are cut and coloured by `docs/store/pieces.py` from `reference/pawn.png`, a supplied render of a marble-and-gold piece.
+
+```bash
+python docs/store/pieces.py
+```
+
+Three things about that cut are load-bearing:
+
+- **The threshold sits above the bloom, not above the background.** The render is on black with a warm halo around the piece. A gate that merely cleared the corners left the halo at partial alpha, and the recolour then dyed it — every pawn wore an aura on the board. The piece is rim-lit all the way round, so a high gate still finds its whole outline.
+- **The gold is not tinted.** Only the ivory takes the seat colour, and speculars are forced back to white; a highlight in the seat colour stops the piece looking wet. Two pieces that differed in nothing but hue would be two hues, not two pieces.
+- **The ivory render is used twice rather than using the dark one as the second seat.** Blue and red are written into the tutorial, the turn banner and the colour offered when a room is made, in ten languages. Tinting one piece keeps all of that true.
+
+`reference/pawn-dark.png`, `reference/wall.png` and `reference/tile.png` were supplied with it and **nothing uses them yet.** The wall and the tile are drawn isometric — a rhombus seen from above — and this board is an orthogonal grid, where an isometric tile does not tessellate. Using them means either an isometric board, which is a rewrite of the geometry and every touch target, or pulling their materials out as textures. That is a decision, not a chore.
+
 `reference/koridor.png` is the other source picture and **nothing generates from it.** It is the photograph behind the main menu, hand-cut into `res/drawable-{xh,xxh,xxxh}dpi/home_scene.webp` with its own top and bottom fade. It was briefly the icon too, for the length of one afternoon; the icon moved to `simge.png` and the backdrop stayed. Replacing it means re-cutting `home_scene` by hand.
 
 Files, and which of them are safe to upload:

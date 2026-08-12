@@ -187,6 +187,7 @@ private fun artLeft(w: Float, side: Float, rtl: Boolean): Float {
 
 @Composable
 private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
+    val boardTile = ImageBitmap.imageResource(R.drawable.board_tile)
     val pawnBlue = ImageBitmap.imageResource(R.drawable.pawn_blue)
     val pawnRed = ImageBitmap.imageResource(R.drawable.pawn_red)
     Canvas(
@@ -219,6 +220,7 @@ private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
         val left = artLeft(w, side, rtl)
         translate(left, top) {
             renderer.draw(
+                tile = boardTile,
                 pawnOne = pawnBlue,
                 pawnTwo = pawnRed,
                 scope = this,

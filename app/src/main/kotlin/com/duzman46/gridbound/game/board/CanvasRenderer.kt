@@ -82,9 +82,11 @@ class CanvasRenderer @Inject constructor() {
          */
         pawnOne: ImageBitmap? = null,
         pawnTwo: ImageBitmap? = null,
+        /** The board's face, or null to fall back to the drawn blocks. */
+        tile: ImageBitmap? = null,
     ) = with(scope) {
         drawFrame(geometry, palette)
-        drawTiles(geometry, palette, validMoves)
+        drawTiles(geometry, palette, validMoves, tile)
         drawEmptyChannels(geometry, palette)
 
         // Slots the current orientation could legally take, so wall mode shows where a piece
@@ -201,35 +203,60 @@ class CanvasRenderer @Inject constructor() {
         geometry: BoardGeometry,
         palette: BoardPalette,
         validMoves: Set<Position>,
+        tile: ImageBitmap?,
     ) {
         val radius = CornerRadius(geometry.tileSize * Constants.Board.TILE_CORNER_RADIUS_RATIO)
-        val bevel = geometry.tileSize * 0.085f
+        val bevel = geometry.tileSize * 0.10f
         for (row in 0 until Constants.Board.SIZE) {
             for (column in 0 until Constants.Board.SIZE) {
                 val position = Position(row, column)
                 val rect = geometry.tileRect(position)
                 val base = if ((row + column) % 2 == 0) palette.tile else palette.tileAlternate
                 val color = when (row) {
-                    PlayerId.PLAYER_ONE.goalRow -> blend(base, palette.goalOne, 0.52f)
-                    PlayerId.PLAYER_TWO.goalRow -> blend(base, palette.goalTwo, 0.52f)
+                    PlayerId.PLAYER_ONE.goalRow ->
+                        if (tile != null) palette.goalOne else blend(base, palette.goalOne, 0.52f)
+                    PlayerId.PLAYER_TWO.goalRow ->
+                        if (tile != null) palette.goalTwo else blend(base, palette.goalTwo, 0.52f)
                     else -> base
                 }
 
-                // Behind: the lit face. What is left of it after the next rect is the top edge.
-                drawRoundRect(blend(color, Color.White, 0.26f), rect.topLeft, rect.size, radius)
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(rect.left, rect.top + bevel),
-                    size = Size(rect.width, rect.height - bevel),
-                    cornerRadius = radius,
-                )
-                // And the shade the block casts on itself at its foot.
-                drawRoundRect(
-                    color = blend(color, Color.Black, 0.45f),
-                    topLeft = Offset(rect.left + bevel, rect.bottom - bevel * 1.4f),
-                    size = Size(rect.width - bevel * 2f, bevel * 1.4f),
-                    cornerRadius = CornerRadius(bevel * 0.7f),
-                )
+                if (tile != null) {
+                    // The face as rendered: wood, gold inlay, marble. Nothing is repainted, so
+                    // the material survives exactly as it was rendered — which is the whole
+                    // reason it is a picture instead of three rounded rectangles.
+                    drawImage(
+                        image = tile,
+                        dstOffset = IntOffset(rect.left.roundToInt(), rect.top.roundToInt()),
+                        dstSize = IntSize(rect.width.roundToInt(), rect.height.roundToInt()),
+                        filterQuality = FilterQuality.High,
+                    )
+                    // A goal row is the single most important fact on the board, so it is said
+                    // over the material rather than instead of it.
+                    if (row == PlayerId.PLAYER_ONE.goalRow || row == PlayerId.PLAYER_TWO.goalRow) {
+                        drawRoundRect(
+                            color = color.copy(alpha = 0.52f),
+                            topLeft = rect.topLeft,
+                            size = rect.size,
+                            cornerRadius = radius,
+                        )
+                    }
+                } else {
+                    // Behind: the lit face. What is left of it after the next rect is the top edge.
+                    drawRoundRect(blend(color, Color.White, 0.34f), rect.topLeft, rect.size, radius)
+                    drawRoundRect(
+                        color = color,
+                        topLeft = Offset(rect.left, rect.top + bevel),
+                        size = Size(rect.width, rect.height - bevel),
+                        cornerRadius = radius,
+                    )
+                    // And the shade the block casts on itself at its foot.
+                    drawRoundRect(
+                        color = blend(color, Color.Black, 0.45f),
+                        topLeft = Offset(rect.left + bevel, rect.bottom - bevel * 1.4f),
+                        size = Size(rect.width - bevel * 2f, bevel * 1.4f),
+                        cornerRadius = CornerRadius(bevel * 0.7f),
+                    )
+                }
 
                 if (position in validMoves) {
                     drawCircle(
@@ -472,14 +499,18 @@ class CanvasRenderer @Inject constructor() {
             size = Size(radius * 2.30f, radius * 0.62f),
         )
 
-        val side = radius * 2.36f
+        // Height first, aspect from the bitmap. The sprite is cropped to the piece, so its
+        // proportions are the pawn's and not a square's — asking for a square here is what put
+        // a pawn half a tile wide in the middle of a tile-sized box.
+        val height = radius * 2.74f
+        val width = height * sprite.width / sprite.height
         drawImage(
             image = sprite,
             dstOffset = IntOffset(
-                (center.x - side / 2f).roundToInt(),
-                (foot - side).roundToInt(),
+                (center.x - width / 2f).roundToInt(),
+                (foot - height).roundToInt(),
             ),
-            dstSize = IntSize(side.roundToInt(), side.roundToInt()),
+            dstSize = IntSize(width.roundToInt(), height.roundToInt()),
             filterQuality = FilterQuality.High,
         )
     }

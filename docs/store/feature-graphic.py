@@ -147,7 +147,7 @@ tile = app_icon.visible_of(app_icon.canvas()).resize((mark_px, mark_px), Image.L
 shape = Image.new("L", (mark_px * 4, mark_px * 4), 0)
 ImageDraw.Draw(shape).rounded_rectangle(
     (0, 0, mark_px * 4 - 1, mark_px * 4 - 1),
-    radius=int(mark_px * 4 * app_icon.BAKED_RADIUS), fill=255)
+    radius=int(mark_px * 4 * app_icon.TILE_RADIUS), fill=255)
 tile.putalpha(shape.resize((mark_px, mark_px), Image.LANCZOS))
 
 mx, my = int(W * 0.185), int(H * 0.50)

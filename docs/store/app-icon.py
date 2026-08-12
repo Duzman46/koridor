@@ -8,17 +8,22 @@ splash and the tile in the Play listing cannot drift apart from each other.
     python docs/store/app-icon.py
 
 **The source already is an icon**, which is the whole problem this file has to solve. It arrives
-with its own gold bezel and its own rounded corners, and an adaptive icon is not allowed either:
-the launcher applies a mask, and a second rounded rectangle underneath shows up as a gold ring
-clipped at four corners. The guidance says strip the frame. Rendered under both masks that
-matter, the guidance loses — the bezel's baked radius is 14.5%, well inside a squircle's 30% and
-a circle's, so the mask cuts through the *straight* runs of the frame rather than across its
-corners, and what comes out is a gold rim following the mask. On One UI it is indistinguishable
-from a frame drawn for that shape; on a circle it reads as a gold-rimmed disc. Both were looked
-at before this was written.
+with its own gold bezel and its own rounded corners, and an adaptive icon may carry neither: the
+launcher applies a mask of its own, and a second frame underneath it does not line up with the
+first.
 
-So the frame is kept, and [FRAME] is cut a few pixels wide of the gold so the mask has dark to
-bite into before it reaches the metal.
+Keeping the bezel was tried and shipped for one build. On paper it worked — the baked radius is
+14.5%, inside a squircle's 30% and inside a circle, so the mask crosses the frame's straight runs
+rather than its corners and comes back as a gold rim following the mask. On the handset it was
+not even: the frame is lit from the top left, so the rim arrives bright along two edges, dim
+along the other two, and cut to nothing where the mask pinches. A frame that is only a frame on
+half of its perimeter reads as a mistake, which is what the owner called it.
+
+So [ART] is the opening *inside* the bezel, with a margin: the frame's inner edge varies from
+81px at the top to 136px at the right — it is a three-dimensional moulding, not a stroke — and
+this crop clears the worst of those by a comfortable distance on every side. The gold that
+remains at the edges belongs to the walls' own lit top faces, which is artwork rather than
+frame. The launcher supplies the only frame there is now.
 
 **The composition is scaled into the visible 72, not cropped to it.** A launcher keeps the
 middle 72 units of 108 and throws away the rest, so a full-bleed source loses a third of itself
@@ -41,15 +46,17 @@ SOURCE = os.path.join(ROOT, "reference", "simge.png")
 RES = os.path.join(ROOT, "app", "src", "main", "res")
 STORE = os.path.join(ROOT, "store-assets")
 
-#: The tile, bezel included, as left/top/right/bottom in source pixels. Measured off the gold:
-#: the frame's outer edge runs x 54..1184 and y 53..1186, and this is that square opened by five
-#: pixels on each side so no mask lands directly on the metal.
-FRAME = (49, 48, 1191, 1191)
+#: The artwork inside the bezel, as left/top/right/bottom in source pixels. The frame's inner
+#: edge was measured across the middle 60% of every side and taken at its worst case — left 111,
+#: right 1136, top 81, bottom 1126 — and this is the largest centred square that clears all four
+#: with room to spare. Tightened past the minimum on purpose: the extra crop costs board nobody
+#: looks at and buys the two pieces roughly a tenth more size at 48 pixels.
+ART = (150, 130, 1098, 1078)
 
-#: The corner radius the source has baked in, as a fraction of the tile. Not used here — the
-#: launcher supplies the shape — but [KoridorMark] rounds the splash tile to it, and the number
-#: belongs beside the crop it was measured from.
-BAKED_RADIUS = 0.145
+#: The corner a tile of this artwork is rounded to where the shape is ours to choose — the splash
+#: mark and the feature graphic. Not used for the launcher, which supplies its own mask. Roughly
+#: One UI's squircle, so the three agree.
+TILE_RADIUS = 0.26
 
 #: The fraction of the 108-unit canvas a launcher mask keeps: 72/108.
 VISIBLE = 72 / 108
@@ -82,7 +89,7 @@ def rounded_mask(size, radius=0.22):
 def canvas():
     """The 108-unit square: the tile filling the visible middle, a fabricated ring around it."""
     side = CANVAS - 2 * RING
-    tile = Image.open(SOURCE).convert("RGB").crop(FRAME).resize((side, side), Image.LANCZOS)
+    tile = Image.open(SOURCE).convert("RGB").crop(ART).resize((side, side), Image.LANCZOS)
 
     grown = np.pad(np.asarray(tile), ((RING, RING), (RING, RING), (0, 0)), mode="edge")
     plate = Image.fromarray(grown)
@@ -144,7 +151,7 @@ if __name__ == "__main__":
             format="WEBP", quality=QUALITY, method=6, exact=True,
         )
 
-    print("splash mark — the tile, square; KoridorMark rounds it to BAKED_RADIUS")
+    print("splash mark — the tile, square; KoridorMark rounds it to TILE_RADIUS")
     save(
         visible.resize((432, 432), Image.LANCZOS),
         os.path.join(RES, "drawable-xxxhdpi", "app_mark.webp"),

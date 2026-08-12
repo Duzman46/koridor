@@ -1,6 +1,7 @@
 package com.duzman46.gridbound.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,7 +12,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.theme.KoridorGold
 
 /**
  * The app mark: the launcher tile, on the splash screen.
@@ -27,20 +30,25 @@ import com.duzman46.gridbound.R
  * of the 108-unit canvas. One export at xxxhdpi and nothing below: this is drawn at a single size
  * on a single screen, and 432 pixels covers 104dp on the densest handset with room to spare.
  *
- * **No border and no rounding of its own beyond the source's.** The artwork arrives with a gold
- * bezel already drawn on it at a 14.5% corner radius, so the clip below traces that corner rather
- * than imposing a second one — a squircle at 26%, which is what this used when the mark was a
- * photograph, would cut across the metal and leave four gaps in the frame. A hairline on top of
- * the bezel would be a second frame for the same reason.
+ * **The gold hairline is not the bezel coming back.** The source artwork has a thick gold moulding
+ * around it; the icon crop cuts inside it, because a launcher masks the tile and a baked frame
+ * only survives on the part of the perimeter the mask happens to follow — on the handset it came
+ * out bright on two edges, dim on two and gone at the pinch points. What is left is a picture
+ * whose own edges are dark board, and on a near-black splash a dark tile with no edge stops
+ * reading as an object. One device-pixel of gold at a fifth opacity gives it one, evenly, on a
+ * shape this file controls completely.
  */
 @Composable
 fun KoridorMark(modifier: Modifier = Modifier) {
-    // Matches BAKED_RADIUS in docs/store/app-icon.py. A percentage rather than a dp, so the
-    // corner stays the source's corner at whatever size the caller asks for.
+    // Matches TILE_RADIUS in docs/store/app-icon.py, which rounds the same tile on the feature
+    // graphic. A percentage rather than a dp, so the corner holds its proportion at any size.
+    val shape = RoundedCornerShape(percent = 26)
     Image(
         painter = painterResource(R.drawable.app_mark),
         contentDescription = null,
-        modifier = modifier.clip(RoundedCornerShape(percent = 14)),
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, KoridorGold.copy(alpha = 0.20f), shape),
         contentScale = ContentScale.Crop,
     )
 }

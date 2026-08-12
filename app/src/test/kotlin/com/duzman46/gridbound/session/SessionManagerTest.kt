@@ -21,6 +21,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import com.duzman46.gridbound.domain.models.GameStatistics
+import kotlinx.coroutines.flow.first
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -362,6 +364,44 @@ class SessionManagerTest {
         assertEquals(AppError.NOT_SIGNED_IN, renamed.errorOrNull)
         assertEquals(startedAt, testScheduler.currentTime)
         assertFalse(game.isUsernameChosen)
+    }
+
+    // --- Whose record it is ---------------------------------------------------------------
+
+    @Test
+    fun `a different identity does not inherit the last one's record`() = runTest {
+        // The bug, reported from the handset: sign out, come back as a guest, and the previous
+        // account's achievements and statistics were still there. They are DataStore counters
+        // and nothing on them said whose they were.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        game.setStatistics(GameStatistics(totalGames = 9, totalWins = 5, onlineGames = 9))
+        game.markAchievementsSeen(setOf("FIRST_WIN"))
+
+        profiles.seedExistingAccount(username = "Koray", rating = 1450)
+        auth.hasCredentialForExistingAccount = true
+        session.signInToExistingAccount()
+        advanceUntilIdle()
+
+        assertEquals(GameStatistics(), game.statistics.first())
+        assertEquals(emptySet<String>(), game.seenAchievements.first())
+    }
+
+    @Test
+    fun `signing up in place keeps everything the guest played`() = runTest {
+        // The other half of the same rule, and the one the sign-up row promises in words:
+        // linking upgrades the anonymous user without changing its id, so the record stays.
+        val session = manager()
+        session.enterGuestMode()
+        advanceUntilIdle()
+        val played = GameStatistics(totalGames = 9, totalWins = 5, onlineGames = 9)
+        game.setStatistics(played)
+
+        session.linkGuestWithEmail("koray@example.com", "hunter2hunter2")
+        advanceUntilIdle()
+
+        assertEquals(played, game.statistics.first())
     }
 
     // --- Handing over to an account that already exists -----------------------------------

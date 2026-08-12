@@ -39,6 +39,22 @@ interface GameRepository {
 
     suspend fun markAchievementsSeen(ids: Set<String>)
 
+    /**
+     * Says whose the local record is, and clears it when that is somebody new.
+     *
+     * The counters behind [statistics] and [seenAchievements] live on the handset, and for a
+     * long time that was the whole of it: they belonged to the device and to nobody in
+     * particular. That is a leak. Signing out and coming back as a guest handed the next
+     * identity the last one's achievements and win rate.
+     *
+     * Called with whichever identity the session is carrying. The same id twice changes
+     * nothing, which is what makes linking safe -- `linkGuestWithEmail` upgrades an anonymous
+     * user in place and keeps its id, so a guest who signs up keeps everything they played,
+     * exactly as the sign-up row promises. A *different* id is a different player, and their
+     * record starts empty.
+     */
+    suspend fun claimStatisticsFor(userId: String)
+
     suspend fun setLanguage(language: AppLanguage)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setSoundEnabled(enabled: Boolean)

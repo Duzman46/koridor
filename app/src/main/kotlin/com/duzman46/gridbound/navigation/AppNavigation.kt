@@ -511,6 +511,8 @@ fun AppNavigation(
                 LeaderboardRoute(
                     onBack = { navController.popFrom(entry) },
                     onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
+                    // Where the empty friends board sends somebody who wants one.
+                    onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
                     onProfile = { navController.navigateFrom(entry, Routes.PROFILE) },
                     onOpenProfile = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))

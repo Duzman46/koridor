@@ -69,6 +69,10 @@ import com.duzman46.gridbound.ui.components.home.ScopeTabs
 import com.duzman46.gridbound.ui.components.home.StandingRow
 import com.duzman46.gridbound.ui.components.home.StandingsHeader
 import com.duzman46.gridbound.ui.components.home.localeUpper
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.duzman46.gridbound.ui.components.home.FriendPerk
+import com.duzman46.gridbound.ui.components.home.FriendsEmptyPanel
 
 private val VISIBLE_SCOPES = listOf(
     LeaderboardScope.GLOBAL,
@@ -81,6 +85,7 @@ fun LeaderboardRoute(
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onLinkAccount: () -> Unit,
+    onFriends: () -> Unit,
     onProfile: () -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel(),
 ) {
@@ -90,6 +95,7 @@ fun LeaderboardRoute(
         onBack = onBack,
         onOpenProfile = onOpenProfile,
         onLinkAccount = onLinkAccount,
+        onFriends = onFriends,
         onProfile = onProfile,
         onSelectScope = viewModel::selectScope,
         onLoadMore = viewModel::loadMore,
@@ -103,6 +109,7 @@ private fun LeaderboardScreen(
     onBack: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onLinkAccount: () -> Unit,
+    onFriends: () -> Unit,
     onProfile: () -> Unit,
     onSelectScope: (LeaderboardScope) -> Unit,
     onLoadMore: () -> Unit,
@@ -164,6 +171,42 @@ private fun LeaderboardScreen(
                 tab.isLoading -> LoadingState()
                 tab.error != null && tab.entries.isEmpty() ->
                     ErrorState(tab.error.asString(), onRetry)
+
+                // The friends board with nobody on it is not an error and not a shrug: it is
+                // the same "you have no friends yet" the friends screen answers with a panel,
+                // so it answers with that panel. A one-line EmptyState here left the player on
+                // a blank board with no way off it.
+                tab.isEmpty && state.selectedScope == LeaderboardScope.FRIENDS ->
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = Dimens.ScreenPadding)
+                            .padding(top = Dimens.SpaceSm, bottom = Dimens.SpaceLg),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        FriendsEmptyPanel(
+                            title = stringResource(R.string.friends_empty_title),
+                            body = stringResource(R.string.leaderboard_empty_friends),
+                            perks = listOf(
+                                FriendPerk(
+                                    icon = PremiumIcon.PLUS,
+                                    title = stringResource(R.string.friends_perk_add),
+                                    body = stringResource(R.string.friends_perk_add_hint),
+                                ),
+                                FriendPerk(
+                                    icon = PremiumIcon.BARS,
+                                    title = stringResource(R.string.friends_perk_compare),
+                                    body = stringResource(R.string.friends_perk_compare_hint),
+                                ),
+                            ),
+                            // A guest is offered nothing here for the same reason the friends
+                            // screen offers them nothing: the form behind it needs an account.
+                            action = stringResource(R.string.friends_add_player)
+                                .takeIf { !state.isGuest },
+                            onAction = onFriends,
+                        )
+                    }
 
                 tab.isEmpty -> EmptyState(state.selectedScope.emptyMessage())
                 else -> LeaderboardList(state, onOpenProfile, onLoadMore)

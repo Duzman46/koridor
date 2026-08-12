@@ -94,7 +94,6 @@ import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
 import com.duzman46.gridbound.ui.components.home.FriendActionButton
 import com.duzman46.gridbound.ui.components.home.ProfileDetailCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
-import com.duzman46.gridbound.ui.components.home.ProfilePips
 import com.duzman46.gridbound.ui.components.home.ProfileProgressBar
 import com.duzman46.gridbound.ui.components.home.ProfileStatStrip
 import com.duzman46.gridbound.ui.components.home.SectionLabel
@@ -313,17 +312,31 @@ fun ProfileScreen(
                                 )
                             },
                         )
+                        // Statistics rather than the streak. A run of wins is one number and
+                        // it is already on the strip above as part of the record; the card slot
+                        // is better spent on the door to every other number, which nothing else
+                        // on this page opens.
                         ProfileFeatureCard(
-                            icon = PremiumIcon.FLAME,
+                            icon = PremiumIcon.BARS,
                             accent = KoridorGold,
-                            title = stringResource(R.string.profile_win_streak),
-                            headline = profile.currentWinStreak.toString(),
+                            title = stringResource(R.string.menu_statistics),
+                            headline = stringResource(
+                                R.string.stats_percentage,
+                                if (profile.totalGames == 0) {
+                                    0
+                                } else {
+                                    (profile.wins * 100) / profile.totalGames
+                                },
+                            ),
                             action = stringResource(R.string.profile_streak_action),
                             onAction = onStatistics,
                             detail = {
-                                ProfilePips(
-                                    filled = profile.currentWinStreak,
-                                    total = STREAK_PIPS,
+                                ProfileProgressBar(
+                                    fraction = if (profile.totalGames == 0) {
+                                        0f
+                                    } else {
+                                        profile.wins.toFloat() / profile.totalGames
+                                    },
                                     accent = KoridorGold,
                                 )
                             },
@@ -360,15 +373,6 @@ fun ProfileScreen(
         }
     }
 }
-
-/**
- * How many pips the streak card draws.
- *
- * Five, because that is [com.duzman46.gridbound.achievements.domain.Achievement.STREAK_FIVE]'s
- * target — the longest run the game asks for — so a full row means the streak is as long as
- * anything rewards rather than as long as an arbitrary bar.
- */
-private const val STREAK_PIPS = 5
 
 /**
  * Another player's page: the same record, none of the controls that belong to its owner.

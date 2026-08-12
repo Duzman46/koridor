@@ -60,6 +60,16 @@ class DefaultGameRepository @Inject constructor(
         val bestStreak = intPreferencesKey(Constants.Data.KEY_BEST_STREAK)
         val fastestWinTurns = intPreferencesKey(Constants.Data.KEY_FASTEST_WIN_TURNS)
         val seenAchievements = stringSetPreferencesKey(Constants.Data.KEY_SEEN_ACHIEVEMENTS)
+        val statisticsOwner = stringPreferencesKey(Constants.Data.KEY_STATISTICS_OWNER)
+
+        /** Everything [claimStatisticsFor] clears, in one place so none is forgotten. */
+        val record: List<Preferences.Key<*>> = listOf(
+            totalGames, totalWins, totalLosses, localGames, totalTurns,
+            easyWins, mediumWins, hardWins, expertWins,
+            easyLosses, mediumLosses, hardLosses, expertLosses,
+            onlineGames, onlineWins, currentStreak, bestStreak, fastestWinTurns,
+            seenAchievements,
+        )
     }
 
     private val preferences: Flow<Preferences> = context.gridboundDataStore.data.catch { error ->
@@ -137,6 +147,24 @@ class DefaultGameRepository @Inject constructor(
     override suspend fun setMatchMessagesEnabled(enabled: Boolean) =
         update(Keys.matchMessagesEnabled, enabled)
     override suspend fun setDifficulty(difficulty: Difficulty) = update(Keys.difficulty, difficulty.name)
+
+    override suspend fun claimStatisticsFor(userId: String) {
+        if (userId.isBlank()) return
+        context.gridboundDataStore.edit { values ->
+            val owner = values[Keys.statisticsOwner]
+            if (owner == userId) return@edit
+            // A first claim on a store that predates the owner key keeps what is there. The
+            // player it belongs to is the one making the claim -- there has only ever been one
+            // on this device -- and wiping a real record to introduce bookkeeping would be a
+            // worse bug than the one being fixed.
+            if (owner != null) {
+                // Typed one at a time: `remove` is generic over the key's value type, so a
+                // list of mixed keys cannot be handed to it as a method reference.
+                Keys.record.forEach { key -> values.remove(key) }
+            }
+            values[Keys.statisticsOwner] = userId
+        }
+    }
 
     override suspend fun recordCompletedGame(
         mode: GameMode,

@@ -237,6 +237,15 @@ object Constants {
          */
         const val KEY_SEEN_ACHIEVEMENTS = "seen_achievements"
 
+        /**
+         * Whose record the counters above are.
+         *
+         * They are device-local and were once meant to be exactly that. They are not: a player
+         * who signed out and came back as a guest found the previous account's achievements and
+         * statistics waiting for them, because nothing in the store said who had earned them.
+         */
+        const val KEY_STATISTICS_OWNER = "statistics_owner"
+
         /** When the app was last opened, and when it last said anything while it was closed. */
         const val KEY_LAST_OPENED = "last_opened_at"
         const val KEY_LAST_NUDGED = "last_nudged_at"

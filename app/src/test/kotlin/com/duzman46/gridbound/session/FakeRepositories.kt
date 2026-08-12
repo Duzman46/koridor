@@ -447,6 +447,22 @@ class FakeGameRepository : GameRepository {
         seenAchievementsState.value = ids
     }
 
+    /** Whose record this is, and every id that has ever claimed it, oldest first. */
+    var statisticsOwner: String? = null
+    val statisticsClaims = mutableListOf<String>()
+
+    override suspend fun claimStatisticsFor(userId: String) {
+        if (userId.isBlank()) return
+        statisticsClaims += userId
+        val previous = statisticsOwner
+        if (previous == userId) return
+        if (previous != null) {
+            statisticsState.value = GameStatistics()
+            seenAchievementsState.value = emptySet()
+        }
+        statisticsOwner = userId
+    }
+
     override suspend fun setTutorialCompleted(completed: Boolean) {
         tutorialState.value = completed
     }

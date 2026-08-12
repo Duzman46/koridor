@@ -170,6 +170,17 @@ class SessionManager @Inject constructor(
                 .distinctUntilChanged()
                 .collect { userId -> userId?.let(socialRepository::startPresence) }
         }
+
+        // The local record follows the identity too. Nothing here erases anything on its own:
+        // the same id twice is a no-op, so a guest who signs up in place keeps everything they
+        // played, and only an id that is genuinely somebody else's clears it. Null is ignored
+        // rather than treated as a new owner -- signing out passes through it on the way to the
+        // next identity, and wiping there would erase the record of whoever is about to arrive.
+        scope.launch {
+            state.map { it.user?.userId }
+                .distinctUntilChanged()
+                .collect { userId -> userId?.let { gameRepository.claimStatisticsFor(it) } }
+        }
     }
 
     val isConfigured: Boolean get() = authRepository.isConfigured

@@ -22,14 +22,21 @@ changes.
 down — 2.3 % out of square, which is invisible on its own but would show as pawns drifting off
 centre by the eighth column. The fix is an anisotropic resample that makes the grid exactly
 square; the frame around it is a plain moulding and does not care that it ends up 2 % thicker
-one way than the other. What is left over on each side is the render's own near-black surround,
-between 1 % and 3 % of the image, and the app draws the board on a dark background, so it is
-the sliver that makes the padding uniform rather than a border anybody sees.
+one way than the other.
+
+**The surround is cut away and the frame is taken in.** Both came out of the same complaint —
+the board looked small and sat in a visible grey box. The box was the render's own background,
+which runs to about #141414 while the app's is #070A0D; it is gone now, dropped by an alpha cut
+that finds the board's shape by flooding in from the four corners until the gold hairline round
+the outside stops it. The smallness was the moulding: at 11.7 % a side it left the grid only
+77 % of the picture, and a board can never be wider than the handset, so the grid had nowhere
+else to grow from. [FRAME_SCALE] takes the moulding in without distorting any part of it.
 """
 import os
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -47,9 +54,19 @@ GRID_Y = (157.49, 104.933, 90.78)
 #: The frame's outer edge in the source, as (x0, y0, x1, y1). Everything beyond it is surround.
 FRAME = (34, 39, 1215, 1211)
 
-#: How much surround to leave past the widest frame margin. Small: it exists to make the four
-#: paddings equal, not to be seen.
-BLEED = 10.0
+#: How thin to take the frame, as a fraction of the thickness the render gives it.
+#:
+#: The render's moulding is 11.7 % of the board on every side, so the grid it surrounds is only
+#: 77 % of the picture — and on a 1080 px handset, where the board can never be wider than the
+#: screen, that left a 71 px tile inside a 1001 px board. Shrinking the frame is the only place
+#: the grid can grow from.
+#:
+#: **Nothing is distorted by this, and that is why it is a scale rather than a crop.** The frame
+#: is taken in nine patches: each edge band is resampled only *across* itself, where a moulding
+#: is a constant profile and cannot show it; each corner is resampled by the same factor on both
+#: axes, so the gold ornament in it keeps its shape exactly and merely gets smaller. Cropping
+#: instead would have cut the ornaments in half.
+FRAME_SCALE = 0.62
 
 #: The master's side, and the densities it ships at.
 MASTER = 1234
@@ -89,27 +106,77 @@ def verify(image):
         print("  %s grid checked: 9 tiles, worst drift %.2f px" % (axis, drift))
 
 
+def silhouette(image):
+    """The board's own shape, so the render's surround can be dropped instead of shipped.
+
+    It shipped once with the surround in it and it read as a grey box behind the board with
+    square corners — the render's background is not black, it runs to about #141414 along the
+    top, and the app's own is #070A0D. There is no threshold that separates them, because the
+    frame's *wood* is as dark as the surround it sits on. What does separate them is that a gold
+    hairline runs the whole way round the outside: flood the low ground in from the four corners
+    and it stops there, and everything the flood could not reach is the board.
+    """
+    lum = np.asarray(image.convert("RGB")).astype(float).mean(axis=2)
+    labels, _ = ndimage.label(lum <= 55.0)
+    corners = {labels[2, 2], labels[2, -3], labels[-3, 2], labels[-3, -3]}
+    corners.discard(0)
+    assert corners, "the four corners are not background — the gate is too low"
+    board = ndimage.binary_fill_holes(~np.isin(labels, sorted(corners)))
+    return Image.fromarray((board * 255).astype(np.uint8)).convert("L")
+
+
 def cut(image):
-    """The board, its grid squared, cropped to a uniform padding."""
+    """The board, its grid squared, its frame taken in, its surround dropped."""
     ax0, ax1 = span(GRID_X)
     ay0, ay1 = span(GRID_Y)
 
     # Square the grid by stretching the shorter axis. The frame comes along and does not mind.
     scale = (ay1 - ay0) / (ax1 - ax0)
-    wide = image.resize(
-        (int(round(image.width * scale)), image.height), Image.LANCZOS
-    )
+    size = (int(round(image.width * scale)), image.height)
+    wide = image.resize(size, Image.LANCZOS)
+    alpha = silhouette(image).resize(size, Image.LANCZOS)
     ax0, ax1 = ax0 * scale, ax1 * scale
     fx0, fx1 = FRAME[0] * scale, FRAME[2] * scale
 
-    # The padding is set by the widest frame margin, so no side of the frame is ever clipped.
-    pad = BLEED + max(ax0 - fx0, fx1 - ax1, ay0 - FRAME[1], FRAME[3] - ay1)
-    box = (ax0 - pad, ay0 - pad, ax1 + pad, ay1 + pad)
-    assert box[0] >= 0 and box[1] >= 0, "padding runs off the top left of the render"
-    assert box[2] <= wide.width and box[3] <= image.height, "padding runs off the bottom right"
+    # The four bands the frame occupies, and the grid between them. The render does not centre
+    # its grid in its frame — the left margin is six pixels wider than the right and twenty wider
+    # than the top — so these are four separate numbers and stay four.
+    margins = (ax0 - fx0, ay0 - FRAME[1], fx1 - ax1, FRAME[3] - ay1)
+    thin = [m * FRAME_SCALE for m in margins]
+    grid = ax1 - ax0
 
-    cropped = wide.crop(tuple(int(round(v)) for v in box))
-    return cropped.resize((MASTER, MASTER), Image.LANCZOS), pad, box[2] - box[0]
+    def band(box, width, height):
+        return wide.crop(box).resize((max(1, int(round(width))), max(1, int(round(height)))),
+                                     Image.LANCZOS), \
+               alpha.crop(box).resize((max(1, int(round(width))), max(1, int(round(height)))),
+                                      Image.LANCZOS)
+
+    # Nine patches. Each edge band is resampled only across itself, where a moulding cannot show
+    # it; each corner takes the same factor on both axes, so its ornament keeps its shape.
+    xs = [fx0, ax0, ax1, fx1]
+    ys = [FRAME[1], ay0, ay1, FRAME[3]]
+    out_w = [thin[0], grid, thin[2]]
+    out_h = [thin[1], grid, thin[3]]
+
+    pad = max(thin)
+    side = int(round(grid + pad * 2))
+    face = Image.new("RGB", (side, side), (0, 0, 0))
+    cover = Image.new("L", (side, side), 0)
+    top = pad - thin[1]
+    for row in range(3):
+        left = pad - thin[0]
+        for column in range(3):
+            piece, mask = band((xs[column], ys[row], xs[column + 1], ys[row + 1]),
+                               out_w[column], out_h[row])
+            face.paste(piece, (int(round(left)), int(round(top))))
+            cover.paste(mask, (int(round(left)), int(round(top))))
+            left += out_w[column]
+        top += out_h[row]
+
+    face.putalpha(cover)
+    print("  frame %s -> %s, grid %.1f, board %d px"
+          % (tuple(round(m) for m in margins), tuple(round(t) for t in thin), grid, side))
+    return face.resize((MASTER, MASTER), Image.LANCZOS), pad, float(side)
 
 
 def ratios(pad, side):
@@ -127,7 +194,7 @@ def ratios(pad, side):
 def save(image, folder, name):
     path = os.path.join(RES, folder, name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    image.save(path, format="WEBP", quality=92, method=6)
+    image.save(path, format="WEBP", quality=92, method=6, exact=True)
     print("  %-48s %7.1f KB" % (os.path.relpath(path, ROOT), os.path.getsize(path) / 1024))
 
 

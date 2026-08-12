@@ -41,7 +41,7 @@ object Constants {
          * the two lattices have to be the same lattice. Change the artwork, re-run the script,
          * copy both numbers back; do not tune either by eye.
          */
-        const val FRAME_RATIO = 0.12303f
+        const val FRAME_RATIO = 0.07949f
         const val PAWN_RADIUS_RATIO = 0.40f
     }
 

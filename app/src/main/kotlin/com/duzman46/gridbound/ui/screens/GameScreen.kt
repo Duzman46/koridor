@@ -79,6 +79,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -333,7 +335,8 @@ private fun GameScreen(
         },
     ) { padding ->
         BoxWithConstraints(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxSize().padding(padding)
+                .padding(horizontal = SCREEN_INSET, vertical = 8.dp),
             contentAlignment = Alignment.TopCenter,
         ) {
             val wide = maxWidth >= Constants.Ui.TABLET_BREAKPOINT_DP.dp
@@ -367,7 +370,7 @@ private fun GameScreen(
                         modifier = Modifier.rotate(180f),
                     )
                     Box(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        modifier = Modifier.fillMaxWidth().weight(1f).bleedHorizontally(SCREEN_INSET),
                         contentAlignment = Alignment.Center,
                     ) {
                         GameBoard(
@@ -409,7 +412,7 @@ private fun GameScreen(
                     }
                 } else {
                     Box(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        modifier = Modifier.fillMaxWidth().weight(1f).bleedHorizontally(SCREEN_INSET),
                         contentAlignment = Alignment.Center,
                     ) {
                         GameBoard(
@@ -1415,5 +1418,26 @@ private fun WallButton(enabled: Boolean, onClick: () -> Unit) {
             color = ink,
             maxLines = 1,
         )
+    }
+}
+
+/**
+ * The inset every card on this screen keeps, and the board gives back.
+ */
+private val SCREEN_INSET = 10.dp
+
+/**
+ * Lets the board step back out of the screen's own horizontal inset.
+ *
+ * The board is square, and on a handset it is always the width that limits it — the space above
+ * and below it goes unused whatever happens. So every dp of side padding comes straight off the
+ * grid, which is the game, while buying nothing. The cards above and below still want the inset
+ * and still have it; the inset stays on the column and this takes it off one child.
+ */
+private fun Modifier.bleedHorizontally(inset: Dp) = layout { measurable, constraints ->
+    val extra = inset.roundToPx() * 2
+    val placeable = measurable.measure(constraints.offset(horizontal = extra))
+    layout((placeable.width - extra).coerceAtLeast(0), placeable.height) {
+        placeable.place(-inset.roundToPx(), 0)
     }
 }

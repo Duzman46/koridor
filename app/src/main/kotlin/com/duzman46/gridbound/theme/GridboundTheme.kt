@@ -31,9 +31,14 @@ val KoridorJade = Color(0xFF16E9A0)
  * Muted deliberately. A saturated yellow is a coin in a casino game; this is closer to brass
  * seen under a controlled light, which is what keeps it expensive rather than loud.
  *
- * [KoridorJade] stays exactly where it was — on the board. A wall is jade in a live match, in
- * the hero picture and in the icon set, because that is a rule about a game object and not a
- * decision about the interface's accent. The two never appear in the same role.
+ * [KoridorJade] stays exactly where it was — on the board. A wall is jade in a live match and on
+ * the feature graphic's board, because that is a rule about a game object and not a decision
+ * about the interface's accent. The two never appear in the same role.
+ *
+ * The launcher icon is the one place that rule is not visible, and it is not an exception to it.
+ * Since 2026-08-12 the icon is a supplied render — gold pawn, gold-edged walls — chosen by the
+ * owner as artwork. It is a picture *of* the game rather than an instance of the interface, and
+ * nothing in the app reads a colour from it, so it constrains nothing here.
  */
 val KoridorGold = Color(0xFFD0A653)
 

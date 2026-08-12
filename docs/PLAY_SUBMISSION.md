@@ -111,18 +111,17 @@ ve o dosya olmadan programatik alıcıların büyük kısmı envantere teklif ve
 
 **Görseller** — hangisinin kullanılacağı `docs/store/ASSET_NOTES.md` içinde yazılı:
 
-- Simge: `store-assets/play-icon-512.png`. 2026-08-12'de değişti: artık ana menünün arkasındaki
-  fotoğrafın bir karesi. APK'nın içinde değil, konsola ayrıca yüklenir.
+- Simge: `store-assets/play-icon-512.png`. 2026-08-12'de değişti: `reference/simge.png`'den
+  kesiliyor — altın piyon, siyah piyon, altın çerçeve. APK'nın içinde değil, konsola ayrıca
+  yüklenir.
 - Ekran görüntüleri: `docs/store/screenshots/` altında iki set var. `-en` ile bitenler
   İngilizce sayfaya, `-tr` ile bitenler Türkçe sayfaya. Kendi dilinde sayfası olmayan herkes
   varsayılanın — yani İngilizce setin — görüntülerini görür. İkisi de 2026-08-08'de yayın
   derlemesinden çekildi.
-- Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png`. 2026-08-08'de yayın paletiyle
-  yeniden üretildi — koyu tahta, mavi ve kırmızı piyon, mint duvarlar, solda çizilmiş
-  piyon-duvar amblemi. Üreten betik `docs/store/feature-graphic.py`; palet değişirse yeniden
-  çalıştırılır. **Soldaki amblem 2026-08-12'den beri simgeyle aynı şey değil** — simge artık bir
-  fotoğraf. Yüklemeyi engellemez; yalnızca ikisi aynı ürünü göstermiyor. Ayrıntı
-  `ASSET_NOTES.md` sonunda.
+- Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png`. Koyu tahta, mavi ve kırmızı piyon,
+  mint duvarlar; **solda simgenin kendisi** — çizimi değil, `app-icon.py`'nin ürettiği kutucuğun
+  ta kendisi, çalışma anında kesiliyor. Üreten betik `docs/store/feature-graphic.py`; simge ya da
+  palet değişirse `app-icon.py`'den **sonra** yeniden çalıştırılır.
 - **Depo dışında, bir üst klasörde** (`Koridor/store-assets/`) hem eski bir `icon-512.png` hem de
   **yayınlanacakla aynı adı taşıyan** eski bir `feature-graphic-1024x500.png` duruyor. Buradaki
   tek gerçek tehlike, adına bakıp o ikisinden birini yüklemek.

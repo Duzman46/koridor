@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,10 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import androidx.compose.foundation.background
@@ -77,17 +74,19 @@ fun SplashScreen(onFinished: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl),
             ) {
                 KoridorMark(Modifier.size(104.dp).scale(scale))
-                Text(
-                    stringResource(R.string.app_name).uppercase(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    // Explicit, and that is the whole fix: this Text is not inside a Surface,
-                    // so it inherited LocalContentColor's default of black and was drawn in
-                    // black on a near-black ground. The wordmark was there the whole time and
-                    // could not be read.
-                    color = MaterialTheme.colorScheme.onBackground,
-                    letterSpacing = 0.18.em,
-                )
+                // The home screen's own brand block, not a second setting of the same words.
+                //
+                // What stood here was a plain uppercased Text, and it was wrong twice. It called
+                // String.uppercase() with no locale, which maps i to I in the root locale — so
+                // the first thing a Turkish player saw was KORIDOR, the app's name misspelt, and
+                // the home screen one screen later said KORİDOR. And it set the name in Black at
+                // a tight track, where HomeWordmark sets it Light and widely tracked with a wall
+                // piece standing in for the upright letter. Two different wordmarks a heartbeat
+                // apart is not a splash, it is a mismatch.
+                //
+                // HomeBrand carries the tagline with it, which is the point: the promise belongs
+                // on the screen that has nothing else to say.
+                HomeBrand()
             }
         }
     }

@@ -4,6 +4,17 @@ The old file was drawn against the pre-launch palette: bright green tiles, an or
 pawn, gold walls. The shipped board is near-black with blue and red pawns and mint
 walls, so the old graphic advertises an app the player will not recognise. Everything
 here is drawn from the same colours the screenshots show.
+
+**The left-hand mark is no longer drawn.** It used to be a jade bar-pawn-bar emblem,
+copied from the launcher icon so the two read as one product; the icon became artwork
+of its own and the copy went stale within the day. It is now the icon itself, pasted
+from the same export the Play listing uses, which is a thing that cannot drift.
+
+The bloom that lit the graphic moved with it, emerald to the brand's gold. The board
+on the right did NOT: its tiles, its mint wall and its blue and red pawns are the
+colours of a live match, and a feature graphic that recolours the game to match its
+own icon is a feature graphic that lies about the app. Gold is the interface accent
+here and jade is the board — the same division the app itself keeps.
 """
 import os
 from PIL import Image, ImageDraw, ImageFilter
@@ -11,9 +22,10 @@ from PIL import Image, ImageDraw, ImageFilter
 S = 4  # supersample, downscaled at the end
 W, H = 1024 * S, 500 * S
 
-BG_TOP = (10, 14, 12)
-BG_BOT = (4, 7, 6)
-GLOW = (18, 120, 84)
+BG_TOP = (13, 12, 10)
+BG_BOT = (5, 5, 5)
+#: The brand's gold, dimmed to a bloom. Was emerald; the icon it lights is gold now.
+GLOW = (120, 92, 40)
 
 TILE = (19, 24, 21)
 TILE_EDGE = (30, 38, 33)
@@ -118,24 +130,29 @@ pawn(d, x0 + pitch * 3 + side / 2, y0 + pitch * 2 + side * 0.32, side * 0.19,
 
 canvas = Image.alpha_composite(canvas.convert("RGBA"), board)
 
-# The icon motif on the left: the two walls and the pawn between them, so the graphic
-# and the launcher icon read as the same product.
-mark = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-m = ImageDraw.Draw(mark)
+# The icon on the left — the real one, not a drawing of it.
+#
+# app-icon.py is imported rather than its output file read, so this cannot be run against a
+# stale export: the tile is cut from reference/simge.png at the moment this runs, by the same
+# code that cuts the launcher's.
+import importlib.util  # noqa: E402 — deferred so the drawing above stays readable top to bottom
+
+spec = importlib.util.spec_from_file_location(
+    "app_icon", os.path.join(os.path.dirname(os.path.abspath(__file__)), "app-icon.py"))
+app_icon = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(app_icon)
+
+mark_px = int(H * 0.62)
+tile = app_icon.visible_of(app_icon.canvas()).resize((mark_px, mark_px), Image.LANCZOS)
+shape = Image.new("L", (mark_px * 4, mark_px * 4), 0)
+ImageDraw.Draw(shape).rounded_rectangle(
+    (0, 0, mark_px * 4 - 1, mark_px * 4 - 1),
+    radius=int(mark_px * 4 * app_icon.BAKED_RADIUS), fill=255)
+tile.putalpha(shape.resize((mark_px, mark_px), Image.LANCZOS))
+
 mx, my = int(W * 0.185), int(H * 0.50)
-bar_h = int(H * 0.52)
-bar_w = int(bar_h * 0.132)
-bar_dx = int(bar_h * 0.40)
-
-bar_grad = vertical_gradient((bar_w, bar_h), ICON_G1, ICON_G2)
-for sign in (-1, 1):
-    shape = Image.new("L", (bar_w, bar_h), 0)
-    ImageDraw.Draw(shape).rounded_rectangle((0, 0, bar_w - 1, bar_h - 1),
-                                            radius=bar_w // 2, fill=255)
-    canvas.paste(bar_grad, (mx + sign * bar_dx - bar_w // 2, my - bar_h // 2), shape)
-
-pawn(m, mx, my - bar_h * 0.20, bar_h * 0.155, PAWN_W, PAWN_W_D)
-canvas = Image.alpha_composite(canvas, mark)
+canvas = canvas.convert("RGBA")
+canvas.alpha_composite(tile, (mx - mark_px // 2, my - mark_px // 2))
 
 # Vignette, so nothing important reads as sitting on the frame edge.
 vig = Image.new("L", (W, H), 0)

@@ -1,20 +1,24 @@
 # Store asset notes
 
-The launcher icon is a photograph: one square cut out of `reference/koridor.png`, holding both pawns and the three walls between them — the scene from the main menu, not a detail of it. `docs/store/app-icon.py` cuts every size the app and the listing need from that one file, so the tile on the launcher, the tile on the splash screen and the tile in the Play listing cannot drift apart from each other. Re-run it after the photograph or the framing changes; there is nothing to redraw by hand.
-
-The scene is **scaled down into** the 72 units a launcher keeps rather than cropped up to fill the 108-unit canvas. That distinction is the whole design: the two pieces sit 848 pixels apart on the picture's diagonal, and every square that contains them both puts at least one outside the safe circle — so a cropping approach can only ever produce one pawn on its own, which is what shipped for half a day and read as a chess app. Scaling the composition instead puts both pieces comfortably inside a circle mask. The outer sixth, which no launcher draws, is the scene's own edge rows blurred and darkened; it is the only part of the icon that is not photograph.
-
-`reference/koridor.png` is also the source of the main menu's backdrop, but **that one is not generated** — `res/drawable-{xh,xxh,xxxh}dpi/home_scene.webp` is a separate wide crop carrying its own top and bottom fade, and no script rebuilds it. Replacing the photograph therefore means re-running the script *and* re-cutting `home_scene` by hand, or the icon and the screen behind it stop being the same board.
+The launcher icon is `reference/simge.png` — the owner's artwork: a gold pawn and a black one on a black board of gold-edged walls, inside a gold bezel. `docs/store/app-icon.py` cuts every size the app and the listing need from that one file, so the tile on the launcher, the tile on the splash screen, the tile in the Play listing and the mark on the feature graphic cannot drift apart from each other. Re-run it after the artwork or the framing changes; there is nothing to redraw by hand.
 
 ```bash
 python docs/store/app-icon.py
+python docs/store/feature-graphic.py
 ```
 
-Three things are still drawn rather than photographed, and each for a reason the platform imposes:
+Two things about the cut are load-bearing:
 
-- **`ic_launcher_monochrome.xml`** — the Android 13 themed icon. The system keeps this layer's shape and recolours it to the wallpaper palette, so a photograph would arrive as one flat blob. It is the pawn between two walls.
+- **The bezel is kept, against the guidance.** An adaptive icon is not supposed to carry its own shape — the launcher applies a mask, and a second rounded rectangle underneath it can show up as a gold ring clipped at four corners. Rendered under both masks that matter, that does not happen here: the baked radius is 14.5%, well inside a squircle's 30% and inside a circle, so the mask cuts across the frame's *straight* runs and comes out as a gold rim following the mask. On One UI it is indistinguishable from a frame drawn for that shape; on a Pixel it reads as a gold-rimmed disc. Both were looked at before the decision. `FRAME` is cut five pixels wide of the gold so the mask has dark to bite into first.
+- **The tile is scaled into the visible 72, not cropped to it.** A launcher keeps the middle 72 units of 108, so a full-bleed source loses a third of itself — here, the outer walls and most of the frame. The outer sixth, which nothing draws, is the tile's own edge pushed outwards, blurred and pulled down to the surround's near-black.
+
+Three marks are drawn rather than cut from the artwork, each for a reason the platform imposes:
+
+- **`ic_launcher_monochrome.xml`** — the Android 13 themed icon. The system keeps this layer's shape and recolours it to the wallpaper palette, so the artwork would arrive as one flat blob. It is the pawn between two walls.
 - **`ic_notification.xml`** — the status bar keeps a small icon's alpha and throws away every pixel of colour it has. Same reason, at 24dp.
 - **`ic_launcher_foreground.xml`** — one fully transparent path, which draws nothing and is deliberate twice over. A launcher parallaxes the foreground across the background, so a full-bleed picture has to be the *background* layer or it slides off its own edges; and the layer cannot be a genuinely empty `<vector>`, because `VectorDrawable` throws `no path defined in <vector>` and takes the whole icon down with it. That shipped for one build and every launcher fell back to Android's grid-and-robot placeholder.
+
+`reference/koridor.png` is the other source picture and **nothing generates from it.** It is the photograph behind the main menu, hand-cut into `res/drawable-{xh,xxh,xxxh}dpi/home_scene.webp` with its own top and bottom fade. It was briefly the icon too, for the length of one afternoon; the icon moved to `simge.png` and the backdrop stayed. Replacing it means re-cutting `home_scene` by hand.
 
 Files, and which of them are safe to upload:
 
@@ -24,7 +28,7 @@ Files, and which of them are safe to upload:
 - `app/src/main/res/drawable-xxxhdpi/app_mark.webp` — the splash screen's tile, rounded by `KoridorMark`.
 - `screenshots/phone-0{1..4}-*-tr.png` — the Turkish set: main menu, a match against the Expert bot with two walls down, the four bots and the colour choice, and the three ways to play. All 1080×2160.
 - `screenshots/phone-0{1..4}-*-en.png` — the same four in English, same dimensions. Eight files in the folder, not four; upload the set that matches the listing language.
-- `feature-graphic-1024x500.png` — the listing's feature graphic, redrawn on 2026-08-08 from the palette the app actually ships: near-black board, blue and red pawns, mint walls, and the drawn pawn-between-walls mark on the left. **That mark is no longer the launcher icon** — see the note below.
+- `feature-graphic-1024x500.png` — the listing's feature graphic: near-black board, blue and red pawns, mint walls, and the launcher icon itself on the left. The mark used to be a drawing copied from the icon, which went stale the day the icon changed; `feature-graphic.py` now imports `app-icon.py` and cuts the tile at run time, so a stale copy is no longer possible.
 
 Two stale files sit one directory above the repository, in `Koridor/store-assets/` — that is `../../../store-assets/` from here, outside `source/` and therefore outside git, which is why nothing has ever pruned them:
 
@@ -35,9 +39,9 @@ Uploading either by name is the hazard `WORK_ORDER.md` §9 describes.
 
 The screenshots were taken on 2026-08-08 from the shipped release build on a Galaxy S24 at 1080×2340, cropped to remove the navigation bar. No interface element was generated or retouched — this is the app as it runs. The two earlier raster icons that used to sit in this folder are deleted rather than kept beside the current one, because the hazard was never that they were wrong, it was that they were named plausibly.
 
-The feature graphic is drawn, not generated: `feature-graphic.py` renders it with Pillow at 4× and downsamples, so every colour in it is a literal from the same palette the screenshots show rather than an approximation of one. Re-run that script if the board or pawn colours change.
+The board half of the feature graphic is drawn, not generated: `feature-graphic.py` renders it with Pillow at 4× and downsamples, so every colour in it is a literal from the same palette the screenshots show rather than an approximation of one. Re-run that script if the board or pawn colours change — and re-run it after `app-icon.py`, because the mark on the left is cut from the icon.
 
-**It is out of date as of 2026-08-12 and was deliberately left that way.** Its left-hand motif is the jade bars and pawn that used to be the launcher icon, drawn at `feature-graphic.py:121–138` in `ICON_G1`/`ICON_G2`; the icon is a photograph now, so the graphic and the tile no longer read as the same product. Fixing it is a design decision about store artwork, not a mechanical consequence of the icon swap, so it waits for one.
+**The board is not recoloured to match the icon, on purpose.** Its tiles, its mint wall and its blue and red pawns are what a live match looks like, and a listing image that restyles the game to agree with its own icon is a listing image that misrepresents the app. The division is the app's own: gold is the interface accent, jade is a board object. What did move is the bloom behind everything, emerald to gold, because that is lighting rather than gameplay.
 
 ```bash
 python docs/store/feature-graphic.py

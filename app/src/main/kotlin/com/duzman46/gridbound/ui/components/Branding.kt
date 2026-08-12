@@ -1,7 +1,6 @@
 package com.duzman46.gridbound.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,40 +11,36 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
-import com.duzman46.gridbound.theme.KoridorGold
 
 /**
  * The app mark: the launcher tile, on the splash screen.
  *
  * Literally the same pixels. res/drawable-xxxhdpi/app_mark.webp and the icon's background layer
- * are two exports of one crop of one photograph — docs/store/app-icon.py cuts both — so the tile
- * a player taps and the tile that greets them a heartbeat later are the same object, down to the
- * grain on the board. That is the whole reason this is a picture and no longer a drawing: the
- * mark used to be a flat pawn between two bars while the icon was a shaded one, and they were
- * recognisably siblings rather than recognisably the same.
+ * are two exports of one crop of one file — docs/store/app-icon.py cuts both — so the tile a
+ * player taps and the tile that greets them a heartbeat later are the same object. That is the
+ * whole reason this is a picture and no longer a drawing: the mark used to be a flat pawn between
+ * two bars while the icon was a shaded one, and they were recognisably siblings rather than
+ * recognisably the same.
  *
- * The asset is the *masked* square — what a launcher leaves after it throws away the outer
- * sixth of the 108-unit canvas — so rounding it here reproduces the tile rather than re-cropping
- * it. One export at xxxhdpi and nothing below: this is drawn at a single size on a single screen,
- * and 432 pixels covers 104dp on the densest handset with room to spare.
+ * The asset is the *masked* square — what a launcher leaves after it throws away the outer sixth
+ * of the 108-unit canvas. One export at xxxhdpi and nothing below: this is drawn at a single size
+ * on a single screen, and 432 pixels covers 104dp on the densest handset with room to spare.
  *
- * The hairline is not decoration. On the splash the ground is near-black and so is most of the
- * board in the picture, and without an edge the tile bleeds into the page and stops reading as
- * an object.
+ * **No border and no rounding of its own beyond the source's.** The artwork arrives with a gold
+ * bezel already drawn on it at a 14.5% corner radius, so the clip below traces that corner rather
+ * than imposing a second one — a squircle at 26%, which is what this used when the mark was a
+ * photograph, would cut across the metal and leave four gaps in the frame. A hairline on top of
+ * the bezel would be a second frame for the same reason.
  */
 @Composable
 fun KoridorMark(modifier: Modifier = Modifier) {
-    // A percentage, not a dp: the shape has to stay the launcher's shape at whatever size the
-    // caller asks for, and a fixed radius stops being a squircle the moment the size moves.
-    val shape = RoundedCornerShape(percent = 26)
+    // Matches BAKED_RADIUS in docs/store/app-icon.py. A percentage rather than a dp, so the
+    // corner stays the source's corner at whatever size the caller asks for.
     Image(
         painter = painterResource(R.drawable.app_mark),
         contentDescription = null,
-        modifier = modifier
-            .clip(shape)
-            .border(1.dp, KoridorGold.copy(alpha = 0.20f), shape),
+        modifier = modifier.clip(RoundedCornerShape(percent = 14)),
         contentScale = ContentScale.Crop,
     )
 }

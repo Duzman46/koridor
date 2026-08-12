@@ -328,10 +328,11 @@ Round 7's list, re-checked against the code rather than assumed. One is new.
    `source/store-assets/play-icon-512.png` and `source/docs/store/feature-graphic-1024x500.png`.
    The hazard is uploading a stale file by name, and it is unchanged.
 
-   Two things inside the repository are genuinely behind as of 2026-08-12: the feature graphic
-   still draws the retired pawn-between-walls emblem on the left, where the launcher icon is now
-   a photograph; and the screenshots predate the Friends, More, Achievements and Settings
-   redesigns. Both want a decision rather than a command, and the screenshots want a handset.
+   The feature graphic was behind for part of 2026-08-12 and is not any more: its left-hand mark
+   was a drawing copied from the old icon, and `feature-graphic.py` now imports `app-icon.py` and
+   cuts the real tile at run time, so that particular drift cannot recur. What remains behind is
+   the screenshots — they predate the Friends, More, Achievements and Settings redesigns, and
+   retaking them needs a handset.
 10. **Not verifiable here: no device is attached, and the emulator is not the deployed database.**
     `docs/MANUAL_TESTS.md` is the list; the ones this round bears on are **H4** (haptics without
     the VIBRATE permission, new) and **H2** (the release build after R8). Neither can be signed

@@ -88,6 +88,11 @@ class ComeBackWorker(
         }
 
         private fun schedule(context: Context) {
+            // The thirty-second one-shot that was briefly here, so the notice could be looked at
+            // once on a real handset, is gone. It proved the whole path — worker, permission,
+            // channel, icon, colour — and there is nothing about it worth keeping: a preview
+            // that ships is a notification a minute after install.
+            //
             // KEEP, not REPLACE: replacing on every launch restarts the period, and a period
             // that restarts every launch is a period that never elapses.
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(

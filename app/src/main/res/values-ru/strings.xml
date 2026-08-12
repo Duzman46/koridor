@@ -553,4 +553,6 @@
     <string name="account_sign_in_warning_title">Прогресс гостя будет удалён</string>
     <string name="account_sign_in_warning">Вход в этот аккаунт навсегда удалит всё, что вы сыграли как гость — рейтинг, статистику и друзей. Вместо этого вернётся история того аккаунта. Ничто не объединяется.</string>
     <string name="account_sign_in_confirm">Всё равно войти</string>
+    <string name="auth_guest_card_note">Играйте локально и пройдите обучение.</string>
+    <string name="auth_guest_link_note">Привяжите аккаунт ради друзей и сетевой игры.</string>
 </resources>

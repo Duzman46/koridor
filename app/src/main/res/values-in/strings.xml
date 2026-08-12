@@ -547,4 +547,6 @@
     <string name="account_sign_in_warning_title">Progres tamu kamu akan dihapus</string>
     <string name="account_sign_in_warning">Masuk ke akun itu menghapus permanen semua yang kamu mainkan sebagai tamu — peringkat, statistik, dan teman. Riwayat akun itu yang kembali. Tidak ada yang digabungkan.</string>
     <string name="account_sign_in_confirm">Tetap masuk</string>
+    <string name="auth_guest_card_note">Main lokal dan selesaikan tutorial.</string>
+    <string name="auth_guest_link_note">Tautkan akun untuk berteman dan bermain daring.</string>
 </resources>

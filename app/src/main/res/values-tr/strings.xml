@@ -568,4 +568,6 @@
     <string name="account_sign_in_warning_title">Misafir ilerlemen silinecek</string>
     <string name="account_sign_in_warning">O hesaba giriş yaparsan misafirken oynadığın her şey — puanın, istatistiklerin ve arkadaşların — kalıcı olarak silinir. Onun yerine o hesabın kendi geçmişi gelir. Hiçbir şey birleştirilmez.</string>
     <string name="account_sign_in_confirm">Yine de giriş yap</string>
+    <string name="auth_guest_card_note">Yerel oyunlar oynayabilir ve öğreticiyi bitirebilirsin.</string>
+    <string name="auth_guest_link_note">Arkadaş eklemek ve çevrim içi yarışmak için hesabını bağla.</string>
 </resources>

@@ -547,4 +547,6 @@
     <string name="account_sign_in_warning_title">आपकी गेस्ट प्रगति मिट जाएगी</string>
     <string name="account_sign_in_warning">उस खाते में साइन इन करने पर गेस्ट के रूप में खेला सब कुछ — रेटिंग, आँकड़े और दोस्त — हमेशा के लिए मिट जाएगा। उसकी जगह उस खाते का इतिहास लौटेगा। कुछ भी मर्ज नहीं होता।</string>
     <string name="account_sign_in_confirm">फिर भी साइन इन करें</string>
+    <string name="auth_guest_card_note">लोकल गेम खेलें और ट्यूटोरियल पूरा करें।</string>
+    <string name="auth_guest_link_note">दोस्त जोड़ने और ऑनलाइन खेलने के लिए खाता जोड़ें।</string>
 </resources>

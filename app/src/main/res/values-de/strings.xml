@@ -547,4 +547,6 @@
     <string name="account_sign_in_warning_title">Dein Gastfortschritt wird gelöscht</string>
     <string name="account_sign_in_warning">Die Anmeldung an diesem Konto löscht dauerhaft alles, was du als Gast gespielt hast — Wertung, Statistiken und Freunde. Stattdessen kehrt die Historie dieses Kontos zurück. Nichts wird zusammengeführt.</string>
     <string name="account_sign_in_confirm">Trotzdem anmelden</string>
+    <string name="auth_guest_card_note">Lokale Partien spielen und das Tutorial beenden.</string>
+    <string name="auth_guest_link_note">Verknüpfe ein Konto für Freunde und Online-Partien.</string>
 </resources>

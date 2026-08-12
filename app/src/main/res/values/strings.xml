@@ -582,4 +582,6 @@
     <string name="account_sign_in_warning_title">Your guest progress will be erased</string>
     <string name="account_sign_in_warning">Signing in to that account permanently deletes everything you played as a guest — your rating, your statistics and your friends. That account’s own history comes back instead. Nothing is merged.</string>
     <string name="account_sign_in_confirm">Sign in anyway</string>
+    <string name="auth_guest_card_note">Play local games and finish the tutorial.</string>
+    <string name="auth_guest_link_note">Link an account to add friends and play online.</string>
 </resources>

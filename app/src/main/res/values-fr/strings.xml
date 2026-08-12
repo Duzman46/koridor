@@ -550,4 +550,6 @@
     <string name="account_sign_in_warning_title">Votre progression d’invité sera effacée</string>
     <string name="account_sign_in_warning">Se connecter à ce compte supprime définitivement tout ce que vous avez joué en invité : classement, statistiques et amis. L’historique de ce compte revient à la place. Rien n’est fusionné.</string>
     <string name="account_sign_in_confirm">Se connecter quand même</string>
+    <string name="auth_guest_card_note">Jouez en local et terminez le tutoriel.</string>
+    <string name="auth_guest_link_note">Associez un compte pour les amis et le jeu en ligne.</string>
 </resources>

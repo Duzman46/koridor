@@ -563,4 +563,6 @@
     <string name="account_sign_in_warning_title">سيُمحى تقدمك كضيف</string>
     <string name="account_sign_in_warning">تسجيل الدخول إلى ذلك الحساب يحذف نهائيًا كل ما لعبته كضيف — تصنيفك وإحصاءاتك وأصدقاؤك. يعود سجل ذلك الحساب بدلاً منه. لا يُدمج شيء.</string>
     <string name="account_sign_in_confirm">سجّل الدخول على أي حال</string>
+    <string name="auth_guest_card_note">العب مباريات محلية وأكمل الدرس التعليمي.</string>
+    <string name="auth_guest_link_note">اربط حسابًا لإضافة الأصدقاء واللعب عبر الإنترنت.</string>
 </resources>

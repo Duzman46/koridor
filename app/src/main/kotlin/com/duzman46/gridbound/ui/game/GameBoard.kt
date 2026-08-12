@@ -29,6 +29,8 @@ import com.duzman46.gridbound.game.models.Wall
 import com.duzman46.gridbound.game.models.GameMode
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.presentation.game.GameUiState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.imageResource
 
 @Composable
 fun GameBoard(
@@ -37,6 +39,8 @@ fun GameBoard(
     onWallTap: (Wall) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pawnBlue = ImageBitmap.imageResource(R.drawable.pawn_blue)
+    val pawnRed = ImageBitmap.imageResource(R.drawable.pawn_red)
     val renderer = remember { CanvasRenderer() }
     val touchController = remember { TouchController() }
     // Whose way up the board is drawn. Wherever one person holds one seat — online or against
@@ -97,6 +101,8 @@ fun GameBoard(
         val geometry = BoardGeometry(size.minDimension)
         val renderBoard: DrawScope.() -> Unit = {
             renderer.draw(
+                pawnOne = pawnBlue,
+                pawnTwo = pawnRed,
                 scope = this,
                 geometry = geometry,
                 state = state.boardState,

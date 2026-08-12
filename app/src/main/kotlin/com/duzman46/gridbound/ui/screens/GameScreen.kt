@@ -107,6 +107,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
@@ -114,6 +115,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import com.duzman46.gridbound.ui.components.drawPawnMark
 
 @Composable
 fun GameRoute(
@@ -1025,20 +1030,37 @@ private fun WallControls(
             }
 
             else -> {
+                // A mark, the instruction, a rule, and the one thing there is to press. The
+                // button was outlined and grey beside grey text, which on a board screen makes
+                // the only action look like the caption next to it.
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Box(
+                        Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF171C22)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Canvas(Modifier.size(20.dp)) {
+                            drawPawnMark(
+                                center = Offset(size.width / 2f, size.height / 2f),
+                                unit = size.minDimension,
+                                color = KoridorGold,
+                            )
+                        }
+                    }
                     Text(
                         stringResource(R.string.game_move_hint),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    OutlinedButton(onClick = onToggleWall, enabled = enabled) {
-                        Text(stringResource(R.string.game_place_wall))
-                    }
+                    Box(Modifier.width(1.dp).height(34.dp).background(Color(0xFF2A3038)))
+                    WallButton(enabled = enabled, onClick = onToggleWall)
                 }
             }
         }
@@ -1344,5 +1366,54 @@ private fun GameBarButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.45f))
+    }
+}
+
+/**
+ * The one thing there is to press on a board screen, drawn like it.
+ *
+ * Gold and filled, with near-black on it: white on this yellow is under three to one, and the
+ * board behind it is the darkest surface in the app, so an outlined button here disappeared
+ * into its own caption.
+ */
+@Composable
+private fun WallButton(enabled: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(14.dp)
+    val fill = if (enabled) KoridorGold else Color(0xFF20262D)
+    val ink = if (enabled) Color(0xFF1A1206) else Color(0xFF5C6169)
+    Row(
+        Modifier
+            .clip(shape)
+            .background(fill)
+            .border(1.dp, if (enabled) KoridorGold else Color(0xFF2A3038), shape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = Dimens.SpaceLg, vertical = 11.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Two bars on the diagonal: the piece the button places, not a generic glyph.
+        Canvas(Modifier.size(18.dp)) {
+            val bar = size.width * 0.62f
+            val thick = size.height * 0.17f
+            drawRoundRect(
+                color = ink,
+                topLeft = Offset(size.width * 0.06f, size.height * 0.24f),
+                size = Size(bar, thick),
+                cornerRadius = CornerRadius(thick / 2f),
+            )
+            drawRoundRect(
+                color = ink.copy(alpha = 0.72f),
+                topLeft = Offset(size.width * 0.32f, size.height * 0.58f),
+                size = Size(bar, thick),
+                cornerRadius = CornerRadius(thick / 2f),
+            )
+        }
+        Text(
+            text = stringResource(R.string.game_place_wall),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = ink,
+            maxLines = 1,
+        )
     }
 }

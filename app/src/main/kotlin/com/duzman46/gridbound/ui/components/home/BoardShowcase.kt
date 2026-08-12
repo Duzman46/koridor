@@ -44,6 +44,9 @@ import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.game.models.WallOrientation
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.ui.util.rememberMotionEnabled
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.imageResource
+import com.duzman46.gridbound.R
 
 /**
  * Where the board artwork sits inside the well, as fractions of the well's height.
@@ -184,6 +187,8 @@ private fun artLeft(w: Float, side: Float, rtl: Boolean): Float {
 
 @Composable
 private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
+    val pawnBlue = ImageBitmap.imageResource(R.drawable.pawn_blue)
+    val pawnRed = ImageBitmap.imageResource(R.drawable.pawn_red)
     Canvas(
         Modifier
             .matchParentSize()
@@ -214,6 +219,8 @@ private fun BoxScope.StaticLayer(renderer: CanvasRenderer, rtl: Boolean) {
         val left = artLeft(w, side, rtl)
         translate(left, top) {
             renderer.draw(
+                pawnOne = pawnBlue,
+                pawnTwo = pawnRed,
                 scope = this,
                 geometry = BoardGeometry(side),
                 state = HomePosition.STATE,

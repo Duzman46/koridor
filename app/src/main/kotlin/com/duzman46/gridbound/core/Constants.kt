@@ -21,7 +21,7 @@ object Constants {
 
         /** The frame around the grid, as a fraction of the whole board. */
         const val FRAME_RATIO = 0.022f
-        const val PAWN_RADIUS_RATIO = 0.31f
+        const val PAWN_RADIUS_RATIO = 0.40f
     }
 
     object Ai {

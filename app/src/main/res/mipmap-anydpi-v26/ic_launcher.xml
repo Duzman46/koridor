@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The three layers are three different jobs, and only one of them can be the photograph.
+
+  background — the picture, full bleed. @mipmap rather than @drawable because it is a bitmap at
+  five densities and mipmap resources survive density splitting, which matters for the one
+  drawable a launcher keeps loaded after the app is gone.
+
+  foreground — empty. See ic_launcher_foreground for why the picture cannot go there.
+
+  monochrome — the drawn pawn between two walls. Android 13 recolours this layer to the user's
+  wallpaper palette and keeps only its shape, so a photograph is not an option here at any
+  quality: it would arrive as one flat blob. The mark stands in for it, which is also what
+  ic_notification does in the status bar.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_launcher_background" />
+    <background android:drawable="@mipmap/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

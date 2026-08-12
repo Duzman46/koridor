@@ -534,4 +534,8 @@
     <string name="stats_career_note">देखें आप कैसा खेल रहे हैं और यह कैसे बदल रहा है।</string>
     <string name="stats_bot_games">बॉट के खिलाफ़</string>
     <string name="stats_online_only">ऊपर के आंकड़े सिर्फ़ ऑनलाइन मैच गिनते हैं। बॉट के मैच नीचे की सूची में हैं, और इस फ़ोन पर दो लोगों का खेल किसी के रिकॉर्ड में नहीं जाता।</string>
+    <string name="stats_record_short">%1$d–%2$d</string>
+    <string name="account_manage_note">अपना साइन-इन और सत्र प्रबंधित करें।</string>
+    <string name="account_privacy_note">आपके डेटा का क्या होता है।</string>
+    <string name="account_terms_note">वे शर्तें जो आपने मानी थीं।</string>
 </resources>

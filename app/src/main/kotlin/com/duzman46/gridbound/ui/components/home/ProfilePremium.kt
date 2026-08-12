@@ -93,6 +93,7 @@ fun ProfileIdentity(
     isGuest: Boolean,
     modifier: Modifier = Modifier,
     onEdit: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val editLabel = stringResource(R.string.profile_edit_title)
     Row(
@@ -130,7 +131,10 @@ fun ProfileIdentity(
             )
             if (onEdit != null) PencilBadge(Modifier.align(Alignment.BottomEnd), size = 26.dp)
         }
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+        Column(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                 verticalAlignment = Alignment.CenterVertically,
@@ -168,6 +172,55 @@ fun ProfileIdentity(
                 )
             }
         }
+        // The one thing this page offers about the person it is about. It sits beside the name
+        // rather than under the record, because it is about *them* and the record is not.
+        trailing?.invoke()
+    }
+}
+
+/**
+ * What you can do about the person whose page this is, as one control beside their name.
+ *
+ * It replaces a banner that sat under the record and, for a guest, read "friendship needs an
+ * account" with a **Report** button beside it — two unrelated things laid out as one card, so
+ * the button appeared to be the answer to the sentence.
+ *
+ * A guest is not told they cannot. The button is offered exactly as it is to anybody else, and
+ * pressing it goes to the place that makes it possible; refusing a tap and explaining why is how
+ * an app teaches people not to tap things.
+ */
+@Composable
+fun FriendActionButton(
+    icon: PremiumIcon,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tone: Color = KoridorGold,
+) {
+    Row(
+        modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (enabled) tone.copy(alpha = 0.14f) else Color(0xFF171C22))
+            .border(
+                1.dp,
+                if (enabled) tone.copy(alpha = 0.55f) else Color(0xFF262C33),
+                RoundedCornerShape(50),
+            )
+            .then(if (enabled) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm)
+            .semantics { contentDescription = label },
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PremiumGlyph(icon, Modifier.size(18.dp), if (enabled) tone else Muted)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (enabled) tone else Muted,
+            maxLines = 1,
+        )
     }
 }
 

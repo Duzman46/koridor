@@ -540,4 +540,8 @@
     <string name="stats_career_note">Посмотрите, как вы играете и как это меняется.</string>
     <string name="stats_bot_games">Против бота</string>
     <string name="stats_online_only">Цифры выше учитывают только сетевые матчи. Матчи с ботом — в списке ниже, а игра двоих на этом телефоне никому не засчитывается.</string>
+    <string name="stats_record_short">%1$d–%2$d</string>
+    <string name="account_manage_note">Управление входом и сеансом.</string>
+    <string name="account_privacy_note">Как обращаются с вашими данными.</string>
+    <string name="account_terms_note">Условия, которые вы приняли.</string>
 </resources>

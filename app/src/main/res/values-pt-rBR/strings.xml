@@ -537,4 +537,8 @@
     <string name="stats_career_note">Veja como você joga e como isso vem mudando.</string>
     <string name="stats_bot_games">Contra o bot</string>
     <string name="stats_online_only">Os números acima contam apenas partidas on-line. As partidas contra o bot estão na escala abaixo, e uma partida entre duas pessoas neste celular não conta para ninguém.</string>
+    <string name="stats_record_short">%1$d–%2$d</string>
+    <string name="account_manage_note">Gerencie seu acesso e sua sessão.</string>
+    <string name="account_privacy_note">Como seus dados são tratados.</string>
+    <string name="account_terms_note">Os termos que você aceitou.</string>
 </resources>

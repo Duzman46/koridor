@@ -371,7 +371,14 @@ fun StatisticsScreen(
     val percent = stringResource(R.string.stats_percentage, (rate * 100).roundToInt())
 
     ScreenBackground {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        // The header is outside the scroll and the inset is on the container, which is what
+        // every other premium screen does. With the header inside, scrolling ran the cards up
+        // under the status bar and "Detaylar" ended up printed across the clock.
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(
+                title = stringResource(R.string.menu_statistics),
+                onBack = onBack,
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -379,11 +386,6 @@ fun StatisticsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
             ) {
-                PremiumHeader(
-                    title = stringResource(R.string.menu_statistics),
-                    onBack = onBack,
-                    modifier = Modifier.statusBarsPadding(),
-                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -411,9 +413,9 @@ fun StatisticsScreen(
                             label = stringResource(R.string.stats_wins),
                         )
                         StatsHeadlineCard(
-                            icon = PremiumIcon.TARGET,
-                            value = percent,
-                            label = stringResource(R.string.stats_rate),
+                            icon = PremiumIcon.SHIELD_STAR,
+                            value = losses.toString(),
+                            label = stringResource(R.string.stats_losses),
                         )
                     }
 
@@ -428,9 +430,9 @@ fun StatisticsScreen(
                                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                             ) {
                                 StatsLine(
-                                    icon = PremiumIcon.SHIELD_STAR,
-                                    label = stringResource(R.string.stats_losses),
-                                    value = losses.toString(),
+                                    icon = PremiumIcon.TARGET,
+                                    label = stringResource(R.string.stats_rate),
+                                    value = percent,
                                 )
                                 StatsDivider()
                                 StatsLine(
@@ -495,6 +497,11 @@ fun StatisticsScreen(
                                     tone = DifficultyTones[index % DifficultyTones.size],
                                     label = difficulty.label(),
                                     record = stringResource(
+                                        R.string.stats_record_short,
+                                        statistics.winsByDifficulty[difficulty] ?: 0,
+                                        statistics.lossesByDifficulty[difficulty] ?: 0,
+                                    ),
+                                    recordDescription = stringResource(
                                         R.string.stats_wins_losses,
                                         statistics.winsByDifficulty[difficulty] ?: 0,
                                         statistics.lossesByDifficulty[difficulty] ?: 0,

@@ -24,6 +24,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -228,14 +230,20 @@ fun StatsDonut(fraction: Float, caption: String, modifier: Modifier = Modifier) 
 
 /** One bot level and what it has cost or paid. */
 @Composable
-fun RowScope.DifficultyChip(tone: Color, label: String, record: String) {
+fun RowScope.DifficultyChip(
+    tone: Color,
+    label: String,
+    record: String,
+    recordDescription: String,
+) {
     Column(
         Modifier
             .weight(1f)
             .clip(RoundedCornerShape(Dimens.RadiusSm))
             .background(tone.copy(alpha = 0.10f))
             .border(1.dp, tone.copy(alpha = 0.30f), RoundedCornerShape(Dimens.RadiusSm))
-            .padding(vertical = Dimens.SpaceMd, horizontal = Dimens.SpaceSm),
+            .padding(vertical = Dimens.SpaceMd, horizontal = 4.dp)
+            .semantics(mergeDescendants = true) { contentDescription = recordDescription },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
     ) {
@@ -248,10 +256,14 @@ fun RowScope.DifficultyChip(tone: Color, label: String, record: String) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        // A score, not a sentence. The long form is a full phrase in most of the ten
+        // languages and a chip a quarter of a phone wide clips it to its first number, with
+        // no ellipsis to say that it did. The sentence survives on the semantics node.
         Text(
             text = record,
-            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
-            color = Muted,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
         )
     }

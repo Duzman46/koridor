@@ -555,4 +555,8 @@
     <string name="stats_career_note">Nasıl oynadığını ve nasıl geliştiğini gör.</string>
     <string name="stats_bot_games">Bota karşı</string>
     <string name="stats_online_only">Yukarıdaki sayılar yalnızca çevrim içi maçları sayar. Bota karşı oynananlar aşağıdaki basamakta; tek telefonda iki kişinin oynadığı maç ise kimsenin siciline yazılmaz.</string>
+    <string name="stats_record_short">%1$d–%2$d</string>
+    <string name="account_manage_note">Hesap bilgilerini ve oturum ayarlarını yönet.</string>
+    <string name="account_privacy_note">Verilerinin nasıl korunduğunu incele.</string>
+    <string name="account_terms_note">Kabul ettiğin koşullar.</string>
 </resources>

@@ -51,6 +51,24 @@ import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.SubmitButton
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.sp
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.ui.components.home.GroupNote
+import com.duzman46.gridbound.ui.components.home.OptionEntry
+import com.duzman46.gridbound.ui.components.home.OptionGroup
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
 
 @Composable
 fun AccountScreen(
@@ -102,119 +120,185 @@ fun AccountScreen(
         )
     }
 
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.account_title), onBack) }) { padding ->
-        ScreenBackground {
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(title = stringResource(R.string.account_title), onBack = onBack)
+            // Outside the scroll on purpose. Every action here is a card away from the top of
+            // the page and ends with a dialog closing over wherever the player had scrolled to;
+            // an answer written at one end of a page the player is reading the other end of is
+            // how a refused deletion came to look like a button that does nothing.
             Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 620.dp)
+                    .padding(horizontal = Dimens.SpaceLg),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
             ) {
-                // Outside the scroll on purpose. Every action here is a card away from the
-                // top of the page and ends with a dialog closing over wherever the player
-                // had scrolled to; an answer written at one end of a page the player is
-                // reading the other end of is how a refused deletion came to look like a
-                // button that does nothing.
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 620.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    // Every action on this page is several backend round trips long, and
-                    // handing an account over is the longest of them: data erased, an
-                    // identity given up, another signed in, and the session read back. The
-                    // card whose button carries a spinner is the first thing to disappear
-                    // when that starts, so without this the screen goes still at precisely
-                    // the moment the player most needs telling that it has not.
-                    if (state.isSubmitting) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
-                    }
-                    state.error?.let { FormMessage(it) }
-                    state.info?.let { FormMessage(it, isError = false) }
+                // Every action on this page is several backend round trips long, and handing an
+                // account over is the longest of them: data erased, an identity given up,
+                // another signed in, and the session read back. The card whose button carries a
+                // spinner is the first thing to disappear when that starts, so without this the
+                // screen goes still at precisely the moment the player most needs telling that
+                // it has not.
+                if (state.isSubmitting) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 620.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    if (session.isGuest) {
-                        LinkAccountCard(
-                            state = state,
-                            googleAvailable = session.isGoogleSignInAvailable,
-                            onEmail = onEmail,
-                            onPassword = onPassword,
-                            onLinkGoogle = onLinkGoogle,
-                            onLinkEmail = onLinkEmail,
-                        )
-                    }
+                state.error?.let { FormMessage(it) }
+                state.info?.let { FormMessage(it, isError = false) }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 620.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Dimens.SpaceLg)
+                    .navigationBarsPadding()
+                    .padding(bottom = Dimens.SpaceXl),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            ) {
+                if (session.isGuest) {
+                    AccountHeadline(
+                        title = stringResource(R.string.auth_link_title),
+                        body = stringResource(R.string.auth_link_explainer),
+                    )
+                    LinkAccountCard(
+                        state = state,
+                        googleAvailable = session.isGoogleSignInAvailable,
+                        onEmail = onEmail,
+                        onPassword = onPassword,
+                        onLinkGoogle = onLinkGoogle,
+                        onLinkEmail = onLinkEmail,
+                    )
+                }
 
-                    AccountCard(stringResource(R.string.account_title)) {
-                        session.user?.email?.let { email ->
-                            Text(email, style = MaterialTheme.typography.bodyMedium)
-                        }
-                        SecondarySubmitButton(
-                            text = stringResource(R.string.auth_sign_out),
+                OptionGroup(
+                    listOf(
+                        OptionEntry(
+                            icon = PremiumIcon.PERSON,
+                            title = session.user?.email
+                                ?: stringResource(R.string.account_title),
+                            subtitle = stringResource(R.string.account_manage_note),
                             onClick = { signOutRequested = true },
-                            enabled = !state.isSubmitting,
-                            leadingIcon = Icons.AutoMirrored.Rounded.Logout,
-                        )
-                    }
+                        ),
+                    ),
+                )
 
-                    if (state.hasPrivacyPolicy || state.hasTerms) {
-                        AccountCard(stringResource(R.string.account_privacy_policy)) {
+                if (state.hasPrivacyPolicy || state.hasTerms) {
+                    OptionGroup(
+                        buildList {
                             if (state.hasPrivacyPolicy) {
-                                SecondarySubmitButton(
-                                    text = stringResource(R.string.account_privacy_policy),
-                                    onClick = { onOpenUrl(state.privacyPolicyUrl) },
-                                    leadingIcon = Icons.Rounded.PrivacyTip,
+                                add(
+                                    OptionEntry(
+                                        icon = PremiumIcon.SHIELD_STAR,
+                                        title = stringResource(R.string.account_privacy_policy),
+                                        subtitle = stringResource(R.string.account_privacy_note),
+                                        onClick = { onOpenUrl(state.privacyPolicyUrl) },
+                                    ),
                                 )
                             }
                             if (state.hasTerms) {
-                                SecondarySubmitButton(
-                                    text = stringResource(R.string.account_terms_of_service),
-                                    onClick = { onOpenUrl(state.termsUrl) },
-                                    leadingIcon = Icons.Rounded.Gavel,
+                                add(
+                                    OptionEntry(
+                                        icon = PremiumIcon.DOCUMENT,
+                                        title = stringResource(R.string.account_terms_of_service),
+                                        subtitle = stringResource(R.string.account_terms_note),
+                                        onClick = { onOpenUrl(state.termsUrl) },
+                                    ),
                                 )
                             }
-                        }
-                    } else {
-                        Text(
-                            stringResource(R.string.account_legal_unavailable),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
-                    AccountCard(stringResource(R.string.account_delete_title)) {
-                        Text(
-                            stringResource(R.string.account_delete_warning),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Button(
-                            onClick = { deleteRequested = true },
-                            enabled = !state.isSubmitting,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                            ),
-                        ) {
-                            Icon(Icons.Rounded.DeleteForever, contentDescription = null)
-                            Text(
-                                stringResource(R.string.account_delete_action),
-                                Modifier.padding(start = 10.dp),
-                            )
-                        }
-                    }
+                        },
+                    )
+                } else {
+                    GroupNote(stringResource(R.string.account_legal_unavailable))
                 }
+
+                DangerRow(
+                    title = stringResource(R.string.account_delete_title),
+                    body = stringResource(R.string.account_delete_warning),
+                    enabled = !state.isSubmitting,
+                    onClick = { deleteRequested = true },
+                )
             }
         }
+    }
+}
+
+/** The gold line and the sentence under it, at the top of a page that is asking for something. */
+@Composable
+private fun AccountHeadline(title: String, body: String) {
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = KoridorGold,
+            letterSpacing = 1.2.sp,
+        )
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * The one row on this page that destroys something, drawn so it cannot be mistaken for the ones
+ * that do not.
+ *
+ * The warning is above the control rather than behind it. A red button with a title and no
+ * consequence beside it is a button people press to find out what it does; this one says what
+ * goes — profile, statistics, friends, rating — before the finger arrives, and the dialog then
+ * asks for the word to be typed out.
+ */
+@Composable
+private fun DangerRow(title: String, body: String, enabled: Boolean, onClick: () -> Unit) {
+    val danger = MaterialTheme.colorScheme.error
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(danger.copy(alpha = 0.06f))
+            .border(1.dp, danger.copy(alpha = 0.35f), RoundedCornerShape(Dimens.RadiusMd))
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(Dimens.SpaceLg),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(danger.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Rounded.DeleteForever,
+                    contentDescription = null,
+                    tint = danger,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = danger,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

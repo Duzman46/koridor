@@ -555,6 +555,9 @@ fun AppNavigation(
                     onOpenPlayer = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))
                     },
+                    // Where the add-friend button sends a guest. It is offered rather than
+                    // refused, and this is what makes the offer true.
+                    onLinkAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
                 )
             }
 

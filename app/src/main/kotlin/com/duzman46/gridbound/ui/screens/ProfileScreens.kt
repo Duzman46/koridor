@@ -91,6 +91,7 @@ import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.ProfileEmptyGames
 import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
+import com.duzman46.gridbound.ui.components.home.FriendActionButton
 import com.duzman46.gridbound.ui.components.home.ProfileDetailCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
 import com.duzman46.gridbound.ui.components.home.ProfilePips
@@ -223,7 +224,26 @@ fun ProfileScreen(
             }
             return@ScreenBackground
         }
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        // No Scaffold and no banner. A band of board ran across the top for one build and it
+        // cost 196dp of a 891dp window to say nothing the screen did not already say — with it
+        // there, the recent matches ended up underneath the docked bar with 78 pixels of scroll
+        // to reach them.
+        //
+        // The header is outside the scroll and the inset is on the container, which is what
+        // every other premium screen does. Inside the scroll, the cards ran up under the status
+        // bar and printed themselves across the clock.
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(
+                title = stringResource(R.string.profile_title),
+                onBack = onBack,
+                trailing = {
+                    PremiumIconButton(
+                        icon = PremiumIcon.COG,
+                        label = stringResource(R.string.game_settings),
+                        onClick = onSettings,
+                    )
+                },
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -231,22 +251,6 @@ fun ProfileScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
             ) {
-                // No Scaffold and no banner. A band of board ran across the top for one build
-                // and it cost 196dp of a 891dp window to say nothing the screen did not already
-                // say — with it there, the recent matches ended up underneath the docked bar and
-                // there were 78 pixels of scroll to reach them with.
-                PremiumHeader(
-                    title = stringResource(R.string.profile_title),
-                    onBack = onBack,
-                    modifier = Modifier.statusBarsPadding(),
-                    trailing = {
-                        PremiumIconButton(
-                            icon = PremiumIcon.COG,
-                            label = stringResource(R.string.game_settings),
-                            onClick = onSettings,
-                        )
-                    },
-                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -382,6 +386,7 @@ private const val STREAK_PIPS = 5
 fun PlayerProfileRoute(
     onBack: () -> Unit,
     onOpenPlayer: (String) -> Unit,
+    onLinkAccount: () -> Unit,
     viewModel: PlayerProfileViewModel = hiltViewModel(),
     recentGamesViewModel: RecentGamesViewModel = hiltViewModel(),
 ) {
@@ -397,6 +402,7 @@ fun PlayerProfileRoute(
         onUnblock = viewModel::unblock,
         onBlock = viewModel::block,
         onReport = viewModel::report,
+        onLinkAccount = onLinkAccount,
         onRetry = viewModel::retry,
     )
 }
@@ -412,6 +418,7 @@ private fun PlayerProfileScreen(
     onUnblock: () -> Unit,
     onBlock: () -> Unit,
     onReport: (ContentReportReason) -> Unit,
+    onLinkAccount: () -> Unit,
     onRetry: () -> Unit,
 ) {
     // The player's own name once it is known: a bar reading "Player profile" above a page with
@@ -455,6 +462,15 @@ private fun PlayerProfileScreen(
                         username = profile.username,
                         avatarId = profile.avatarId,
                         isGuest = profile.isGuest,
+                        trailing = {
+                            FriendAction(
+                                state = state,
+                                onSendRequest = onSendRequest,
+                                onAccept = onAccept,
+                                onUnblock = onUnblock,
+                                onLinkAccount = onLinkAccount,
+                            )
+                        },
                     )
                     ProfileStatStrip(
                         rating = profile.rating,
@@ -462,22 +478,20 @@ private fun PlayerProfileScreen(
                         wins = profile.wins,
                         losses = profile.losses,
                     )
-                    ProfileDetailCard(
-                        entries = listOf(
-                            stringResource(R.string.profile_win_streak) to
-                                profile.currentWinStreak.toString(),
-                            stringResource(R.string.profile_best_streak) to
-                                profile.bestWinStreak.toString(),
-                            stringResource(R.string.profile_highest_rating) to
-                                profile.highestRating.toString(),
-                        ),
-                        footer = profile.createdAt
-                            .takeIf { it > 0L }
-                            ?.let {
-                                stringResource(R.string.profile_member_since, formatDate(it))
-                            },
-                    )
-                    FriendAction(state, onSendRequest, onAccept, onUnblock)
+                    // No streaks and no peak rating. Somebody else's run of form is theirs to
+                    // know: the four public figures are what a stranger needs to size up an
+                    // opponent, and how hot they are running right now is not one of them.
+                    profile.createdAt.takeIf { it > 0L }?.let {
+                        Text(
+                            text = stringResource(
+                                R.string.profile_member_since,
+                                formatDate(it),
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    state.message?.let { FormMessage(it) }
                     SafetyActions(state, onBlock, onReport)
                     SectionLabel(stringResource(R.string.profile_recent_games))
                     when {
@@ -510,42 +524,58 @@ private fun FriendAction(
     onSendRequest: () -> Unit,
     onAccept: () -> Unit,
     onUnblock: () -> Unit,
+    onLinkAccount: () -> Unit,
 ) {
     if (state.isSelf) return
+    // A guest gets the same button, pointed at the thing that makes it work. The page used to
+    // print a sentence saying friendship needs an account, next to a Report button it had
+    // nothing to do with.
     if (state.requiresAccount) {
-        RelationshipNote(stringResource(R.string.friends_requires_account))
+        FriendActionButton(
+            icon = PremiumIcon.PLUS,
+            label = stringResource(R.string.friends_add),
+            enabled = true,
+            onClick = onLinkAccount,
+        )
         return
     }
     when (state.status) {
-        FriendshipStatus.NONE -> SubmitButton(
-            text = stringResource(R.string.friends_add),
+        FriendshipStatus.NONE -> FriendActionButton(
+            icon = PremiumIcon.PLUS,
+            label = stringResource(R.string.friends_add),
+            enabled = !state.isBusy,
             onClick = onSendRequest,
-            isSubmitting = state.isBusy,
-            leadingIcon = Icons.Rounded.PersonAdd,
         )
 
-        FriendshipStatus.REQUEST_RECEIVED -> SubmitButton(
-            text = stringResource(R.string.friends_accept),
+        FriendshipStatus.REQUEST_RECEIVED -> FriendActionButton(
+            icon = PremiumIcon.PEOPLE,
+            label = stringResource(R.string.friends_accept),
+            enabled = !state.isBusy,
             onClick = onAccept,
-            isSubmitting = state.isBusy,
-            leadingIcon = Icons.Rounded.Check,
         )
 
-        FriendshipStatus.REQUEST_SENT ->
-            RelationshipNote(stringResource(R.string.friends_request_pending))
-
-        FriendshipStatus.FRIENDS -> RelationshipNote(
-            text = stringResource(R.string.friends_already_friends),
-            color = MaterialTheme.colorScheme.primary,
+        // Sent and already-friends are states, not offers, so neither is pressable.
+        FriendshipStatus.REQUEST_SENT -> FriendActionButton(
+            icon = PremiumIcon.CLOCK,
+            label = stringResource(R.string.friends_request_pending),
+            enabled = false,
+            onClick = {},
         )
 
-        FriendshipStatus.BLOCKED -> SecondarySubmitButton(
-            text = stringResource(R.string.friends_unblock),
+        FriendshipStatus.FRIENDS -> FriendActionButton(
+            icon = PremiumIcon.PEOPLE,
+            label = stringResource(R.string.friends_already_friends),
+            enabled = false,
+            onClick = {},
+        )
+
+        FriendshipStatus.BLOCKED -> FriendActionButton(
+            icon = PremiumIcon.NO_ADS,
+            label = stringResource(R.string.friends_unblock),
+            enabled = !state.isBusy,
             onClick = onUnblock,
-            isSubmitting = state.isBusy,
         )
     }
-    state.message?.let { FormMessage(it) }
 }
 
 /**

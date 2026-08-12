@@ -544,4 +544,6 @@
     <string name="account_manage_note">Управление входом и сеансом.</string>
     <string name="account_privacy_note">Как обращаются с вашими данными.</string>
     <string name="account_terms_note">Условия, которые вы приняли.</string>
+    <string name="account_or">или</string>
+    <string name="account_link_email_note">Задайте адрес и пароль</string>
 </resources>

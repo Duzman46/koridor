@@ -1,6 +1,5 @@
 package com.duzman46.gridbound.ui.components.home
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,11 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
@@ -179,52 +174,6 @@ fun StatsLine(icon: PremiumIcon, label: String, value: String, modifier: Modifie
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
         )
-    }
-}
-
-/** The win-rate ring beside the details. */
-@Composable
-fun StatsDonut(fraction: Float, caption: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(112.dp)) {
-                val stroke = size.minDimension * 0.11f
-                val inset = stroke / 2f
-                val box = Size(size.width - stroke, size.height - stroke)
-                drawArc(
-                    color = Hairline,
-                    startAngle = 0f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = box,
-                    style = Stroke(stroke, cap = StrokeCap.Round),
-                )
-                // Zero draws nothing rather than a dot: a rounded cap on a zero-length arc is a
-                // pip at twelve o'clock, which reads as a sliver of progress that is not there.
-                if (fraction > 0f) {
-                    drawArc(
-                        color = KoridorGold,
-                        startAngle = -90f,
-                        sweepAngle = 360f * fraction.coerceIn(0f, 1f),
-                        useCenter = false,
-                        topLeft = Offset(inset, inset),
-                        size = box,
-                        style = Stroke(stroke, cap = StrokeCap.Round),
-                    )
-                }
-            }
-            Text(
-                text = caption,
-                style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
     }
 }
 

@@ -573,4 +573,6 @@
     <string name="account_manage_note">Manage your sign-in and session.</string>
     <string name="account_privacy_note">See how your data is handled.</string>
     <string name="account_terms_note">The terms you agreed to.</string>
+    <string name="account_or">or</string>
+    <string name="account_link_email_note">Set an address and a password</string>
 </resources>

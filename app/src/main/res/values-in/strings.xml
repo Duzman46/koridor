@@ -538,4 +538,6 @@
     <string name="account_manage_note">Kelola masuk dan sesi kamu.</string>
     <string name="account_privacy_note">Bagaimana datamu diperlakukan.</string>
     <string name="account_terms_note">Ketentuan yang kamu setujui.</string>
+    <string name="account_or">atau</string>
+    <string name="account_link_email_note">Tetapkan alamat dan kata sandi</string>
 </resources>

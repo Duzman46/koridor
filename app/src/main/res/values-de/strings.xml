@@ -538,4 +538,6 @@
     <string name="account_manage_note">Anmeldung und Sitzung verwalten.</string>
     <string name="account_privacy_note">So werden deine Daten behandelt.</string>
     <string name="account_terms_note">Die zugestimmten Bedingungen.</string>
+    <string name="account_or">oder</string>
+    <string name="account_link_email_note">Adresse und Passwort festlegen</string>
 </resources>

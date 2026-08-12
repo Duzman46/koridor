@@ -554,4 +554,6 @@
     <string name="account_manage_note">أدِر تسجيل الدخول والجلسة.</string>
     <string name="account_privacy_note">كيف تُعالَج بياناتك.</string>
     <string name="account_terms_note">الشروط التي وافقت عليها.</string>
+    <string name="account_or">أو</string>
+    <string name="account_link_email_note">حدِّد بريدًا وكلمة مرور</string>
 </resources>

@@ -888,3 +888,48 @@ private fun DrawScope.clock(s: Float, tint: Color, line: Float) {
     drawLine(tint, centre, Offset(s * 0.5f, s * 0.26f), strokeWidth = line, cap = StrokeCap.Round)
     drawLine(tint, centre, Offset(s * 0.68f, s * 0.58f), strokeWidth = line, cap = StrokeCap.Round)
 }
+
+/**
+ * Google's mark, drawn to their four brand colours.
+ *
+ * Not a [PremiumIcon]. Every glyph in that set takes its colour from the caller and this one
+ * must not: Google's sign-in branding requires their own red, yellow, green and blue, and a mark
+ * recoloured to the app's gold would be both wrong and against the terms the button is offered
+ * under. It is a composable of its own so it cannot be passed to anything that tints.
+ *
+ * Built from four arcs and the crossbar rather than an imported asset, so it needs no density
+ * set and stays sharp at any size.
+ */
+@Composable
+fun GoogleMark(modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val s = size.minDimension
+        val stroke = s * 0.22f
+        val box = Size(s - stroke, s - stroke)
+        val at = Offset(stroke / 2f, stroke / 2f)
+        // Each quadrant of the ring, in the order Google draws them: blue from one o'clock,
+        // then green, yellow and red anticlockwise around to the gap.
+        listOf(
+            Triple(-70f, 66f, Color(0xFF4285F4)),
+            Triple(6f, 84f, Color(0xFF34A853)),
+            Triple(95f, 75f, Color(0xFFFBBC05)),
+            Triple(175f, 85f, Color(0xFFEA4335)),
+        ).forEach { (start, sweep, colour) ->
+            drawArc(
+                color = colour,
+                startAngle = start,
+                sweepAngle = sweep,
+                useCenter = false,
+                topLeft = at,
+                size = box,
+                style = Stroke(stroke),
+            )
+        }
+        // The bar of the G, which is what separates it from a broken ring.
+        drawRect(
+            color = Color(0xFF4285F4),
+            topLeft = Offset(s * 0.50f, s * 0.39f),
+            size = Size(s * 0.39f, stroke),
+        )
+    }
+}

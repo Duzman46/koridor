@@ -631,20 +631,30 @@ private fun SafetyActions(
         )
     }
 
+    // The same pill the friend button uses, so the two things you can do about somebody are
+    // drawn as one family. Report is gold rather than grey: it is the control that protects the
+    // player, and a Material outlined button was the last grey thing left on this page.
+    //
+    // Block keeps the error colour. It is the destructive one of the pair and the only place on
+    // this screen where a tap ends a relationship, so it is not allowed to look like its
+    // neighbour.
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
-        SecondarySubmitButton(
-            text = stringResource(R.string.report_action),
+        FriendActionButton(
+            icon = PremiumIcon.INFO,
+            label = stringResource(R.string.report_action),
+            enabled = true,
             onClick = { reporting = true },
-            modifier = Modifier.weight(1f),
         )
         if (!state.requiresAccount && state.status != FriendshipStatus.BLOCKED) {
-            SecondarySubmitButton(
-                text = stringResource(R.string.friends_block),
+            FriendActionButton(
+                icon = PremiumIcon.NO_ADS,
+                label = stringResource(R.string.friends_block),
+                enabled = true,
                 onClick = { confirmingBlock = true },
-                modifier = Modifier.weight(1f),
+                tone = MaterialTheme.colorScheme.error,
             )
         }
     }

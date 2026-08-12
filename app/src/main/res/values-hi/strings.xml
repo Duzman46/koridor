@@ -538,4 +538,6 @@
     <string name="account_manage_note">अपना साइन-इन और सत्र प्रबंधित करें।</string>
     <string name="account_privacy_note">आपके डेटा का क्या होता है।</string>
     <string name="account_terms_note">वे शर्तें जो आपने मानी थीं।</string>
+    <string name="account_or">या</string>
+    <string name="account_link_email_note">पता और पासवर्ड सेट करें</string>
 </resources>

@@ -541,4 +541,6 @@
     <string name="account_manage_note">Gérez votre connexion et votre session.</string>
     <string name="account_privacy_note">Comment vos données sont traitées.</string>
     <string name="account_terms_note">Les conditions que vous avez acceptées.</string>
+    <string name="account_or">ou</string>
+    <string name="account_link_email_note">Définissez une adresse et un mot de passe</string>
 </resources>

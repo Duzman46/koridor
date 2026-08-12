@@ -59,7 +59,6 @@ import com.duzman46.gridbound.ui.components.home.DifficultyChip
 import com.duzman46.gridbound.ui.components.home.DifficultyTones
 import com.duzman46.gridbound.ui.components.home.StatsCard
 import com.duzman46.gridbound.ui.components.home.StatsDivider
-import com.duzman46.gridbound.ui.components.home.StatsDonut
 import com.duzman46.gridbound.ui.components.home.StatsHeadlineCard
 import com.duzman46.gridbound.ui.components.home.StatsLine
 import com.duzman46.gridbound.ui.components.home.StatsNote
@@ -417,44 +416,34 @@ fun StatisticsScreen(
                             value = losses.toString(),
                             label = stringResource(R.string.stats_losses),
                         )
+                        StatsHeadlineCard(
+                            icon = PremiumIcon.TARGET,
+                            value = percent,
+                            label = stringResource(R.string.stats_rate),
+                        )
                     }
 
+                    // No ring and no percentage down here. The rate is one number and it is
+                    // in the row above; drawing it twice on one screen made the second one look
+                    // like a different measurement.
                     StatsCard(stringResource(R.string.stats_details)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(
-                                Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                            ) {
-                                StatsLine(
-                                    icon = PremiumIcon.TARGET,
-                                    label = stringResource(R.string.stats_rate),
-                                    value = percent,
-                                )
-                                StatsDivider()
-                                StatsLine(
-                                    icon = PremiumIcon.ROBOT,
-                                    label = stringResource(R.string.stats_bot_games),
-                                    value = statistics.botGames.toString(),
-                                )
-                                StatsDivider()
-                                StatsLine(
-                                    icon = PremiumIcon.PEOPLE,
-                                    label = stringResource(R.string.stats_local_games),
-                                    value = statistics.localGames.toString(),
-                                )
-                                StatsDivider()
-                                StatsLine(
-                                    icon = PremiumIcon.CLOCK,
-                                    label = stringResource(R.string.stats_total_turns),
-                                    value = statistics.totalTurns.toString(),
-                                )
-                            }
-                            StatsDonut(fraction = rate, caption = percent)
-                        }
+                        StatsLine(
+                            icon = PremiumIcon.ROBOT,
+                            label = stringResource(R.string.stats_bot_games),
+                            value = statistics.botGames.toString(),
+                        )
+                        StatsDivider()
+                        StatsLine(
+                            icon = PremiumIcon.PEOPLE,
+                            label = stringResource(R.string.stats_local_games),
+                            value = statistics.localGames.toString(),
+                        )
+                        StatsDivider()
+                        StatsLine(
+                            icon = PremiumIcon.CLOCK,
+                            label = stringResource(R.string.stats_total_turns),
+                            value = statistics.totalTurns.toString(),
+                        )
                     }
 
                     // The account's ranked standing. A guest gets no card rather than a card of

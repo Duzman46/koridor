@@ -60,6 +60,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
@@ -69,6 +70,12 @@ import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.duzman46.gridbound.ui.components.home.GoogleMark
+import com.duzman46.gridbound.ui.components.home.OptionChevron
+import com.duzman46.gridbound.ui.components.home.PremiumGlyph
 
 @Composable
 fun AccountScreen(
@@ -86,8 +93,22 @@ fun AccountScreen(
     onOpenUrl: (String) -> Unit,
 ) {
     var signOutRequested by remember { mutableStateOf(false) }
+    var emailSheetOpen by rememberSaveable { mutableStateOf(false) }
     var deleteRequested by remember { mutableStateOf(false) }
 
+    // Closed by the link succeeding, not by the button: onLinkEmail is several round trips
+    // long and the answer arrives in state.error or state.info, so dismissing on tap would hide
+    // the field the player has to correct.
+    if (emailSheetOpen && !session.isGuest) emailSheetOpen = false
+    if (emailSheetOpen) {
+        EmailLinkDialog(
+            state = state,
+            onEmail = onEmail,
+            onPassword = onPassword,
+            onSubmit = onLinkEmail,
+            onDismiss = { emailSheetOpen = false },
+        )
+    }
     if (state.existingAccountWarning) {
         ExistingAccountDialog(
             onConfirm = onSignInToExistingAccount,
@@ -161,13 +182,11 @@ fun AccountScreen(
                         title = stringResource(R.string.auth_link_title),
                         body = stringResource(R.string.auth_link_explainer),
                     )
-                    LinkAccountCard(
-                        state = state,
+                    LinkRows(
                         googleAvailable = session.isGoogleSignInAvailable,
-                        onEmail = onEmail,
-                        onPassword = onPassword,
+                        enabled = !state.isSubmitting,
                         onLinkGoogle = onLinkGoogle,
-                        onLinkEmail = onLinkEmail,
+                        onEmailRow = { emailSheetOpen = true },
                     )
                 }
 
@@ -303,58 +322,167 @@ private fun DangerRow(title: String, body: String, enabled: Boolean, onClick: ()
 }
 
 @Composable
-private fun LinkAccountCard(
-    state: AccountUiState,
+private fun LinkRows(
     googleAvailable: Boolean,
-    onEmail: (String) -> Unit,
-    onPassword: (String) -> Unit,
+    enabled: Boolean,
     onLinkGoogle: () -> Unit,
-    onLinkEmail: () -> Unit,
+    onEmailRow: () -> Unit,
 ) {
-    AccountCard(stringResource(R.string.auth_link_title)) {
-        Text(
-            stringResource(R.string.auth_link_explainer),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
         if (googleAvailable) {
-            SubmitButton(
-                text = stringResource(R.string.auth_link_with_google),
+            // Its own row, bordered in gold, because it is the one that takes a single tap and
+            // the reference gives it that weight. Google's mark keeps Google's colours.
+            LinkRow(
+                mark = { GoogleMark(Modifier.size(22.dp)) },
+                title = stringResource(R.string.auth_link_with_google),
+                subtitle = null,
+                accented = true,
+                enabled = enabled,
                 onClick = onLinkGoogle,
-                isSubmitting = state.isSubmitting,
-                leadingIcon = Icons.Rounded.AccountCircle,
             )
+            OrDivider()
         }
-        OutlinedTextField(
-            value = state.email,
-            onValueChange = onEmail,
-            label = { Text(stringResource(R.string.auth_email_label)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = state.password,
-            onValueChange = onPassword,
-            label = { Text(stringResource(R.string.auth_password_label)) },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        SecondarySubmitButton(
-            text = stringResource(R.string.auth_link_with_email),
-            onClick = onLinkEmail,
-            enabled = !state.isSubmitting,
-            leadingIcon = Icons.Rounded.AlternateEmail,
+        LinkRow(
+            mark = {
+                PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Color(0xFF9AA0A6))
+            },
+            title = stringResource(R.string.auth_link_with_email),
+            subtitle = stringResource(R.string.account_link_email_note),
+            accented = false,
+            enabled = enabled,
+            onClick = onEmailRow,
         )
     }
+}
+
+/** One way in: a mark, a name, a reason, and a chevron saying it leads somewhere. */
+@Composable
+private fun LinkRow(
+    mark: @Composable () -> Unit,
+    title: String,
+    subtitle: String?,
+    accented: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (accented) KoridorGold.copy(alpha = 0.07f) else Color(0xFF12161B))
+            .border(
+                1.dp,
+                if (accented) KoridorGold.copy(alpha = 0.55f) else Color(0xFF2A3038),
+                shape,
+            )
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF1B2027)),
+            contentAlignment = Alignment.Center,
+        ) { mark() }
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+            )
+            subtitle?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
+        OptionChevron()
+    }
+}
+
+/** The word between the one-tap way and the typed one. */
+@Composable
+private fun OrDivider() {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+        Text(
+            text = stringResource(R.string.account_or),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+    }
+}
+
+/**
+ * The two fields, behind the row rather than laid out on the page.
+ *
+ * They were what made this a scrolling page: an address, a password and a button are most of a
+ * phone's height, sitting under a heading, above three more cards. Nothing about the flow moved
+ * -- the same lambdas, the same state, the same errors -- only where the fields are while the
+ * player is not filling them in.
+ */
+@Composable
+private fun EmailLinkDialog(
+    state: AccountUiState,
+    onEmail: (String) -> Unit,
+    onPassword: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.auth_link_with_email)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
+                OutlinedTextField(
+                    value = state.email,
+                    onValueChange = onEmail,
+                    label = { Text(stringResource(R.string.auth_email_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.password,
+                    onValueChange = onPassword,
+                    label = { Text(stringResource(R.string.auth_password_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                state.error?.let { FormMessage(it) }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSubmit, enabled = !state.isSubmitting) {
+                Text(stringResource(R.string.auth_link_account))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
 }
 
 /**

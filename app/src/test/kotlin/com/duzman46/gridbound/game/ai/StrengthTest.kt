@@ -268,7 +268,32 @@ class StrengthTest {
         /** A threshold a coin clears more often than this is not a measurement. */
         const val MAX_FALSE_POSITIVE = 0.05
 
-        const val SAFETY_NET_MILLIS = 5_000L
+        /**
+         * The ceiling on a single decision — a tripwire, not a budget.
+         *
+         * Raised from 5s to 20s on 2026-08-12, after it failed twice in one afternoon at 5089ms
+         * and 5075ms on a developer machine that was compiling at the same time. Both passed when
+         * re-run alone, which is the signature of contention rather than a regression.
+         *
+         * Five seconds was never justified by what this test is for, and
+         * [noEngineHitsItsWallClockSafetyNet] says as much itself: it is not a latency assertion,
+         * the figure includes whatever the other games were doing on the same cores, and the
+         * failure it exists to catch is "orders of magnitude past the threshold, not near it". A
+         * threshold sitting that close to the noise floor fails for the one reason the test is
+         * documented not to measure — and a test that cries wolf on a busy machine is a test
+         * people learn to re-run instead of read.
+         *
+         * Twenty is four times the worst figure either of those runs produced, and still nowhere
+         * near a search that had genuinely lost its node cap: that one does not come back at all
+         * and hangs the suite rather than tripping this. What is left in between — a brake that
+         * works but is orders weaker than intended — is what this catches, and it catches it just
+         * as well at twenty seconds as at five.
+         *
+         * [TIMED_DECISION_CEILING_MILLIS] is the number to tighten if the question is latency.
+         * That one runs a single engine on a real clock with nothing competing for the cores,
+         * which is what earns it the right to be strict.
+         */
+        const val SAFETY_NET_MILLIS = 20_000L
 
         /**
          * The deterministic size of this file, with room for one more match and no more.

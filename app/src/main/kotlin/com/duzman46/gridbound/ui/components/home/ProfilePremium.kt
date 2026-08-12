@@ -97,7 +97,7 @@ fun ProfileIdentity(
     ) {
         Box(
             Modifier
-                .size(96.dp)
+                .size(84.dp)
                 .clip(CircleShape)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -111,12 +111,12 @@ fun ProfileIdentity(
                 avatarId = avatarId,
                 name = username,
                 modifier = Modifier
-                    .size(88.dp)
+                    .size(76.dp)
                     .align(Alignment.TopStart)
                     .border(2.dp, KoridorGold.copy(alpha = 0.75f), CircleShape),
-                size = 88.dp,
+                size = 76.dp,
             )
-            PencilBadge(Modifier.align(Alignment.BottomEnd))
+            PencilBadge(Modifier.align(Alignment.BottomEnd), size = 26.dp)
         }
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
             Row(
@@ -674,19 +674,19 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceXl),
+                .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
             Box(
                 Modifier
-                    .size(58.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(Color(0xFF171C22))
                     .border(1.dp, Color(0xFF262C33), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                PremiumGlyph(PremiumIcon.GLOBE, Modifier.size(26.dp), Color(0xFF5C6169))
+                PremiumGlyph(PremiumIcon.GLOBE, Modifier.size(22.dp), Color(0xFF5C6169))
             }
             Text(
                 text = stringResource(R.string.profile_recent_empty_title),

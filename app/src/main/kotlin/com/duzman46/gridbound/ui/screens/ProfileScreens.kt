@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -249,8 +250,16 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Dimens.SpaceLg),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+                        .padding(horizontal = Dimens.SpaceLg)
+                        // Both, in this order, and the order is the point. DockedBarSpace is the
+                        // bar and the air it floats in and deliberately excludes the system's
+                        // navigation inset, because the bar applies that itself — so a screen
+                        // that clears the bar has to apply it too. Leaving it out is why the
+                        // last card sat under the bar on a handset with three-button navigation,
+                        // where the inset is 48dp rather than a gesture bar's 18.
+                        .navigationBarsPadding()
+                        .padding(bottom = DockedBarSpace),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                 ) {
                     // Aliased at the import: this file already has a private ProfileIdentity,
                     // the Material one that a stranger's page still uses.
@@ -342,10 +351,6 @@ fun ProfileScreen(
                             onOpenPlayer = onOpenPlayer,
                         )
                     }
-                    // The docked bar floats over the NavHost rather than sitting under it, so
-                    // every tab has to leave its own room. This screen never did, and the last
-                    // row of its recent games has been under the bar the whole time.
-                    Spacer(Modifier.height(DockedBarSpace))
                 }
             }
         }

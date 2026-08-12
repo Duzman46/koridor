@@ -111,14 +111,21 @@ ve o dosya olmadan programatik alıcıların büyük kısmı envantere teklif ve
 
 **Görseller** — hangisinin kullanılacağı `docs/store/ASSET_NOTES.md` içinde yazılı:
 
-- Simge: `store-assets/play-icon-512.png`
+- Simge: `store-assets/play-icon-512.png`. 2026-08-12'de değişti: artık ana menünün arkasındaki
+  fotoğrafın bir karesi. APK'nın içinde değil, konsola ayrıca yüklenir.
 - Ekran görüntüleri: `docs/store/screenshots/` altında iki set var. `-en` ile bitenler
   İngilizce sayfaya, `-tr` ile bitenler Türkçe sayfaya. Kendi dilinde sayfası olmayan herkes
   varsayılanın — yani İngilizce setin — görüntülerini görür. İkisi de 2026-08-08'de yayın
   derlemesinden çekildi.
 - Öne çıkan görsel: `docs/store/feature-graphic-1024x500.png`. 2026-08-08'de yayın paletiyle
-  yeniden üretildi — koyu tahta, mavi ve kırmızı piyon, mint duvarlar, solda simgenin kendi
-  motifi. Üreten betik `docs/store/feature-graphic.py`; palet değişirse yeniden çalıştırılır.
+  yeniden üretildi — koyu tahta, mavi ve kırmızı piyon, mint duvarlar, solda çizilmiş
+  piyon-duvar amblemi. Üreten betik `docs/store/feature-graphic.py`; palet değişirse yeniden
+  çalıştırılır. **Soldaki amblem 2026-08-12'den beri simgeyle aynı şey değil** — simge artık bir
+  fotoğraf. Yüklemeyi engellemez; yalnızca ikisi aynı ürünü göstermiyor. Ayrıntı
+  `ASSET_NOTES.md` sonunda.
+- **Depo dışında, bir üst klasörde** (`Koridor/store-assets/`) hem eski bir `icon-512.png` hem de
+  **yayınlanacakla aynı adı taşıyan** eski bir `feature-graphic-1024x500.png` duruyor. Buradaki
+  tek gerçek tehlike, adına bakıp o ikisinden birini yüklemek.
 
 Telefon ekran görüntüleri 1080×2160, yani 1:2 — Play'in metninde yazan 9:16'dan uzun. Konsol
 bunu sorunsuz kabul ediyor; yalnızca "tanıtımdan yararlanma" için en az üç tanesinin 16:9 ya da

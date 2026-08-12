@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   The themed-icon layer (Android 13+), which the system recolours to the user's wallpaper
-  palette. Same geometry as the foreground, one colour: the launcher tints it, so any colour
-  here is a placeholder. The walls are what carries the shape once the pawn and the bars are
-  the same value, so the gap between them is left wide enough to survive the tint.
+  palette. One colour: the launcher tints it, so any colour here is a placeholder. The walls are
+  what carries the shape once the pawn and the bars are the same value, so the gap between them
+  is left wide enough to survive the tint.
+
+  This used to be the foreground's geometry with the shading taken out, and that sentence stood
+  here until the icon became a photograph. It is now the last place in the icon set where the
+  drawn mark survives — the background layer is the board itself and the foreground is a
+  transparent path — so there is nothing left to keep it in step with except
+  res/drawable/ic_notification.xml, which is the same idea reduced to what reads at the height
+  of a status bar. Move one and the other has to move with it.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"

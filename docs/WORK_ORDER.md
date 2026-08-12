@@ -318,12 +318,20 @@ Round 7's list, re-checked against the code rather than assumed. One is new.
    prunes no weekly rows, does not check the board's wall arithmetic before rating — and writes
    no `recentMatches` row at all, which round 7's list did not mention. It is not what is
    deployed and `README.md` says so; deploying it instead of `worker/` reintroduces every one.
-9. **`docs/store/` still holds the previous artwork.** Unchanged from round 4. `icon-master.png`,
-   `icon-512.png`, the feature graphic generated from them and the three screenshots all show the
-   old emblem and the pre-near-black palette. `ASSET_NOTES.md` says so and no longer lists the two
-   stale icons among the files to ship — the current icon is `store-assets/play-icon-512.png`,
-   512×512, RGB, no alpha, opaque to the corners. The hazard is uploading a stale file by name.
-   Regenerating the screenshots needs a handset.
+9. **The stale artwork is outside the repository, not in `docs/store/`.** Rewritten 2026-08-12.
+   The previous wording named `docs/store/icon-master.png` and `docs/store/icon-512.png`, and
+   neither has existed there since round 4 deleted them — a reader who followed it found nothing
+   and concluded the whole item was stale. The files that do exist sit one level *above* the git
+   root, in `Koridor/store-assets/`, which is why nothing has ever pruned them: `icon-512.png`
+   (the blue-and-orange emblem on green tiles) and `feature-graphic-1024x500.png` — **the same
+   basename as the shipping graphic**, which is the dangerous one. What to upload is
+   `source/store-assets/play-icon-512.png` and `source/docs/store/feature-graphic-1024x500.png`.
+   The hazard is uploading a stale file by name, and it is unchanged.
+
+   Two things inside the repository are genuinely behind as of 2026-08-12: the feature graphic
+   still draws the retired pawn-between-walls emblem on the left, where the launcher icon is now
+   a photograph; and the screenshots predate the Friends, More, Achievements and Settings
+   redesigns. Both want a decision rather than a command, and the screenshots want a handset.
 10. **Not verifiable here: no device is attached, and the emulator is not the deployed database.**
     `docs/MANUAL_TESTS.md` is the list; the ones this round bears on are **H4** (haptics without
     the VIBRATE permission, new) and **H2** (the release build after R8). Neither can be signed

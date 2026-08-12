@@ -23,10 +23,10 @@ a circle mask and the base clear of the bottom. The first version of this file s
 108-canvas instead and the Play listing came back with the head cut off at the top edge, because
 the listing is the *visible* square full-bleed and nothing masks it back.
 
-**The canvas is then grown outwards from that window**, a sixth on every side, and where the
-photograph runs out — forty pixels past its right edge — the shortfall is mirrored. Those pixels
-live in the ring no launcher draws; the alternative was sliding the whole composition left to
-fetch board that nobody sees.
+**The canvas is then grown outwards from that window** by [PAD], and where the photograph runs
+out — some forty pixels past its right edge — the shortfall is mirrored. Those pixels live in
+the ring no launcher draws; the alternative was sliding the whole composition left to fetch
+board that nobody sees.
 
 **Why the tone is touched at all.** The scene was lit for a six-inch screen. A launcher draws it
 twelve millimetres wide against a wallpaper, and the deepest part of the board — which is where
@@ -48,10 +48,19 @@ STORE = os.path.join(ROOT, "store-assets")
 
 #: Left, top and side of the square a launcher KEEPS, in source pixels. Everything else is
 #: derived from it, so moving the framing is one edit here.
-WINDOW = (835, 142, 560)
+WINDOW = (835 + 30, 142 + 30, 500)
 
 #: The fraction of the 108-unit canvas a launcher mask keeps: 72/108.
 VISIBLE = 72 / 108
+
+#: How far the canvas reaches past [WINDOW] on each side. DERIVED, never chosen: a mask that
+#: keeps 72 of 108 discards a sixth of the *canvas* per side, which is a quarter of the *window*
+#: — 1/VISIBLE is 1.5, so the canvas is one and a half windows and each ring is half of the
+#: remaining half. The first version of this file padded by a sixth of the window instead, which
+#: is the same fraction measured against the wrong side, and every export came out 12% tighter
+#: than the docstring above claims. The exports looked right and the spec was wrong, which is
+#: the harder of the two to notice; the assertion below is here so it cannot happen twice.
+PAD = round(WINDOW[2] * (1 / VISIBLE - 1) / 2)
 
 #: Launcher densities, as (folder suffix, scale). One dp is one pixel at mdpi.
 DENSITIES = (("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4))
@@ -79,11 +88,10 @@ def rounded_mask(size, radius=0.22):
 
 
 def canvas():
-    """The 108-unit square, graded, at source resolution: [WINDOW] grown by a sixth each way."""
+    """The 108-unit square, graded, at source resolution: [WINDOW] grown by [PAD] each way."""
     photo = Image.open(SOURCE).convert("RGB")
     left, top, side = WINDOW
-    pad = int(round(side / 6))
-    box = (left - pad, top - pad, left + side + pad, top + side + pad)
+    box = (left - PAD, top - PAD, left + side + PAD, top + side + PAD)
 
     inside = (max(0, box[0]), max(0, box[1]), min(photo.width, box[2]), min(photo.height, box[3]))
     pixels = np.asarray(photo.crop(inside))
@@ -99,9 +107,12 @@ def canvas():
 
 
 def visible_of(square):
-    """What is left of the canvas after a launcher mask: the middle 72 of 108."""
-    inset = int(round(square.width * (1 - VISIBLE) / 2))
-    return square.crop((inset, inset, square.width - inset, square.height - inset))
+    """What is left of the canvas after a launcher mask: the middle 72 of 108, which is [WINDOW]."""
+    kept = square.crop((PAD, PAD, square.width - PAD, square.height - PAD))
+    # The round trip has to close, or WINDOW stops meaning what the docstring says it means and
+    # the framing drifts silently the next time somebody moves it.
+    assert kept.width == WINDOW[2], "canvas ring and window disagree: %d != %d" % (kept.width, WINDOW[2])
+    return kept
 
 
 def save(image, path, **options):

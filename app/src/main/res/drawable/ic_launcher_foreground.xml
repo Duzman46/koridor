@@ -12,6 +12,13 @@
   AdaptiveIconDrawable hands its foreground out to callers that do not expect null, so the layer
   is present and transparent rather than absent.
 
+  The transparent path below is not decoration either. This file was genuinely empty for one
+  build, and every launcher on the phone fell back to Android's own grid-and-robot placeholder:
+  VectorDrawable.inflateChildElements throws `no path defined in <vector>` when it reaches the
+  closing tag without having seen one, the exception takes the whole AdaptiveIconDrawable down
+  with it, and the picture in the background layer is never reached. An empty vector is not an
+  empty drawable — it is a broken one.
+
   The drawn pawn-in-a-corridor that used to live here is not gone — see ic_launcher_monochrome,
   which is where a flat silhouette is the only thing that can go, and ic_notification, which is
   the same idea at the height of a status bar.
@@ -20,4 +27,8 @@
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
-    android:viewportHeight="108" />
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0h108v108h-108z" />
+</vector>

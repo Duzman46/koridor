@@ -58,6 +58,18 @@ ART = (150, 130, 1098, 1078)
 #: One UI's squircle, so the three agree.
 TILE_RADIUS = 0.26
 
+#: A wide band of the same artwork, for the banner across the top of the profile screen. Chosen
+#: for what it holds rather than by dividing the tile: both pieces, three walls and the inlaid
+#: spiral in the top right. Bands taken lower lose the dark pawn and bands taken higher lose the
+#: gold one — the two sit on the picture's diagonal, so a 2.5:1 strip can only just contain them.
+#: No fade is baked in: the screen fades it into whatever the theme's background is, which a
+#: baked one could only do for the dark theme.
+BANNER = (120, 240, 1128, 640)
+
+#: Banner widths, as (folder suffix, pixels). One per density that a phone actually has; the
+#: band is a background, so xhdpi upwards is the whole useful range.
+BANNER_WIDTHS = (("xhdpi", 720), ("xxhdpi", 1080), ("xxxhdpi", 1440))
+
 #: The fraction of the 108-unit canvas a launcher mask keeps: 72/108.
 VISIBLE = 72 / 108
 
@@ -164,3 +176,13 @@ if __name__ == "__main__":
         os.path.join(STORE, "play-icon-512.png"),
         format="PNG", optimize=True,
     )
+
+    print("profile banner — a wide band of the same board, faded into the page by the screen")
+    band = Image.open(SOURCE).convert("RGB").crop(BANNER)
+    for suffix, width in BANNER_WIDTHS:
+        height = int(round(width * band.height / band.width))
+        save(
+            band.resize((width, height), Image.LANCZOS),
+            os.path.join(RES, "drawable-" + suffix, "profile_banner.webp"),
+            format="WEBP", quality=QUALITY, method=6,
+        )

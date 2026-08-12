@@ -6,11 +6,15 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -75,8 +79,26 @@ import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
+import com.duzman46.gridbound.ui.components.PremiumNotice
 import com.duzman46.gridbound.ui.components.ScreenTopBar
 import com.duzman46.gridbound.ui.components.SubmitButton
+import com.duzman46.gridbound.navigation.DockedBarSpace
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.ui.components.home.BadgeAccent
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
+import com.duzman46.gridbound.ui.components.home.PremiumIconButton
+import com.duzman46.gridbound.ui.components.home.ProfileBanner
+import com.duzman46.gridbound.ui.components.home.ProfileEmptyNote
+import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
+import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
+import com.duzman46.gridbound.ui.components.home.ProfilePips
+import com.duzman46.gridbound.ui.components.home.ProfileProgressBar
+import com.duzman46.gridbound.ui.components.home.ProfileStatStrip
+import com.duzman46.gridbound.ui.components.home.PuzzleAccent
+import com.duzman46.gridbound.ui.components.home.RecentGamesPremium
+import com.duzman46.gridbound.ui.components.home.SectionLabel
 import java.text.DateFormat
 import java.util.Date
 
@@ -132,96 +154,201 @@ fun UsernameScreen(
 }
 
 /**
- * The player's own page: who they are, their record, and the screens that belong to them.
+ * The player's own page: who they are, their record, and what they are collecting.
  *
- * Built to a hard budget — all of it has to be readable on one phone screen. That is why the
- * avatar sits beside the name instead of above it and why every statistic shares one card:
- * portrait-style headers and a stack of separate cards spend most of their height on padding.
+ * This was the last Material screen among the three the docked bar switches between — a card of
+ * statistics under four stacked buttons, next to a home screen and a leaderboard that had both
+ * been redrawn. Nothing here is new information. The rating, the record, the win streak and the
+ * recent matches were all on the old page; they are arranged so the numbers lead and the
+ * navigation stops being a list of destinations the player has to read.
  *
- * The scroll is a safety net for accessibility font scales, not part of the intended
- * experience. At default scale everything down to the last button is short enough that it
- * never moves — which is why the recent games sit *below* those buttons rather than under the
- * record where they read most naturally. Above them, three more rows would push the ways out
- * of this screen off the bottom of it; below, the section heading peeks over the edge and is
- * the one thing here worth scrolling for.
+ * The four buttons are gone rather than restyled. Leaderboard is a tab of its own, friends hang
+ * off the home screen, and Account is a row inside Settings — three of the four were second ways
+ * into places already one tap away, and the fourth, "Edit profile", is now the pencil on the
+ * thing it edits.
+ *
+ * **What the reference asked for and this does not have.** The mock puts a daily-puzzle card and
+ * a consecutive-days streak beside the badges. Neither exists: there is no puzzle, and nothing
+ * anywhere records days opened — `ComeBackWorker` says in as many words that there is no streak
+ * to protect. The puzzle card is therefore present but marked "soon" and opens a notice; the
+ * third card counts the run of *wins*, which the app has kept all along and which already drives
+ * two badges. Drawing a day counter that nothing increments would have been a lie in a number.
  */
 @Composable
 fun ProfileScreen(
     profile: UserProfile?,
     hasAccount: Boolean,
     recentGames: RecentGamesState,
+    achievementsUnlocked: Int,
+    achievementsTotal: Int,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAccount: () -> Unit,
-    onLeaderboard: () -> Unit,
-    onFriends: () -> Unit,
+    onSettings: () -> Unit,
+    onAchievements: () -> Unit,
+    onStatistics: () -> Unit,
     onOpenPlayer: (String) -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(stringResource(R.string.profile_title), onBack) }) { padding ->
-        ScreenBackground {
-            if (profile == null) {
-                // A null profile is only a loading state when there is an account behind it.
-                // A guest playing locally has none and never will, so spinning forever here
-                // was a dead end on the one screen that is supposed to explain who you are.
-                if (hasAccount) {
-                    LoadingState(Modifier.padding(padding))
-                } else {
-                    EmptyState(
-                        message = stringResource(R.string.auth_guest_explainer),
-                        modifier = Modifier.padding(padding),
+    var puzzleNotice by remember { mutableStateOf(false) }
+    if (puzzleNotice) {
+        PremiumNotice(
+            title = stringResource(R.string.profile_puzzle_soon_title),
+            message = stringResource(R.string.profile_puzzle_soon_body),
+            icon = PremiumIcon.CALENDAR,
+            onDismiss = { puzzleNotice = false },
+        )
+    }
+
+    ScreenBackground {
+        if (profile == null) {
+            // A null profile is only a loading state when there is an account behind it.
+            // A guest playing locally has none and never will, so spinning forever here
+            // was a dead end on the one screen that is supposed to explain who you are.
+            if (hasAccount) {
+                LoadingState()
+            } else {
+                EmptyState(
+                    message = stringResource(R.string.auth_guest_explainer),
+                    title = stringResource(R.string.profile_title),
+                    // The explainer ends on "link an account". Without a way to do it
+                    // this screen told a guest what to do and then gave them nowhere to
+                    // do it — the one screen they would go to in order to do it.
+                    action = {
+                        Button(onClick = onAccount) {
+                            Text(stringResource(R.string.auth_link_account))
+                        }
+                    },
+                )
+            }
+            return@ScreenBackground
+        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 620.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+            ) {
+                // No Scaffold, and that is what lets the picture start at the top of the window:
+                // a topBar slot would have reserved a strip above the banner with nothing to put
+                // in it. The header sits on the picture instead and takes the inset itself.
+                ProfileBanner {
+                    PremiumHeader(
                         title = stringResource(R.string.profile_title),
-                        // The explainer ends on "link an account". Without a way to do it
-                        // this screen told a guest what to do and then gave them nowhere to
-                        // do it — the one screen they would go to in order to do it.
-                        action = {
-                            Button(onClick = onAccount) {
-                                Text(stringResource(R.string.auth_link_account))
-                            }
+                        onBack = onBack,
+                        modifier = Modifier.statusBarsPadding(),
+                        trailing = {
+                            PremiumIconButton(
+                                icon = PremiumIcon.COG,
+                                label = stringResource(R.string.game_settings),
+                                onClick = onSettings,
+                            )
                         },
                     )
                 }
-                return@ScreenBackground
-            }
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.TopCenter,
-            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 620.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(horizontal = Dimens.SpaceLg),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
                 ) {
-                    ProfileIdentity(profile)
-                    ProfileStatsCard(profile)
-                    SubmitButton(
-                        text = stringResource(R.string.profile_edit_title),
-                        onClick = onEdit,
+                    // Aliased at the import: this file already has a private ProfileIdentity,
+                    // the Material one that a stranger's page still uses.
+                    PremiumProfileIdentity(
+                        username = profile.username,
+                        avatarId = profile.avatarId,
+                        isGuest = profile.isGuest,
+                        onEdit = onEdit,
                     )
-                    // The leaderboard and the friend list used to be buttons on the home screen.
-                    // They belong to the player, so they hang off the player's own screen.
-                    SecondarySubmitButton(
-                        text = stringResource(R.string.leaderboard_title),
-                        onClick = onLeaderboard,
+                    ProfileStatStrip(
+                        rating = profile.rating,
+                        games = profile.totalGames,
+                        wins = profile.wins,
                     )
-                    SecondarySubmitButton(
-                        text = stringResource(R.string.friends_title),
-                        onClick = onFriends,
-                    )
-                    SecondarySubmitButton(
-                        text = stringResource(R.string.account_title),
-                        onClick = onAccount,
-                    )
-                    RecentGamesCard(recentGames, onOpenPlayer)
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+                    ) {
+                        // Marked "soon" rather than given the reference's red dot. A dot means
+                        // something is waiting for the player; nothing is, and the button opens
+                        // a notice that says so.
+                        ProfileFeatureCard(
+                            icon = PremiumIcon.CALENDAR,
+                            accent = PuzzleAccent,
+                            title = stringResource(R.string.profile_puzzle_title),
+                            headline = null,
+                            body = stringResource(R.string.profile_puzzle_body),
+                            action = stringResource(R.string.profile_puzzle_action),
+                            onAction = { puzzleNotice = true },
+                            badge = stringResource(R.string.profile_soon_badge),
+                        )
+                        ProfileFeatureCard(
+                            icon = PremiumIcon.SHIELD_STAR,
+                            accent = BadgeAccent,
+                            title = stringResource(R.string.achievements_title),
+                            headline = "$achievementsUnlocked / $achievementsTotal",
+                            body = stringResource(R.string.profile_badges_body),
+                            action = stringResource(R.string.profile_badges_action),
+                            onAction = onAchievements,
+                            detail = {
+                                ProfileProgressBar(
+                                    fraction = if (achievementsTotal == 0) {
+                                        0f
+                                    } else {
+                                        achievementsUnlocked.toFloat() / achievementsTotal
+                                    },
+                                    accent = BadgeAccent,
+                                )
+                            },
+                        )
+                        ProfileFeatureCard(
+                            icon = PremiumIcon.BOLT,
+                            accent = KoridorGold,
+                            title = stringResource(R.string.profile_win_streak),
+                            headline = profile.currentWinStreak.toString(),
+                            body = stringResource(
+                                R.string.profile_streak_best,
+                                profile.bestWinStreak,
+                            ),
+                            action = stringResource(R.string.profile_streak_action),
+                            onAction = onStatistics,
+                            detail = {
+                                ProfilePips(
+                                    filled = profile.currentWinStreak,
+                                    total = STREAK_PIPS,
+                                    accent = KoridorGold,
+                                )
+                            },
+                        )
+                    }
+                    SectionLabel(stringResource(R.string.profile_recent_games))
+                    when {
+                        recentGames.isLoading -> LoadingState()
+                        recentGames.matches.isEmpty() ->
+                            ProfileEmptyNote(stringResource(R.string.profile_recent_empty))
+                        else -> RecentGamesPremium(recentGames.matches, onOpenPlayer)
+                    }
+                    // The docked bar floats over the NavHost rather than sitting under it, so
+                    // every tab has to leave its own room. This screen never did, and the last
+                    // row of its recent games has been under the bar the whole time.
+                    Spacer(Modifier.height(DockedBarSpace))
                 }
             }
         }
     }
 }
+
+/**
+ * How many pips the streak card draws.
+ *
+ * Five, because that is [com.duzman46.gridbound.achievements.domain.Achievement.STREAK_FIVE]'s
+ * target — the longest run the game asks for — so a full row means the streak is as long as
+ * anything rewards rather than as long as an arbitrary bar.
+ */
+private const val STREAK_PIPS = 5
 
 /**
  * Another player's page: the same record, none of the controls that belong to its owner.

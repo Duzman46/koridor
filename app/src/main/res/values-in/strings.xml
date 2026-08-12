@@ -520,4 +520,17 @@
     <string name="notification_channel_description">Pengingat sesekali saat kamu sudah lama tidak bermain.</string>
     <string name="notification_come_back_title">Papannya masih tersusun</string>
     <string name="notification_come_back_body">Sudah lama. Satu pertandingan?</string>
+    <string name="profile_puzzle_title">Teka-teki harian</string>
+    <string name="profile_puzzle_body">Papan baru untuk dipecahkan setiap hari.</string>
+    <string name="profile_puzzle_action">Pecahkan</string>
+    <string name="profile_soon_badge">Segera</string>
+    <string name="profile_puzzle_soon_title">Belum siap</string>
+    <string name="profile_puzzle_soon_body">Teka-teki harian sedang disiapkan. Kartu ini ada agar kamu tahu — hari ini belum ada yang bisa dipecahkan.</string>
+    <string name="profile_badges_body">Semua pencapaian dan seberapa jauh sisanya.</string>
+    <string name="profile_badges_action">Lihat</string>
+    <string name="profile_streak_best">Terbaik: %1$d</string>
+    <string name="profile_streak_action">Detail</string>
+    <string name="profile_recent_letter_win">M</string>
+    <string name="profile_recent_letter_loss">K</string>
+    <string name="profile_recent_letter_draw">S</string>
 </resources>

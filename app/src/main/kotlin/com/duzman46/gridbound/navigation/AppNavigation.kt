@@ -59,6 +59,7 @@ import com.duzman46.gridbound.monetization.domain.Entitlement
 import com.duzman46.gridbound.online.model.RoomEndReason
 import com.duzman46.gridbound.presentation.account.AccountEvent
 import com.duzman46.gridbound.presentation.account.AccountViewModel
+import com.duzman46.gridbound.presentation.achievements.AchievementsViewModel
 import com.duzman46.gridbound.presentation.auth.AuthEvent
 import com.duzman46.gridbound.presentation.auth.AuthViewModel
 import com.duzman46.gridbound.presentation.profile.ProfileViewModel
@@ -564,6 +565,11 @@ fun AppNavigation(
                 // id, and that absence is what tells it to ask about the signed-in player.
                 val recentGamesViewModel: RecentGamesViewModel = hiltViewModel()
                 val recentGames by recentGamesViewModel.state.collectAsStateWithLifecycle()
+                // The badge count, from the view model the badges screen itself uses, so the
+                // two can never disagree about how many there are. Badges are derived from the
+                // statistics rather than stored, so this costs a fold over eighteen entries.
+                val achievementsViewModel: AchievementsViewModel = hiltViewModel()
+                val achievements by achievementsViewModel.uiState.collectAsStateWithLifecycle()
                 ProfileScreen(
                     profile = state.profile,
                     // Not "signed in": an ordinary guest signs in anonymously and is
@@ -571,11 +577,16 @@ fun AppNavigation(
                     // have no profile. What decides it is whether a profile can exist at all.
                     hasAccount = state.canUseSocialFeatures,
                     recentGames = recentGames,
+                    achievementsUnlocked = achievements.unlocked,
+                    achievementsTotal = achievements.total,
                     onBack = { navController.popFrom(entry) },
                     onEdit = { navController.navigateFrom(entry, Routes.EDIT_PROFILE) },
                     onAccount = { navController.navigateFrom(entry, Routes.ACCOUNT) },
-                    onLeaderboard = { navController.navigateFrom(entry, Routes.LEADERBOARD) },
-                    onFriends = { navController.navigateFrom(entry, Routes.FRIENDS) },
+                    // The gear on the banner. Account moved inside Settings when Settings was
+                    // redrawn, so the two buttons this screen used to stack are one row apart.
+                    onSettings = { navController.navigateFrom(entry, Routes.SETTINGS) },
+                    onAchievements = { navController.navigateFrom(entry, Routes.ACHIEVEMENTS) },
+                    onStatistics = { navController.navigateFrom(entry, Routes.STATISTICS) },
                     // A rival from a finished match, reached from the row that remembers them.
                     onOpenPlayer = { userId ->
                         navController.navigateFrom(entry, Routes.playerProfile(userId))

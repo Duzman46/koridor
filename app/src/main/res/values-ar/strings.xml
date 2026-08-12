@@ -536,4 +536,17 @@
     <string name="notification_channel_description">تذكير من حين لآخر عندما تنقطع عن اللعب مدة.</string>
     <string name="notification_come_back_title">الرقعة ما زالت جاهزة</string>
     <string name="notification_come_back_body">مضى وقت. مباراة واحدة؟</string>
+    <string name="profile_puzzle_title">لغز اليوم</string>
+    <string name="profile_puzzle_body">لوحة جديدة لحلّها كل يوم.</string>
+    <string name="profile_puzzle_action">حل</string>
+    <string name="profile_soon_badge">قريبًا</string>
+    <string name="profile_puzzle_soon_title">غير جاهز بعد</string>
+    <string name="profile_puzzle_soon_body">لغز اليوم قيد الإعداد. البطاقة هنا لتعرف أنه قادم — لا يوجد ما يُحل اليوم.</string>
+    <string name="profile_badges_body">كل الإنجازات وما تبقّى منها.</string>
+    <string name="profile_badges_action">عرض</string>
+    <string name="profile_streak_best">الأفضل: %1$d</string>
+    <string name="profile_streak_action">التفاصيل</string>
+    <string name="profile_recent_letter_win">ف</string>
+    <string name="profile_recent_letter_loss">خ</string>
+    <string name="profile_recent_letter_draw">ت</string>
 </resources>

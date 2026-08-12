@@ -526,4 +526,17 @@
     <string name="notification_channel_description">Редкое напоминание, когда вы давно не играли.</string>
     <string name="notification_come_back_title">Доска всё ещё расставлена</string>
     <string name="notification_come_back_body">Прошло время. Одну партию?</string>
+    <string name="profile_puzzle_title">Задача дня</string>
+    <string name="profile_puzzle_body">Каждый день новая доска для решения.</string>
+    <string name="profile_puzzle_action">Решить</string>
+    <string name="profile_soon_badge">Скоро</string>
+    <string name="profile_puzzle_soon_title">Ещё не готово</string>
+    <string name="profile_puzzle_soon_body">Задача дня в работе. Карточка здесь, чтобы вы знали о ней, — сегодня решать нечего.</string>
+    <string name="profile_badges_body">Все награды и сколько осталось до остальных.</string>
+    <string name="profile_badges_action">Смотреть</string>
+    <string name="profile_streak_best">Лучшая: %1$d</string>
+    <string name="profile_streak_action">Подробнее</string>
+    <string name="profile_recent_letter_win">П</string>
+    <string name="profile_recent_letter_loss">Пр</string>
+    <string name="profile_recent_letter_draw">Н</string>
 </resources>

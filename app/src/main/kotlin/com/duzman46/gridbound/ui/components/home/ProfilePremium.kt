@@ -1,0 +1,604 @@
+package com.duzman46.gridbound.ui.components.home
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.duzman46.gridbound.R
+import com.duzman46.gridbound.match.domain.MatchOutcome
+import com.duzman46.gridbound.match.domain.RecentMatch
+import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.ui.components.PlayerAvatar
+import java.text.DateFormat
+import java.util.Date
+
+/**
+ * The profile tab, in the same language as every other premium screen.
+ *
+ * The page it replaces was Material: a `Card` of statistics and four stacked buttons, on the one
+ * tab of three that had not been redrawn. Nothing here is new information — the rating, the
+ * record, the streak and the recent matches were all on the old page — it is the same record
+ * arranged so the numbers lead and the navigation stops being a list.
+ */
+
+/** The three card accents. Local to this screen on purpose — see [ProfileFeatureCard]. */
+internal val PuzzleAccent = Color(0xFF8B7BE8)
+internal val BadgeAccent = Color(0xFF2FBF9B)
+
+private val CardFill = Color(0xFF12161B)
+private val Muted = Color(0xFF8B9098)
+
+/**
+ * The band of board across the top.
+ *
+ * The same artwork as the launcher icon, cut wide by docs/store/app-icon.py. It fades into the
+ * page rather than stopping at an edge, and the fade is drawn here rather than baked into the
+ * asset because it has to land on the theme's background — a baked one would only be right in
+ * the dark theme.
+ */
+@Composable
+fun ProfileBanner(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val ground = MaterialTheme.colorScheme.background
+    Box(modifier.fillMaxWidth().height(BANNER_HEIGHT)) {
+        Image(
+            painter = painterResource(R.drawable.profile_banner),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().clearAndSetSemantics { },
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+        )
+        // Two washes, not one. The vertical fade joins the picture to the page; the top wash is
+        // what keeps the header legible over whatever part of the board happens to be behind it.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to ground.copy(alpha = 0.72f),
+                        0.35f to ground.copy(alpha = 0.10f),
+                        0.78f to ground.copy(alpha = 0.72f),
+                        1f to ground,
+                    ),
+                ),
+        )
+        content()
+    }
+}
+
+private val BANNER_HEIGHT = 196.dp
+
+/**
+ * Who you are: the disc, the name, and whether the name is yours to keep.
+ *
+ * The pencils are the change of substance here. Editing used to be a button below the record,
+ * one navigation hop from the two things it edits; putting the affordance on the avatar and on
+ * the name means the control is where the thing it changes is.
+ */
+@Composable
+fun ProfileIdentity(
+    username: String,
+    avatarId: String,
+    isGuest: Boolean,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val editLabel = stringResource(R.string.profile_edit_title)
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(96.dp)
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onEdit,
+                )
+                .semantics { contentDescription = editLabel },
+        ) {
+            PlayerAvatar(
+                avatarId = avatarId,
+                name = username,
+                modifier = Modifier
+                    .size(88.dp)
+                    .align(Alignment.TopStart)
+                    .border(2.dp, KoridorGold.copy(alpha = 0.75f), CircleShape),
+                size = 88.dp,
+            )
+            PencilBadge(Modifier.align(Alignment.BottomEnd))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onEdit,
+                ),
+            ) {
+                Text(
+                    text = username,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                PencilBadge(size = 26.dp)
+            }
+            if (isGuest) {
+                Text(
+                    text = stringResource(R.string.auth_guest_badge),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Muted,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF20262D))
+                        .padding(horizontal = Dimens.SpaceMd, vertical = 5.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A round control for the one thing a premium header offers.
+ *
+ * [HomeIconButton] already exists and is the wrong one here: it draws a `GlyphKind` in
+ * `HomePalette.OnWell` on a jade-edged chip, because it lives on the home screen's photograph
+ * and belongs to that surface. This takes a [PremiumIcon] in gold, which is what the header's
+ * own title is set in.
+ */
+@Composable
+fun PremiumIconButton(
+    icon: PremiumIcon,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .size(Dimens.CrestHeight)
+            .clip(CircleShape)
+            .background(Color(0xFF12161B).copy(alpha = 0.86f))
+            .border(1.dp, KoridorGold.copy(alpha = 0.45f), CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
+    }
+}
+
+/** The gold disc with a pencil in it, on the avatar and beside the name. */
+@Composable
+private fun PencilBadge(modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 30.dp) {
+    Box(
+        modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Color(0xFF171C22))
+            .border(1.dp, KoridorGold.copy(alpha = 0.55f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(size * 0.46f)) {
+            val edge = this.size.minDimension
+            val nib = edge * 0.22f
+            // A pencil is a bar on the diagonal with a point at one end. Drawn rather than
+            // imported so it inherits nothing and needs no density set of its own.
+            drawLine(
+                color = KoridorGold,
+                start = Offset(edge * 0.14f, edge * 0.86f),
+                end = Offset(edge * 0.82f, edge * 0.18f),
+                strokeWidth = nib,
+            )
+            drawLine(
+                color = KoridorGold,
+                start = Offset(edge * 0.08f, edge * 0.92f),
+                end = Offset(edge * 0.30f, edge * 0.86f),
+                strokeWidth = nib * 0.7f,
+            )
+        }
+    }
+}
+
+/** Rating, matches, wins — the three numbers the game keeps about a player. */
+@Composable
+fun ProfileStatStrip(
+    rating: Int,
+    games: Int,
+    wins: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(CardFill)
+            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd))
+            .padding(vertical = Dimens.SpaceLg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StatCell(PremiumIcon.STAR, rating.toString(), stringResource(R.string.profile_rating))
+        StripDivider()
+        StatCell(PremiumIcon.GAMEPAD, games.toString(), stringResource(R.string.profile_games))
+        StripDivider()
+        StatCell(PremiumIcon.TROPHY, wins.toString(), stringResource(R.string.profile_wins))
+    }
+}
+
+@Composable
+private fun RowScope.StatCell(icon: PremiumIcon, value: String, label: String) {
+    Column(
+        Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
+            Text(
+                text = value,
+                // Tabular figures, so a rating that changes by one digit does not shuffle the
+                // three cells sideways. It belongs to the style rather than to Text, which has
+                // no parameter for it.
+                style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+            )
+        }
+        Text(label, style = MaterialTheme.typography.bodySmall, color = Muted, maxLines = 1)
+    }
+}
+
+@Composable
+private fun StripDivider() {
+    Box(
+        Modifier
+            .width(1.dp)
+            .fillMaxHeight()
+            .background(Color(0xFF20262D)),
+    )
+}
+
+/**
+ * One of the three cards under the record.
+ *
+ * The accent is a parameter and the three callers pass three different colours, which is a
+ * deliberate exception to the home screen's rule that every mark is gold. That rule is about a
+ * *menu* — a row of destinations reads as one list when the marks match. These are three
+ * unrelated things a player collects, and the colour is how the eye tells them apart before it
+ * reads the word.
+ */
+@Composable
+fun RowScope.ProfileFeatureCard(
+    icon: PremiumIcon,
+    accent: Color,
+    title: String,
+    headline: String?,
+    body: String,
+    action: String?,
+    onAction: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    badge: String? = null,
+    detail: (@Composable () -> Unit)? = null,
+) {
+    Column(
+        modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(CardFill)
+            .border(1.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(Dimens.RadiusMd))
+            .padding(Dimens.SpaceMd),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+    ) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                PremiumGlyph(icon, Modifier.size(Dimens.GlyphMd), accent)
+            }
+            badge?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF0B0E11),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .clip(RoundedCornerShape(50))
+                        .background(accent)
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                )
+            }
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        headline?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = accent,
+                maxLines = 1,
+            )
+        }
+        detail?.invoke()
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            textAlign = TextAlign.Center,
+            // Three cards side by side have to agree on where their buttons sit, and the only
+            // thing that can push them apart is this line wrapping to different depths.
+            minLines = 3,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.weight(1f))
+        if (action != null && onAction != null) {
+            Text(
+                text = action,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = accent,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accent.copy(alpha = 0.16f))
+                    .clickable(role = Role.Button, onClick = onAction)
+                    .padding(vertical = 10.dp),
+            )
+        }
+    }
+}
+
+/** A bar that fills left to right, for "badges earned out of all of them". */
+@Composable
+fun ProfileProgressBar(fraction: Float, accent: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(5.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Color(0xFF20262D)),
+    ) {
+        if (fraction > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(50))
+                    .background(accent),
+            )
+        }
+    }
+}
+
+/** A run of pips, filled up to [filled]. The streak card's readout. */
+@Composable
+fun ProfilePips(filled: Int, total: Int, accent: Color, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        repeat(total) { index ->
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(if (index < filled) accent else Color(0xFF262C33)),
+            )
+        }
+    }
+}
+
+/**
+ * The matches behind you: who, when, and what it cost or paid.
+ *
+ * The outcome disc carries the letter as well as the colour, because the three states differ by
+ * hue alone otherwise and a red-green pair is the one distinction a large minority cannot make.
+ */
+@Composable
+fun RecentGamesPremium(
+    matches: List<RecentMatch>,
+    onOpenPlayer: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(CardFill)
+            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd)),
+    ) {
+        matches.forEachIndexed { index, match ->
+            if (index > 0) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 68.dp)
+                        .height(1.dp)
+                        .background(Color(0xFF20262D)),
+                )
+            }
+            RecentGameRow(match, onOpenPlayer)
+        }
+    }
+}
+
+@Composable
+private fun RecentGameRow(match: RecentMatch, onOpenPlayer: (String) -> Unit) {
+    val tone = when (match.outcome) {
+        MatchOutcome.WIN -> Color(0xFF4CC38A)
+        MatchOutcome.LOSS -> Color(0xFFE2776C)
+        MatchOutcome.DRAW -> Muted
+    }
+    val letter = stringResource(
+        when (match.outcome) {
+            MatchOutcome.WIN -> R.string.profile_recent_letter_win
+            MatchOutcome.LOSS -> R.string.profile_recent_letter_loss
+            MatchOutcome.DRAW -> R.string.profile_recent_letter_draw
+        },
+    )
+    val name = match.opponentName.ifBlank {
+        stringResource(R.string.profile_recent_unknown_opponent)
+    }
+    val row = Modifier
+        .fillMaxWidth()
+        .then(
+            if (match.hasOpponentProfile) {
+                Modifier.clickable(role = Role.Button) { onOpenPlayer(match.opponentUserId) }
+            } else {
+                Modifier
+            },
+        )
+        .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd)
+    Row(row, verticalAlignment = Alignment.CenterVertically) {
+        // The seam of colour down the leading edge, which is what makes a run of wins legible
+        // as a run rather than as four rows that each have to be read.
+        Box(
+            Modifier
+                .width(3.dp)
+                .height(34.dp)
+                .clip(RoundedCornerShape(50))
+                .background(tone),
+        )
+        Spacer(Modifier.width(Dimens.SpaceMd))
+        Box(
+            Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, tone.copy(alpha = 0.75f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(letter, style = MaterialTheme.typography.labelLarge, color = tone, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.width(Dimens.SpaceMd))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = remember(match.playedAt) {
+                    DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(match.playedAt))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                maxLines = 1,
+            )
+        }
+        val change = match.ratingChange
+        if (change != null) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PremiumGlyph(PremiumIcon.TROPHY, Modifier.size(16.dp), KoridorGold)
+                Text(
+                    text = if (change >= 0) "+$change" else change.toString(),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    color = if (change >= 0) Color(0xFF4CC38A) else Color(0xFFE2776C),
+                    maxLines = 1,
+                )
+            }
+        } else {
+            Text(
+                text = stringResource(R.string.profile_recent_unranked),
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                maxLines = 1,
+            )
+        }
+        if (match.hasOpponentProfile) {
+            Spacer(Modifier.width(Dimens.SpaceSm))
+            OptionChevron()
+        }
+    }
+}
+
+/** The card the profile uses where a row of numbers would be, when there are no numbers yet. */
+@Composable
+fun ProfileEmptyNote(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = Muted,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Dimens.RadiusMd))
+            .background(CardFill)
+            .border(BorderStroke(1.dp, FieldEdge), RoundedCornerShape(Dimens.RadiusMd))
+            .padding(Dimens.SpaceLg),
+    )
+}

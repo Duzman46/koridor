@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -91,6 +93,15 @@ fun SplashScreen(onFinished: () -> Unit) {
         }
     }
 }
+
+/**
+ * How far the wash behind the home screen's top bar reaches.
+ *
+ * The status bar, the bar itself and the air around it, plus enough beyond to fade out rather
+ * than stop at an edge. Generous on purpose: too short and the rating sits on the picture again,
+ * and the cost of too long is a slightly darker sky above a board that is nearly black anyway.
+ */
+private val TopBarScrim: Dp = 168.dp
 
 /**
  * Everything under the scene, added up.
@@ -206,8 +217,26 @@ fun MainMenuScreen(
             ) {
                 HomeHero(Modifier.fillMaxSize())
                 // The top bar rides on the scene rather than above it. A row of its own cost
-                // sixty device-independent pixels of picture and bought nothing: the scene is
-                // darkest along its top edge, which is exactly where this has to be legible.
+                // sixty device-independent pixels of picture and bought nothing.
+                //
+                // It used to rely on the scene being darkest along its top edge, and that held
+                // while the bar was one line. A signed-in player has two — the name and the
+                // rating under it — and the second line reaches past the dark strip into the
+                // lit part of the board, where a small brass number on a bright tile is not a
+                // number anybody can read. So the bar brings its own ground: opaque enough at
+                // the top to carry text, gone entirely by the time it clears the second line.
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(TopBarScrim)
+                        .background(
+                            Brush.verticalGradient(
+                                0f to MaterialTheme.colorScheme.background,
+                                0.55f to MaterialTheme.colorScheme.background.copy(alpha = 0.72f),
+                                1f to Color.Transparent,
+                            ),
+                        ),
+                )
                 Column(
                     Modifier
                         .fillMaxWidth()

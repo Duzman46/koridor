@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -100,6 +101,10 @@ fun RowScope.StatsHeadlineCard(icon: PremiumIcon, value: String, label: String) 
     Column(
         Modifier
             .weight(1f)
+            // Every card the height of the tallest. "Kazanma oranı" wraps to two lines where
+            // the other three labels do not, and with the row top-aligned that card hung below
+            // its neighbours like a dropped tooth.
+            .fillMaxHeight()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
             .background(CardFill)
             .border(1.dp, Hairline, RoundedCornerShape(Dimens.RadiusMd))

@@ -3,6 +3,8 @@ package com.duzman46.gridbound.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -398,7 +400,7 @@ fun StatisticsScreen(
                         note = stringResource(R.string.stats_career_note),
                     )
                     Row(
-                        Modifier.fillMaxWidth(),
+                        Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                     ) {
                         StatsHeadlineCard(

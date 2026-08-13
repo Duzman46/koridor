@@ -366,12 +366,21 @@ class CanvasRenderer @Inject constructor() {
      * dark wood has almost no contrast of its own to spend, so the first gold version at 30 %
      * disappeared into the surface entirely: prettier than the green pinstripes it replaced and
      * useless, because the one thing this mark has to do is tell a player where a wall may go.
+     *
+     * **And it is a mark, not a preview of the piece.** A wall is two tiles long and the slots
+     * are one tile apart, so a hint drawn at the wall's own length overlaps its neighbour by
+     * nearly a whole tile — draw every legal one and a row of eight becomes a single unbroken
+     * rail from frame to frame, saying nothing about where one choice ends and the next begins.
+     * At green's old 16 % that was merely invisible; in brass it was a handrail. So the mark is
+     * a short dash on the intersection the wall would centre on: discrete, and turned the way
+     * the wall would lie, so toggling the orientation is something a player can watch happen.
      */
     private fun DrawScope.drawWallHint(geometry: BoardGeometry, wall: Wall, color: Color) {
         val rect = geometry.wallRect(wall)
         val slim = geometry.wallThickness * 0.24f
+        val run = geometry.tileSize * 0.62f
         val horizontal = rect.width >= rect.height
-        val size = if (horizontal) Size(rect.width * 0.82f, slim) else Size(slim, rect.height * 0.82f)
+        val size = if (horizontal) Size(run, slim) else Size(slim, run)
         drawRoundRect(
             color = color.copy(alpha = 0.85f),
             topLeft = Offset(rect.center.x - size.width / 2f, rect.center.y - size.height / 2f),

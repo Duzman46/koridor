@@ -44,12 +44,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
@@ -68,6 +66,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -970,6 +970,17 @@ private fun SeatPanel(
     }
 }
 
+/**
+ * The height every state of the action bar occupies, whatever is in it.
+ *
+ * The bar sits under the board and the board takes what is left, so a bar that grows when wall
+ * mode opens moves the board. On a handset the board is square and limited by the width, so it
+ * does not resize when the bar grows — it slides up by half of whatever the bar took, and that
+ * slide is the flicker on the first tap of "place a wall". Reserving the tallest state spends
+ * slack that was doing nothing and buys a board that holds still.
+ */
+private val WallBarHeight = 88.dp
+
 /** The pawn/wall action area, shared by the single control strip and by both seats. */
 @Composable
 private fun WallControls(
@@ -980,94 +991,210 @@ private fun WallControls(
     onConfirmWall: () -> Unit,
     onCancelWall: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        when {
-            state.pendingWall != null -> {
-                Text(
-                    stringResource(R.string.game_wall_confirm_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onCancelWall, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Rounded.Close, contentDescription = null)
-                        Text(stringResource(R.string.game_wall_cancel))
-                    }
-                    Button(onClick = onConfirmWall, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Rounded.Check, contentDescription = null)
-                        Text(stringResource(R.string.game_wall_confirm))
-                    }
-                }
-            }
-
-            state.wallMode -> {
-                Text(
-                    stringResource(R.string.game_wall_pick_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    WallOrientation.entries.forEach { orientation ->
-                        FilterChip(
-                            selected = state.wallOrientation == orientation,
-                            onClick = { onOrientation(orientation) },
-                            label = {
-                                Text(
-                                    if (orientation == WallOrientation.HORIZONTAL) {
-                                        stringResource(R.string.game_wall_horizontal)
-                                    } else {
-                                        stringResource(R.string.game_wall_vertical)
-                                    },
-                                )
-                            },
-                            leadingIcon = { Icon(Icons.Rounded.SwapHoriz, contentDescription = null) },
+    Box(
+        Modifier.fillMaxWidth().heightIn(min = WallBarHeight),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            when {
+                state.pendingWall != null -> {
+                    WallHint(stringResource(R.string.game_wall_confirm_hint), strong = true)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BoardActionButton(
+                            label = stringResource(R.string.game_wall_cancel),
+                            filled = false,
+                            modifier = Modifier.weight(1f),
+                            glyph = { drawCrossGlyph(it) },
+                            onClick = onCancelWall,
+                        )
+                        BoardActionButton(
+                            label = stringResource(R.string.game_wall_confirm),
+                            filled = true,
+                            modifier = Modifier.weight(1f),
+                            glyph = { drawTickGlyph(it) },
+                            onClick = onConfirmWall,
                         )
                     }
-                    OutlinedButton(onClick = onToggleWall, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.game_history_pawn_label))
-                    }
                 }
-            }
 
-            else -> {
-                // A mark, the instruction, a rule, and the one thing there is to press. The
-                // button was outlined and grey beside grey text, which on a board screen makes
-                // the only action look like the caption next to it.
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF171C22)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Canvas(Modifier.size(20.dp)) {
-                            drawPawnMark(
-                                center = Offset(size.width / 2f, size.height / 2f),
-                                unit = size.minDimension,
-                                color = KoridorGold,
+                state.wallMode -> {
+                    WallHint(stringResource(R.string.game_wall_pick_hint))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WallOrientation.entries.forEach { orientation ->
+                            val lying = orientation == WallOrientation.HORIZONTAL
+                            BoardActionButton(
+                                label = stringResource(
+                                    if (lying) {
+                                        R.string.game_wall_horizontal
+                                    } else {
+                                        R.string.game_wall_vertical
+                                    },
+                                ),
+                                // Filled is the orientation in force. A chip carried a tick to say
+                                // the same thing in Material's voice; this bar has one voice.
+                                filled = state.wallOrientation == orientation,
+                                modifier = Modifier.weight(1f),
+                                enabled = enabled,
+                                glyph = { drawBarGlyph(it, lying) },
+                                onClick = { onOrientation(orientation) },
                             )
                         }
+                        BoardActionButton(
+                            label = stringResource(R.string.game_history_pawn_label),
+                            filled = false,
+                            modifier = Modifier.weight(1f),
+                            enabled = enabled,
+                            glyph = {
+                                drawPawnMark(Offset(size.width / 2f, size.height / 2f),
+                                    size.minDimension, it)
+                            },
+                            onClick = onToggleWall,
+                        )
                     }
-                    Text(
-                        stringResource(R.string.game_move_hint),
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Box(Modifier.width(1.dp).height(34.dp).background(Color(0xFF2A3038)))
-                    WallButton(enabled = enabled, onClick = onToggleWall)
+                }
+
+                else -> {
+                    // A mark, the instruction, a rule, and the one thing there is to press. The
+                    // button was outlined and grey beside grey text, which on a board screen makes
+                    // the only action look like the caption next to it.
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF171C22)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Canvas(Modifier.size(20.dp)) {
+                                drawPawnMark(
+                                    center = Offset(size.width / 2f, size.height / 2f),
+                                    unit = size.minDimension,
+                                    color = KoridorGold,
+                                )
+                            }
+                        }
+                        Text(
+                            stringResource(R.string.game_move_hint),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Box(Modifier.width(1.dp).height(34.dp).background(Color(0xFF2A3038)))
+                        WallButton(enabled = enabled, onClick = onToggleWall)
+                    }
                 }
             }
         }
     }
+}
+
+/** The line above the buttons, held to two lines so the bar's height stays a known quantity. */
+@Composable
+private fun WallHint(text: String, strong: Boolean = false) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        fontWeight = if (strong) FontWeight.SemiBold else FontWeight.Normal,
+        color = if (strong) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        maxLines = 2,
+    )
+}
+
+/**
+ * The action bar's one button shape.
+ *
+ * [WallButton] had this look and nothing else on the bar did, so pressing it swapped a gold-edged
+ * strip for Material's chips and buttons: another border, another radius, another height, on the
+ * one screen where nothing is allowed to move. Filled is the action being offered, or the state
+ * already in force; outlined is the alternative to it.
+ */
+@Composable
+private fun BoardActionButton(
+    label: String,
+    filled: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    glyph: (DrawScope.(Color) -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(14.dp)
+    val fill = when {
+        !enabled -> Color(0xFF20262D)
+        filled -> KoridorGold
+        else -> Color(0xFF161B21)
+    }
+    val edge = when {
+        !enabled -> Color(0xFF2A3038)
+        filled -> KoridorGold
+        else -> KoridorGold.copy(alpha = 0.45f)
+    }
+    val ink = when {
+        !enabled -> Color(0xFF5C6169)
+        filled -> Color(0xFF1A1206)
+        else -> KoridorGold
+    }
+    Row(
+        modifier
+            .height(44.dp)
+            .clip(shape)
+            .background(fill)
+            .border(1.dp, edge, shape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = Dimens.SpaceSm),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (glyph != null) {
+            Canvas(Modifier.size(16.dp)) { glyph(ink) }
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = ink,
+            maxLines = 1,
+        )
+    }
+}
+
+/** The piece this button places, lying the way it would lie. */
+private fun DrawScope.drawBarGlyph(color: Color, lying: Boolean) {
+    val long = size.minDimension * 0.82f
+    val thick = size.minDimension * 0.24f
+    val width = if (lying) long else thick
+    val height = if (lying) thick else long
+    drawRoundRect(
+        color = color,
+        topLeft = Offset((size.width - width) / 2f, (size.height - height) / 2f),
+        size = Size(width, height),
+        cornerRadius = CornerRadius(thick / 2f),
+    )
+}
+
+private fun DrawScope.drawTickGlyph(color: Color) {
+    val unit = size.minDimension
+    val stroke = unit * 0.16f
+    drawLine(color, Offset(unit * 0.16f, unit * 0.54f), Offset(unit * 0.40f, unit * 0.78f),
+        strokeWidth = stroke, cap = StrokeCap.Round)
+    drawLine(color, Offset(unit * 0.40f, unit * 0.78f), Offset(unit * 0.86f, unit * 0.24f),
+        strokeWidth = stroke, cap = StrokeCap.Round)
+}
+
+private fun DrawScope.drawCrossGlyph(color: Color) {
+    val unit = size.minDimension
+    val stroke = unit * 0.16f
+    drawLine(color, Offset(unit * 0.24f, unit * 0.24f), Offset(unit * 0.76f, unit * 0.76f),
+        strokeWidth = stroke, cap = StrokeCap.Round)
+    drawLine(color, Offset(unit * 0.76f, unit * 0.24f), Offset(unit * 0.24f, unit * 0.76f),
+        strokeWidth = stroke, cap = StrokeCap.Round)
 }
 
 @Composable

@@ -74,7 +74,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -861,7 +863,17 @@ private fun CompactGameControls(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         state.onlineMessage?.let { message ->
             Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(12.dp)) {
-                Text(message.asString(), Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.bodySmall)
+                // A live region. This strip is how the match says the rival has dropped, that a
+                // move is still being sent, or that the connection is back — and it appeared in
+                // silence, which on a board screen is the same as not appearing at all.
+                Text(
+                    message.asString(),
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { liveRegion = LiveRegionMode.Polite }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
         Box(
@@ -1244,7 +1256,17 @@ private fun TurnSummary(
                                 .alpha(beaconAlpha)
                                 .background(activeColor, RoundedCornerShape(50)),
                         )
-                        Text(turnTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        // The one line on the board screen that says whose move it is, and a
+                        // live region because that is a fact which changes without the player
+                        // touching anything. Without it a blind player is never told the turn
+                        // has come round to them — the beacon beside this text pulses, and a
+                        // pulse is not something a screen reader can pass on.
+                        Text(
+                            turnTitle,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                     Text(
                         when (state.mode) {
@@ -1475,7 +1497,16 @@ private fun TitleRule() {
     }
 }
 
-/** A gold-edged square control, which is what every button on this screen is. */
+/**
+ * A gold-edged square control, which is what every button on this screen is.
+ *
+ * Two boxes rather than one, and the outer is the point: [size] is the chip that gets drawn, and
+ * it is forty-four here and thirty-six on the turn banner — both under the forty-eight the
+ * platform asks of anything a finger has to hit. The touch box is raised to that minimum while
+ * the chip keeps the size the layout was built around, which is the arrangement
+ * [com.duzman46.gridbound.ui.components.home.PremiumBackArrow] already uses: nothing moves, and
+ * the target stops being smaller than the fingertip aiming at it.
+ */
 @Composable
 private fun GameBarButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -1487,17 +1518,27 @@ private fun GameBarButton(
     val tint = if (enabled) KoridorGold else Color(0xFF5C6169)
     Box(
         Modifier
-            .size(size)
+            .size(size.coerceAtLeast(MIN_TOUCH_TARGET))
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF12161B))
-            .border(1.dp, tint.copy(alpha = 0.45f), RoundedCornerShape(14.dp))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.45f))
+        Box(
+            Modifier
+                .size(size)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xFF12161B))
+                .border(1.dp, tint.copy(alpha = 0.45f), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.45f))
+        }
     }
 }
+
+/** What Android asks of anything a finger has to hit. */
+private val MIN_TOUCH_TARGET: Dp = 48.dp
 
 /**
  * The one thing there is to press on a board screen, drawn like it.

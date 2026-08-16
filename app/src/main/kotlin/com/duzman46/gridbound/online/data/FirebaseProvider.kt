@@ -27,7 +27,13 @@ class FirebaseProvider @Inject constructor(
     ).all(String::isNotBlank)
 
     private val app: FirebaseApp by lazy {
-        check(isConfigured) { "Çevrimiçi servis henüz yapılandırılmadı." }
+        // Deliberately an English developer assertion, not a string resource. Every caller
+        // tests `isConfigured` first and returns AppError.SERVICE_UNAVAILABLE, which is what a
+        // player is actually shown; reaching this line means that guard was skipped, so this is
+        // a programming error and not copy anybody reads. Translating it would say otherwise —
+        // and a lone Turkish sentence in a file whose other diagnostics are English was only
+        // ever a stowaway from an earlier draft.
+        check(isConfigured) { "Firebase is not configured; callers must check isConfigured." }
         val instance = FirebaseApp.getApps(context).firstOrNull { it.name == APP_NAME }
             ?: FirebaseApp.initializeApp(
                 context,

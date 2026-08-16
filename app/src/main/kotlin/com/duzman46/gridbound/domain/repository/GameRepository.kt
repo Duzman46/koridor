@@ -63,11 +63,18 @@ interface GameRepository {
     suspend fun setMatchMessagesEnabled(enabled: Boolean)
     suspend fun setDifficulty(difficulty: Difficulty)
 
+    /**
+     * @param turnsPlayed how long the match actually ran, whatever ended it.
+     * @param winTurns the turn the board was won on, or null when the board did not decide it —
+     *   a resignation, a timeout, a walk-out. The two used to be one parameter, which is how a
+     *   rival resigning on turn two came to hand out a badge for winning in under twenty.
+     */
     suspend fun recordCompletedGame(
         mode: GameMode,
         difficulty: Difficulty,
         winner: PlayerId,
         localPlayer: PlayerId,
-        turns: Int,
+        turnsPlayed: Int,
+        winTurns: Int?,
     )
 }

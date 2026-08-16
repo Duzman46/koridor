@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,28 +106,47 @@ private fun OptionRow(entry: OptionEntry) {
     val onToggle = entry.onCheckedChange
     // A switch row is tappable across its whole width. Aiming for a 52 dp pill at the far edge
     // of a phone is a worse control than the row it sits in, and the row is right there.
-    val press: (() -> Unit)? = when {
-        toggle != null && onToggle != null -> ({ onToggle(!toggle) })
-        else -> entry.onClick
-    }
+    //
+    // `toggleable` rather than `clickable(role = Role.Switch)`, and that is not a tidy-up.
+    // `clickable` sets the role and nothing else, so the node carried no ToggleableState: a
+    // screen reader read "Sesler, switch" with no on or off in it, and said nothing at all after
+    // a tap, because as far as the semantics tree was concerned nothing had changed. `toggleable`
+    // supplies the state and the state change announcement for free, and it governs all four of
+    // these rows — sounds, haptics, match messages, notifications.
+    val action = if (toggle != null && onToggle != null) null else entry.onClick
     Row(
         Modifier
             .fillMaxWidth()
             .then(
-                if (press != null) {
-                    Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = if (toggle != null) Role.Switch else Role.Button,
-                            onClick = press,
-                        )
-                        .semantics(mergeDescendants = true) {
-                            contentDescription =
-                                listOfNotNull(entry.title, entry.subtitle).joinToString(". ")
-                        }
-                } else {
-                    Modifier
+                when {
+                    toggle != null && onToggle != null ->
+                        Modifier
+                            .toggleable(
+                                value = toggle,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Switch,
+                                onValueChange = onToggle,
+                            )
+                            .semantics(mergeDescendants = true) {
+                                contentDescription =
+                                    listOfNotNull(entry.title, entry.subtitle).joinToString(". ")
+                            }
+
+                    action != null ->
+                        Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                                onClick = action,
+                            )
+                            .semantics(mergeDescendants = true) {
+                                contentDescription =
+                                    listOfNotNull(entry.title, entry.subtitle).joinToString(". ")
+                            }
+
+                    else -> Modifier
                 },
             )
             .heightIn(min = 66.dp)
@@ -252,6 +273,10 @@ internal fun OptionChevron(tint: Color = Color(0xFF5C6169)) {
  *
  * One of these rather than the three near-identical ones the badge shelf, the friends list and
  * this file each grew: same words, same weight, same colour, same job.
+ *
+ * Marked as a heading, which is what makes TalkBack's navigate-by-heading gesture do anything on
+ * a settings screen: it is a long column of near-identical rows, and skipping to the next group
+ * is the only way to cross it that is not row by row.
  */
 @Composable
 fun SectionLabel(title: String, modifier: Modifier = Modifier, trailing: String? = null) {
@@ -263,7 +288,9 @@ fun SectionLabel(title: String, modifier: Modifier = Modifier, trailing: String?
     ) {
         Text(
             text = localeUpper(title),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF9AA0A8),

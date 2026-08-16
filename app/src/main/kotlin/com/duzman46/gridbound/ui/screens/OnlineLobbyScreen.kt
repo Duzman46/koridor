@@ -3,12 +3,9 @@ package com.duzman46.gridbound.ui.screens
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,31 +27,15 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AddCircle
-import androidx.compose.material.icons.rounded.Flag
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,28 +43,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import com.duzman46.gridbound.game.audio.LocalHapticsManager
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -92,7 +63,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -118,8 +88,6 @@ import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import com.duzman46.gridbound.ui.components.ReportDialog
-import com.duzman46.gridbound.ui.components.SecondarySubmitButton
-import com.duzman46.gridbound.ui.components.SubmitButton
 import com.duzman46.gridbound.game.board.SeatColors
 import com.duzman46.gridbound.ui.components.home.DialogCrest
 import com.duzman46.gridbound.ui.components.home.DurationChip
@@ -129,13 +97,13 @@ import com.duzman46.gridbound.ui.components.home.FieldLabel
 import com.duzman46.gridbound.ui.components.home.FormHeading
 import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.HomeHero
-import com.duzman46.gridbound.ui.components.home.HomeSceneShare
 import com.duzman46.gridbound.ui.components.home.LobbyActionCard
 import com.duzman46.gridbound.ui.components.home.LobbyField
 import com.duzman46.gridbound.ui.components.home.LobbySectionHeader
 import com.duzman46.gridbound.ui.components.home.OpenRoomCard
 import com.duzman46.gridbound.ui.components.home.OutlineAction
 import com.duzman46.gridbound.ui.components.home.PanelFootnote
+import com.duzman46.gridbound.ui.components.home.PremiumBackArrow
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.RankedQueueCard
 import com.duzman46.gridbound.ui.components.home.SearchingPanel
@@ -148,7 +116,6 @@ import com.duzman46.gridbound.ui.components.home.drawPairMark
 import com.duzman46.gridbound.ui.components.home.drawPlusMark
 import com.duzman46.gridbound.ui.components.home.drawRoomCrest
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /** Which of the lobby's two forms is open, if either. */
 private enum class LobbyForm { JOIN, CREATE }
@@ -282,7 +249,7 @@ private fun OnlineLobbyScreen(
                     .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                LobbyBackArrow(onBack)
+                PremiumBackArrow(onBack)
                 Text(
                     text = stringResource(R.string.online_title),
                     style = MaterialTheme.typography.headlineSmall,
@@ -328,51 +295,6 @@ private fun OnlineLobbyScreen(
                     onOpenForm = { openForm = it },
                 )
             }
-        }
-    }
-}
-
-/**
- * The way back, on a screen whose top bar is a photograph.
- *
- * The same arrow the play screen uses, drawn again rather than shared: it is eleven lines of
- * canvas and pulling it into a component would mean a file whose only job is to hold one
- * private glyph two screens happen to agree on.
- */
-@Composable
-private fun LobbyBackArrow(onBack: () -> Unit) {
-    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val label = stringResource(R.string.action_back)
-    Box(
-        Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.Button,
-                onClick = onBack,
-            )
-            .semantics { contentDescription = label },
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(
-            Modifier
-                .size(24.dp)
-                .scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
-        ) {
-            val s = size.minDimension
-            drawPath(
-                Path().apply {
-                    moveTo(s * 0.92f, s * 0.5f)
-                    lineTo(s * 0.12f, s * 0.5f)
-                    moveTo(s * 0.44f, s * 0.18f)
-                    lineTo(s * 0.12f, s * 0.5f)
-                    lineTo(s * 0.44f, s * 0.82f)
-                },
-                KoridorGold,
-                style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
         }
     }
 }
@@ -551,10 +473,17 @@ private fun JoinByCodeForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
             value = state.roomCodeInput,
             onValueChange = viewModel::setRoomCode,
             placeholder = stringResource(R.string.room_code_placeholder),
+            label = stringResource(R.string.room_code_label),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Characters,
                 keyboardType = KeyboardType.Ascii,
                 imeAction = ImeAction.Done,
+            ),
+            // The sharpest of the six. A player is read a code down the phone, types it, presses
+            // the tick — and until now the keyboard simply closed and the room did not open,
+            // because `ImeAction.Done` draws the key and nothing else wires it to anything.
+            keyboardActions = KeyboardActions(
+                onDone = { if (state.canJoinByCode && !state.isBusy) viewModel.joinByCode() },
             ),
         )
     }
@@ -585,6 +514,7 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
             value = configuration.roomName,
             onValueChange = viewModel::setRoomName,
             placeholder = stringResource(R.string.room_name_placeholder),
+            label = stringResource(R.string.room_name_label),
             leading = { drawRoomCrest() },
         )
     }
@@ -641,6 +571,7 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
             value = configuration.password,
             onValueChange = viewModel::setRoomPassword,
             placeholder = stringResource(R.string.room_password_placeholder),
+            label = stringResource(R.string.room_password_label),
             visualTransformation = if (passwordShown) {
                 VisualTransformation.None
             } else {
@@ -649,6 +580,9 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { if (!state.isBusy) viewModel.createRoom() },
             ),
             leading = { drawLock() },
             trailing = {
@@ -955,6 +889,7 @@ private fun PasswordPromptDialog(
             value = password,
             onValueChange = onPassword,
             placeholder = stringResource(R.string.room_password_label),
+            label = stringResource(R.string.room_password_label),
             visualTransformation = if (shown) {
                 VisualTransformation.None
             } else {
@@ -964,6 +899,7 @@ private fun PasswordPromptDialog(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
             ),
+            keyboardActions = KeyboardActions(onDone = { if (password.isNotBlank()) onConfirm() }),
             leading = { drawLock() },
             trailing = {
                 FieldControl(

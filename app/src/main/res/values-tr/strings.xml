@@ -126,7 +126,6 @@
     <string name="account_delete_warning">Bu işlem profilini, istatistiklerini, arkadaşlarını ve puanını kalıcı olarak siler. Sonrasında satın alımlar geri yüklenemez. Bu işlem geri alınamaz.</string>
     <string name="account_delete_reauth_explainer">Hesabın silinmeden önce oturumunu doğrulaman istenecek.</string>
     <string name="account_delete_confirm_label">Onaylamak için %1$s yaz</string>
-    <string name="account_delete_action">Hesabımı kalıcı olarak sil</string>
     <string name="account_delete_success">Hesabın silindi.</string>
     <string name="account_privacy_policy">Gizlilik Politikası</string>
     <string name="account_terms_of_service">Kullanım Koşulları</string>
@@ -183,7 +182,6 @@
 
     <string name="room_browser_empty">Şu anda açık oda yok</string>
     <string name="room_browser_empty_hint">Bir oda oluştur ve rakip bekle.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Şifre korumalı</string>
 
@@ -223,12 +221,9 @@
     <string name="leaderboard_empty">Henüz dereceli maç oynanmadı.</string>
     <string name="leaderboard_empty_weekly">Bu hafta henüz dereceli maç oynanmadı.</string>
     <string name="leaderboard_empty_friends">Karşılaştırmak için arkadaş ekle.</string>
-    <string name="leaderboard_your_rank">Senin sıran</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Liderlik tablosunda yer almak için giriş yap.</string>
     <string name="leaderboard_guest_not_ranked">Misafirler liderlik tablosunda yer almaz. Sıralamaya girmek için hesabını bağla.</string>
-    <string name="leaderboard_record">%1$d galibiyet · %2$d maç</string>
-    <string name="cd_leaderboard_row">Sıra %1$d, %2$s, puan %3$d</string>
 
     <!-- Ana menü ve mod seçimi -->
     <string name="menu_statistics">İstatistikler</string>
@@ -341,7 +336,6 @@
     <string name="friends_section_incoming">Gelen istekler</string>
     <string name="friends_section_outgoing">Gönderilen istekler</string>
     <string name="friends_section_blocked">Engellenenler</string>
-    <string name="friends_empty">Henüz kimseyi eklemedin. Başlamak için bir kullanıcı adı ara.</string>
     <string name="friends_add">Arkadaş ekle</string>
     <string name="friends_accept">Kabul et</string>
     <string name="friends_decline">Reddet</string>
@@ -355,7 +349,6 @@
     <string name="friends_invite_sent">Davet gönderildi.</string>
     <string name="friends_online">Çevrim içi</string>
     <string name="friends_offline">Çevrim dışı</string>
-    <string name="friends_requires_account">Arkadaşlık için hesap gerekir. Oyuncu eklemek için hesabını bağla.</string>
     <string name="friends_invite_waiting">%1$s bekleniyor…</string>
     <string name="friends_request_pending">Arkadaşlık isteği gönderildi</string>
     <string name="friends_already_friends">Arkadaşsınız</string>
@@ -409,7 +402,6 @@
     <string name="home_more_subtitle">Mağaza, istatistik ve diğerleri</string>
     <string name="home_leaderboard_short">Liderlik</string>
 
-    <string name="online_ranked_match">Dereceli eşleşme</string>
     <string name="queue_searching_hint">Puanına en yakın oyuncu aranıyor.</string>
     <string name="queue_connection_good">Bağlantı iyi</string>
     <string name="queue_connection_lost">Bağlantı yok</string>
@@ -437,7 +429,6 @@
     <string name="paint_yours">Senin rengin</string>
     <string name="paint_rivals">Rakibin rengi</string>
     <string name="room_browser_refresh">Yenile</string>
-    <string name="room_browser_players_caption">Oyuncu</string>
     <string name="report_note">Bildirimin gizli tutulur.</string>
     <string name="room_code_copied">Oda kodu kopyalandı</string>
     <string name="difficulty_level_label">Bot seviyesi</string>
@@ -447,12 +438,10 @@
     <string name="difficulty_expert_hint">İleri seviye strateji ve baskı.</string>
     <string name="difficulty_start">Maçı Başlat</string>
     <string name="leaderboard_subtitle">En iyi oyuncular, aynı masada.</string>
-    <string name="leaderboard_season">Bu sezon</string>
     <string name="leaderboard_column_rank">SIRA</string>
     <string name="leaderboard_column_player">OYUNCU</string>
     <string name="leaderboard_climb_title">Sıralamada yüksel</string>
     <string name="leaderboard_climb_action">Hesabını bağla</string>
-    <string name="leaderboard_live_note">Liderlik tablosu canlı olarak güncellenir.</string>
     <string name="leaderboard_wins_short">G</string>
     <string name="leaderboard_losses_short">M</string>
 
@@ -556,7 +545,6 @@
     <string name="stats_bot_games">Bota karşı</string>
     <string name="stats_online_only">Yukarıdaki sayılar yalnızca çevrim içi maçları sayar. Bota karşı oynananlar aşağıdaki basamakta; tek telefonda iki kişinin oynadığı maç ise kimsenin siciline yazılmaz.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Hesap bilgilerini ve oturum ayarlarını yönet.</string>
     <string name="account_privacy_note">Verilerinin nasıl korunduğunu incele.</string>
     <string name="account_terms_note">Kabul ettiğin koşullar.</string>
     <string name="account_or">veya</string>

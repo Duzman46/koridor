@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.core.Constants
@@ -44,6 +45,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -127,6 +129,16 @@ class GameViewModel @Inject constructor(
 
     /** When this device last said something; see [sendMessage]. */
     private var lastMessageAt = 0L
+
+    /**
+     * True once this device has given its online seat up, whichever way it did it.
+     *
+     * [leaveGame] and [onCleared] both release it and both can run for the same departure —
+     * the exit dialog resigns, and the navigation it then performs clears this view model.
+     * The second write would be refused by the server anyway, since the room is no longer in
+     * progress; this is so it is never sent.
+     */
+    private var released = false
 
     init {
         viewModelScope.launch {
@@ -254,6 +266,7 @@ class GameViewModel @Inject constructor(
             return
         }
         val forfeits = _uiState.value.leavingForfeits
+        released = true
         viewModelScope.launch {
             // Bounded, because [onFinished] is what takes the player off this screen and it is
             // the only thing that does. The write goes through a Firebase transaction, and a
@@ -272,6 +285,40 @@ class GameViewModel @Inject constructor(
                 }
             }
             onFinished()
+        }
+    }
+
+    /**
+     * Gives the seat up when the board is torn down without anybody having pressed the exit.
+     *
+     * The exit dialog is not the only way off this screen, and it was the only one that wrote
+     * anything. Accepting a rematch — or a friend's invitation — from the request bar navigates
+     * straight onto the new board and pops this one with it, which clears this view model; so
+     * did every other pop that does not pass through [leaveGame]. Nothing told the room, and the
+     * opponent was left in front of a position nobody was ever going to move again until the
+     * ten-minute idle sweep noticed and decided it for them. That is the same abandonment
+     * [leaveGame] calls a resignation, so it is written as one: they are told, and rated,
+     * exactly as they would have been.
+     *
+     * Guarded twice, because most teardowns owe the room nothing. [GameUiState.leavingForfeits]
+     * is false the moment a match has ended, so the ordinary pop from the board to the victory
+     * screen costs no write at all; and [released] is what stops the exit dialog's own
+     * resignation being filed a second time by the navigation it performs.
+     *
+     * On the application scope for the reason [announceResult] is: the navigation that clears
+     * this view model is the navigation that cancels [viewModelScope], and work started there
+     * would be cancelled before it left the handset. Bounded for the reason [leaveGame] is — a
+     * transaction on a handset with no network waits rather than failing — so that nothing is
+     * left holding the process scope open indefinitely.
+     */
+    override fun onCleared() {
+        val session = onlineSession ?: return
+        if (released || !_uiState.value.leavingForfeits) return
+        released = true
+        applicationScope.launch {
+            runCatching {
+                withTimeout(LEAVE_TIMEOUT_MILLIS) { onlineRepository.resign(session) }
+            }
         }
     }
 
@@ -338,7 +385,7 @@ class GameViewModel @Inject constructor(
     private fun finishOrRunAi(state: BoardState) {
         val winner = state.status.winner
         if (winner != null) {
-            announceResult(winner, state.turnNumber)
+            announceResult(winner, state.turnNumber, state.turnNumber)
         } else if (mode == GameMode.VS_AI && state.currentPlayer != localPlayer) {
             runAiTurn()
         }
@@ -359,7 +406,7 @@ class GameViewModel @Inject constructor(
      * it simply never writes: the match is played, won, and silently never counted. Nothing
      * about the recording belongs to this screen, so it must not die with it.
      */
-    private fun announceResult(winner: PlayerId, turns: Int) {
+    private fun announceResult(winner: PlayerId, turnsPlayed: Int, winTurns: Int?) {
         if (recordedWinner == winner) return
         recordedWinner = winner
         applicationScope.launch {
@@ -368,7 +415,8 @@ class GameViewModel @Inject constructor(
                 difficulty = difficulty,
                 winner = winner,
                 localPlayer = localPlayer,
-                turns = turns,
+                turnsPlayed = turnsPlayed,
+                winTurns = winTurns,
             )
         }
         val lost = when (mode) {
@@ -467,7 +515,40 @@ class GameViewModel @Inject constructor(
                     pendingWall = null,
                 )
             }
-            val accepted = onlineRepository.submitAction(session, onlineVersion, action)
+            // Bounded, for the reason [leaveGame] is bounded and then some. `submitAction`
+            // resolves to a Firebase transaction, and a transaction on a handset that has lost
+            // the network does not fail — it waits for a connection that may not come back.
+            // Unbounded, that left the board with [GameUiState.acceptsHumanInput] false, which
+            // is to say refusing every tap, while the move clock the player could still see ran
+            // down and handed the match to the opponent on time. Nothing said why, or that
+            // anything was wrong at all.
+            //
+            // Giving up on the wait does not throw the move away: Firebase keeps the write
+            // queued and applies it when the connection returns, and the room listener delivers
+            // whatever the server settled on. That is also what makes the message safe to show
+            // early — a move that was merely slow arrives a moment later as an ordinary room
+            // update, which clears both the message and the syncing state on its way past.
+            val accepted = try {
+                withTimeout(SUBMIT_TIMEOUT_MILLIS) {
+                    onlineRepository.submitAction(session, onlineVersion, action)
+                }
+            } catch (expired: TimeoutCancellationException) {
+                // Caught by its own type rather than as a CancellationException, so that a
+                // scope genuinely being cancelled — the player leaving the board mid-move —
+                // still unwinds instead of being reported to a screen that has gone.
+                AppLog.warn("submit-action-timeout", expired)
+                _uiState.update {
+                    it.copy(
+                        isOnlineSyncing = false,
+                        // No new string: the honest reading of a write that never reached the
+                        // server is the connection, and AppError already owns that sentence in
+                        // all ten languages.
+                        onlineMessage = AppError.NETWORK.message,
+                    )
+                }
+                feedback(SoundEffect.ERROR)
+                return@launch
+            }
             if (!accepted) {
                 // The room moved on underneath us; the listener will deliver the truth.
                 _uiState.update {
@@ -587,8 +668,32 @@ class GameViewModel @Inject constructor(
         reportFinishedMatch(room)
         watchForIdleForfeit(session, room)
         watchTurnClock(session, room)
-        _uiState.value.winner?.let { announceResult(it, room.boardState.turnNumber) }
+        _uiState.value.winner?.let {
+            announceResult(it, room.boardState.turnNumber, boardWinTurns(room))
+        }
     }
+
+    /**
+     * How many turns a finished online match is entitled to report, which is none unless the
+     * board itself decided it.
+     *
+     * The same distinction [onRoomUpdate] already draws for the winner, applied to the count.
+     * A room can end without the position moving — a resignation, a walk-out, a clock running
+     * down — and those writes leave [OnlineRoom.boardState] exactly as it stood, so its turn
+     * number is a measure of how far the game got, not of how quickly it was won. Reporting it
+     * anyway turned an opponent who resigned on turn two into a two-move victory: it went
+     * straight into the handset's `fastestWinTurns` and unlocked the "Lightning" badge — the
+     * gold one, permanently — for a game nobody played. A player could farm it by finding
+     * somebody willing to resign twice.
+     *
+     * Null rather than zero, and the distinction is the whole point: zero was overloaded to mean
+     * both "no time to record" and "no turns played", so suppressing the Lightning badge also
+     * stopped a resigned match counting towards the lifetime turn total and the Marathon badge.
+     * The two questions are now asked separately — how long did this run, and how fast was this
+     * won — and only the second one can be unanswerable.
+     */
+    private fun boardWinTurns(room: OnlineRoom): Int? =
+        if (room.boardState.status.winner != null) room.boardState.turnNumber else null
 
     /**
      * Puts a name and a face on the other seat, so the rival is a player rather than "the
@@ -800,6 +905,17 @@ class GameViewModel @Inject constructor(
          * has just confirmed they want to leave is never held on the board they left.
          */
         const val LEAVE_TIMEOUT_MILLIS = 4_000L
+
+        /**
+         * How long a move waits for the server before the board is handed back to the player.
+         *
+         * Longer than the exit's wait, because a move is worth waiting for and a leave is only
+         * worth confirming — but not much longer. It is spent out of a turn clock that can be
+         * as short as thirty seconds, and every second of it is a second the player cannot
+         * touch the board. Erring short is the cheap mistake: a move that was merely slow lands
+         * anyway and arrives back as a room update, which clears the warning it caused.
+         */
+        const val SUBMIT_TIMEOUT_MILLIS = 8_000L
 
         /** How long to wait before trying again when the server refuses an idle forfeit. */
         const val IDLE_FORFEIT_RETRY_MILLIS = 30_000L

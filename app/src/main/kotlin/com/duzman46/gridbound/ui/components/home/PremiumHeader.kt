@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,8 +46,10 @@ import com.duzman46.gridbound.theme.KoridorGold
  * between deliberately have no arrow at all — there is no "back" from a place, only the place
  * beside it — which is why this is a component and not a rule applied everywhere.
  *
- * The lobby and the play screen each keep a private arrow of their own. Theirs is drawn on a
- * photograph and sized to it; this one sits on the page.
+ * [PremiumBackArrow] is the app's only back arrow. The lobby and the play screen each kept a
+ * private copy, and each carried a comment explaining why it had to stay private; the two copies
+ * were byte-for-byte the same box, the same canvas, the same right-to-left flip and the same path
+ * to the third decimal, so neither comment was true of the code under it. They call this one now.
  */
 @Composable
 fun PremiumHeader(
@@ -67,6 +70,10 @@ fun PremiumHeader(
         Column(Modifier.weight(1f)) {
             Text(
                 text = title,
+                // The screen's name, marked as what it is. TalkBack's navigate-by-heading gesture
+                // had nothing to land on anywhere in the app, so a player using it was left
+                // stepping through every control on a screen to reach the top of the next block.
+                modifier = Modifier.semantics { heading() },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = KoridorGold,

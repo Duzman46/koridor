@@ -250,7 +250,8 @@ class DefaultGameRepositoryTest {
                 difficulty = Difficulty.MEDIUM,
                 winner = PlayerId.PLAYER_ONE,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 30,
+                turnsPlayed = 30,
+                winTurns = 30,
             )
         }
 
@@ -275,7 +276,8 @@ class DefaultGameRepositoryTest {
                 difficulty = Difficulty.HARD,
                 winner = PlayerId.PLAYER_ONE,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 24,
+                turnsPlayed = 24,
+                winTurns = 24,
             )
             // The same id again is what a link, a relaunch and a token refresh all look like.
             repository.claimStatisticsFor(OWNER)
@@ -297,7 +299,8 @@ class DefaultGameRepositoryTest {
                 difficulty = Difficulty.EASY,
                 winner = PlayerId.PLAYER_ONE,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 30,
+                turnsPlayed = 30,
+                winTurns = 30,
             )
             repository.markAchievementsSeen(setOf("FIRST_WIN"))
             repository.setLanguage(AppLanguage.TURKISH)
@@ -371,14 +374,16 @@ class DefaultGameRepositoryTest {
                 difficulty = Difficulty.EXPERT,
                 winner = PlayerId.PLAYER_ONE,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 28,
+                turnsPlayed = 28,
+                winTurns = 28,
             )
             repository.recordCompletedGame(
                 mode = GameMode.ONLINE,
                 difficulty = Difficulty.MEDIUM,
                 winner = PlayerId.PLAYER_TWO,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 40,
+                turnsPlayed = 40,
+                winTurns = 40,
             )
             repository.claimStatisticsFor(OWNER)
             repository.statistics.first()
@@ -429,7 +434,8 @@ class DefaultGameRepositoryTest {
                 difficulty = Difficulty.MEDIUM,
                 winner = PlayerId.PLAYER_ONE,
                 localPlayer = PlayerId.PLAYER_ONE,
-                turns = 34,
+                turnsPlayed = 34,
+                winTurns = 34,
             )
             repository.statistics.first()
         }

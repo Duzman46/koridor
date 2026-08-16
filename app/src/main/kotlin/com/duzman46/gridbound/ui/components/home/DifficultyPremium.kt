@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +50,13 @@ import com.duzman46.gridbound.theme.KoridorGold
  *
  * No "recommended" or "standard" badge. The owner cut both, and they were right to: a label
  * telling somebody which difficulty to want is the screen answering a question it just asked.
+ *
+ * `selectable` rather than `clickable(role = Role.RadioButton)`. The role alone names the control
+ * without ever saying which of the four is chosen, and the only other signal here is a gold
+ * border — so to a screen reader the four rows were identical, and the answer to "which bot am I
+ * about to play" was carried by colour and nothing else. `selectable` puts the choice in the
+ * semantics tree, which is the same fix [com.duzman46.gridbound.ui.components.LanguagePicker]
+ * already uses.
  */
 @Composable
 fun BotLevelRow(
@@ -65,7 +72,8 @@ fun BotLevelRow(
     Row(
         modifier
             .fillMaxWidth()
-            .clickable(
+            .selectable(
+                selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.RadioButton,

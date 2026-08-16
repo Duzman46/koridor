@@ -18,8 +18,9 @@ class StatisticsManager @Inject constructor(
         difficulty: Difficulty,
         winner: PlayerId,
         localPlayer: PlayerId,
-        turns: Int,
+        turnsPlayed: Int,
+        winTurns: Int?,
     ) {
-        repository.recordCompletedGame(mode, difficulty, winner, localPlayer, turns)
+        repository.recordCompletedGame(mode, difficulty, winner, localPlayer, turnsPlayed, winTurns)
     }
 }

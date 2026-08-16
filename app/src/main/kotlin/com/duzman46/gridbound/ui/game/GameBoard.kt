@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -78,12 +79,53 @@ fun GameBoard(
     }
     val colors = MaterialTheme.colorScheme
     val palette = remember(colors) { boardPalette(colors) }
+
+    // What the board says when a swipe lands on it.
+    //
+    // It used to say "Game board, 9 by 9 squares" and stop there, which is a description of the
+    // furniture rather than of the position: nine by nine is the one fact about this board that
+    // never changes. A player who cannot see it had no way to find out where either pawn stood
+    // or how many walls were left, and those four numbers are the whole state of a Koridor game.
+    //
+    // Assembled from the strings the move list and the turn banner already use — the same
+    // "Pawn 3,5" and "Blue · 7 walls" a sighted player reads elsewhere on this screen — so the
+    // ten translations carry it without a single new key, and a blind player and a sighted one
+    // are told the position in the same words.
     val boardDescription = stringResource(R.string.cd_board)
+    val playerOneName = stringResource(R.string.game_player_blue)
+    val playerTwoName = stringResource(R.string.game_player_red)
+    val playerOneWalls = pluralStringResource(
+        R.plurals.game_player_walls,
+        playerOne.wallsRemaining,
+        playerOneName,
+        playerOne.wallsRemaining,
+    )
+    val playerTwoWalls = pluralStringResource(
+        R.plurals.game_player_walls,
+        playerTwo.wallsRemaining,
+        playerTwoName,
+        playerTwo.wallsRemaining,
+    )
+    val playerOneSquare = stringResource(
+        R.string.game_history_pawn,
+        playerOne.position.row + 1,
+        playerOne.position.column + 1,
+    )
+    val playerTwoSquare = stringResource(
+        R.string.game_history_pawn,
+        playerTwo.position.row + 1,
+        playerTwo.position.column + 1,
+    )
+    val position = listOf(
+        boardDescription,
+        "$playerOneWalls. $playerOneSquare",
+        "$playerTwoWalls. $playerTwoSquare",
+    ).joinToString(". ")
 
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
-            .semantics { contentDescription = boardDescription }
+            .semantics { contentDescription = position }
             // `flipped` belongs in the key: without it the gesture lambda kept the
             // orientation from the turn it was created on, so on a shared device every tap
             // after the first hand-over landed on the mirrored square.

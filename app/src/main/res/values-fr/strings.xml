@@ -118,7 +118,6 @@
     <string name="account_delete_warning">Cette action supprime définitivement ton profil, tes statistiques, tes amis et ton classement. Les achats ne pourront plus être restaurés. C\'est irréversible.</string>
     <string name="account_delete_reauth_explainer">Avant la suppression de ton compte, il te sera demandé de confirmer ta connexion.</string>
     <string name="account_delete_confirm_label">Saisis %1$s pour confirmer</string>
-    <string name="account_delete_action">Supprimer définitivement mon compte</string>
     <string name="account_delete_success">Ton compte a été supprimé.</string>
     <string name="account_privacy_policy">Politique de confidentialité</string>
     <string name="account_terms_of_service">Conditions d\'utilisation</string>
@@ -172,7 +171,6 @@
 
     <string name="room_browser_empty">Aucun salon ouvert pour l\'instant</string>
     <string name="room_browser_empty_hint">Crées-en un et attends un adversaire.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Protégé par mot de passe</string>
 
@@ -211,12 +209,9 @@
     <string name="leaderboard_empty">Aucune partie classée n\'a encore été jouée.</string>
     <string name="leaderboard_empty_weekly">Aucune partie classée cette semaine pour l\'instant.</string>
     <string name="leaderboard_empty_friends">Ajoute des amis pour te comparer à eux.</string>
-    <string name="leaderboard_your_rank">Ta position</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Connecte-toi pour apparaître au classement.</string>
     <string name="leaderboard_guest_not_ranked">Les invités ne sont pas classés. Associe un compte pour entrer au classement.</string>
-    <string name="leaderboard_record">%1$d V · %2$d parties</string>
-    <string name="cd_leaderboard_row">Rang %1$d, %2$s, classement %3$d</string>
 
     <string name="menu_statistics">Statistiques</string>
     <string name="difficulty_title">Difficulté</string>
@@ -324,7 +319,6 @@
     <string name="friends_section_incoming">Demandes reçues</string>
     <string name="friends_section_outgoing">Demandes envoyées</string>
     <string name="friends_section_blocked">Bloqués</string>
-    <string name="friends_empty">Tu n\'as encore ajouté personne. Recherche un pseudo pour commencer.</string>
     <string name="friends_add">Ajouter en ami</string>
     <string name="friends_accept">Accepter</string>
     <string name="friends_decline">Refuser</string>
@@ -338,7 +332,6 @@
     <string name="friends_invite_sent">Invitation envoyée.</string>
     <string name="friends_online">En ligne</string>
     <string name="friends_offline">Hors ligne</string>
-    <string name="friends_requires_account">Les amis nécessitent un compte. Associe le tien pour ajouter des joueurs.</string>
     <string name="friends_invite_waiting">En attente de %1$s…</string>
     <string name="friends_request_pending">Demande d\'ami envoyée</string>
     <string name="friends_already_friends">Vous êtes amis</string>
@@ -391,7 +384,6 @@
     <string name="home_more_subtitle">Boutique, stats et plus</string>
     <string name="home_leaderboard_short">Classement</string>
 
-    <string name="online_ranked_match">Partie classée</string>
     <string name="queue_searching_hint">Recherche du classement le plus proche du tien.</string>
     <string name="queue_connection_good">Connexion bonne</string>
     <string name="queue_connection_lost">Pas de connexion</string>
@@ -419,7 +411,6 @@
     <string name="paint_yours">Ta couleur</string>
     <string name="paint_rivals">Couleur de l\'adversaire</string>
     <string name="room_browser_refresh">Actualiser</string>
-    <string name="room_browser_players_caption">Joueurs</string>
     <string name="report_note">Ton signalement reste confidentiel.</string>
     <string name="room_code_copied">Code copié</string>
     <string name="difficulty_level_label">Niveau du bot</string>
@@ -429,12 +420,10 @@
     <string name="difficulty_expert_hint">Stratégie de longue haleine et pression.</string>
     <string name="difficulty_start">Lancer la partie</string>
     <string name="leaderboard_subtitle">Les meilleurs joueurs, à la même table.</string>
-    <string name="leaderboard_season">Cette saison</string>
     <string name="leaderboard_column_rank">RANG</string>
     <string name="leaderboard_column_player">JOUEUR</string>
     <string name="leaderboard_climb_title">Grimpe au classement</string>
     <string name="leaderboard_climb_action">Associer un compte</string>
-    <string name="leaderboard_live_note">Le classement se met à jour à la fin des parties.</string>
     <string name="leaderboard_wins_short">V</string>
     <string name="leaderboard_losses_short">D</string>
 
@@ -538,7 +527,6 @@
     <string name="stats_bot_games">Contre le bot</string>
     <string name="stats_online_only">Les chiffres ci-dessus ne comptent que les parties en ligne. Les parties contre le bot figurent dans l’échelle ci-dessous, et une partie à deux sur ce téléphone ne compte pour personne.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Gérez votre connexion et votre session.</string>
     <string name="account_privacy_note">Comment vos données sont traitées.</string>
     <string name="account_terms_note">Les conditions que vous avez acceptées.</string>
     <string name="account_or">ou</string>

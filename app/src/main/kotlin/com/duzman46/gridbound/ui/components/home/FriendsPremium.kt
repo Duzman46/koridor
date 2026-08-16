@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -312,6 +313,11 @@ fun FriendCard(
  * The label is carried as the accessibility description rather than printed: three of these share
  * the trailing end of a row with a name that has to stay readable, and three words there would
  * leave the name about fifty pixels.
+ *
+ * The ring stays forty and the touch box is forty-eight, which is the platform's minimum and the
+ * arrangement [PremiumBackArrow] uses. Three of these sit side by side on a request row and one
+ * of them refuses a friend request — a mis-aimed tap there is not a cosmetic problem, and eight
+ * device-independent pixels of invisible margin is what it costs to make them separable.
  */
 @Composable
 fun FriendAction(
@@ -324,13 +330,8 @@ fun FriendAction(
     val tint = if (accented) KoridorGold else Color(0xFF8B9098)
     Box(
         modifier
-            .size(40.dp)
+            .size(48.dp)
             .clip(CircleShape)
-            .background(if (accented) KoridorGold.copy(alpha = 0.10f) else Color(0xFF161B21))
-            .border(
-                BorderStroke(1.dp, if (accented) KoridorGold.copy(alpha = 0.5f) else FieldEdge),
-                CircleShape,
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -339,7 +340,19 @@ fun FriendAction(
             )
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
-    ) { Canvas(Modifier.size(17.dp)) { mark() } }
+    ) {
+        Box(
+            Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (accented) KoridorGold.copy(alpha = 0.10f) else Color(0xFF161B21))
+                .border(
+                    BorderStroke(1.dp, if (accented) KoridorGold.copy(alpha = 0.5f) else FieldEdge),
+                    CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) { Canvas(Modifier.size(17.dp)) { mark() } }
+    }
 }
 
 /** A section of the list: whose rows these are. */
@@ -353,7 +366,11 @@ fun FriendsSectionHeader(title: String, count: String, modifier: Modifier = Modi
     ) {
         Text(
             text = localeUpper(title),
-            modifier = Modifier.weight(1f),
+            // A heading, so the navigate-by-heading gesture crosses the friend list a section at
+            // a time rather than a row at a time. This is the longest list in the app.
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF9AA0A8),

@@ -241,7 +241,8 @@ private class RecordingGameRepository : GameRepository {
         difficulty: Difficulty,
         winner: PlayerId,
         localPlayer: PlayerId,
-        turns: Int,
+        turnsPlayed: Int,
+        winTurns: Int?,
     ) {
         gate.await()
         recorded += winner

@@ -508,6 +508,7 @@ class FakeGameRepository : GameRepository {
         difficulty: Difficulty,
         winner: PlayerId,
         localPlayer: PlayerId,
-        turns: Int,
+        turnsPlayed: Int,
+        winTurns: Int?,
     ) = Unit
 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -505,9 +506,14 @@ private fun AddPlayerSheet(
                     value = state.query,
                     onValueChange = viewModel::setQuery,
                     placeholder = stringResource(R.string.friends_search_placeholder),
+                    label = stringResource(R.string.friends_search_label),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.None,
                         imeAction = ImeAction.Search,
+                    ),
+                    // The magnifier on the keyboard used to do nothing at all. It searches.
+                    keyboardActions = KeyboardActions(
+                        onSearch = { if (state.query.isNotBlank() && !state.isSearching) viewModel.search() },
                     ),
                     leading = { drawPersonMark(KoridorGold) },
                     trailing = {

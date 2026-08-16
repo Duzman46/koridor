@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -272,6 +273,7 @@ fun SignInScreen(
             imeAction = ImeAction.Done,
             onValueChange = onPassword,
             onToggleVisibility = onTogglePasswordVisibility,
+            onDone = { if (!state.isSubmitting) onSubmit() },
         )
         SubmitButton(
             text = stringResource(R.string.auth_sign_in_title),
@@ -314,6 +316,7 @@ fun SignUpScreen(
             imeAction = ImeAction.Done,
             onValueChange = onConfirmPassword,
             onToggleVisibility = onTogglePasswordVisibility,
+            onDone = { if (!state.isSubmitting) onSubmit() },
         )
         SubmitButton(
             text = stringResource(R.string.auth_create_account),
@@ -338,7 +341,12 @@ fun ForgotPasswordScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        EmailField(state.email, onEmail, imeAction = ImeAction.Done)
+        EmailField(
+            state.email,
+            onEmail,
+            imeAction = ImeAction.Done,
+            onDone = { if (!state.isSubmitting) onSubmit() },
+        )
         SubmitButton(
             text = stringResource(R.string.auth_reset_send),
             onClick = onSubmit,
@@ -378,11 +386,17 @@ private fun AuthFormScaffold(
     }
 }
 
+/**
+ * @param onDone what the tick in the corner of the keyboard does, where this field is the last
+ *   one on the form. Declaring `ImeAction.Done` only draws the key; without this it closes the
+ *   keyboard and nothing else happens, which on a two-field sign-in form reads as a dead button.
+ */
 @Composable
 private fun EmailField(
     value: String,
     onValueChange: (String) -> Unit,
     imeAction: ImeAction = ImeAction.Next,
+    onDone: (() -> Unit)? = null,
 ) {
     OutlinedTextField(
         value = value,
@@ -393,10 +407,12 @@ private fun EmailField(
             keyboardType = KeyboardType.Email,
             imeAction = imeAction,
         ),
+        keyboardActions = KeyboardActions(onDone = onDone?.let { { it() } }),
         modifier = Modifier.fillMaxWidth(),
     )
 }
 
+/** @param onDone see [EmailField]. */
 @Composable
 private fun PasswordField(
     value: String,
@@ -405,6 +421,7 @@ private fun PasswordField(
     imeAction: ImeAction,
     onValueChange: (String) -> Unit,
     onToggleVisibility: () -> Unit,
+    onDone: (() -> Unit)? = null,
 ) {
     val toggleDescription = stringResource(
         if (visible) R.string.auth_hide_password else R.string.auth_show_password,
@@ -420,6 +437,7 @@ private fun PasswordField(
             keyboardType = KeyboardType.Password,
             imeAction = imeAction,
         ),
+        keyboardActions = KeyboardActions(onDone = onDone?.let { { it() } }),
         trailingIcon = {
             IconButton(
                 onClick = onToggleVisibility,

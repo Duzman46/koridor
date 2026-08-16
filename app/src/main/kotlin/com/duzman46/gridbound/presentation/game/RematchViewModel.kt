@@ -110,20 +110,31 @@ class RematchViewModel @Inject constructor(
                 _uiState.update { it.copy(isBusy = false, message = created.error.message) }
                 return@launch
             }
-            val session = (created as OnlineLobbyResult.Success).session
-            val sent = socialRepository.sendRematch(
-                fromUserId = ownId,
-                fromUsername = account.profile?.username.orEmpty(),
-                toUserId = opponentUserId,
-                roomCode = session.roomCode,
-                playedRoomCode = playedRoomCode,
-            )
-            if (sent is Outcome.Failure) {
-                // A room nobody will ever be told about is worse than no room: it would sit
-                // in the player's name until it expired.
-                onlineRepository.leaveRoom(session)
-                _uiState.update { it.copy(isBusy = false, message = sent.error.message) }
-                return@launch
+            val opened = created as OnlineLobbyResult.Success
+            val session = opened.session
+            // Asked only by the device that opened the room. When both players press at once
+            // the second one does not open anything — it walks into the seat the first left —
+            // and an invitation from there is an offer of a room its recipient is already
+            // sitting in. Worse, it is one that never goes away: the room is in play the
+            // instant it is sent, so the watcher below hands the match over and neither the
+            // refusal path nor [onCleared] is ever reached to withdraw it. Both players then
+            // carried a "wants a rematch" bar across the live board for the ten minutes an
+            // invitation lives, pointing at the game they were already playing.
+            if (opened.hosted) {
+                val sent = socialRepository.sendRematch(
+                    fromUserId = ownId,
+                    fromUsername = account.profile?.username.orEmpty(),
+                    toUserId = opponentUserId,
+                    roomCode = session.roomCode,
+                    playedRoomCode = playedRoomCode,
+                )
+                if (sent is Outcome.Failure) {
+                    // A room nobody will ever be told about is worse than no room: it would sit
+                    // in the player's name until it expired.
+                    onlineRepository.leaveRoom(session)
+                    _uiState.update { it.copy(isBusy = false, message = sent.error.message) }
+                    return@launch
+                }
             }
             pending = Pending(session, opponentUserId)
             _uiState.update { it.copy(stage = RematchStage.WAITING, isBusy = false) }
@@ -154,9 +165,21 @@ class RematchViewModel @Inject constructor(
                         // Guarded on `pending` as well as cancelled below, because the room
                         // republishes itself on every move: an answer announced twice would
                         // be a second navigation queued behind the interstitial.
-                        if (room?.status?.isPlayable != true || pending == null) return@collect
+                        val answered = pending
+                        if (room?.status?.isPlayable != true || answered == null) return@collect
                         // Handed over: the room is in play and is no longer ours to close.
                         pending = null
+                        // Both directions, before anybody is taken anywhere. The channel holds
+                        // one entry per pair per direction, and a rematch that ends up being
+                        // played can leave one at each end: this player's question to the
+                        // opponent, and — from an older build, or from the same double press
+                        // read the other way round — the opponent's to this player. Neither is
+                        // a question any more, and an entry nobody withdraws sits in front of
+                        // its owner for ten minutes offering the board they are looking at.
+                        // Done here rather than after the emission because emitting is what
+                        // navigates, and navigating cancels the scope this is running in.
+                        socialRepository.clearRequest(answered.opponentUserId, ownId)
+                        socialRepository.clearRequest(ownId, answered.opponentUserId)
                         _accepted.tryEmit(session)
                         stopWatching()
                     }

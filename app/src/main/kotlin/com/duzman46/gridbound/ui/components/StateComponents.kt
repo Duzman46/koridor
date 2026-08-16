@@ -21,7 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -82,7 +85,14 @@ fun ErrorState(
 /**
  * Inline validation or failure text under a form.
  *
- * Marked as a live region so TalkBack announces it the moment it appears.
+ * Marked as a live region so TalkBack announces it the moment it appears. That matters more here
+ * than anywhere else in the app: this is the only inline channel a refused password, a room that
+ * would not open or a rematch that failed has, and without the live region a player who cannot
+ * see the screen is told nothing at all — the text simply appears somewhere below the control
+ * they are still standing on.
+ *
+ * Polite rather than assertive: it is an answer to something the player just did, not an
+ * interruption, so it waits for whatever TalkBack is already saying to finish.
  */
 @Composable
 fun FormMessage(
@@ -92,7 +102,9 @@ fun FormMessage(
 ) {
     Text(
         text = message.asString(),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { liveRegion = LiveRegionMode.Polite },
         color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Center,

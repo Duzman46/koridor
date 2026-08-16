@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -283,7 +284,9 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
     ) {
         Text(
             text = title,
-            modifier = Modifier.weight(1f),
+            // The lobby's only section header, and the last one in the app without this. A
+            // screen reader's navigate-by-heading gesture skips whatever is not marked.
+            modifier = Modifier.weight(1f).semantics { heading() },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,

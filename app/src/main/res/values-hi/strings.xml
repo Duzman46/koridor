@@ -116,7 +116,6 @@
     <string name="account_delete_warning">इससे आपकी प्रोफ़ाइल, आँकड़े, दोस्त और रेटिंग स्थायी रूप से हट जाएँगे। इसके बाद ख़रीदारी बहाल नहीं की जा सकेगी। यह कार्रवाई वापस नहीं ली जा सकती।</string>
     <string name="account_delete_reauth_explainer">आपका खाता हटाने से पहले आपसे साइन-इन की पुष्टि करने को कहा जाएगा।</string>
     <string name="account_delete_confirm_label">पुष्टि के लिए %1$s टाइप करें</string>
-    <string name="account_delete_action">मेरा खाता स्थायी रूप से हटाएँ</string>
     <string name="account_delete_success">आपका खाता हटा दिया गया है।</string>
     <string name="account_privacy_policy">गोपनीयता नीति</string>
     <string name="account_terms_of_service">सेवा की शर्तें</string>
@@ -170,7 +169,6 @@
 
     <string name="room_browser_empty">अभी कोई कमरा खुला नहीं है</string>
     <string name="room_browser_empty_hint">एक बनाएँ और प्रतिद्वंद्वी का इंतज़ार करें।</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">पासवर्ड से सुरक्षित</string>
 
@@ -209,12 +207,9 @@
     <string name="leaderboard_empty">अभी तक कोई रैंक मैच नहीं खेला गया।</string>
     <string name="leaderboard_empty_weekly">इस हफ़्ते अभी तक कोई रैंक मैच नहीं हुआ।</string>
     <string name="leaderboard_empty_friends">तुलना करने के लिए दोस्त जोड़ें।</string>
-    <string name="leaderboard_your_rank">आपकी स्थिति</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">लीडरबोर्ड में दिखने के लिए साइन इन करें।</string>
     <string name="leaderboard_guest_not_ranked">मेहमानों की रैंकिंग नहीं होती। लीडरबोर्ड में जगह पाने के लिए खाता लिंक करें।</string>
-    <string name="leaderboard_record">%1$d जीत · %2$d मैच</string>
-    <string name="cd_leaderboard_row">रैंक %1$d, %2$s, रेटिंग %3$d</string>
 
     <string name="menu_statistics">आँकड़े</string>
     <string name="difficulty_title">कठिनाई</string>
@@ -321,7 +316,6 @@
     <string name="friends_section_incoming">आए हुए अनुरोध</string>
     <string name="friends_section_outgoing">भेजे गए अनुरोध</string>
     <string name="friends_section_blocked">ब्लॉक किए गए</string>
-    <string name="friends_empty">आपने अभी किसी को नहीं जोड़ा। शुरू करने के लिए कोई उपयोगकर्ता नाम खोजें।</string>
     <string name="friends_add">दोस्त जोड़ें</string>
     <string name="friends_accept">स्वीकारें</string>
     <string name="friends_decline">अस्वीकारें</string>
@@ -335,7 +329,6 @@
     <string name="friends_invite_sent">न्योता भेज दिया गया।</string>
     <string name="friends_online">ऑनलाइन</string>
     <string name="friends_offline">ऑफ़लाइन</string>
-    <string name="friends_requires_account">दोस्तों के लिए खाता ज़रूरी है। खिलाड़ी जोड़ने के लिए अपना खाता जोड़ें।</string>
     <string name="friends_invite_waiting">%1$s की प्रतीक्षा…</string>
     <string name="friends_request_pending">मित्रता अनुरोध भेजा गया</string>
     <string name="friends_already_friends">आप दोस्त हैं</string>
@@ -388,7 +381,6 @@
     <string name="home_more_subtitle">स्टोर, आँकड़े और अधिक</string>
     <string name="home_leaderboard_short">लीडरबोर्ड</string>
 
-    <string name="online_ranked_match">रैंक वाला मैच</string>
     <string name="queue_searching_hint">आपकी रेटिंग के सबसे नज़दीकी खिलाड़ी की तलाश है।</string>
     <string name="queue_connection_good">कनेक्शन ठीक है</string>
     <string name="queue_connection_lost">कनेक्शन नहीं है</string>
@@ -416,7 +408,6 @@
     <string name="paint_yours">आपका रंग</string>
     <string name="paint_rivals">प्रतिद्वंद्वी का रंग</string>
     <string name="room_browser_refresh">ताज़ा करें</string>
-    <string name="room_browser_players_caption">खिलाड़ी</string>
     <string name="report_note">आपकी रिपोर्ट गोपनीय रहती है।</string>
     <string name="room_code_copied">कमरा कोड कॉपी हुआ</string>
     <string name="difficulty_level_label">बॉट का स्तर</string>
@@ -426,12 +417,10 @@
     <string name="difficulty_expert_hint">दूरगामी रणनीति और दबाव।</string>
     <string name="difficulty_start">मैच शुरू करें</string>
     <string name="leaderboard_subtitle">बेहतरीन खिलाड़ी, एक ही मेज़ पर।</string>
-    <string name="leaderboard_season">इस सीज़न</string>
     <string name="leaderboard_column_rank">क्रम</string>
     <string name="leaderboard_column_player">खिलाड़ी</string>
     <string name="leaderboard_climb_title">तालिका में ऊपर चढ़ें</string>
     <string name="leaderboard_climb_action">खाता जोड़ें</string>
-    <string name="leaderboard_live_note">मैच खत्म होते ही तालिका अपडेट होती है।</string>
     <string name="leaderboard_wins_short">जी</string>
     <string name="leaderboard_losses_short">एच</string>
 
@@ -535,7 +524,6 @@
     <string name="stats_bot_games">बॉट के खिलाफ़</string>
     <string name="stats_online_only">ऊपर के आंकड़े सिर्फ़ ऑनलाइन मैच गिनते हैं। बॉट के मैच नीचे की सूची में हैं, और इस फ़ोन पर दो लोगों का खेल किसी के रिकॉर्ड में नहीं जाता।</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">अपना साइन-इन और सत्र प्रबंधित करें।</string>
     <string name="account_privacy_note">आपके डेटा का क्या होता है।</string>
     <string name="account_terms_note">वे शर्तें जो आपने मानी थीं।</string>
     <string name="account_or">या</string>

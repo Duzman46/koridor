@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -81,6 +82,9 @@ fun StatsTitle(title: String, note: String, modifier: Modifier = Modifier) {
                     }
                 }
             },
+            // A heading, so the navigate-by-heading gesture has somewhere to land on a page that
+            // is otherwise a wall of figures.
+            modifier = Modifier.semantics { heading() },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,

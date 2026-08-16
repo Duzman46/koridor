@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
@@ -123,14 +125,28 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier, trailing: String? = 
  * adds — the floating label, the filled container, the two-dp focus ring — is something this
  * design removes again. What is left is the box, the mark and the text, which is the whole
  * control.
+ *
+ * What the Material one also carried, and what had to be put back by hand, is the label. The
+ * placeholder here is a sibling `Text` that disappears the moment anything is typed, and
+ * [FieldLabel] above is a node of its own that the field is not associated with — so focusing
+ * the room-code box announced an edit box and nothing about what it wanted. [label] is the
+ * field's own description, and it is required rather than optional so a new call site cannot
+ * quietly go back to being unlabelled.
+ *
+ * @param label what this field is asking for, said in words to a screen reader.
+ * @param keyboardActions what the key in the corner of the keyboard does. Declaring
+ *   `ImeAction.Done` in [keyboardOptions] draws a tick and nothing more; this is what makes it
+ *   submit.
  */
 @Composable
 fun LobbyField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    label: String,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leading: (DrawScope.() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
@@ -172,6 +188,7 @@ fun LobbyField(
                 onValueChange = onValueChange,
                 singleLine = true,
                 keyboardOptions = keyboardOptions,
+                keyboardActions = keyboardActions,
                 visualTransformation = visualTransformation,
                 textStyle = LocalTextStyle.current.merge(
                     MaterialTheme.typography.bodyLarge.copy(
@@ -179,19 +196,29 @@ fun LobbyField(
                     ),
                 ),
                 cursorBrush = SolidColor(KoridorGold),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = label },
             )
         }
         trailing?.invoke()
     }
 }
 
-/** A control that lives inside a field: the eye on a password, and nothing else so far. */
+/**
+ * A control that lives inside a field: the eye on a password, and nothing else so far.
+ *
+ * The box is forty-eight, which is the platform's minimum for anything a finger has to hit, and
+ * the mark inside it is still twenty — the same arrangement [PremiumBackArrow] uses. Nothing is
+ * drawn on the box itself, so the extra eight device-independent pixels either side cost the
+ * field nothing to look at and are the difference between a control that can be tapped and one
+ * that can be aimed at.
+ */
 @Composable
 fun FieldControl(label: String, onClick: () -> Unit, mark: DrawScope.() -> Unit) {
     Box(
         Modifier
-            .size(38.dp)
+            .size(48.dp)
             .clip(CircleShape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -318,7 +345,8 @@ fun RowScope.SeatCard(
                 BorderStroke(if (chosen) Dimens.BorderStrong else 1.dp, if (chosen) swatch else FieldEdge),
                 shape,
             )
-            .clickable(
+            .selectable(
+                selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.RadioButton,
@@ -373,7 +401,14 @@ fun RowScope.SeatCard(
     }
 }
 
-/** One of the turn-length options: a word, and the mark that says what kind of length it is. */
+/**
+ * One of the turn-length options: a word, and the mark that says what kind of length it is.
+ *
+ * `selectable`, not `clickable(role = Role.RadioButton)`. Which of these is chosen was said by a
+ * gold border and by nothing else — not by the semantics tree, so a screen reader read four
+ * identical chips and a player who cannot see the border had no way to find out how long a turn
+ * they were about to agree to.
+ */
 @Composable
 fun RowScope.DurationChip(
     label: String,
@@ -388,7 +423,8 @@ fun RowScope.DurationChip(
             .clip(shape)
             .background(if (chosen) KoridorGold.copy(alpha = 0.10f) else Color(0xFF0D1116))
             .border(BorderStroke(1.dp, if (chosen) KoridorGold else FieldEdge), shape)
-            .clickable(
+            .selectable(
+                selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.RadioButton,
@@ -445,7 +481,8 @@ fun ChoiceRow(
             .clip(shape)
             .background(if (chosen) KoridorGold.copy(alpha = 0.08f) else Color(0xFF0D1116))
             .border(BorderStroke(1.dp, if (chosen) KoridorGold else FieldEdge), shape)
-            .clickable(
+            .selectable(
+                selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.RadioButton,
@@ -602,9 +639,13 @@ fun OpenRoomCard(
         Canvas(Modifier.size(15.dp)) {
             drawLock(if (locked) KoridorGold else Color(0xFF41464D))
         }
+        // Forty-eight for the touch box, fifteen for the flag. The mark stays the size the row
+        // can afford — the argument above about width still holds — but the thing a finger has
+        // to land on is the platform minimum. Thirty-two was a target smaller than the fingertip
+        // aiming at it, sitting immediately beside a row-wide control that joins a game.
         Box(
             Modifier
-                .size(32.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },

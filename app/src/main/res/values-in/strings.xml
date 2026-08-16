@@ -117,7 +117,6 @@
     <string name="account_delete_warning">Tindakan ini menghapus profil, statistik, teman, dan peringkatmu secara permanen. Setelah itu pembelian tidak dapat dipulihkan. Tindakan ini tidak bisa dibatalkan.</string>
     <string name="account_delete_reauth_explainer">Sebelum akunmu dihapus, kamu akan diminta mengonfirmasi proses masuk.</string>
     <string name="account_delete_confirm_label">Ketik %1$s untuk mengonfirmasi</string>
-    <string name="account_delete_action">Hapus akun saya secara permanen</string>
     <string name="account_delete_success">Akunmu telah dihapus.</string>
     <string name="account_privacy_policy">Kebijakan Privasi</string>
     <string name="account_terms_of_service">Ketentuan Layanan</string>
@@ -171,7 +170,6 @@
 
     <string name="room_browser_empty">Belum ada ruang terbuka</string>
     <string name="room_browser_empty_hint">Buat satu dan tunggu lawan.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Dilindungi kata sandi</string>
 
@@ -210,12 +208,9 @@
     <string name="leaderboard_empty">Belum ada pertandingan berperingkat yang dimainkan.</string>
     <string name="leaderboard_empty_weekly">Belum ada pertandingan berperingkat minggu ini.</string>
     <string name="leaderboard_empty_friends">Tambahkan teman untuk membandingkan hasilmu.</string>
-    <string name="leaderboard_your_rank">Posisimu</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Masuk agar kamu muncul di papan peringkat.</string>
     <string name="leaderboard_guest_not_ranked">Tamu tidak masuk peringkat. Tautkan akun untuk mendapat tempat di papan peringkat.</string>
-    <string name="leaderboard_record">%1$d M · %2$d main</string>
-    <string name="cd_leaderboard_row">Peringkat %1$d, %2$s, poin %3$d</string>
 
     <string name="menu_statistics">Statistik</string>
     <string name="difficulty_title">Kesulitan</string>
@@ -321,7 +316,6 @@
     <string name="friends_section_incoming">Permintaan masuk</string>
     <string name="friends_section_outgoing">Permintaan terkirim</string>
     <string name="friends_section_blocked">Diblokir</string>
-    <string name="friends_empty">Kamu belum menambahkan siapa pun. Cari nama pengguna untuk mulai.</string>
     <string name="friends_add">Tambah teman</string>
     <string name="friends_accept">Terima</string>
     <string name="friends_decline">Tolak</string>
@@ -335,7 +329,6 @@
     <string name="friends_invite_sent">Undangan terkirim.</string>
     <string name="friends_online">Online</string>
     <string name="friends_offline">Offline</string>
-    <string name="friends_requires_account">Daftar teman memerlukan akun. Tautkan akunmu untuk menambah pemain.</string>
     <string name="friends_invite_waiting">Menunggu %1$s…</string>
     <string name="friends_request_pending">Permintaan pertemanan terkirim</string>
     <string name="friends_already_friends">Kalian berteman</string>
@@ -388,7 +381,6 @@
     <string name="home_more_subtitle">Toko, statistik, dan lainnya</string>
     <string name="home_leaderboard_short">Peringkat</string>
 
-    <string name="online_ranked_match">Pertandingan berperingkat</string>
     <string name="queue_searching_hint">Mencari peringkat yang paling dekat denganmu.</string>
     <string name="queue_connection_good">Koneksi bagus</string>
     <string name="queue_connection_lost">Tidak ada koneksi</string>
@@ -416,7 +408,6 @@
     <string name="paint_yours">Warnamu</string>
     <string name="paint_rivals">Warna lawan</string>
     <string name="room_browser_refresh">Segarkan</string>
-    <string name="room_browser_players_caption">Pemain</string>
     <string name="report_note">Laporanmu dirahasiakan.</string>
     <string name="room_code_copied">Kode ruang disalin</string>
     <string name="difficulty_level_label">Level bot</string>
@@ -426,12 +417,10 @@
     <string name="difficulty_expert_hint">Strategi jangka panjang dan tekanan.</string>
     <string name="difficulty_start">Mulai pertandingan</string>
     <string name="leaderboard_subtitle">Pemain terbaik, di satu meja.</string>
-    <string name="leaderboard_season">Musim ini</string>
     <string name="leaderboard_column_rank">PERINGKAT</string>
     <string name="leaderboard_column_player">PEMAIN</string>
     <string name="leaderboard_climb_title">Naik di klasemen</string>
     <string name="leaderboard_climb_action">Tautkan akun</string>
-    <string name="leaderboard_live_note">Tabel diperbarui saat pertandingan selesai.</string>
     <string name="leaderboard_wins_short">M</string>
     <string name="leaderboard_losses_short">K</string>
 
@@ -535,7 +524,6 @@
     <string name="stats_bot_games">Melawan bot</string>
     <string name="stats_online_only">Angka di atas hanya menghitung pertandingan daring. Pertandingan melawan bot ada di daftar bawah, dan pertandingan dua orang di ponsel ini tidak dihitung untuk siapa pun.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Kelola masuk dan sesi kamu.</string>
     <string name="account_privacy_note">Bagaimana datamu diperlakukan.</string>
     <string name="account_terms_note">Ketentuan yang kamu setujui.</string>
     <string name="account_or">atau</string>

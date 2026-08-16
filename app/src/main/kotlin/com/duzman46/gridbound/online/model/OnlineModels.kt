@@ -116,6 +116,45 @@ data class RoomConfiguration(
 
         else -> null
     }
+
+    companion object {
+        /**
+         * What a rerun of [played] is played under: exactly what the first game was.
+         *
+         * A rematch used to be built from scratch and carried only the visibility, the rating
+         * and the seats, which meant [timing] — the one setting on this form a player actually
+         * feels — was silently defaulted. Two people who had deliberately turned the move clock
+         * off got it back at sixty seconds and either of them could then lose a rematch on time
+         * they had agreed not to play against; a two-minute room halved, a thirty-second room
+         * doubled. The played room is read anyway, to find out whether the match was rated, so
+         * carrying the rest of it costs nothing.
+         *
+         * [gameMode] is carried for the same reason, even though there is one of them today and
+         * so nothing to get wrong yet. A promise kept by accident stops being kept the moment a
+         * second mode ships, and the rematch would quietly downgrade to the classic board
+         * without anybody having asked it to.
+         *
+         * Two things are deliberately *not* carried. The room is always private, whatever the
+         * played one was: it is opened for one named opponent who is about to be handed the
+         * code, so a browser listing is only a way for a stranger to take their seat. And it
+         * never has a password, which would be a lock with the key already given out — the
+         * played room's password is not readable here in any case, only the fact that it had
+         * one.
+         *
+         * @param played the finished match, or null when it could not be read. A rematch on the
+         *   defaults is still better than no rematch, and an unreadable room is treated as
+         *   unrated for the same reason a guest's is: nothing that cannot be shown to have been
+         *   rated may move a rating.
+         */
+        fun rematchOf(played: OnlineRoom?, hostSeat: PlayerId): RoomConfiguration =
+            RoomConfiguration(
+                visibility = RoomVisibility.PRIVATE,
+                ranked = played?.ranked == true,
+                gameMode = played?.gameMode ?: OnlineGameMode.CLASSIC,
+                timing = played?.timing ?: RoomTiming(),
+                hostSeat = hostSeat,
+            )
+    }
 }
 
 data class OnlineRoom(
@@ -203,7 +242,22 @@ data class OnlineSession(
 )
 
 sealed interface OnlineLobbyResult {
-    data class Success(val session: OnlineSession) : OnlineLobbyResult
+    /**
+     * @param hosted whether this device opened the room or walked into one that was already
+     *   standing. Only a rematch has two answers to that, and only a rematch needs one: both
+     *   players are offered the button, the code is derived from the match they just played, so
+     *   whichever device gets there first hosts and the other takes the free seat. The one that
+     *   joined must not then send an invitation — it would be an offer of a room its recipient
+     *   is already sitting in, and because the room is in play the moment it is sent, nothing
+     *   that would withdraw it ever runs. The bar hangs over the live board for the ten minutes
+     *   an invitation lives. Defaults to false so a path that has not thought about the
+     *   question is treated as the seat-taker, which is the answer that sends nothing.
+     */
+    data class Success(
+        val session: OnlineSession,
+        val hosted: Boolean = false,
+    ) : OnlineLobbyResult
+
     data class Failure(val error: AppError) : OnlineLobbyResult
 }
 

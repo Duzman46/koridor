@@ -185,12 +185,16 @@ class DefaultGameRepository(
         difficulty: Difficulty,
         winner: PlayerId,
         localPlayer: PlayerId,
-        turns: Int,
+        turnsPlayed: Int,
+        winTurns: Int?,
     ) {
         val tally = tallyOf(mode, winner, localPlayer)
         store.edit { values ->
             values[Keys.totalGames] = (values[Keys.totalGames] ?: 0) + 1
-            values[Keys.totalTurns] = (values[Keys.totalTurns] ?: 0) + turns
+            // Every turn the match actually ran, however it ended. A resignation on turn
+            // forty is forty turns of play; only the *record* below cares that nobody won on
+            // the board.
+            values[Keys.totalTurns] = (values[Keys.totalTurns] ?: 0) + turnsPlayed
             if (!tally.countsAsResult) {
                 values[Keys.localGames] = (values[Keys.localGames] ?: 0) + 1
                 return@edit
@@ -210,9 +214,11 @@ class DefaultGameRepository(
                 values[Keys.bestStreak] = maxOf(values[Keys.bestStreak] ?: 0, streak)
                 val fastest = values[Keys.fastestWinTurns] ?: 0
                 // Zero means "no win yet", so the first win always sets the record rather than
-                // losing to a stored nothing.
-                if (turns > 0 && (fastest == 0 || turns < fastest)) {
-                    values[Keys.fastestWinTurns] = turns
+                // losing to a stored nothing. Null means the board did not decide this one, and
+                // a win nobody played out is not a fast win — it is not a time at all.
+                val record = winTurns ?: 0
+                if (record > 0 && (fastest == 0 || record < fastest)) {
+                    values[Keys.fastestWinTurns] = record
                 }
             } else {
                 values[Keys.totalLosses] = (values[Keys.totalLosses] ?: 0) + 1

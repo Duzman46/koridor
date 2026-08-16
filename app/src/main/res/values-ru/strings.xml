@@ -120,7 +120,6 @@
     <string name="account_delete_warning">Профиль, статистика, друзья и рейтинг будут удалены безвозвратно. После этого покупки восстановить не получится. Отменить это действие нельзя.</string>
     <string name="account_delete_reauth_explainer">Перед удалением аккаунта потребуется подтвердить вход.</string>
     <string name="account_delete_confirm_label">Введите %1$s для подтверждения</string>
-    <string name="account_delete_action">Удалить мой аккаунт навсегда</string>
     <string name="account_delete_success">Ваш аккаунт удалён.</string>
     <string name="account_privacy_policy">Политика конфиденциальности</string>
     <string name="account_terms_of_service">Условия использования</string>
@@ -174,7 +173,6 @@
 
     <string name="room_browser_empty">Сейчас открытых комнат нет</string>
     <string name="room_browser_empty_hint">Создайте свою и дождитесь соперника.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Защищена паролем</string>
 
@@ -213,12 +211,9 @@
     <string name="leaderboard_empty">Рейтинговых матчей пока не было.</string>
     <string name="leaderboard_empty_weekly">На этой неделе рейтинговых матчей пока нет.</string>
     <string name="leaderboard_empty_friends">Добавьте друзей, чтобы сравнить результаты.</string>
-    <string name="leaderboard_your_rank">Ваше место</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Войдите, чтобы попасть в таблицу лидеров.</string>
     <string name="leaderboard_guest_not_ranked">Гости не попадают в рейтинг. Привяжите аккаунт, чтобы занять место в таблице лидеров.</string>
-    <string name="leaderboard_record">%1$d П · %2$d матчей</string>
-    <string name="cd_leaderboard_row">Место %1$d, %2$s, рейтинг %3$d</string>
 
     <string name="menu_statistics">Статистика</string>
     <string name="difficulty_title">Сложность</string>
@@ -327,7 +322,6 @@
     <string name="friends_section_incoming">Входящие заявки</string>
     <string name="friends_section_outgoing">Отправленные заявки</string>
     <string name="friends_section_blocked">Заблокированные</string>
-    <string name="friends_empty">Вы ещё никого не добавили. Найдите игрока по имени, чтобы начать.</string>
     <string name="friends_add">Добавить в друзья</string>
     <string name="friends_accept">Принять</string>
     <string name="friends_decline">Отклонить</string>
@@ -341,7 +335,6 @@
     <string name="friends_invite_sent">Приглашение отправлено.</string>
     <string name="friends_online">В сети</string>
     <string name="friends_offline">Не в сети</string>
-    <string name="friends_requires_account">Для друзей нужен аккаунт. Привяжите свой, чтобы добавлять игроков.</string>
     <string name="friends_invite_waiting">Ждём %1$s…</string>
     <string name="friends_request_pending">Запрос в друзья отправлен</string>
     <string name="friends_already_friends">Вы друзья</string>
@@ -394,7 +387,6 @@
     <string name="home_more_subtitle">Магазин, статистика и другое</string>
     <string name="home_leaderboard_short">Рейтинг</string>
 
-    <string name="online_ranked_match">Рейтинговый матч</string>
     <string name="queue_searching_hint">Ищем игрока с ближайшим рейтингом.</string>
     <string name="queue_connection_good">Связь в порядке</string>
     <string name="queue_connection_lost">Нет связи</string>
@@ -422,7 +414,6 @@
     <string name="paint_yours">Ваш цвет</string>
     <string name="paint_rivals">Цвет соперника</string>
     <string name="room_browser_refresh">Обновить</string>
-    <string name="room_browser_players_caption">Игроки</string>
     <string name="report_note">Ваша жалоба остаётся конфиденциальной.</string>
     <string name="room_code_copied">Код скопирован</string>
     <string name="difficulty_level_label">Уровень бота</string>
@@ -432,12 +423,10 @@
     <string name="difficulty_expert_hint">Дальний расчёт и давление.</string>
     <string name="difficulty_start">Начать матч</string>
     <string name="leaderboard_subtitle">Лучшие игроки за одним столом.</string>
-    <string name="leaderboard_season">Этот сезон</string>
     <string name="leaderboard_column_rank">МЕСТО</string>
     <string name="leaderboard_column_player">ИГРОК</string>
     <string name="leaderboard_climb_title">Поднимайтесь в таблице</string>
     <string name="leaderboard_climb_action">Привязать аккаунт</string>
-    <string name="leaderboard_live_note">Таблица обновляется по мере завершения матчей.</string>
     <string name="leaderboard_wins_short">П</string>
     <string name="leaderboard_losses_short">Пр</string>
 
@@ -541,7 +530,6 @@
     <string name="stats_bot_games">Против бота</string>
     <string name="stats_online_only">Цифры выше учитывают только сетевые матчи. Матчи с ботом — в списке ниже, а игра двоих на этом телефоне никому не засчитывается.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Управление входом и сеансом.</string>
     <string name="account_privacy_note">Как обращаются с вашими данными.</string>
     <string name="account_terms_note">Условия, которые вы приняли.</string>
     <string name="account_or">или</string>

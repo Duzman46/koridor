@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -47,7 +48,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -139,11 +143,23 @@ fun UsernameScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    UsernameField(state, onUsername)
+                    // Gated on the name being available, not merely on it being typed.
+                    //
+                    // `isNotBlank()` let a player press Continue on a name the check had already
+                    // refused, or on one it was still checking — the claim then failed in the
+                    // repository and the screen came back with an error, on the one screen there
+                    // is no way off. The check the field is already running is the answer, so
+                    // the button waits for it.
+                    val canContinue = state.username.isAvailable && !state.username.isChecking
+                    UsernameField(
+                        state = state,
+                        onUsername = onUsername,
+                        onDone = { if (canContinue && !state.isSubmitting) onSubmit() },
+                    )
                     SubmitButton(
                         text = stringResource(R.string.action_continue),
                         onClick = onSubmit,
-                        enabled = state.username.value.isNotBlank(),
+                        enabled = canContinue,
                         isSubmitting = state.isSubmitting,
                     )
                     state.error?.let { FormMessage(it) }
@@ -729,7 +745,11 @@ fun EditProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     if (canChangeUsername) {
-                        UsernameField(state, onUsername)
+                        UsernameField(
+                            state = state,
+                            onUsername = onUsername,
+                            onDone = { if (!state.isSubmitting) onSubmit() },
+                        )
                     } else {
                         GuestUsernameNote(onLinkAccount)
                     }
@@ -818,8 +838,25 @@ private fun GuestUsernameNote(onLinkAccount: () -> Unit) {
     }
 }
 
+/**
+ * The name field, and the answer to the question it silently asks.
+ *
+ * The availability check used to finish without saying anything: the tick that appears when a
+ * name is free carried `contentDescription = null`, and the line under the field explaining why
+ * a name was refused was ordinary text. So the whole exchange — type a name, wait, be told yes
+ * or no — happened where a screen reader could not follow it, on the one screen a real account
+ * cannot get past.
+ *
+ * @param onDone what the tick on the keyboard does. See [UsernameScreen] for why it is gated on
+ *   the name actually being available rather than on it merely being non-blank.
+ */
 @Composable
-private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit) {
+private fun UsernameField(
+    state: ProfileEditState,
+    onUsername: (String) -> Unit,
+    onDone: (() -> Unit)? = null,
+) {
+    val availableDescription = stringResource(R.string.username_available)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         OutlinedTextField(
             value = state.username.value,
@@ -832,6 +869,7 @@ private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit)
                 keyboardType = KeyboardType.Ascii,
                 imeAction = ImeAction.Done,
             ),
+            keyboardActions = KeyboardActions(onDone = onDone?.let { { it() } }),
             trailingIcon = {
                 when {
                     state.username.isChecking -> CircularProgressIndicator(
@@ -841,7 +879,7 @@ private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit)
 
                     state.username.isAvailable -> Icon(
                         Icons.Rounded.Check,
-                        contentDescription = null,
+                        contentDescription = availableDescription,
                         tint = MaterialTheme.colorScheme.primary,
                     )
 
@@ -853,6 +891,10 @@ private fun UsernameField(state: ProfileEditState, onUsername: (String) -> Unit)
         state.username.message?.let {
             Text(
                 it.asString(),
+                // Polite live region: this line is the result of a check the player started by
+                // typing and then stopped touching, so nothing else will ever bring them back
+                // to read it.
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (state.username.isError) {
                     MaterialTheme.colorScheme.error

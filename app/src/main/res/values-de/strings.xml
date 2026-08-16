@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Spielbegriffe: Mauer, Zug, Runde, Gegner, Raum, Ranglistenpartie, aufgeben. -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="action_back">Zurück</string>
     <string name="action_continue">Weiter</string>
     <string name="action_cancel">Abbrechen</string>
@@ -116,7 +116,6 @@
     <string name="account_delete_warning">Damit werden dein Profil, deine Statistiken, deine Freunde und deine Wertung endgültig gelöscht. Käufe lassen sich danach nicht mehr wiederherstellen. Das lässt sich nicht rückgängig machen.</string>
     <string name="account_delete_reauth_explainer">Bevor dein Konto entfernt wird, wirst du gebeten, deine Anmeldung zu bestätigen.</string>
     <string name="account_delete_confirm_label">Tippe %1$s zur Bestätigung</string>
-    <string name="account_delete_action">Mein Konto endgültig löschen</string>
     <string name="account_delete_success">Dein Konto wurde gelöscht.</string>
     <string name="account_privacy_policy">Datenschutzerklärung</string>
     <string name="account_terms_of_service">Nutzungsbedingungen</string>
@@ -170,7 +169,6 @@
 
     <string name="room_browser_empty">Gerade sind keine Räume offen</string>
     <string name="room_browser_empty_hint">Erstelle einen und warte auf einen Gegner.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Passwortgeschützt</string>
 
@@ -209,12 +207,9 @@
     <string name="leaderboard_empty">Es wurden noch keine Ranglistenpartien gespielt.</string>
     <string name="leaderboard_empty_weekly">Diese Woche gab es noch keine Ranglistenpartien.</string>
     <string name="leaderboard_empty_friends">Füge Freunde hinzu, um dich zu vergleichen.</string>
-    <string name="leaderboard_your_rank">Deine Platzierung</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Melde dich an, um in der Bestenliste zu erscheinen.</string>
     <string name="leaderboard_guest_not_ranked">Gäste werden nicht gewertet. Verknüpfe ein Konto, um in die Bestenliste zu kommen.</string>
-    <string name="leaderboard_record">%1$d S · %2$d Partien</string>
-    <string name="cd_leaderboard_row">Platz %1$d, %2$s, Wertung %3$d</string>
 
     <string name="menu_statistics">Statistiken</string>
     <string name="difficulty_title">Schwierigkeit</string>
@@ -321,7 +316,6 @@
     <string name="friends_section_incoming">Erhaltene Anfragen</string>
     <string name="friends_section_outgoing">Gesendete Anfragen</string>
     <string name="friends_section_blocked">Blockiert</string>
-    <string name="friends_empty">Du hast noch niemanden hinzugefügt. Suche nach einem Benutzernamen, um loszulegen.</string>
     <string name="friends_add">Freund hinzufügen</string>
     <string name="friends_accept">Annehmen</string>
     <string name="friends_decline">Ablehnen</string>
@@ -335,7 +329,6 @@
     <string name="friends_invite_sent">Einladung gesendet.</string>
     <string name="friends_online">Online</string>
     <string name="friends_offline">Offline</string>
-    <string name="friends_requires_account">Für Freunde brauchst du ein Konto. Verknüpfe deins, um Spieler hinzuzufügen.</string>
     <string name="friends_invite_waiting">Warten auf %1$s…</string>
     <string name="friends_request_pending">Freundschaftsanfrage gesendet</string>
     <string name="friends_already_friends">Ihr seid Freunde</string>
@@ -388,7 +381,6 @@
     <string name="home_more_subtitle">Shop, Statistik und mehr</string>
     <string name="home_leaderboard_short">Rangliste</string>
 
-    <string name="online_ranked_match">Gewertete Partie</string>
     <string name="queue_searching_hint">Es wird nach der Wertung gesucht, die deiner am nächsten kommt.</string>
     <string name="queue_connection_good">Verbindung gut</string>
     <string name="queue_connection_lost">Keine Verbindung</string>
@@ -416,7 +408,6 @@
     <string name="paint_yours">Deine Farbe</string>
     <string name="paint_rivals">Farbe des Gegners</string>
     <string name="room_browser_refresh">Aktualisieren</string>
-    <string name="room_browser_players_caption">Spieler</string>
     <string name="report_note">Deine Meldung bleibt vertraulich.</string>
     <string name="room_code_copied">Raumcode kopiert</string>
     <string name="difficulty_level_label">Bot-Stufe</string>
@@ -426,12 +417,10 @@
     <string name="difficulty_expert_hint">Weitreichende Strategie und Druck.</string>
     <string name="difficulty_start">Partie starten</string>
     <string name="leaderboard_subtitle">Die besten Spieler, an einem Tisch.</string>
-    <string name="leaderboard_season">Diese Saison</string>
     <string name="leaderboard_column_rank">PLATZ</string>
     <string name="leaderboard_column_player">SPIELER</string>
     <string name="leaderboard_climb_title">Steig in der Tabelle</string>
     <string name="leaderboard_climb_action">Konto verknüpfen</string>
-    <string name="leaderboard_live_note">Die Tabelle aktualisiert sich, sobald Partien enden.</string>
     <string name="leaderboard_wins_short">S</string>
     <string name="leaderboard_losses_short">N</string>
 
@@ -480,7 +469,13 @@
     <string name="achievement_desc_bot">Schlage den Bot auf %1$s</string>
     <string name="achievement_desc_online_play">Spiele %1$d Partien online</string>
     <string name="achievement_desc_online_win">Gewinne %1$d Partien online</string>
-    <string name="achievement_desc_streak">Gewinne %1$d Partien in Folge</string>
+    <!--
+      "in Folge" is correct here and must not be joined up. Separated it means "nacheinander"
+      ("drei Siege in Folge"), which is the sense this badge wants; the single word "infolge"
+      is the preposition "as a result of" and would be nonsense in this sentence. Lint's typo
+      dictionary only knows the direction that is usually wrong, so it is silenced, not obeyed.
+    -->
+    <string name="achievement_desc_streak" tools:ignore="Typos">Gewinne %1$d Partien in Folge</string>
     <string name="achievement_desc_swift">Gewinne eine Partie in höchstens %1$d Zügen</string>
     <string name="achievement_desc_turns">Spiele insgesamt %1$d Züge</string>
     <string name="achievement_first_step">Erster Schritt</string>
@@ -535,7 +530,6 @@
     <string name="stats_bot_games">Gegen den Bot</string>
     <string name="stats_online_only">Die Zahlen oben zählen nur Online-Partien. Partien gegen den Bot stehen in der Leiter darunter, und eine Partie zu zweit an diesem Telefon zählt für niemanden.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Anmeldung und Sitzung verwalten.</string>
     <string name="account_privacy_note">So werden deine Daten behandelt.</string>
     <string name="account_terms_note">Die zugestimmten Bedingungen.</string>
     <string name="account_or">oder</string>

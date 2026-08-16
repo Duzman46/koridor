@@ -99,6 +99,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
                     }.warnOnFailure("room-on-disconnect")
                     return@lobbyCall OnlineLobbyResult.Success(
                         OnlineSession(roomCode, userId, hostSeat),
+                        hosted = true,
                     )
                 }
                 // The code was taken by somebody else between the hash and the room, so the
@@ -122,18 +123,15 @@ class FirebaseOnlineGameRepository @Inject constructor(
         val userId = requireUserId()
         val code = RoomCredentials.rematchCode(playedRoomCode, userId, opponentUserId)
         val host = profileRepository.loadProfile(userId).successOrNull
-        val configuration = RoomConfiguration(
-            // Private, so a rematch never turns up in the public browser for a stranger to
-            // walk into ahead of the player it was opened for.
-            visibility = RoomVisibility.PRIVATE,
-            // Read off the match just played rather than defaulted: a rerun is played for
-            // exactly what the first game was, and a guest's result cannot move a rating.
-            ranked = codec.decode(
-                playedRoomCode,
-                roomRef(playedRoomCode).awaitSnapshot().value,
-            )?.ranked == true,
-            hostSeat = playedSeat.opponent,
+        // The whole of the played room, not one field of it. Only `ranked` used to be taken off
+        // it, and the settings that were left behind were quietly replaced by the defaults —
+        // see [RoomConfiguration.rematchOf] for what that cost a room with the clock switched
+        // off. The read happens either way, so carrying the rest of it is free.
+        val played = codec.decode(
+            playedRoomCode,
+            roomRef(playedRoomCode).awaitSnapshot().value,
         )
+        val configuration = RoomConfiguration.rematchOf(played, playedSeat.opponent)
         val now = serverNow()
         val opened = roomRef(code).runTransactionSuspend { current ->
             if (current.value != null) return@runTransactionSuspend Transaction.abort()
@@ -142,10 +140,15 @@ class FirebaseOnlineGameRepository @Inject constructor(
             Transaction.success(current)
         }
         if (opened) {
-            OnlineLobbyResult.Success(OnlineSession(code, userId, playedSeat.opponent))
+            OnlineLobbyResult.Success(
+                OnlineSession(code, userId, playedSeat.opponent),
+                hosted = true,
+            )
         } else {
             // The other player asked first and this is their room. Taking the free seat in it
-            // is the same answer their invitation would have given, one tap earlier.
+            // is the same answer their invitation would have given, one tap earlier — and it
+            // comes back as `hosted = false`, which is what stops this device sending an
+            // invitation of its own to a room the recipient is already sitting in.
             seat(code, userId, "")
         }
     }

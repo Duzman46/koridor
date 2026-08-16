@@ -128,7 +128,6 @@
     <string name="account_delete_warning">سيؤدي هذا إلى حذف ملفك الشخصي وإحصاءاتك وأصدقائك وتصنيفك نهائيًا. ولن يمكن استرجاع المشتريات بعد ذلك. لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="account_delete_reauth_explainer">قبل حذف حسابك سيُطلب منك تأكيد تسجيل دخولك.</string>
     <string name="account_delete_confirm_label">اكتب %1$s للتأكيد</string>
-    <string name="account_delete_action">حذف حسابي نهائيًا</string>
     <string name="account_delete_success">تم حذف حسابك.</string>
     <string name="account_privacy_policy">سياسة الخصوصية</string>
     <string name="account_terms_of_service">شروط الاستخدام</string>
@@ -182,7 +181,6 @@
 
     <string name="room_browser_empty">لا توجد غرف مفتوحة الآن</string>
     <string name="room_browser_empty_hint">أنشئ غرفة وانتظر خصمًا.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">محمية بكلمة مرور</string>
 
@@ -221,12 +219,9 @@
     <string name="leaderboard_empty">لم تُلعب أي مباراة تصنيفية بعد.</string>
     <string name="leaderboard_empty_weekly">لا توجد مباريات تصنيفية هذا الأسبوع بعد.</string>
     <string name="leaderboard_empty_friends">أضِف أصدقاء لتقارن نتائجك بنتائجهم.</string>
-    <string name="leaderboard_your_rank">ترتيبك</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">سجّل الدخول لتظهر في لوحة الصدارة.</string>
     <string name="leaderboard_guest_not_ranked">الضيوف لا يُصنّفون. اربط حسابًا لتأخذ مكانك في لوحة الصدارة.</string>
-    <string name="leaderboard_record">%1$d فوز · %2$d مباراة</string>
-    <string name="cd_leaderboard_row">المركز %1$d، %2$s، التصنيف %3$d</string>
 
     <string name="menu_statistics">الإحصاءات</string>
     <string name="difficulty_title">الصعوبة</string>
@@ -337,7 +332,6 @@
     <string name="friends_section_incoming">الطلبات الواردة</string>
     <string name="friends_section_outgoing">الطلبات المُرسلة</string>
     <string name="friends_section_blocked">المحظورون</string>
-    <string name="friends_empty">لم تُضِف أحدًا بعد. ابحث عن اسم مستخدم للبدء.</string>
     <string name="friends_add">إضافة صديق</string>
     <string name="friends_accept">قبول</string>
     <string name="friends_decline">رفض</string>
@@ -351,7 +345,6 @@
     <string name="friends_invite_sent">أُرسلت الدعوة.</string>
     <string name="friends_online">متصل</string>
     <string name="friends_offline">غير متصل</string>
-    <string name="friends_requires_account">تتطلب قائمة الأصدقاء حسابًا. اربط حسابك لإضافة لاعبين.</string>
     <string name="friends_invite_waiting">بانتظار %1$s…</string>
     <string name="friends_request_pending">تم إرسال طلب الصداقة</string>
     <string name="friends_already_friends">أنتما صديقان</string>
@@ -404,7 +397,6 @@
     <string name="home_more_subtitle">المتجر والإحصاءات والمزيد</string>
     <string name="home_leaderboard_short">الترتيب</string>
 
-    <string name="online_ranked_match">مباراة مصنّفة</string>
     <string name="queue_searching_hint">نبحث عن أقرب تقييم إلى تقييمك.</string>
     <string name="queue_connection_good">الاتصال جيد</string>
     <string name="queue_connection_lost">لا يوجد اتصال</string>
@@ -432,7 +424,6 @@
     <string name="paint_yours">لونك</string>
     <string name="paint_rivals">لون الخصم</string>
     <string name="room_browser_refresh">تحديث</string>
-    <string name="room_browser_players_caption">لاعبون</string>
     <string name="report_note">بلاغك يبقى سريًا.</string>
     <string name="room_code_copied">تم نسخ رمز الغرفة</string>
     <string name="difficulty_level_label">مستوى الروبوت</string>
@@ -442,12 +433,10 @@
     <string name="difficulty_expert_hint">استراتيجية بعيدة المدى وضغط متواصل.</string>
     <string name="difficulty_start">ابدأ المباراة</string>
     <string name="leaderboard_subtitle">أفضل اللاعبين على طاولة واحدة.</string>
-    <string name="leaderboard_season">هذا الموسم</string>
     <string name="leaderboard_column_rank">الترتيب</string>
     <string name="leaderboard_column_player">اللاعب</string>
     <string name="leaderboard_climb_title">ارتقِ في الترتيب</string>
     <string name="leaderboard_climb_action">اربط حسابك</string>
-    <string name="leaderboard_live_note">يتحدّث الجدول مع انتهاء المباريات.</string>
     <string name="leaderboard_wins_short">ف</string>
     <string name="leaderboard_losses_short">خ</string>
 
@@ -551,7 +540,6 @@
     <string name="stats_bot_games">ضدّ الروبوت</string>
     <string name="stats_online_only">الأرقام أعلاه تحسب مباريات الإنترنت فقط. مباريات الروبوت في القائمة أدناه، ومباراة بين شخصين على هذا الهاتف لا تُحسب لأحد.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">أدِر تسجيل الدخول والجلسة.</string>
     <string name="account_privacy_note">كيف تُعالَج بياناتك.</string>
     <string name="account_terms_note">الشروط التي وافقت عليها.</string>
     <string name="account_or">أو</string>

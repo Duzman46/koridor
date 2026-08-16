@@ -131,7 +131,6 @@
     <string name="account_delete_warning">This permanently deletes your profile, stats, friends and rating. Purchases cannot be restored afterwards. This cannot be undone.</string>
     <string name="account_delete_reauth_explainer">Before your account is removed you will be asked to confirm your sign-in.</string>
     <string name="account_delete_confirm_label">Type %1$s to confirm</string>
-    <string name="account_delete_action">Delete my account permanently</string>
     <string name="account_delete_success">Your account has been deleted.</string>
     <string name="account_privacy_policy">Privacy Policy</string>
     <string name="account_terms_of_service">Terms of Service</string>
@@ -192,7 +191,6 @@
 
     <string name="room_browser_empty">No open rooms right now</string>
     <string name="room_browser_empty_hint">Create one and wait for a rival.</string>
-    <string name="room_browser_host">%1$s · %2$d</string>
     <string name="room_browser_players">%1$d/2</string>
     <string name="room_locked">Password protected</string>
 
@@ -236,13 +234,9 @@
     <string name="leaderboard_empty">No ranked matches have been played yet.</string>
     <string name="leaderboard_empty_weekly">No ranked matches this week yet.</string>
     <string name="leaderboard_empty_friends">Add friends to see how you compare.</string>
-    <string name="leaderboard_your_rank">Your position</string>
     <string name="leaderboard_rank_capped">%1$d+</string>
     <string name="leaderboard_sign_in_required">Sign in to appear on the leaderboard.</string>
     <string name="leaderboard_guest_not_ranked">Guests are not ranked. Link an account to take your place on the leaderboard.</string>
-    <!-- A terse two-number badge in a table row, not a sentence; plurals would not fit. -->
-    <string name="leaderboard_record" tools:ignore="PluralsCandidate">%1$d W · %2$d played</string>
-    <string name="cd_leaderboard_row">Rank %1$d, %2$s, rating %3$d</string>
 
     <!-- Main menu and mode selection -->
     <string name="menu_statistics">Statistics</string>
@@ -355,7 +349,6 @@
     <string name="friends_section_incoming">Incoming requests</string>
     <string name="friends_section_outgoing">Sent requests</string>
     <string name="friends_section_blocked">Blocked</string>
-    <string name="friends_empty">You have not added anyone yet. Search for a username to start.</string>
     <string name="friends_add">Add friend</string>
     <string name="friends_accept">Accept</string>
     <string name="friends_decline">Decline</string>
@@ -369,7 +362,6 @@
     <string name="friends_invite_sent">Invitation sent.</string>
     <string name="friends_online">Online</string>
     <string name="friends_offline">Offline</string>
-    <string name="friends_requires_account">Friends need an account. Link yours to add players.</string>
     <string name="friends_invite_waiting">Waiting for %1$s…</string>
     <string name="friends_request_pending">Friend request sent</string>
     <string name="friends_already_friends">You are friends</string>
@@ -423,7 +415,6 @@
     <string name="home_more_subtitle">Store, statistics and more</string>
     <string name="home_leaderboard_short">Leaderboard</string>
 
-    <string name="online_ranked_match">Ranked match</string>
     <string name="queue_searching_hint">Looking for the closest rating to yours.</string>
     <string name="queue_connection_good">Connection good</string>
     <string name="queue_connection_lost">No connection</string>
@@ -451,7 +442,6 @@
     <string name="paint_yours">Your colour</string>
     <string name="paint_rivals">Rival\'s colour</string>
     <string name="room_browser_refresh">Refresh</string>
-    <string name="room_browser_players_caption">Players</string>
     <string name="report_note">Your report is kept private.</string>
     <string name="room_code_copied">Room code copied</string>
     <string name="difficulty_level_label">Bot level</string>
@@ -461,12 +451,10 @@
     <string name="difficulty_expert_hint">Long-range strategy, and pressure.</string>
     <string name="difficulty_start">Start the match</string>
     <string name="leaderboard_subtitle">The best players, at one table.</string>
-    <string name="leaderboard_season">This season</string>
     <string name="leaderboard_column_rank">RANK</string>
     <string name="leaderboard_column_player">PLAYER</string>
     <string name="leaderboard_climb_title">Climb the table</string>
     <string name="leaderboard_climb_action">Link account</string>
-    <string name="leaderboard_live_note">The table updates as matches finish.</string>
     <string name="leaderboard_wins_short">W</string>
     <string name="leaderboard_losses_short">L</string>
 
@@ -570,7 +558,6 @@
     <string name="stats_bot_games">Against the bot</string>
     <string name="stats_online_only">The figures above count online matches only. Games against the bot are in the ladder below, and a game played by two people on this phone settles nobody\u2019s record.</string>
     <string name="stats_record_short">%1$d–%2$d</string>
-    <string name="account_manage_note">Manage your sign-in and session.</string>
     <string name="account_privacy_note">See how your data is handled.</string>
     <string name="account_terms_note">The terms you agreed to.</string>
     <string name="account_or">or</string>

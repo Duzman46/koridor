@@ -874,15 +874,26 @@ fun AppNavigation(
         // player wherever they are. See [RequestBar] for why it sits where it does.
         RequestBar(
             onOpenGame = { session ->
+                // Where the answer was given from, read once: it settles both what this
+                // navigation clears and whether a match is being left at all.
+                val from = navController.currentDestination?.route
                 val open = {
                     navController.navigate(
                         Routes.onlineGame(session.roomCode, session.playerId, session.userId),
                     ) {
                         // A match accepted from inside another one replaces it rather than
-                        // stacking a second board on top of the first, and the same goes for the
-                        // finished match's victory screen.
-                        popUpTo(Routes.GAME) { inclusive = true }
-                        popUpTo(Routes.WINNER) { inclusive = true }
+                        // stacking a second board on top of the first, and the same goes for
+                        // the finished match's victory screen.
+                        //
+                        // One or the other, never both, and that is a correction rather than a
+                        // tidy-up: two `popUpTo` calls in one options block are not two
+                        // instructions. The second overwrites the first, so the board was never
+                        // being popped at all and the new match was pushed on top of a live one
+                        // that stayed on the stack behind it. They are never both on the stack
+                        // anyway — reaching the victory screen pops the board inclusively — so
+                        // naming whichever one is underfoot is the whole of what was meant.
+                        from?.takeIf { it == Routes.GAME || it == Routes.WINNER }
+                            ?.let { popUpTo(it) { inclusive = true } }
                         launchSingleTop = true
                     }
                 }
@@ -890,16 +901,18 @@ fun AppNavigation(
                 // and it is the only way out of one that did not pass through the ad. It is the
                 // same departure the winner screen's own buttons make, so it earns the same ad.
                 //
-                // Conditional, and that is the whole point of the check: the identical bar
-                // accepts an invitation from the home screen or the friends list, where nothing
-                // is being left and an ad would arrive in front of a player who has just asked
-                // to start playing.
-                val route = navController.currentDestination?.route
-                if (route == Routes.GAME || route == Routes.WINNER) {
-                    onCompletedMatchExit(open)
-                } else {
-                    open()
-                }
+                // The victory screen and nowhere else, which is narrower than it used to be.
+                // Keying on the board's route as well put a full-screen interstitial in front of
+                // a match still being played, because a route says which screen the player is on
+                // and not whether the game on it is over — accepting from a live board is
+                // somebody abandoning a match, not finishing one, and an ad is the last thing
+                // that moment deserves. The board loses nothing by the change: it is on the
+                // victory screen within a frame of the winning move, so the window in which a
+                // *finished* match could be accepted out of from there does not really exist.
+                // And the same bar accepts an invitation from the home screen or the friends
+                // list, where nothing is being left and an ad would arrive in front of a player
+                // who has just asked to start playing.
+                if (from == Routes.WINNER) onCompletedMatchExit(open) else open()
             },
             onOpenLobby = { roomCode -> navController.navigate(Routes.online(roomCode)) },
         )

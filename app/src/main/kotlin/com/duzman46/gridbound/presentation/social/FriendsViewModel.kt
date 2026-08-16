@@ -6,6 +6,7 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppError
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
 import com.duzman46.gridbound.online.model.OnlineLobbyResult
 import com.duzman46.gridbound.online.model.OnlineSession
@@ -276,12 +277,29 @@ class FriendsViewModel @Inject constructor(
     /**
      * The same wait the lobby does after creating a room: watch it until the second seat fills,
      * then hand the session to the screen so it can open the board.
+     *
+     * And the same failure, handled the same way. This listener is the only thing that would
+     * notice the invited friend arriving; when it stops, the panel was cleared with no message
+     * and no log, so the invitation simply disappeared off the screen of the person who sent
+     * it. The room goes with it, exactly as [cancelHostedInvite] does it — a seat nobody is
+     * holding is worse than no invitation at all, because the friend walks into it.
+     *
+     * The failure itself is logged where it happens, in `observeRoom`, so what is left here is
+     * the part only this screen can do.
      */
     private fun awaitInvitedFriend(session: OnlineSession) {
         hostedInviteJob?.cancel()
         hostedInviteJob = viewModelScope.launch {
             onlineRepository.observeRoom(session.roomCode)
-                .catch { _uiState.update { state -> state.copy(hostedInvite = null) } }
+                .catch { error ->
+                    onlineRepository.leaveRoom(session)
+                    _uiState.update { state ->
+                        state.copy(
+                            hostedInvite = null,
+                            message = error.toDatabaseAppError().message,
+                        )
+                    }
+                }
                 .collect { room ->
                     when {
                         // The room being deleted is the ending a waiting room actually has:

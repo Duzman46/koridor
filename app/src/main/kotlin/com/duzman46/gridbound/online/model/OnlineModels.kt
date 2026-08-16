@@ -103,8 +103,14 @@ data class RoomConfiguration(
 ) {
     val hasPassword: Boolean get() = password.isNotBlank()
 
+    /**
+     * The name is measured trimmed, because trimmed is what gets stored: `RoomCodec` writes
+     * `roomName.trim().take(MAX)`. Measuring the raw text instead meant a name the codec would
+     * have stored intact was refused as too long on the strength of the spaces around it — a
+     * rejection the host could not see the cause of, since the offending characters are blank.
+     */
     fun validate(): AppError? = when {
-        roomName.length > Constants.Online.ROOM_NAME_MAX_LENGTH -> AppError.ROOM_NAME_TOO_LONG
+        roomName.trim().length > Constants.Online.ROOM_NAME_MAX_LENGTH -> AppError.ROOM_NAME_TOO_LONG
         password.isNotBlank() && password.length < Constants.Online.ROOM_PASSWORD_MIN_LENGTH ->
             AppError.ROOM_PASSWORD_TOO_SHORT
 

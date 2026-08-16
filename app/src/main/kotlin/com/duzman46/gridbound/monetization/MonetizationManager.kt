@@ -50,15 +50,41 @@ class MonetizationManager @Inject constructor(
     private val _state = MutableStateFlow(MonetizationState())
     val state: StateFlow<MonetizationState> = _state.asStateFlow()
 
+    /**
+     * The three fields the ads SDK's own callbacks and this class's coroutines both touch.
+     *
+     * Everything here is meant to run on the main thread, and with the dispatchers named that is
+     * what happens — but "meant to" is not a memory barrier. A plain field written on one thread
+     * and read on another carries no happens-before edge, so a stale `interstitialLoading` read
+     * would either start a second load or refuse a legitimate one, and a stale `interstitialAd`
+     * would show an ad that has already been spent. Volatile is the cheapest way to make the
+     * invariant hold rather than merely be intended; these are touched a handful of times a
+     * match, so the cost is nothing.
+     */
+    @Volatile
     private var adsInitialized = false
+
+    @Volatile
     private var interstitialAd: InterstitialAd? = null
+
+    @Volatile
     private var interstitialLoading = false
     private var interstitialShowing = false
     private var interstitialRetries = 0
     private var consentRetries = 0
 
     init {
-        scope.launch {
+        // `Dispatchers.Main` for the reason spelled out on [scheduleInterstitialRetry], and this
+        // is the collector that most needed it: [scope] is `Dispatchers.Default`, and an
+        // entitlement that changes under this app — an account switch, a refund, a restore —
+        // delivers here and goes straight on into [updateConsentState], which is
+        // `MobileAds.initialize` and `InterstitialAd.load`. Both are main-thread-only entry
+        // points into the ads SDK. Inheriting the scope's dispatcher meant every one of those
+        // paths called them from a background thread, and a throw out of `load` leaves
+        // [interstitialLoading] true forever, which retires advertising for the life of the
+        // process. The two scheduled retries below already name the dispatcher; this one is the
+        // path that reaches the SDK first.
+        scope.launch(Dispatchers.Main) {
             billingManager.state.collect { billing ->
                 val isPremium = billing.owns(Entitlement.REMOVE_ADS)
                 if (_state.value.isPremium != isPremium) {

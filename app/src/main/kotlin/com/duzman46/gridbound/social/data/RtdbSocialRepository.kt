@@ -8,6 +8,7 @@ import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.data.firebase.await
 import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.snapshotFlow
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.profile.domain.UserProfileRepository
@@ -22,12 +23,12 @@ import com.duzman46.gridbound.social.domain.PresenceState
 import com.duzman46.gridbound.social.domain.RequestKind
 import com.duzman46.gridbound.social.domain.SocialRepository
 import com.duzman46.gridbound.util.enumValueOrDefault
-import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ServerValue
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -393,6 +394,12 @@ class RtdbSocialRepository @Inject constructor(
     private fun presenceRef(userId: String): DatabaseReference =
         firebase.database.getReference(Constants.Social.PRESENCE_PATH).child(userId)
 
+    /**
+     * Cancellation is passed on rather than caught. On the JVM it is an `Exception` like any
+     * other, so leaving the generic catch to see it turned a player who tapped away from the
+     * friends screen mid-request into a Crashlytics report of a failed write, and left the
+     * coroutine that had been told to stop running on to answer nobody.
+     */
     private suspend fun <T> dbCall(
         operation: String,
         block: suspend () -> Outcome<T>,
@@ -400,11 +407,11 @@ class RtdbSocialRepository @Inject constructor(
         if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
         return try {
             block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn(operation, error)
-            Outcome.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            Outcome.Failure(error.toDatabaseAppError())
         }
     }
 

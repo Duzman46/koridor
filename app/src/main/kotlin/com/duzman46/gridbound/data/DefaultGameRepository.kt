@@ -1,13 +1,9 @@
 package com.duzman46.gridbound.data
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
-import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
@@ -25,54 +21,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
+/**
+ * The record and the settings, on this handset.
+ *
+ * Takes the store rather than reaching for it, so the whole of this class — including
+ * [claimStatisticsFor], which decides whether a real player's history survives — can be exercised
+ * against a real DataStore over a temporary file instead of against a stand-in that only behaves
+ * the way its author expected. The constructor Hilt uses hands it the one shared delegate; nothing
+ * else in the app may construct a second one over the same file.
+ */
 @Singleton
-class DefaultGameRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+class DefaultGameRepository(
+    private val store: DataStore<Preferences>,
 ) : GameRepository {
-    private object Keys {
-        val language = stringPreferencesKey(Constants.Data.KEY_LANGUAGE)
-        val themeMode = stringPreferencesKey(Constants.Data.KEY_THEME_MODE)
-        val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
-        val notificationsEnabled = booleanPreferencesKey(Constants.Data.KEY_NOTIFICATIONS_ENABLED)
-        val hapticsEnabled = booleanPreferencesKey(Constants.Data.KEY_HAPTICS_ENABLED)
-        val matchMessagesEnabled =
-            booleanPreferencesKey(Constants.Data.KEY_MATCH_MESSAGES_ENABLED)
-        val difficulty = stringPreferencesKey(Constants.Data.KEY_DIFFICULTY)
-        val tutorialCompleted = booleanPreferencesKey(Constants.Tutorial.KEY_COMPLETED)
-        val guestModeAccepted = booleanPreferencesKey(Constants.Session.KEY_GUEST_MODE_ACCEPTED)
-        val usernameChosen = booleanPreferencesKey(Constants.Session.KEY_USERNAME_CHOSEN)
-        val totalGames = intPreferencesKey(Constants.Data.KEY_TOTAL_GAMES)
-        val totalWins = intPreferencesKey(Constants.Data.KEY_TOTAL_WINS)
-        val totalLosses = intPreferencesKey(Constants.Data.KEY_TOTAL_LOSSES)
-        val localGames = intPreferencesKey(Constants.Data.KEY_LOCAL_GAMES)
-        val totalTurns = intPreferencesKey(Constants.Data.KEY_TOTAL_TURNS)
-        val easyWins = intPreferencesKey(Constants.Data.KEY_EASY_WINS)
-        val mediumWins = intPreferencesKey(Constants.Data.KEY_MEDIUM_WINS)
-        val hardWins = intPreferencesKey(Constants.Data.KEY_HARD_WINS)
-        val expertWins = intPreferencesKey(Constants.Data.KEY_EXPERT_WINS)
-        val easyLosses = intPreferencesKey(Constants.Data.KEY_EASY_LOSSES)
-        val mediumLosses = intPreferencesKey(Constants.Data.KEY_MEDIUM_LOSSES)
-        val hardLosses = intPreferencesKey(Constants.Data.KEY_HARD_LOSSES)
-        val expertLosses = intPreferencesKey(Constants.Data.KEY_EXPERT_LOSSES)
-        val onlineGames = intPreferencesKey(Constants.Data.KEY_ONLINE_GAMES)
-        val onlineWins = intPreferencesKey(Constants.Data.KEY_ONLINE_WINS)
-        val currentStreak = intPreferencesKey(Constants.Data.KEY_CURRENT_STREAK)
-        val bestStreak = intPreferencesKey(Constants.Data.KEY_BEST_STREAK)
-        val fastestWinTurns = intPreferencesKey(Constants.Data.KEY_FASTEST_WIN_TURNS)
-        val seenAchievements = stringSetPreferencesKey(Constants.Data.KEY_SEEN_ACHIEVEMENTS)
-        val statisticsOwner = stringPreferencesKey(Constants.Data.KEY_STATISTICS_OWNER)
 
-        /** Everything [claimStatisticsFor] clears, in one place so none is forgotten. */
-        val record: List<Preferences.Key<*>> = listOf(
-            totalGames, totalWins, totalLosses, localGames, totalTurns,
-            easyWins, mediumWins, hardWins, expertWins,
-            easyLosses, mediumLosses, hardLosses, expertLosses,
-            onlineGames, onlineWins, currentStreak, bestStreak, fastestWinTurns,
-            seenAchievements,
-        )
-    }
+    @Inject
+    constructor(@ApplicationContext context: Context) : this(context.gridboundDataStore)
 
-    private val preferences: Flow<Preferences> = context.gridboundDataStore.data.catch { error ->
+    private val preferences: Flow<Preferences> = store.data.catch { error ->
         if (error is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw error
     }
 
@@ -148,19 +114,67 @@ class DefaultGameRepository @Inject constructor(
         update(Keys.matchMessagesEnabled, enabled)
     override suspend fun setDifficulty(difficulty: Difficulty) = update(Keys.difficulty, difficulty.name)
 
+    /**
+     * Says whose the local record is, and clears it when that is somebody new.
+     *
+     * Three cases, and the third is the one that shipped wrong.
+     *
+     * **The same id twice** changes nothing, which is what makes linking safe: an anonymous user
+     * who signs up keeps their id, so everything they played stays theirs.
+     *
+     * **A different id** is a different player, and everything in [Keys.record] goes. Their record
+     * starts empty, including the tutorial flag — see [Keys.record] for why that one is in the list.
+     *
+     * **No owner at all** used to mean one thing and now means two, and telling them apart is the
+     * whole of the fix. The owner key did not exist in versionCode 5, so *every* handset in closed
+     * testing arrives here with no owner the first time somebody signs in. Keeping the record and
+     * stamping it for whoever that is was defensible on a fresh install, where the games were
+     * played by the person now signing in, and indefensible on a store from the old build, where
+     * the counters were a merged pile that no longer said whose they were. [Keys.legacyRecord] is
+     * what distinguishes them, and it exists only because [LegacyRecordQuarantine] wrote it.
+     *
+     * On a store carrying that marker the record has already had the contaminated part taken out
+     * of it, at process start, before a single statistic could be read or a badge offered. What is
+     * left is a count of matches somebody on this handset genuinely played, and there is exactly
+     * one player on a handset, so it is adopted rather than destroyed — the owner's instruction
+     * was that nobody loses what they actually played.
+     *
+     * The quarantine is emphatically *not* re-run here, and that is the one thing in this method
+     * it would be easiest to get wrong. The migration's sweep is only true at the instant it runs:
+     * a guest with no identity can play the machine for a week before they ever sign in, and by
+     * the time this is called the ladder may hold wins that are entirely honest. Sweeping again
+     * here would delete exactly those.
+     *
+     * The marker is left in place afterwards. It is the only thing on disk that still says this
+     * player's totals came out of the era when a record belonged to the handset and not to a
+     * person, and the complaint about the old code was that it left no signal at all.
+     */
     override suspend fun claimStatisticsFor(userId: String) {
         if (userId.isBlank()) return
-        context.gridboundDataStore.edit { values ->
-            val owner = values[Keys.statisticsOwner]
-            if (owner == userId) return@edit
-            // A first claim on a store that predates the owner key keeps what is there. The
-            // player it belongs to is the one making the claim -- there has only ever been one
-            // on this device -- and wiping a real record to introduce bookkeeping would be a
-            // worse bug than the one being fixed.
-            if (owner != null) {
-                // Typed one at a time: `remove` is generic over the key's value type, so a
-                // list of mixed keys cannot be handed to it as a method reference.
-                Keys.record.forEach { key -> values.remove(key) }
+        store.edit { values ->
+            when (values[Keys.statisticsOwner]) {
+                // Already theirs. Nothing to decide and nothing to write.
+                userId -> return@edit
+
+                // Nobody has claimed this store yet, and both of the ways that can happen end
+                // the same way — the record is adopted, not destroyed.
+                //
+                // With [Keys.legacyRecord] set it is a record from before the split, and the
+                // quarantine has already taken the contaminated part out of it at process
+                // start; what is left is matches somebody on this handset really played, and
+                // the marker stays put as the note saying where those totals came from.
+                // Without it, the store was created by this build and the games in it were
+                // played by this install since the last claim.
+                //
+                // The difference is recorded rather than acted on, and deliberately so: by the
+                // time a claim arrives the ladder may hold wins earned honestly after the
+                // quarantine — a guest can play the machine for a week before ever signing in —
+                // so there is nothing here that it would be safe to sweep a second time.
+                null -> Unit
+
+                // Somebody else's. Typed one at a time: `remove` is generic over the key's value
+                // type, so a list of mixed keys cannot be handed to it as a method reference.
+                else -> Keys.record.forEach { key -> values.remove(key) }
             }
             values[Keys.statisticsOwner] = userId
         }
@@ -174,7 +188,7 @@ class DefaultGameRepository @Inject constructor(
         turns: Int,
     ) {
         val tally = tallyOf(mode, winner, localPlayer)
-        context.gridboundDataStore.edit { values ->
+        store.edit { values ->
             values[Keys.totalGames] = (values[Keys.totalGames] ?: 0) + 1
             values[Keys.totalTurns] = (values[Keys.totalTurns] ?: 0) + turns
             if (!tally.countsAsResult) {
@@ -212,7 +226,7 @@ class DefaultGameRepository @Inject constructor(
     }
 
     private suspend fun <T> update(key: Preferences.Key<T>, value: T) {
-        context.gridboundDataStore.edit { it[key] = value }
+        store.edit { it[key] = value }
     }
 
     private fun winKey(difficulty: Difficulty): Preferences.Key<Int> = when (difficulty) {

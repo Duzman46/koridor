@@ -292,7 +292,16 @@ class BillingManager @Inject constructor(
         val owned = records.filter { it.state == PurchaseState.OWNED }
         val pending = records.filter { it.state == PurchaseState.PENDING }
 
-        owned.forEach(::finalisePurchase)
+        // Read here, not inside the coroutines below, and passed down rather than looked up
+        // again. This callback arrives from Play on the main thread and [onAccountChanged] runs
+        // on the main thread too, so an account switch can land in the gap between launching
+        // this work and it being dispatched — and the field would already say somebody else by
+        // the time it was read. Account A's purchase would then be filed, and verified, under
+        // account B: precisely the mix-up this class exists to prevent. The id belongs to the
+        // moment Play answered, so it is captured at that moment.
+        val owner = accountId
+
+        owned.forEach { finalisePurchase(owner, it) }
 
         val grantedNow = owned.flatMap { it.entitlements }.toSet()
         scope.launch {
@@ -300,7 +309,7 @@ class BillingManager @Inject constructor(
             // A definitive query is the whole truth, so a refund removes access. An update
             // callback only ever adds, because it carries just the purchase that changed.
             val next = if (definitive) grantedNow else current + grantedNow
-            if (next != current) entitlementStore.store(accountId, next)
+            if (next != current) entitlementStore.store(owner, next)
         }
         _state.update { it.copy(pendingPurchases = pending) }
         rebuildOffers()
@@ -309,11 +318,15 @@ class BillingManager @Inject constructor(
     /**
      * Acknowledges or consumes, and files the token for server-side verification. A
      * non-consumable left unacknowledged for three days is refunded by Play automatically.
+     *
+     * @param owner the account the purchase belongs to, taken by the caller at the moment Play
+     *   answered rather than read from the field here. A receipt is written once and never
+     *   corrected, so filing one under the wrong account is not a state that recovers.
      */
-    private fun finalisePurchase(record: PurchaseRecord) {
+    private fun finalisePurchase(owner: String?, record: PurchaseRecord) {
         if (!redeemedTokens.add(record.purchaseToken)) return
 
-        scope.launch { verifier.submit(accountId, record) }
+        scope.launch { verifier.submit(owner, record) }
 
         val consumable = record.productIds
             .mapNotNull(ProductCatalog::forProductId)

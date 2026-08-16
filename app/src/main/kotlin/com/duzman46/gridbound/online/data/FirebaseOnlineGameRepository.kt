@@ -8,6 +8,8 @@ import com.duzman46.gridbound.data.firebase.await
 import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.runTransactionSuspend
 import com.duzman46.gridbound.data.firebase.snapshotFlow
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
+import com.duzman46.gridbound.data.firebase.warnOnFailure
 import com.duzman46.gridbound.game.engine.GameEngine
 import com.duzman46.gridbound.game.models.ActionResult
 import com.duzman46.gridbound.game.models.GameAction
@@ -34,6 +36,7 @@ import com.google.firebase.database.ServerValue
 import com.google.firebase.database.Transaction
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -93,12 +96,19 @@ class FirebaseOnlineGameRepository @Inject constructor(
                     runCatching {
                         roomRef(roomCode).onDisconnect().removeValue().await()
                         secretRef(roomCode).onDisconnect().removeValue().await()
-                    }.onFailure { AppLog.warn("room-on-disconnect", it) }
+                    }.warnOnFailure("room-on-disconnect")
                     return@lobbyCall OnlineLobbyResult.Success(
                         OnlineSession(roomCode, userId, hostSeat),
                     )
                 }
-                if (hash != null) runCatching { secretRef(roomCode).removeValue().await() }
+                // The code was taken by somebody else between the hash and the room, so the
+                // hash belongs to a room this player will never own. Best effort, but not a
+                // secret worth abandoning in silence: one left behind under a code somebody
+                // else now holds is a password check the real host never set.
+                if (hash != null) {
+                    runCatching { secretRef(roomCode).removeValue().await() }
+                        .warnOnFailure("room-secret-abandon")
+                }
             }
             OnlineLobbyResult.Failure(AppError.ROOM_CODE_UNAVAILABLE)
         }
@@ -154,11 +164,10 @@ class FirebaseOnlineGameRepository @Inject constructor(
         }
         return queueSession(ranked).catch { error ->
             AppLog.warn("matchmake", error)
-            emit(
-                MatchmakingState.Failed(
-                    if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-                ),
-            )
+            // The queue is watched through listeners, and a listener the database closed used
+            // to arrive here as an unrecognised exception and be reported as "something went
+            // wrong" whatever it was. It now carries its own reason; see toDatabaseAppError.
+            emit(MatchmakingState.Failed(error.toDatabaseAppError()))
         }
     }
 
@@ -371,7 +380,18 @@ class FirebaseOnlineGameRepository @Inject constructor(
     override fun observeRoom(roomCode: String): Flow<OnlineRoom?> =
         // Mapped rather than filtered: a deleted room arrives as a snapshot with no value, and
         // dropping it left every waiting panel listening to a room that no longer exists.
-        roomRef(roomCode).snapshotFlow().map { codec.decode(roomCode, it.value) }
+        roomRef(roomCode).snapshotFlow()
+            .map { codec.decode(roomCode, it.value) }
+            // Reported once, here, rather than in each of the four screens that watch a room —
+            // which is also where every other listener in this app reports itself, from
+            // observeFriendships to observeProfile. Why the database closed a listener is a
+            // database fact and it is the same fact whoever was watching; what the screens
+            // differ on is what to do about it, and that is the half they each still own.
+            // Rethrown untouched so those halves still run.
+            .catch { error ->
+                AppLog.warn("room-listener", error)
+                throw error
+            }
 
     override suspend fun submitAction(
         session: OnlineSession,
@@ -413,10 +433,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
             }
             Transaction.success(current)
         }
-    }.getOrElse {
-        AppLog.warn("submit-action", it)
-        false
-    }
+    }.warnOnFailure("submit-action").getOrElse { false }
 
     override suspend fun resign(session: OnlineSession): Outcome<Unit> =
         finishRoom(session, RoomEndReason.RESIGNATION) { room ->
@@ -490,9 +507,13 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 Transaction.success(current)
             }
             if (wasHost) {
+                // The room is gone and its secret should go with it. A hash left under a code
+                // that is free again is the one piece of this teardown that outlives the room,
+                // so a failure here is worth a line even though nothing can be done about it.
                 runCatching { secretRef(session.roomCode).removeValue().await() }
+                    .warnOnFailure("room-secret-remove")
             }
-        }.onFailure { AppLog.warn("leave-room", it) }
+        }.warnOnFailure("leave-room")
     }
 
     /** Takes the guest seat, or returns the seat the player already holds. */
@@ -552,6 +573,9 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 Transaction.success(current)
             }
         }.getOrElse { error ->
+            // The player walked away mid-join. Nobody is waiting for an answer, and reporting
+            // a full room to a screen that has gone is not an answer anyway.
+            if (error is CancellationException) throw error
             // A rules refusal arrives as an exception rather than as `committed == false` —
             // the Realtime Database reports only a handler's own abort that way — so letting
             // it unwind turned every mistyped room password into "something went wrong".
@@ -579,7 +603,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
         runCatching {
             roomRef(roomCode).onDisconnect().cancel().await()
             secretRef(roomCode).onDisconnect().cancel().await()
-        }.onFailure { AppLog.warn("room-keep", it) }
+        }.warnOnFailure("room-keep")
     }
 
     override fun observeConnection(): Flow<Boolean> =
@@ -655,6 +679,12 @@ class FirebaseOnlineGameRepository @Inject constructor(
      * round trip, and it answers immediately even offline — with whatever the last connection
      * established, which is the best answer there is. Falls back to the handset's own clock,
      * because a room opened with a slightly wrong window beats no room at all.
+     *
+     * The fallback is logged rather than taken quietly. A phone whose clock is half an hour
+     * fast publishes a room that is already expired — invisible in every honest browser,
+     * deleted by the sweep within the minute, and the host left watching a wait that never
+     * ends. That is a report about rooms that vanish, and the one fact that explains it is
+     * whether this read answered.
      */
     private suspend fun serverNow(): Long {
         val offset = runCatching {
@@ -663,7 +693,7 @@ class FirebaseOnlineGameRepository @Inject constructor(
                 .snapshotFlow()
                 .first()
                 .getValue(Long::class.java)
-        }.getOrNull() ?: 0L
+        }.warnOnFailure("server-time-offset").getOrNull() ?: 0L
         return System.currentTimeMillis() + offset
     }
 
@@ -678,16 +708,32 @@ class FirebaseOnlineGameRepository @Inject constructor(
     private fun secretRef(roomCode: String): DatabaseReference =
         firebase.database.getReference(Constants.Online.ROOM_SECRETS_PATH).child(roomCode)
 
+    /** Cancellation is passed on for the reasons set out on [dbCall]. */
     private suspend fun lobbyCall(block: suspend () -> OnlineLobbyResult): OnlineLobbyResult {
         if (!firebase.isConfigured) return OnlineLobbyResult.Failure(AppError.SERVICE_UNAVAILABLE)
-        return runCatching { block() }.getOrElse { error ->
+        return try {
+            block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
             AppLog.warn("lobby-call", error)
-            OnlineLobbyResult.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            OnlineLobbyResult.Failure(error.toDatabaseAppError())
         }
     }
 
+    /**
+     * Every database call the lobby and the board make, with its failure turned into something
+     * the screen can say.
+     *
+     * Cancellation is re-thrown before anything else looks at the exception, and that ordering
+     * is the whole of it. On the JVM a `CancellationException` is an `Exception` like any other,
+     * so a player who backed out of a screen mid-request — the single most ordinary thing anyone
+     * does — had the cancellation caught here, written to Crashlytics as a genuine failure, and
+     * handed back as [Outcome.Failure] to a caller that had already gone. It filled the
+     * dashboard with reports of nothing happening, which is worse than no reports at all because
+     * it buries the ones that mean something; and swallowing cancellation breaks the one promise
+     * structured concurrency makes, that cancelling a scope ends the work inside it.
+     */
     private suspend fun <T> dbCall(
         operation: String,
         block: suspend () -> Outcome<T>,
@@ -695,11 +741,11 @@ class FirebaseOnlineGameRepository @Inject constructor(
         if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
         return try {
             block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn(operation, error)
-            Outcome.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            Outcome.Failure(error.toDatabaseAppError())
         }
     }
 }

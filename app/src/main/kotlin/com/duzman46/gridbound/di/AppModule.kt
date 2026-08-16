@@ -85,6 +85,16 @@ abstract class RepositoryModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object CoroutineModule {
+    /**
+     * `Dispatchers.Default`, deliberately: almost everything this scope carries is a write to
+     * disk or to the network that has no business occupying the main thread.
+     *
+     * The consequence is worth stating where the scope is built rather than leaving it to be
+     * rediscovered at each injection site. A collector launched on this scope runs on a
+     * background thread, so anything it reaches that is main-thread-only — the ads SDK, the
+     * consent framework, anything touching a View — has to name `Dispatchers.Main` itself.
+     * Inheriting is the default and it is the wrong default for those callers.
+     */
     @Provides
     @Singleton
     @ApplicationScope

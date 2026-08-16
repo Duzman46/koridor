@@ -5,6 +5,7 @@ import com.duzman46.gridbound.BuildConfig
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.data.firebase.AppCheckProviders
+import com.duzman46.gridbound.data.firebase.warnOnFailure
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -60,20 +61,34 @@ class FirebaseProvider @Inject constructor(
      *
      * The app is deleted in a `finally`, signed in or not. A second FirebaseApp left registered
      * holds a token and a listener for an account the player never asked to stay as.
+     *
+     * @return null when the scratch app could not be stood up at all, which the caller reports
+     *   as the service being unavailable. Every way of returning null is logged: without that,
+     *   a player told "the online service is not available" while their connection was fine
+     *   left behind not one line anywhere saying which of these three steps had failed.
      */
     suspend fun <T> withScratchAuth(block: suspend (FirebaseAuth) -> T): T? {
-        if (!isConfigured) return null
+        if (!isConfigured) {
+            AppLog.warn("scratch-auth-unconfigured")
+            return null
+        }
         // A leftover from a killed attempt would be re-used with its previous user still in it.
-        FirebaseApp.getApps(context).firstOrNull { it.name == SCRATCH_APP_NAME }?.delete()
+        runCatching {
+            FirebaseApp.getApps(context).firstOrNull { it.name == SCRATCH_APP_NAME }?.delete()
+        }.warnOnFailure("scratch-auth-clear")
         val scratch = runCatching {
             FirebaseApp.initializeApp(context, app.options, SCRATCH_APP_NAME)
-        }.getOrNull() ?: return null
+        }.warnOnFailure("scratch-auth-create").getOrNull() ?: return null
         installAppCheck(scratch)
         return try {
             block(FirebaseAuth.getInstance(scratch))
         } finally {
+            // Best effort by design — the check has already given its answer by now — but an
+            // app left registered holds a token for an account the player never asked to be,
+            // so a failure to tear it down is the sort of thing that has to be discoverable.
             runCatching { FirebaseAuth.getInstance(scratch).signOut() }
-            runCatching { scratch.delete() }
+                .warnOnFailure("scratch-auth-sign-out")
+            runCatching { scratch.delete() }.warnOnFailure("scratch-auth-delete")
         }
     }
 

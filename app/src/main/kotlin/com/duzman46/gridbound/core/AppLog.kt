@@ -21,19 +21,38 @@ object AppLog {
 
     fun warn(operation: String, error: Throwable? = null) {
         if (BuildConfig.DEBUG) {
-            Log.w(TAG, "$operation failed", error)
+            write { Log.w(TAG, "$operation failed", error) }
         } else {
             if (error != null) {
-                Log.w(TAG, "$operation failed: ${error.javaClass.simpleName}")
+                write { Log.w(TAG, "$operation failed: ${error.javaClass.simpleName}") }
             } else {
-                Log.w(TAG, "$operation failed")
+                write { Log.w(TAG, "$operation failed") }
             }
             report(operation, error)
         }
     }
 
     fun debug(message: String) {
-        if (BuildConfig.DEBUG) Log.d(TAG, message)
+        if (BuildConfig.DEBUG) write { Log.d(TAG, message) }
+    }
+
+    /**
+     * The same principle [report] already states, applied one line earlier: a reporting failure
+     * can never be allowed to become the actual crash.
+     *
+     * `android.util.Log` is a stub on the JVM, and this module builds unit tests with
+     * `returnDefaultValues = false`, so every one of these calls **throws** under test. That is
+     * not merely a testing inconvenience. These calls live inside `catch` and `Flow.catch {}`
+     * blocks, so a throw here replaces the failure being reported with a different failure, and
+     * skips whatever the handler meant to do next — which in this app is the line that tells the
+     * player what went wrong. A logger that can turn a handled error into an unhandled one, and
+     * a silent screen into a stuck one, is worse than no logger.
+     *
+     * It is also what made roughly forty correctly-written error paths untestable: a test that
+     * drove one of them died inside the logging rather than reaching the assertion.
+     */
+    private inline fun write(block: () -> Unit) {
+        runCatching(block)
     }
 
     /**

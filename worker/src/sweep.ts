@@ -169,6 +169,17 @@ const DEFAULT_TURN_SECONDS = 60;
 const BOARD_SIZE = 9;
 const WALLS_PER_PLAYER = 10;
 
+/**
+ * The square each seat opens from, and the file both of them stand on. See [timeoutFlaw].
+ *
+ * Seat one starts on the far row and walks to row zero; seat two starts on row zero and walks
+ * to the far row. Neither has spent a wall yet, so a seat found exactly here, still holding
+ * ten, is a seat whose player has not taken a turn.
+ */
+const STARTING_ROW_SEAT_ONE = BOARD_SIZE - 1;
+const STARTING_ROW_SEAT_TWO = 0;
+const STARTING_COLUMN = (BOARD_SIZE - 1) / 2;
+
 /** Excludes 0/O and 1/I, exactly as Constants.Online.ROOM_CODE_ALPHABET does. */
 const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_CODE_LENGTH = 6;
@@ -378,6 +389,10 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
   const board = room.board as Record<string, unknown> | undefined;
   const flaw = boardFlaw(board);
   if (flaw) return flaw;
+  if (report.endReason === "TIMEOUT") {
+    const clock = timeoutFlaw(room, board, report);
+    if (clock) return clock;
+  }
   if (report.endReason === "NORMAL") {
     // The board only ever names a seat, and the host is not always seat one: choosing red
     // puts them in seat two. A room written before seats existed carries no hostSeat, which
@@ -395,6 +410,65 @@ export async function verifyReport(db: Rtdb, report: MatchReport): Promise<strin
     if (report.winnerUid !== expected) return "winner does not match the board";
   }
   return "ok";
+}
+
+/**
+ * What is wrong with a match said to have been decided by a clock, or null when nothing is.
+ *
+ * A normal win is re-derived from the board above, because the board says who reached their
+ * goal row. A clock says nothing of the sort: the room simply asserts that somebody ran out of
+ * time, and the room is written by the players. So a report whose only evidence is that
+ * assertion is checked against the one part of the position no opponent can author.
+ *
+ * The hole this closes was a whole ranked rating taken from a stranger who never played. The
+ * queue is readable, so an attacker picks a name off it; a room may be opened naming anyone
+ * who is in the queue; and until this ran, nothing between those two facts and a rated win
+ * required the named player to touch the room at all. The room could be written with the
+ * clock already spent, rewritten a moment later as a timeout, and reported — and every step
+ * agreed with the one before it, because the same hand wrote all three.
+ *
+ * Three things are asked, and the third is the one that holds. A room still at version zero
+ * has had no move written to it by anybody. A board still on its first two turns has not been
+ * round both players. And a loser whose pawn stands on the square it started from, still
+ * holding all ten walls, has not taken a turn — which is a fact about the board, not about
+ * the room, and an attacker cannot forge it: the write rules let a player move their own pawn
+ * and nobody else's, so the victim's pawn is the one thing in the position that only the
+ * victim can have moved.
+ *
+ * It costs one thing, and knowingly: a match whose loser walked their pawn out and back to
+ * exactly where it began, spending no wall, and then ran out of time, is refused as well.
+ * That is a position no honest game reaches on purpose — the starting square is the furthest
+ * point from the goal — and refusing it is the price of a test that needs nothing from the
+ * rules to be true.
+ */
+function timeoutFlaw(
+  room: Record<string, unknown>,
+  board: Record<string, unknown> | undefined,
+  report: MatchReport
+): string | null {
+  // A clock that ended in a draw takes nobody's rating, so there is nothing here to protect.
+  if (!report.winnerUid) return null;
+  if (numberOr(room.version, 0) === 0) return "a clock ran out on a room nobody had played";
+  if (numberOr(board?.turnNumber, 0) < 3) {
+    return "a clock ran out before both players had had a turn";
+  }
+  // See [verifyReport]: the board names seats, and the host is not always seat one.
+  const hostInSeatTwo = room.hostSeat === "PLAYER_TWO";
+  const seatOneUid = hostInSeatTwo ? report.guestUid : report.hostUid;
+  const loserUid = report.winnerUid === report.hostUid ? report.guestUid : report.hostUid;
+  const loserIsSeatOne = loserUid === seatOneUid;
+  const seats = board?.players as Record<string, Record<string, unknown>> | undefined;
+  const loser = loserIsSeatOne ? seats?.PLAYER_ONE : seats?.PLAYER_TWO;
+  if (!loser) return "the board does not name both seats";
+  const home = loserIsSeatOne ? STARTING_ROW_SEAT_ONE : STARTING_ROW_SEAT_TWO;
+  if (
+    loser.row === home &&
+    loser.column === STARTING_COLUMN &&
+    loser.wallsRemaining === WALLS_PER_PLAYER
+  ) {
+    return "the player said to have run out of time never took a turn";
+  }
+  return null;
 }
 
 /**

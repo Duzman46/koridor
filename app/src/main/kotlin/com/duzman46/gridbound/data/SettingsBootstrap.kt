@@ -17,6 +17,12 @@ import kotlinx.coroutines.runBlocking
  *
  * A failure falls back to following the device language rather than propagating: the app
  * starting in the wrong language is a far smaller problem than the app not starting.
+ *
+ * Called only below Android 13. From API 33 the platform locale service already holds the
+ * choice and `LocaleController.wrap` hands the context straight back, so a read here would
+ * block the main thread of a cold start for an answer nobody looks at. The caller checks the
+ * API level before asking; that check has to live at the call site, because it is the only
+ * place that knows the answer will be used.
  */
 object SettingsBootstrap {
 

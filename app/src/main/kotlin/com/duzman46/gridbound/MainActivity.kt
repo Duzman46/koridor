@@ -48,9 +48,22 @@ class MainActivity : ComponentActivity() {
      *
      * Android 13+ handles this through the platform locale service, so [LocaleController.wrap]
      * is a no-op there; below that the configuration has to be layered on by hand. The
-     * preference is read synchronously because there is nothing to show until it is known.
+     * preference is read synchronously because there is nothing to show until it is known, and
+     * blocking here is what the read costs: `attachBaseContext` runs before there is a scope to
+     * defer it to and it has to hand back a configured context.
+     *
+     * Which is why the version check is up here rather than inside [LocaleController.wrap]. On
+     * API 33 and above — most of the install base — wrap returns the context untouched, so the
+     * blocking read was paid for a value that was then thrown away: a disk read on the main
+     * thread of every cold start, buying nothing. It is a small read of one small file and it
+     * was never an ANR, which is exactly why it could sit here unnoticed. The check belongs
+     * before the read, not after it.
      */
     override fun attachBaseContext(newBase: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            super.attachBaseContext(newBase)
+            return
+        }
         val language = SettingsBootstrap.readLanguageBlocking(newBase)
         super.attachBaseContext(LocaleController.wrap(newBase, language))
     }

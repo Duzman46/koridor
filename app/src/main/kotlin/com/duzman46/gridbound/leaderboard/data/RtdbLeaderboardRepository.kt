@@ -9,6 +9,7 @@ import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.int
 import com.duzman46.gridbound.data.firebase.string
 import com.duzman46.gridbound.data.firebase.stringOrNull
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardCursor
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardEntry
 import com.duzman46.gridbound.leaderboard.domain.LeaderboardPage
@@ -19,11 +20,11 @@ import com.duzman46.gridbound.leaderboard.domain.OwnStanding
 import com.duzman46.gridbound.online.data.FirebaseProvider
 import com.duzman46.gridbound.profile.data.ProfileCodec
 import com.duzman46.gridbound.util.enumValueOrDefault
-import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.Query
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -175,6 +176,11 @@ class RtdbLeaderboardRepository @Inject constructor(
         .child(Constants.Backend.WEEKLY_LEADERBOARD_PATH)
         .child(LeaderboardWeek.current())
 
+    /**
+     * Cancellation is passed on rather than caught. On the JVM it is an `Exception` like any
+     * other, and a board is a page a player scrolls past faster than it loads: every one of
+     * those departures was being filed with Crashlytics as a failed read of the leaderboard.
+     */
     private suspend fun <T> dbCall(
         operation: String,
         block: suspend () -> Outcome<T>,
@@ -182,11 +188,11 @@ class RtdbLeaderboardRepository @Inject constructor(
         if (!firebase.isConfigured) return Outcome.Failure(AppError.SERVICE_UNAVAILABLE)
         return try {
             block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn(operation, error)
-            Outcome.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            Outcome.Failure(error.toDatabaseAppError())
         }
     }
 }

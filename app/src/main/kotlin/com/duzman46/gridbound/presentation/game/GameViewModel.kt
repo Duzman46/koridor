@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.AppLog
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.data.SettingsManager
 import com.duzman46.gridbound.data.StatisticsManager
+import com.duzman46.gridbound.di.ApplicationScope
 import com.duzman46.gridbound.game.ai.AIEngineFactory
 import com.duzman46.gridbound.game.animation.AnimationManager
 import com.duzman46.gridbound.game.audio.SoundEffect
@@ -39,9 +41,11 @@ import com.duzman46.gridbound.profile.domain.UserProfileRepository
 import com.duzman46.gridbound.util.enumValueOrDefault
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -69,6 +73,7 @@ class GameViewModel @Inject constructor(
     private val onlineRepository: OnlineGameRepository,
     private val matchRepository: MatchRepository,
     private val profileRepository: UserProfileRepository,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val mode = enumValueOrDefault(savedStateHandle.get<String>("mode"), GameMode.VS_AI)
     private val difficulty = enumValueOrDefault(savedStateHandle.get<String>("difficulty"), Difficulty.MEDIUM)
@@ -345,11 +350,19 @@ class GameViewModel @Inject constructor(
      *
      * Guarded, because online the result arrives on a room that republishes itself afterwards
      * and a losing chime is not something to hear twice.
+     *
+     * The record goes on the application scope, for the same reason [RematchViewModel.onCleared]
+     * does: the state change that brings us here is the one the victory screen watches, and the
+     * navigation it triggers pops the board with `inclusive = true` — which clears this view
+     * model and cancels [viewModelScope]. DataStore applies its transform through
+     * `withContext(callerContext)`, so a caller cancelled in that window does not fail loudly,
+     * it simply never writes: the match is played, won, and silently never counted. Nothing
+     * about the recording belongs to this screen, so it must not die with it.
      */
     private fun announceResult(winner: PlayerId, turns: Int) {
         if (recordedWinner == winner) return
         recordedWinner = winner
-        viewModelScope.launch {
+        applicationScope.launch {
             statisticsManager.recordGame(
                 mode = mode,
                 difficulty = difficulty,
@@ -384,6 +397,13 @@ class GameViewModel @Inject constructor(
             _uiState.update { it.copy(isAiThinking = true, wallMode = false, validWalls = emptySet()) }
             val snapshot = gameManager.state
             val action = withContext(Dispatchers.Default) {
+                // `withContext` tests for cancellation before it dispatches; this tests again
+                // after, which is the window that matters. Beyond this line the thread is
+                // committed: the search is one non-suspending loop behind a monitor, so a
+                // coroutine cancelled from here on runs to its full budget — 1,200 ms at
+                // EXPERT — before anything can observe that nobody wants the answer. Rapid
+                // restarts are exactly how that queue forms.
+                ensureActive()
                 aiEngineFactory.forDifficulty(difficulty)
                     .chooseAction(snapshot, localPlayer.opponent)
             }
@@ -470,12 +490,17 @@ class GameViewModel @Inject constructor(
         viewModelScope.launch {
             onlineRepository.observeRoom(session.roomCode)
                 .catch { error ->
-                    AppLog.warn("observe-room", error)
+                    // The repository logs why the listener closed, under the tag "room-listener";
+                    // what belongs here is only what the player is told. Every failure used to be
+                    // reported as error_network, so a player with a perfect connection whose
+                    // token had expired was sent to check their wifi, and a refused read looked
+                    // like a dead router. toDatabaseAppError carries the database's own reason.
+                    // No new string: AppError already owns one in all ten languages.
                     _uiState.update {
                         it.copy(
                             isOnlineConnected = false,
                             isOnlineSyncing = false,
-                            onlineMessage = UiText.Res(R.string.error_network),
+                            onlineMessage = error.toDatabaseAppError().message,
                         )
                     }
                 }

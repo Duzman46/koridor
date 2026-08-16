@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.online.data
 
+import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.GameAction
 import com.duzman46.gridbound.game.models.GameStatus
@@ -30,6 +31,16 @@ class OnlineBoardCodec @Inject constructor() {
         "history" to state.history.map(::encodeTurn),
     )
 
+    /**
+     * @return the board, or null when the payload cannot be read.
+     *
+     * A null travels all the way to the player as "the room was not found or has been closed",
+     * which is what an intact room with one unreadable field used to look like from the outside
+     * — and from the inside it looked like nothing at all, because not one of these three
+     * `runCatching`s said a word. The logging is the whole point of them now: a board that will
+     * not decode is either a protocol change that was not thought through or a write that got
+     * through the rules malformed, and neither is discoverable from a room-not-found message.
+     */
     fun decodeBoard(value: Any?): BoardState? = runCatching {
         val map = value.asStringMap()
         val playerValues = map["players"].asStringMap()
@@ -49,7 +60,7 @@ class OnlineBoardCodec @Inject constructor() {
             turnNumber = map.int("turnNumber"),
             history = map["history"].asList().mapNotNull(::decodeTurn),
         )
-    }.getOrNull()
+    }.onFailure { AppLog.warn("decode-board", it) }.getOrNull()
 
     private fun encodeWall(wall: Wall): Map<String, Any> = mapOf(
         "row" to wall.row,
@@ -57,10 +68,18 @@ class OnlineBoardCodec @Inject constructor() {
         "orientation" to wall.orientation.name,
     )
 
+    /**
+     * One wall, or null when it will not read.
+     *
+     * Dropped rather than fatal, because a board missing one wall still draws and a board that
+     * refuses to decode at all leaves the player with nothing. Logged all the same: a wall the
+     * two devices disagree about is a match the two of them are playing on different boards,
+     * and it is worth knowing that happened.
+     */
     private fun decodeWall(value: Any?): Wall? = runCatching {
         val map = value.asStringMap()
         Wall(map.int("row"), map.int("column"), WallOrientation.valueOf(map.string("orientation")))
-    }.getOrNull()
+    }.onFailure { AppLog.warn("decode-wall", it) }.getOrNull()
 
     private fun encodeTurn(turn: TurnRecord): Map<String, Any> = buildMap {
         put("turnNumber", turn.turnNumber)
@@ -91,7 +110,7 @@ class OnlineBoardCodec @Inject constructor() {
             else -> error("Unknown action")
         }
         TurnRecord(map.int("turnNumber"), PlayerId.valueOf(map.string("player")), action)
-    }.getOrNull()
+    }.onFailure { AppLog.warn("decode-turn", it) }.getOrNull()
 
     private fun Any?.asStringMap(): Map<String, Any?> = (this as? Map<*, *>)
         ?.entries

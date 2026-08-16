@@ -1,5 +1,6 @@
 package com.duzman46.gridbound.online.data
 
+import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.game.models.BoardState
 import com.duzman46.gridbound.game.models.PlayerId
@@ -31,14 +32,34 @@ import javax.inject.Singleton
 class RoomCodec @Inject constructor(
     private val boardCodec: OnlineBoardCodec,
 ) {
-    fun decode(roomCode: String, value: Any?): OnlineRoom? = runCatching {
-        val map = value as? Map<*, *> ?: return null
-        val board = boardCodec.decodeBoard(map[Keys.BOARD]) ?: return null
-        OnlineRoom(
+    /**
+     * @return the room, or null when the payload is absent or cannot be read.
+     *
+     * The two nulls are not the same thing and are no longer treated as one. Absence is news:
+     * a deleted room arrives as a snapshot with no value, every waiting panel in the app
+     * depends on being told so, and there is nothing to report about it. A payload that is
+     * there and will not parse is a fault — and until this logged, it was an invisible one.
+     * Every caller turns a null into "the room was not found or has been closed", so a player
+     * sitting in a perfectly intact room whose board failed to decode was told the room had
+     * gone, and nothing anywhere recorded that it had not.
+     */
+    fun decode(roomCode: String, value: Any?): OnlineRoom? {
+        if (value == null) return null
+        return runCatching { decodeRoom(roomCode, value) }
+            .onFailure { AppLog.warn("decode-room", it) }
+            .getOrNull()
+    }
+
+    /** Throws rather than returns null, so [decode] can tell a fault from an absence. */
+    private fun decodeRoom(roomCode: String, value: Any): OnlineRoom {
+        val map = value as? Map<*, *> ?: error("room payload is not a map")
+        val board = boardCodec.decodeBoard(map[Keys.BOARD])
+            ?: error("room carries no readable board")
+        return OnlineRoom(
             roomId = roomCode,
             roomCode = roomCode,
             roomName = map.string(Keys.ROOM_NAME).orEmpty(),
-            hostUserId = map.string(Keys.HOST_USER_ID) ?: return null,
+            hostUserId = map.string(Keys.HOST_USER_ID) ?: error("room names no host"),
             guestUserId = map.string(Keys.GUEST_USER_ID),
             hostName = map.string(Keys.HOST_NAME).orEmpty(),
             hostRating = map.int(Keys.HOST_RATING, Constants.Backend.STARTING_RATING),
@@ -65,7 +86,7 @@ class RoomCodec @Inject constructor(
             version = map.long(Keys.VERSION),
             chat = decodeChat(map[Keys.CHAT]),
         )
-    }.getOrNull()
+    }
 
     /**
      * The messages stored under the room, keyed by the player who said each one.

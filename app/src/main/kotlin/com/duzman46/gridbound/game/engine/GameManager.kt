@@ -17,6 +17,19 @@ class GameManager @Inject constructor(
 ) {
     private val undoStack = ArrayDeque<BoardState>()
 
+    /**
+     * Volatile because the writers and the readers are not the same thread.
+     *
+     * Every write happens under this object's monitor on the main thread — a move, an undo, a
+     * room update — but the reads do not: `GameViewModel` computes the legal wall set and runs
+     * the bot on `Dispatchers.Default`, straight off this field. The monitor gives those readers
+     * nothing, because they never take it, so without volatile there is no happens-before edge
+     * between the write and the read at all and the worker is entitled to see a board from
+     * before the last move. The visible cost of that is a wall preview computed against a
+     * position that has already changed, which looks like the rules being wrong rather than like
+     * a missing memory barrier.
+     */
+    @Volatile
     var state: BoardState = BoardState.initial()
         private set
 

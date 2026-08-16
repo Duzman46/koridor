@@ -8,6 +8,7 @@ import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.data.RoomCredentials
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
@@ -414,12 +415,34 @@ class OnlineLobbyViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Holds the waiting panel open until a rival walks in, the room ends, or the listener dies.
+     *
+     * The third of those is the one that used to be handled worst. The listener is the only
+     * thing that would notice a rival arriving, so when it stops there is nothing behind the
+     * panel — and it was cleared with no message and no log, which left a host looking at a
+     * lobby that had silently given up on the room they were still being told about. It is
+     * reported now, and the room is closed on the way out for the same reason [cancelWaiting]
+     * closes it: a room nobody is watching still advertises a code in the browser, and the
+     * stranger who taps it waits for a host who will never be told they are there.
+     *
+     * The failure itself is logged where it happens, in `observeRoom`, so what is left here is
+     * the part only this screen can do.
+     */
     private fun awaitOpponent(session: OnlineSession) {
         waitingJob?.cancel()
         _uiState.update { it.copy(isBusy = false, waitingSession = session) }
         waitingJob = viewModelScope.launch {
             repository.observeRoom(session.roomCode)
-                .catch { _uiState.update { state -> state.copy(waitingSession = null) } }
+                .catch { error ->
+                    repository.leaveRoom(session)
+                    _uiState.update { state ->
+                        state.copy(
+                            waitingSession = null,
+                            message = error.toDatabaseAppError().message,
+                        )
+                    }
+                }
                 .collect { room ->
                     when {
                         // A room waiting for an opponent has one ending nobody writes a status

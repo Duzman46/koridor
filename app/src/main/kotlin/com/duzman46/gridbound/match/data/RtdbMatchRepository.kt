@@ -8,17 +8,18 @@ import com.duzman46.gridbound.data.firebase.awaitSnapshot
 import com.duzman46.gridbound.data.firebase.runTransactionSuspend
 import com.duzman46.gridbound.data.firebase.string
 import com.duzman46.gridbound.data.firebase.stringOrNull
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.match.domain.MatchOutcome
 import com.duzman46.gridbound.match.domain.MatchProcessingState
 import com.duzman46.gridbound.match.domain.MatchReport
 import com.duzman46.gridbound.match.domain.MatchRepository
 import com.duzman46.gridbound.match.domain.RecentMatch
 import com.duzman46.gridbound.online.data.FirebaseProvider
-import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.Transaction
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class RtdbMatchRepository @Inject constructor(
@@ -54,11 +55,15 @@ class RtdbMatchRepository @Inject constructor(
             // A committed write and an aborted duplicate are both success from the caller's
             // point of view: after either one, exactly one report exists.
             Outcome.Success(Unit)
+        } catch (cancellation: CancellationException) {
+            // Passed on rather than caught. A `CancellationException` is an `Exception` on the
+            // JVM, and the winner screen is exactly where a player taps away fastest, so this
+            // catch was reporting ordinary departures to Crashlytics as failed match reports —
+            // burying the real ones — and telling a caller that had already gone.
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn("report-match", error)
-            Outcome.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            Outcome.Failure(error.toDatabaseAppError())
         }
     }
 
@@ -78,11 +83,12 @@ class RtdbMatchRepository @Inject constructor(
                     .mapNotNull(DataSnapshot::toRecentMatch)
                     .sortedByDescending(RecentMatch::playedAt),
             )
+        } catch (cancellation: CancellationException) {
+            // As above: leaving the history screen before the read lands is not a failure.
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn("load-recent-matches", error)
-            Outcome.Failure(
-                if (error is FirebaseNetworkException) AppError.NETWORK else AppError.UNKNOWN,
-            )
+            Outcome.Failure(error.toDatabaseAppError())
         }
     }
 

@@ -25,6 +25,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -314,6 +315,12 @@ class FirebaseAuthRepository @Inject constructor(
         return try {
             val user = block() ?: return Outcome.Failure(AppError.UNKNOWN)
             Outcome.Success(user.toAuthUser())
+        } catch (cancellation: CancellationException) {
+            // A `CancellationException` is an `Exception` on the JVM, so leaving the generic
+            // catch below to see it meant a player who backed out of the sign-in sheet had
+            // their departure filed with Crashlytics as an authentication failure — and the
+            // coroutine told to stop went on to hand an answer to a screen that had gone.
+            throw cancellation
         } catch (error: Exception) {
             AppLog.warn(operation, error)
             Outcome.Failure(error.toAppError())

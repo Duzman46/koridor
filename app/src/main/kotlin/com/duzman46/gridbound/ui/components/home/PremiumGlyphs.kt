@@ -123,6 +123,9 @@ enum class PremiumIcon {
 
     /** Time already spent. A dial with two hands on it. */
     CLOCK,
+
+    /** Go round again. An arc that comes back on itself, with a head on the end. */
+    REPLAY,
 }
 
 /** One stroke weight across the whole set, as a fraction of the icon's box. */
@@ -176,6 +179,7 @@ fun DrawScope.drawPremiumIcon(icon: PremiumIcon, tint: Color) {
         PremiumIcon.TARGET -> target(s, tint, line)
         PremiumIcon.FLAME -> flame(s, tint)
         PremiumIcon.CLOCK -> clock(s, tint, line)
+        PremiumIcon.REPLAY -> replay(s, tint, line)
     }
 }
 
@@ -887,6 +891,40 @@ private fun DrawScope.clock(s: Float, tint: Color, line: Float) {
     drawCircle(tint, s * 0.38f, centre, style = Stroke(line))
     drawLine(tint, centre, Offset(s * 0.5f, s * 0.26f), strokeWidth = line, cap = StrokeCap.Round)
     drawLine(tint, centre, Offset(s * 0.68f, s * 0.58f), strokeWidth = line, cap = StrokeCap.Round)
+}
+
+/**
+ * Go round again: an arc most of the way round, and an arrowhead where it stops.
+ *
+ * The set had no mark for this and the winner screen was borrowing Material's, which is the one
+ * thing this file exists to avoid — a vendor glyph carries its own stroke weight and optical
+ * size, and next to thirty drawn to one specification it is the one that looks imported.
+ *
+ * The gap is deliberate rather than closed: an arc that met its own tail would read as a ring,
+ * so it stops short and the head sits in the opening.
+ */
+private fun DrawScope.replay(s: Float, tint: Color, line: Float) {
+    val radius = s * 0.32f
+    drawArc(
+        color = tint,
+        startAngle = -48f,
+        sweepAngle = 300f,
+        useCenter = false,
+        topLeft = Offset(s * 0.5f - radius, s * 0.5f - radius),
+        size = Size(radius * 2f, radius * 2f),
+        style = Stroke(line, cap = StrokeCap.Round),
+    )
+    // The head, on the end the arc stopped at, pointing the way it was travelling.
+    val tip = Offset(s * 0.5f + radius * 0.67f, s * 0.5f - radius * 0.74f)
+    drawPath(
+        Path().apply {
+            moveTo(tip.x, tip.y)
+            lineTo(tip.x - s * 0.02f, tip.y + s * 0.20f)
+            lineTo(tip.x + s * 0.17f, tip.y + s * 0.09f)
+            close()
+        },
+        color = tint,
+    )
 }
 
 /**

@@ -383,6 +383,15 @@ class SessionManager @Inject constructor(
         // signs in next has not, and a device that has been signed into once must not wave
         // the next account past the gate under a name the app invented for it.
         gameRepository.setUsernameChosen(false)
+        // Same argument, and it was missing. The tutorial flag is read by two things: the
+        // SCHOLAR badge, which is a claim about a person, and the onboarding gate, which decides
+        // whether this player is shown how the game works. Left standing it hands the next
+        // account a badge it never earned and skips the lesson for somebody who has never seen a
+        // board — one flag, two failures, both pointing the same way, so it follows the player
+        // out. The player who genuinely did the tutorial loses nothing: setTutorialCompleted
+        // mirrors the answer to their cloud profile, and the session gate is the local flag OR
+        // the profile's, so their own answer comes back the moment they sign in again.
+        gameRepository.setTutorialCompleted(false)
     }
 
     suspend fun changeUsername(username: String): Outcome<String> {

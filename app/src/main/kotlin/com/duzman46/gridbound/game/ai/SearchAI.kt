@@ -63,6 +63,29 @@ class SearchAI(
     private var abandoned = false
 
     /**
+     * How many times the search has been abandoned, ever.
+     *
+     * This is the half of the guard that [abandoned] cannot supply. A caller reads it *before*
+     * it queues on the monitor and compares once it is in; a caller retired while it waited sees
+     * a different number and gives up the turn instead of taking it.
+     *
+     * Without it the flag defeats itself. [chooseAction] clears [abandoned] on the way in, which
+     * is right for the caller that was asked for and wrong for one that was retired while
+     * blocked: it wipes the very signal meant to stop it, then spends its whole budget — 1,200 ms
+     * at EXPERT — on a move the screen already moved past. Restarts pressed in a burst queue on
+     * this monitor, so k of them serialised k full searches and the one the player is actually
+     * waiting for started last. A count rather than a flag because it must survive an arbitrary
+     * number of abandonments between the read and the entry.
+     *
+     * Incremented without an atomic because every caller of [abandonSearch] is the main thread —
+     * `GameViewModel.stopAiTurn`, and nothing else. A lost increment could only fail to retire a
+     * search that should have been retired, which is the behaviour this replaces; it can never
+     * retire one that was wanted.
+     */
+    @Volatile
+    private var abandonments = 0
+
+    /**
      * The lock is mandatory, not defensive. `GameViewModel.runAiTurn` cancels the previous AI job
      * and relaunches immediately, and cancelling a coroutine does not interrupt a non-suspending
      * CPU loop — so two `Dispatchers.Default` threads can arrive here at once and would otherwise
@@ -76,24 +99,41 @@ class SearchAI(
      * The result is re-validated through [GameEngine] before it is returned. [Searcher] is a
      * transcription of the rules engine and a divergence in it should cost strength, never
      * legality; this line is what guarantees the difference.
+     *
+     * The ticket read on the first line is taken outside the lock on purpose — it has to be, as
+     * it is the value at the moment this caller joined the queue, and everything after it is
+     * spent waiting. See [abandonments].
      */
-    @Synchronized
     override fun chooseAction(state: BoardState, playerId: PlayerId): GameAction {
         require(state.currentPlayer == playerId)
-        abandoned = false
-        val engine = searcher ?: Searcher(config, clock) { abandoned }.also { searcher = it }
-        val action = decode(engine.bestMove(state))
-        if (action != null && gameEngine.perform(state, action) is ActionResult.Success) {
-            return action
+        val ticket = abandonments
+        synchronized(this) {
+            // Retired while queued: somebody asked for this search to stop after it was asked
+            // for and before it got in. Returning at once is what collapses the queue; the
+            // caller is a cancelled coroutine and its answer is discarded either way, so the
+            // cheap legal move costs nothing and the budget it does not spend is the budget the
+            // search the player is waiting for gets to start with.
+            if (abandonments != ticket) return safeFallback(state, playerId)
+            abandoned = false
+            val engine = searcher ?: Searcher(config, clock) { abandoned }.also { searcher = it }
+            val action = decode(engine.bestMove(state))
+            if (action != null && gameEngine.perform(state, action) is ActionResult.Success) {
+                return action
+            }
+            return safeFallback(state, playerId)
         }
-        return safeFallback(state, playerId)
     }
 
     /**
      * Deliberately not `@Synchronized`: taking the lock would mean waiting for the very search
      * this is trying to stop.
+     *
+     * The order of the two writes is the one that matters. [abandonments] is what a caller still
+     * queued on the monitor compares against, and it is bumped first so that a caller which is
+     * about to enter cannot read the old count and then find the flag already cleared by itself.
      */
     override fun abandonSearch() {
+        abandonments++
         abandoned = true
     }
 

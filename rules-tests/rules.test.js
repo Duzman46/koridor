@@ -2741,3 +2741,556 @@ describe("a room's password hash", () => {
     await assertFails(bob.ref(`roomSecrets/${CODE}`).remove());
   });
 });
+
+/**
+ * The holes an adversarial pass reproduced on this emulator, each one pinned shut.
+ *
+ * Every write below went through before the rules were changed: the probe file these came
+ * from asserted the *attack succeeded*, and the suite that was already here said nothing
+ * about any of it. They are kept with the polarity turned over — the write that used to be
+ * granted has to be refused now — and each refusal is paired with the honest version of the
+ * same write, because a rule that refuses everything is not a fix, it is an outage.
+ *
+ * The names are the audit's: SEC-1 the ranked rating taken from a stranger who never played,
+ * SEC-3 the board gate the gated party owned and the record an account could erase off
+ * itself, SEC-4 a friendship nobody agreed to, SEC-10 a password hash on somebody else's room.
+ */
+const MALLORY = "mallory-uid";
+
+/**
+ * A guest, as the database sees one: an anonymous Firebase user.
+ *
+ * `accountType` is a field the phone writes, so it is evidence of nothing — that was the whole
+ * of SEC-3. The sign-in provider on the token is minted by Firebase Auth and cannot be written
+ * by the account it describes, so that is what the board gate reads now, and it is what these
+ * tests have to be able to say.
+ */
+function guestContext(uid) {
+  return testEnv.authenticatedContext(uid, {
+    firebase: { sign_in_provider: "anonymous", identities: {} },
+  });
+}
+
+describe("SEC-1 — a ranked win forged against a player who is only queued", () => {
+  // The chain the audit walked: the queue is world-readable, so pick a name off it; a room
+  // may be opened naming anybody who is in the queue; the room's opening state was entirely
+  // the writer's to choose, clock included; and a room the writer chose is a room the writer
+  // can immediately declare a timeout on. Three writes, no game played, one whole rating.
+
+  function entry() {
+    return { rating: 1000, ranked: true, queuedAt: Date.now() };
+  }
+
+  async function queue(...uids) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      for (const uid of uids) await ctx.database().ref(`matchmaking/${uid}`).set(entry());
+    });
+  }
+
+  /** The room the attack opens: ALICE named as the guest, and put on a clock she cannot see. */
+  function forgedRoom(overrides = {}) {
+    return {
+      roomName: "",
+      hostUserId: MALLORY,
+      guestUserId: ALICE,
+      hostName: "mallory",
+      hostRating: 1000,
+      visibility: "PRIVATE",
+      status: "IN_PROGRESS",
+      ranked: true,
+      requiresPassword: false,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 86_400_000,
+      turnDurationSeconds: 1,
+      lastMoveAt: 0,
+      hostSeat: "PLAYER_TWO",
+      currentTurnUserId: ALICE,
+      winnerUserId: "",
+      endReason: "",
+      version: 0,
+      browseKey: "PRIVATE_IN_PROGRESS",
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 1,
+        players: {
+          PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 0, column: 4, wallsRemaining: 10 },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  it("refuses the forged room the whole chain rests on", async () => {
+    await queue(ALICE, MALLORY);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref("rooms/FORGE1").set(forgedRoom()));
+  });
+
+  it("refuses a matchmade room dated before the clock it starts", async () => {
+    // The one field the create rule never bounded. A room that opens already out of time is
+    // a timeout claim with a room wrapped round it.
+    await queue(ALICE, MALLORY);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref("rooms/FORGE2").set(forgedRoom({ turnDurationSeconds: 60, lastMoveAt: 0 })),
+    );
+  });
+
+  it("refuses a matchmade room whose clock is too short to take a turn on", async () => {
+    // Nobody chose these terms: quick match offers no picker, so a minute is the only answer
+    // a handset ever writes. A second is somebody arranging to win.
+    await queue(ALICE, MALLORY);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory
+        .ref("rooms/FORGE3")
+        .set(forgedRoom({ turnDurationSeconds: 1, lastMoveAt: Date.now() })),
+    );
+  });
+
+  it("still lets an honest pairing write its room", async () => {
+    // The control. RoomCodec.encodePairedRoom stamps `lastMoveAt` on the server and carries
+    // RoomTiming.DEFAULT_TURN_SECONDS, so this is the payload a real handset sends.
+    await queue(ALICE, MALLORY);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(
+      mallory
+        .ref("rooms/FORGE4")
+        .set(forgedRoom({ turnDurationSeconds: 60, lastMoveAt: SERVER_TIME })),
+    );
+  });
+
+  /** A match under way that nobody has moved in, with its clock already spent. */
+  function untouched(overrides = {}) {
+    return forgedRoom({
+      turnDurationSeconds: 60,
+      lastMoveAt: Date.now() - 61_000,
+      ...overrides,
+    });
+  }
+
+  function timedOutAgainst(room, winner) {
+    return {
+      ...room,
+      status: "FINISHED",
+      endReason: "TIMEOUT",
+      winnerUserId: winner,
+      currentTurnUserId: "",
+      version: room.version + 1,
+      browseKey: "PRIVATE_FINISHED",
+    };
+  }
+
+  async function seed(room) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("rooms/FORGE9").set(room);
+    });
+  }
+
+  it("refuses a timeout claimed on a room neither player has moved in", async () => {
+    const room = untouched();
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref("rooms/FORGE9").set(timedOutAgainst(room, MALLORY)));
+  });
+
+  it("refuses a timeout claimed when only the claimant has moved", async () => {
+    // One legal opening move is cheap, and it is all a bound on `lastMoveAt` alone would have
+    // cost the attack: the victim is on the clock at turn two having still done nothing.
+    const room = untouched({
+      version: 1,
+      currentTurnUserId: ALICE,
+      board: {
+        currentPlayer: "PLAYER_TWO",
+        status: "IN_PROGRESS",
+        turnNumber: 2,
+        players: {
+          PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref("rooms/FORGE9").set(timedOutAgainst(room, MALLORY)));
+  });
+
+  it("still settles a clock once the match has been round both players", async () => {
+    // The control, and the case the feature exists for: two moves played, ALICE on the clock
+    // and out of time. A rule that could not do this would have taken the timeout with it.
+    const room = untouched({
+      version: 2,
+      currentTurnUserId: ALICE,
+      board: {
+        currentPlayer: "PLAYER_ONE",
+        status: "IN_PROGRESS",
+        turnNumber: 3,
+        players: {
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(mallory.ref("rooms/FORGE9").set(timedOutAgainst(room, MALLORY)));
+  });
+
+  it("refuses a move stamped far enough back to spend the rival's clock", async () => {
+    // `lastMoveAt` had only to be later than the last one and no later than now, so a move
+    // could be dated to the moment after the previous one and hand the other player a clock
+    // that had already run out. It is the same forgery as the room, one turn further in.
+    const room = untouched({
+      version: 2,
+      lastMoveAt: Date.now() - 200_000,
+      currentTurnUserId: MALLORY,
+      board: {
+        currentPlayer: "PLAYER_TWO",
+        status: "IN_PROGRESS",
+        turnNumber: 3,
+        players: {
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref("rooms/FORGE9").set({
+        ...room,
+        version: 3,
+        lastMoveAt: room.lastMoveAt + 1,
+        currentTurnUserId: ALICE,
+        board: {
+          ...room.board,
+          currentPlayer: "PLAYER_ONE",
+          turnNumber: 4,
+          players: {
+            ...room.board.players,
+            PLAYER_TWO: { row: 2, column: 4, wallsRemaining: 10 },
+          },
+        },
+      }),
+    );
+  });
+
+  it("refuses a player taking two turns in a row", async () => {
+    // Found while closing the timeout: nothing made the turn pass. A player could move their
+    // own pawn again and again — eight steps is the length of the board — and win outright by
+    // the ordinary rule, with the board agreeing, which is the one thing the worker
+    // re-derives a normal win from. It is also what would have made counting turns useless as
+    // a witness that the other player was ever there.
+    const room = untouched({
+      version: 2,
+      lastMoveAt: Date.now(),
+      currentTurnUserId: MALLORY,
+      board: {
+        currentPlayer: "PLAYER_TWO",
+        status: "IN_PROGRESS",
+        turnNumber: 3,
+        players: {
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref("rooms/FORGE9").set({
+        ...room,
+        version: 3,
+        lastMoveAt: SERVER_TIME,
+        board: {
+          ...room.board,
+          turnNumber: 4,
+          players: {
+            ...room.board.players,
+            PLAYER_TWO: { row: 2, column: 4, wallsRemaining: 10 },
+          },
+        },
+      }),
+    );
+  });
+
+  it("still accepts the same move once it hands the turn over", async () => {
+    const room = untouched({
+      version: 2,
+      lastMoveAt: Date.now(),
+      currentTurnUserId: MALLORY,
+      board: {
+        currentPlayer: "PLAYER_TWO",
+        status: "IN_PROGRESS",
+        turnNumber: 3,
+        players: {
+          PLAYER_ONE: { row: 7, column: 4, wallsRemaining: 10 },
+          PLAYER_TWO: { row: 1, column: 4, wallsRemaining: 10 },
+        },
+      },
+    });
+    await seed(room);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(
+      mallory.ref("rooms/FORGE9").set({
+        ...room,
+        version: 3,
+        lastMoveAt: SERVER_TIME,
+        currentTurnUserId: ALICE,
+        board: {
+          ...room.board,
+          currentPlayer: "PLAYER_ONE",
+          turnNumber: 4,
+          players: {
+            ...room.board.players,
+            PLAYER_TWO: { row: 2, column: 4, wallsRemaining: 10 },
+          },
+        },
+      }),
+    );
+  });
+
+  it("refuses the ranked report the chain was worth doing for", async () => {
+    // The end of it. With the room refused there is nothing for the report to agree with, and
+    // a report is only admitted when the room it names says the same thing.
+    await queue(ALICE, MALLORY);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref("rooms/FORGE5").set(forgedRoom()));
+    await assertFails(
+      mallory.ref("matchResults/FORGE5_1").set({
+        roomCode: "FORGE5",
+        hostUid: MALLORY,
+        guestUid: ALICE,
+        winnerUid: MALLORY,
+        endReason: "TIMEOUT",
+        ranked: true,
+        turnCount: 1,
+        reportedAt: Date.now(),
+        reportedBy: MALLORY,
+        state: "PENDING",
+      }),
+    );
+  });
+});
+
+describe("SEC-3 — the board gate and the record an account could erase", () => {
+  // Both leaderboard gates asked whether `accountType` said GUEST, and `accountType` was
+  // written by the account being asked about. And a profile could be deleted and written
+  // again out of nothing, which took a ban, a rating and a loss column with it.
+
+  /** The profile a fresh install writes, written by the anonymous user it belongs to. */
+  async function seedGuest(uid, username) {
+    const db = guestContext(uid).database();
+    await db.ref(`usernames/${username.toLowerCase()}`).set(uid);
+    await db.ref(`users/${uid}`).set(newProfile(username));
+  }
+
+  it("still lets a guest create the profile a fresh install writes", async () => {
+    // The control that matters most: guests are most of the players, and every one of them
+    // arrives through this write.
+    await assertSucceeds(seedGuest(MALLORY, "mallory"));
+  });
+
+  it("refuses a guest declaring itself a signed-in account", async () => {
+    await seedGuest(MALLORY, "mallory");
+    const mallory = guestContext(MALLORY).database();
+    await assertFails(mallory.ref(`users/${MALLORY}/accountType`).set("GOOGLE"));
+  });
+
+  it("refuses a guest taking a place on the board", async () => {
+    // The gate is the sign-in provider now, so it holds whatever the profile claims to be.
+    await seedGuest(MALLORY, "mallory");
+    const mallory = guestContext(MALLORY).database();
+    await assertFails(mallory.ref(`users/${MALLORY}/leaderboardRating`).set(1000));
+    await assertFails(
+      mallory.ref(`users/${MALLORY}`).update({ accountType: "GOOGLE", leaderboardRating: 1000 }),
+    );
+  });
+
+  it("still lets a signed-in account claim its board place", async () => {
+    await seedProfile(ALICE, "alice", { accountType: "GOOGLE" });
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref(`users/${ALICE}/leaderboardRating`).set(1000));
+  });
+
+  it("refuses a moderated account erasing its own ban", async () => {
+    // `accountStatus` is only a moderation control if the moderated account cannot delete the
+    // row it is written on and start again at a thousand under the same name.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("usernames/mallory").set(MALLORY);
+      await ctx.database().ref(`users/${MALLORY}`).set(
+        newProfile("mallory", {
+          accountType: "GOOGLE",
+          accountStatus: "BANNED",
+          rating: 620,
+          losses: 40,
+          totalGames: 40,
+        }),
+      );
+    });
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref(`users/${MALLORY}`).remove());
+  });
+
+  it("still lets an ordinary account delete itself", async () => {
+    // SessionManager.deleteAccount, which has to keep working: erasing an account is a
+    // promise the app makes, and a rule that got in its way would be breaking it.
+    await seedProfile(MALLORY, "mallory");
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(mallory.ref(`usersPrivate/${MALLORY}`).remove());
+    await assertSucceeds(mallory.ref(`users/${MALLORY}`).remove());
+  });
+
+  it("refuses a clean profile written over a record the server keeps", async () => {
+    // The other half of the erasure: delete, write it again, and a rating of 620 with forty
+    // losses behind it comes back as a thousand with none. `recentMatches` is written by the
+    // worker and by nothing else, so a uid that has one has played, and a profile claiming to
+    // be new under that uid is a record being laundered rather than an account being made.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref(`recentMatches/${MALLORY}/m1`).set({
+        opponentName: "alice",
+        result: "LOSS",
+        playedAt: 1,
+      });
+    });
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(mallory.ref("usernames/mallory").set(MALLORY));
+    await assertFails(mallory.ref(`users/${MALLORY}`).set(newProfile("mallory")));
+  });
+});
+
+describe("SEC-4 — consent in a friend list", () => {
+  // A player may write the other side of a friendship, which is what makes a request arrive
+  // and an acceptance land in both lists at once. Nothing asked that a request had ever been
+  // sent, so a stranger could write the accepted state straight into somebody's list — and
+  // the invite channel, which asks only whether the friendship says FRIENDS, then opened.
+
+  it("refuses a stranger installing themselves in your list as FRIENDS", async () => {
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref(`friendships/${ALICE}/${MALLORY}`).set({ status: "FRIENDS", updatedAt: 1 }),
+    );
+  });
+
+  it("refuses the invite the forced friendship unlocked", async () => {
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref(`friendships/${ALICE}/${MALLORY}`).set({ status: "FRIENDS", updatedAt: 1 }),
+    );
+    await assertFails(
+      mallory.ref(`invites/${ALICE}/${MALLORY}`).set({
+        fromUserId: MALLORY,
+        roomCode: "ZZZ999",
+        kind: "GAME_INVITE",
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 60_000,
+      }),
+    );
+  });
+
+  it("still lets a stranger ask", async () => {
+    // A request is not a friendship and unlocks nothing; refusing it would take the feature
+    // away rather than make it consensual.
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(
+      mallory
+        .ref(`friendships/${ALICE}/${MALLORY}`)
+        .set({ status: "REQUEST_RECEIVED", updatedAt: 1 }),
+    );
+  });
+
+  it("still lets an outstanding request be accepted", async () => {
+    // The control: ALICE asked, so ALICE's own row says REQUEST_SENT, and that row is the
+    // consent the acceptance is written against.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice
+      .ref(`friendships/${ALICE}/${MALLORY}`)
+      .set({ status: "REQUEST_SENT", updatedAt: 1 });
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(
+      mallory.ref().update({
+        [`friendships/${ALICE}/${MALLORY}/status`]: "FRIENDS",
+        [`friendships/${ALICE}/${MALLORY}/updatedAt`]: 2,
+      }),
+    );
+  });
+
+  it("still lets the other side be withdrawn", async () => {
+    // Declining, cancelling and unfriending all clear the other player's row, and none of
+    // them may be caught by a rule about arriving at FRIENDS.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await alice
+      .ref(`friendships/${ALICE}/${MALLORY}`)
+      .set({ status: "REQUEST_SENT", updatedAt: 1 });
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertSucceeds(mallory.ref(`friendships/${ALICE}/${MALLORY}`).remove());
+  });
+
+  it("still refuses overwriting a BLOCKED row", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx
+        .database()
+        .ref(`friendships/${ALICE}/${MALLORY}`)
+        .set({ status: "BLOCKED", updatedAt: 1 });
+    });
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(
+      mallory.ref(`friendships/${ALICE}/${MALLORY}`).set({ status: "FRIENDS", updatedAt: 2 }),
+    );
+  });
+});
+
+describe("SEC-10 — the password hash on a room that is not yours", () => {
+  // The write was granted on "nothing is there yet" alone, and survived only because the
+  // honest client happens to lay the hash down before the room. A stranger who got there
+  // first set the password on somebody else's room, unseen: nobody may read this node.
+
+  async function seedRoomHostedBy(uid) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("rooms/SEC010").set({
+        hostUserId: uid,
+        guestUserId: "",
+        status: "WAITING",
+        currentTurnUserId: uid,
+        version: 0,
+        winnerUserId: "",
+        createdAt: 1,
+        lastMoveAt: 1,
+        ranked: false,
+        visibility: "PRIVATE",
+        requiresPassword: true,
+        turnDurationSeconds: 60,
+        hostSeat: "PLAYER_ONE",
+        board: {
+          currentPlayer: "PLAYER_ONE",
+          status: "IN_PROGRESS",
+          turnNumber: 1,
+          players: {
+            PLAYER_ONE: { row: 8, column: 4, wallsRemaining: 10 },
+            PLAYER_TWO: { row: 0, column: 4, wallsRemaining: 10 },
+          },
+        },
+      });
+    });
+  }
+
+  it("refuses a stranger writing the hash for a standing room with none set", async () => {
+    await seedRoomHostedBy(ALICE);
+    const mallory = testEnv.authenticatedContext(MALLORY).database();
+    await assertFails(mallory.ref("roomSecrets/SEC010").set({ passwordHash: "attacker" }));
+  });
+
+  it("still lets a host lay the hash down before the room exists", async () => {
+    // The order the app writes in, and the reason the permission was there at all.
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("roomSecrets/SEC011").set({ passwordHash: "hash-1" }));
+  });
+
+  it("still lets the host replace the hash on their own room", async () => {
+    await seedRoomHostedBy(ALICE);
+    const alice = testEnv.authenticatedContext(ALICE).database();
+    await assertSucceeds(alice.ref("roomSecrets/SEC010").set({ passwordHash: "hash-2" }));
+  });
+});

@@ -2,9 +2,9 @@ package com.duzman46.gridbound.presentation.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.duzman46.gridbound.core.AppLog
 import com.duzman46.gridbound.core.Outcome
 import com.duzman46.gridbound.core.UiText
+import com.duzman46.gridbound.data.firebase.toDatabaseAppError
 import com.duzman46.gridbound.di.ApplicationScope
 import com.duzman46.gridbound.game.models.PlayerId
 import com.duzman46.gridbound.online.domain.OnlineGameRepository
@@ -141,7 +141,15 @@ class RematchViewModel @Inject constructor(
         watchJob = viewModelScope.launch {
             launch {
                 onlineRepository.observeRoom(session.roomCode)
-                    .catch { error -> AppLog.warn("observe-rematch-room", error) }
+                    .catch { error ->
+                        // Acted on, not merely noted. Noting it is all this used to do — the
+                        // log went off to Crashlytics while the player went on watching
+                        // RematchStage.WAITING with no collector left alive behind it: a
+                        // spinner that could not stop, for a question that could not be
+                        // answered, until they gave up and left the screen. The log itself
+                        // now happens in `observeRoom`, with the other listeners.
+                        withdraw(ownId, session, error.toDatabaseAppError().message)
+                    }
                     .collect { room ->
                         // Guarded on `pending` as well as cancelled below, because the room
                         // republishes itself on every move: an answer announced twice would
@@ -172,6 +180,27 @@ class RematchViewModel @Inject constructor(
                     }
             }
         }
+    }
+
+    /**
+     * Takes an unanswered request back when the wait cannot be kept up any longer.
+     *
+     * The same three steps the refusal path takes, for the same reason: the room was opened for
+     * one opponent and there is now nobody watching it, so leaving it standing would put them
+     * in a seat opposite an empty chair. The screen goes back to [RematchStage.IDLE] rather
+     * than to a dead end — the ask is still perfectly askable, and the button that offers it is
+     * the honest thing to leave in front of somebody who has just been told it did not work.
+     */
+    private suspend fun withdraw(ownId: String, session: OnlineSession, message: UiText) {
+        val abandoned = pending ?: return
+        pending = null
+        onlineRepository.leaveRoom(session)
+        socialRepository.clearRequest(abandoned.opponentUserId, ownId)
+        _uiState.update {
+            it.copy(stage = RematchStage.IDLE, isBusy = false, message = message)
+        }
+        // Last, as in every other caller: this cancels the coroutine that is running it.
+        stopWatching()
     }
 
     /**

@@ -16,8 +16,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The scene the home screen opens on: a Koridor board under one controlled light.
@@ -116,8 +116,8 @@ fun HomeHero(modifier: Modifier = Modifier) {
  */
 const val HomeSceneShare = 0.34f
 
-/** What the scene sits on, and what it fades into: the dark scheme's own background. */
-private val SceneInk = Color(0xFF070A0D)
+/** What the scene sits on, and what it fades into: the page itself. */
+private val SceneInk = Palette.Ground
 
 /** The closing fade. Built once — it is the same three values on every screen, every frame. */
 private val SceneJoinBrush = Brush.verticalGradient(listOf(Color.Transparent, SceneInk))

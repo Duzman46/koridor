@@ -29,19 +29,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Mood
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,8 +42,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -68,10 +59,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -118,7 +107,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.LocalKoridorColors
+import com.duzman46.gridbound.theme.Palette
+import com.duzman46.gridbound.ui.components.home.PremiumTextAction
+import com.duzman46.gridbound.ui.components.home.SheetGrip
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
@@ -261,11 +257,15 @@ private fun GameScreen(
                     Text(stringResource(R.string.action_cancel))
                 }
             },
+            // A TextButton in gold, not a filled Material Button. Dialogs are the one thing in
+            // this app that stay Material — hand-rolling a window manager is not worth it — but
+            // the two words inside them are ours, and PremiumNotice already draws its confirm
+            // exactly this way. It also stops the destructive answer being the loud one.
             confirmButton = {
-                Button(onClick = {
+                TextButton(onClick = {
                     showResignConfirmation = false
                     onResign()
-                }) { Text(stringResource(R.string.game_resign)) }
+                }) { Text(stringResource(R.string.game_resign), color = Palette.Gold) }
             },
         )
     }
@@ -295,7 +295,9 @@ private fun GameScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = onExit) { Text(stringResource(R.string.game_exit_confirm)) }
+                TextButton(onClick = onExit) {
+                    Text(stringResource(R.string.game_exit_confirm), color = Palette.Gold)
+                }
             },
         )
     }
@@ -439,11 +441,31 @@ private fun GameScreen(
 }
 
 /**
+ * The warm wash behind an expiring move clock.
+ *
+ * A twelve per cent ember over [Palette.Card], dark enough that the bar is still a card and not
+ * a slab. It is local to this file rather than a [Palette] token because it is the only place in
+ * the app that earns a warm ground; promoting it would invite a second one.
+ */
+private val LiveWell = Color(0xFF2A1408)
+
+/**
  * Move clock for online matches.
  *
  * There is nothing to press: the clock reaching zero ends the match by itself, on both
- * devices. All this has to do is make the last seconds impossible to miss, which is why the
- * whole bar goes red rather than only the digits.
+ * devices. All this has to do is make the last seconds impossible to miss.
+ *
+ * It used to do that with `errorContainer`, which this app never sets — so the last ten seconds
+ * of a turn were announced in Material's baseline crimson `#8C1D18`, a hue that appears nowhere
+ * else in Koridor, on a slab eight dp under a board the owner drew by hand. The quiet state was
+ * no better: `surfaceVariant` sits 1.03:1 against [TurnSummary]'s ground, which is a card that
+ * cannot be seen against the card above it.
+ *
+ * So the bar is the same card as everything else on this screen, and urgency is carried by the
+ * border going from gold to ember and the digits going with it — the app's own `live`, which is
+ * what it already means everywhere else: this is running out. The warm area shrinks from a
+ * filled slab to a hairline and four characters, which is the opposite direction from where it
+ * was and the reason a warm accent is defensible on a screen with a red seat on it.
  */
 @Composable
 private fun OnlineClockBar(state: GameUiState, now: Long) {
@@ -454,18 +476,22 @@ private fun OnlineClockBar(state: GameUiState, now: Long) {
     val remaining = (deadline - now).coerceAtLeast(0L)
     val urgent = remaining <= Constants.Online.TURN_WARNING_MILLIS
     val yourTurn = state.boardState.currentPlayer == state.localPlayer
+    val ember = LocalKoridorColors.current.live
+    val shape = RoundedCornerShape(Dimens.RadiusMd)
 
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = if (urgent) {
-            MaterialTheme.colorScheme.errorContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
-        modifier = Modifier.fillMaxWidth(),
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (urgent) LiveWell else Palette.Card)
+            .border(
+                Dimens.Hairline,
+                if (urgent) ember else Palette.Gold.copy(alpha = 0.45f),
+                shape,
+            ),
     ) {
         Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            Modifier.padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -485,6 +511,7 @@ private fun OnlineClockBar(state: GameUiState, now: Long) {
                 ),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
+                color = if (urgent) ember else Palette.Gold,
             )
         }
     }
@@ -531,18 +558,14 @@ private fun MatchChatBar(
     }
     MatchChatRow(
         modifier = Modifier.fillMaxWidth().heightIn(min = chatRowHeight()),
-        rival = {
-            ChatBubble(
-                bubble = state.rivalBubble,
-                container = MaterialTheme.colorScheme.secondaryContainer,
-            )
-        },
-        own = {
-            ChatBubble(
-                bubble = state.ownBubble,
-                container = MaterialTheme.colorScheme.surfaceVariant,
-            )
-        },
+        // One bubble colour for both speakers. They were told apart by hue, and the rival's hue
+        // was `secondaryContainer` — which this app never set, so it resolved to Material's
+        // baseline grey-violet `#4A4458` and put a purple bubble eight dp above the board. The
+        // sides already say who is talking: [MatchChatRow] places the rival at the start edge
+        // and this player at the end, and does it with placeRelative so it survives Arabic. The
+        // colour was doing a job the layout had already done, so it stopped being a colour.
+        rival = { ChatBubble(bubble = state.rivalBubble) },
+        own = { ChatBubble(bubble = state.ownBubble) },
         action = {
             IconButton(onClick = { picking = true }, enabled = state.canOpenMessages) {
                 Icon(
@@ -702,10 +725,7 @@ internal fun chatRowHeight(glyphLine: Dp, labelLine: Dp): Dp = maxOf(
  * shown at all.
  */
 @Composable
-private fun ChatBubble(
-    bubble: MatchChatBubble?,
-    container: Color,
-) {
+private fun ChatBubble(bubble: MatchChatBubble?) {
     val entry = bubble?.entry
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(entry?.userId, entry?.sentAt) {
@@ -723,12 +743,12 @@ private fun ChatBubble(
     if (bubble == null || entry == null || alpha == 0f) return
 
     val label = stringResource(entry.message.labelRes)
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = container,
-        modifier = Modifier.alpha(alpha).semantics(mergeDescendants = true) {
-            contentDescription = label
-        },
+    Box(
+        modifier = Modifier
+            .alpha(alpha)
+            .clip(RoundedCornerShape(50))
+            .background(Palette.Inset)
+            .semantics(mergeDescendants = true) { contentDescription = label },
     ) {
         Row(
             Modifier.padding(horizontal = 10.dp, vertical = CHAT_BUBBLE_PADDING),
@@ -784,19 +804,35 @@ private fun MatchMessageSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        // The same three lines LobbyFormSheet and the friends sheet already carry, and for the
+        // same reason: left to itself this sheet takes `surfaceContainerLow`, which resolves to
+        // Material's purple-tinted `#1D1B20` rather than the app's card, and Material's grey
+        // drag pill. Two of the app's three sheets had already been fixed. This was the third,
+        // and it is the one on the board screen.
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        dragHandle = {
+            Box(Modifier.fillMaxWidth().padding(top = Dimens.SpaceMd, bottom = Dimens.SpaceXs)) {
+                SheetGrip(Modifier.align(Alignment.Center))
+            }
+        },
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
+                // The vocabulary is fourteen entries and the phrases wrap onto as many rows as
+                // the longest translation needs, so the sheet has to be able to give.
+                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = Dimens.ScreenPadding)
+                .padding(bottom = Dimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         ) {
             Text(
                 stringResource(R.string.chat_open),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+                color = Palette.Gold,
             )
             Row(
                 Modifier.fillMaxWidth(),
@@ -807,10 +843,25 @@ private fun MatchMessageSheet(
                     .filter { it.kind == MatchMessageKind.REACTION }
                     .forEach { message ->
                         val label = stringResource(message.labelRes)
-                        IconButton(
-                            onClick = { onPick(message) },
-                            modifier = Modifier.semantics { contentDescription = label },
-                            enabled = canSend,
+                        // A box with a touch target, not an IconButton: Material's ripple is the
+                        // only ripple that would have been left anywhere near the board screen,
+                        // and the face is already the whole of the affordance. Dimmed rather
+                        // than hidden when the connection is down — what cannot be sent must not
+                        // be offered, and a sheet that changes shape mid-match is worse.
+                        Box(
+                            Modifier
+                                .size(MIN_TOUCH_TARGET)
+                                .clip(CircleShape)
+                                .alpha(if (canSend) 1f else 0.4f)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    enabled = canSend,
+                                    role = Role.Button,
+                                    onClick = { onPick(message) },
+                                )
+                                .semantics { contentDescription = label },
+                            contentAlignment = Alignment.Center,
                         ) {
                             Text(message.glyph, style = MaterialTheme.typography.headlineSmall)
                         }
@@ -818,35 +869,29 @@ private fun MatchMessageSheet(
             }
             FlowRow(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
             ) {
                 MatchMessage.entries
                     .filter { it.kind == MatchMessageKind.PHRASE }
                     .forEach { message ->
-                        SuggestionChip(
-                            onClick = { onPick(message) },
-                            label = { Text(stringResource(message.labelRes)) },
+                        // The board screen's own button, not Material's SuggestionChip — which
+                        // brought its own outline, its own radius and its own label metrics to a
+                        // sheet that opens over the board. The face rides in the label because
+                        // this control draws its marks and an emoji is not one of them.
+                        BoardActionButton(
+                            label = "${message.glyph} ${stringResource(message.labelRes)}",
+                            filled = false,
                             enabled = canSend,
-                            icon = { Text(message.glyph) },
+                            onClick = { onPick(message) },
                         )
                     }
             }
-            TextButton(onClick = onToggleMute, modifier = Modifier.align(Alignment.End)) {
-                Icon(
-                    imageVector = if (muted) {
-                        Icons.AutoMirrored.Rounded.VolumeUp
-                    } else {
-                        Icons.AutoMirrored.Rounded.VolumeOff
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(
-                    stringResource(if (muted) R.string.chat_unmute else R.string.chat_mute),
-                    Modifier.padding(start = 8.dp),
-                )
-            }
+            PremiumTextAction(
+                label = stringResource(if (muted) R.string.chat_unmute else R.string.chat_mute),
+                onClick = onToggleMute,
+                modifier = Modifier.align(Alignment.End),
+            )
         }
     }
 }
@@ -862,7 +907,22 @@ private fun CompactGameControls(
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         state.onlineMessage?.let { message ->
-            Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(12.dp)) {
+            // Was `tertiaryContainer`, which this app never sets — so a strip that says "rival
+            // disconnected" or "move sending" was painted in Material's baseline wine `#633B48`
+            // with pink text on it, during a match, directly under the board. It is a status
+            // line, and status lines in this app are quiet: the same card, the same radius and
+            // the same gold hairline as everything else in this column.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(Dimens.RadiusMd))
+                    .background(Palette.Card)
+                    .border(
+                        Dimens.Hairline,
+                        Palette.Gold.copy(alpha = 0.35f),
+                        RoundedCornerShape(Dimens.RadiusMd),
+                    ),
+            ) {
                 // A live region. This strip is how the match says the rival has dropped, that a
                 // move is still being sent, or that the connection is back — and it appeared in
                 // silence, which on a board screen is the same as not appearing at all.
@@ -873,6 +933,7 @@ private fun CompactGameControls(
                         .semantics { liveRegion = LiveRegionMode.Polite }
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.bodySmall,
+                    color = Palette.InkMuted,
                 )
             }
         }
@@ -880,8 +941,12 @@ private fun CompactGameControls(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Dimens.RadiusMd))
-                .background(Color(0xFF0E1216))
-                .border(1.dp, KoridorGold.copy(alpha = 0.35f), RoundedCornerShape(Dimens.RadiusMd)),
+                .background(Palette.Card)
+                .border(
+                    Dimens.Hairline,
+                    Palette.Gold.copy(alpha = 0.35f),
+                    RoundedCornerShape(Dimens.RadiusMd),
+                ),
         ) {
             Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 WallControls(
@@ -903,6 +968,13 @@ private fun CompactGameControls(
  * Two of these frame the board, the far one turned through half a circle so it faces the
  * player sitting opposite. Only the seat on the clock carries controls; the other keeps its
  * name and wall count and nothing to press, which is what stops the wrong player moving.
+ *
+ * The active seat lifts by [Palette.Inset] over [Palette.Card] — the same 1.19:1 step every
+ * other raised thing in the app uses. It was `tonalElevation`, the only one in the codebase,
+ * which blends `surfaceTint` over the surface; `darkColorScheme` defaults that to the primary,
+ * so the active seat was being washed with gold at roughly eleven per cent on the one screen
+ * where two seats have to be told apart at a glance. Nobody chose that colour and nobody could
+ * have named it.
  */
 @Composable
 private fun SeatPanel(
@@ -918,16 +990,17 @@ private fun SeatPanel(
     val active = state.boardState.currentPlayer == seat &&
         state.boardState.status == GameStatus.IN_PROGRESS
     val seatColor = SeatColors.pawn(seat)
-    Surface(
+    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    Box(
         modifier = modifier
             .fillMaxWidth()
+            .clip(shape)
+            .background(if (active) Palette.Inset else Palette.Card)
             .border(
-                width = 2.dp,
-                color = if (active) seatColor else Color.Transparent,
-                shape = RoundedCornerShape(16.dp),
+                width = if (active) 2.dp else Dimens.Hairline,
+                color = if (active) seatColor else Palette.Edge,
+                shape = shape,
             ),
-        shape = RoundedCornerShape(16.dp),
-        tonalElevation = if (active) 3.dp else 0.dp,
     ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
@@ -954,13 +1027,18 @@ private fun SeatPanel(
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                 )
+                // Two inks rather than one ink at two opacities. `InkMuted` at 60% blends to
+                // roughly #5F646B on this card, which is 3.0:1 — under the floor for text, and
+                // invisibly so, because alpha is how a contrast budget gets spent without
+                // anyone noticing. The waiting seat takes [Palette.InkGlyph] at full strength
+                // instead: still a step quieter, still 4.50:1.
                 Text(
                     stringResource(
                         if (active) R.string.game_your_turn else R.string.game_rival_turn,
                     ),
-                    modifier = Modifier.weight(1f).alpha(if (active) 1f else 0.6f),
+                    modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (active) Palette.InkMuted else Palette.InkGlyph,
                 )
                 if (onHistory != null) {
                     IconButton(onClick = onHistory) {
@@ -1078,14 +1156,14 @@ private fun WallControls(
                             Modifier
                                 .size(38.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF171C22)),
+                                .background(Palette.Inset),
                             contentAlignment = Alignment.Center,
                         ) {
                             Canvas(Modifier.size(20.dp)) {
                                 drawPawnMark(
                                     center = Offset(size.width / 2f, size.height / 2f),
                                     unit = size.minDimension,
-                                    color = KoridorGold,
+                                    color = Palette.Gold,
                                 )
                             }
                         }
@@ -1093,9 +1171,9 @@ private fun WallControls(
                             stringResource(R.string.game_move_hint),
                             modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Palette.InkMuted,
                         )
-                        Box(Modifier.width(1.dp).height(34.dp).background(Color(0xFF2A3038)))
+                        Box(Modifier.width(Dimens.Hairline).height(34.dp).background(Palette.Edge))
                         WallButton(enabled = enabled, onClick = onToggleWall)
                     }
                 }
@@ -1114,7 +1192,7 @@ private fun WallHint(text: String, strong: Boolean = false) {
         color = if (strong) {
             MaterialTheme.colorScheme.onSurface
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+            Palette.InkMuted
         },
         maxLines = 2,
     )
@@ -1139,19 +1217,19 @@ private fun BoardActionButton(
 ) {
     val shape = RoundedCornerShape(14.dp)
     val fill = when {
-        !enabled -> Color(0xFF20262D)
-        filled -> KoridorGold
-        else -> Color(0xFF161B21)
+        !enabled -> Palette.Inset
+        filled -> Palette.Gold
+        else -> Palette.Inset
     }
     val edge = when {
-        !enabled -> Color(0xFF2A3038)
-        filled -> KoridorGold
-        else -> KoridorGold.copy(alpha = 0.45f)
+        !enabled -> Palette.Edge
+        filled -> Palette.Gold
+        else -> Palette.Gold.copy(alpha = 0.45f)
     }
     val ink = when {
-        !enabled -> Color(0xFF5C6169)
-        filled -> Color(0xFF1A1206)
-        else -> KoridorGold
+        !enabled -> Palette.InkDisabled
+        filled -> Palette.GoldInk
+        else -> Palette.Gold
     }
     Row(
         modifier
@@ -1172,7 +1250,13 @@ private fun BoardActionButton(
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = ink,
+            // One line, and it gives up its end rather than its edge. The action bar's own
+            // labels are short, but the message sheet now puts whole phrases in this shape in
+            // ten languages — "Bonne chance la prochaine fois" is wider than a 360 dp handset,
+            // and a clipped word reads as a rendering fault where an ellipsis reads as a word
+            // that did not fit.
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -1243,8 +1327,12 @@ private fun TurnSummary(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(Color(0xFF0E1216))
-            .border(1.dp, KoridorGold.copy(alpha = 0.45f), RoundedCornerShape(Dimens.RadiusMd)),
+            .background(Palette.Card)
+            .border(
+                Dimens.Hairline,
+                Palette.Gold.copy(alpha = 0.45f),
+                RoundedCornerShape(Dimens.RadiusMd),
+            ),
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1276,11 +1364,19 @@ private fun TurnSummary(
                             GameMode.ONLINE -> stringResource(R.string.game_online_match)
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Palette.InkMuted,
                     )
                 }
                 if (state.isAiThinking || state.isOnlineSyncing || (state.mode == GameMode.ONLINE && !state.isOnlineConnected)) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    // Gold, said out loud. It drew in gold before this line existed, because
+                    // Material falls back to `primary` — the right answer arrived at by
+                    // accident, which is the kind that stops being right the moment somebody
+                    // changes the scheme.
+                    CircularProgressIndicator(
+                        Modifier.size(20.dp),
+                        color = Palette.Gold,
+                        strokeWidth = 2.dp,
+                    )
                     Spacer(Modifier.width(Dimens.SpaceSm))
                 }
                 GameBarButton(
@@ -1328,16 +1424,30 @@ private fun SeatWalls(
         return
     }
     val openLabel = stringResource(R.string.cd_open_profile)
-    Surface(
-        onClick = { onOpenProfile(opponent.userId) },
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = modifier.semantics(mergeDescendants = true) {
-            contentDescription = "${opponent.username}, $openLabel"
-        },
+    // A pill, because a name is a pill-shaped thing — but on [Palette.Inset] rather than
+    // `surfaceVariant`, which sat 1.03:1 against the banner behind it. This is the only route to
+    // the opponent's profile in the whole match and it was, measured, invisible as a chip.
+    //
+    // Two boxes, and the outer is the point — the same arrangement [GameBarButton] uses. A
+    // Material `Surface(onClick = …)` stood here and quietly enforced the platform's 48dp touch
+    // target; the chip itself measures about thirty. Drawing it by hand means the target has to
+    // be said out loud, or the one way to find out who you are playing gets smaller than the
+    // fingertip aiming at it.
+    Box(
+        modifier = modifier
+            .heightIn(min = MIN_TOUCH_TARGET)
+            .clickable(role = Role.Button) { onOpenProfile(opponent.userId) }
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${opponent.username}, $openLabel"
+            },
+        contentAlignment = Alignment.Center,
     ) {
         Row(
-            Modifier.padding(start = 4.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .background(Palette.Inset)
+                .border(Dimens.Hairline, Palette.Edge, RoundedCornerShape(50))
+                .padding(start = 4.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -1411,15 +1521,22 @@ private fun Difficulty.label(): String = when (this) {
 }
 
 /**
- * The board screen's own top bar.
+ * The board screen's own top bar: home, the turn number, and the actions.
  *
  * A CenterAlignedTopAppBar stood here and was the last Material chrome in the app: a flat
  * surface, a Black-weight title and four tint-less icon buttons. The board under it is the most
  * finished thing the app draws, and the row above it looked borrowed.
  *
- * The rules either side of the name are drawn rather than typed. A middle dot in the string
- * would be a character the ten translations have to carry, and a divider that has to be
- * translated is a divider somebody will eventually delete.
+ * **The app's name is not in it.** It stood here in `titleLarge` with a hand-drawn rule and a
+ * diamond either side of it, and none of that was information: the player is in a match, on a
+ * screen they reached from a launcher icon and a home screen that both say Koridor, and the only
+ * line in this column that tells them something is the turn counter underneath. Every dp of
+ * vertical space here comes off the board — this file already argues that case for horizontal
+ * space where the board bleeds out of the screen inset — and the name with its rules was costing
+ * about thirty-four of them to repeat a word.
+ *
+ * So the counter is promoted into the space the name left rather than a gap being closed around
+ * it. It is the title of this screen because it is the one fact that changes.
  */
 @Composable
 private fun GameTopBar(
@@ -1442,58 +1559,15 @@ private fun GameTopBar(
             enabled = true,
             onClick = onHome,
         )
-        Column(
-            Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TitleRule()
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                )
-                TitleRule()
-            }
-            Text(
-                text = stringResource(R.string.game_turn, turn),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
+        Text(
+            text = stringResource(R.string.game_turn, turn),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            color = Palette.InkMuted,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
         trailing()
-    }
-}
-
-/** A short rule with a diamond on its inner end, one either side of the name. */
-@Composable
-private fun TitleRule() {
-    Canvas(Modifier.size(width = 26.dp, height = 8.dp)) {
-        val mid = size.height / 2f
-        drawLine(
-            color = KoridorGold.copy(alpha = 0.45f),
-            start = Offset(0f, mid),
-            end = Offset(size.width - size.height, mid),
-            strokeWidth = size.height * 0.14f,
-        )
-        val r = size.height * 0.3f
-        val cx = size.width - r
-        drawPath(
-            androidx.compose.ui.graphics.Path().apply {
-                moveTo(cx, mid - r)
-                lineTo(cx + r, mid)
-                lineTo(cx, mid + r)
-                lineTo(cx - r, mid)
-                close()
-            },
-            KoridorGold,
-        )
     }
 }
 
@@ -1515,7 +1589,7 @@ private fun GameBarButton(
     onClick: () -> Unit,
     size: Dp = 44.dp,
 ) {
-    val tint = if (enabled) KoridorGold else Color(0xFF5C6169)
+    val tint = if (enabled) Palette.Gold else Palette.InkDisabled
     Box(
         Modifier
             .size(size.coerceAtLeast(MIN_TOUCH_TARGET))
@@ -1528,7 +1602,7 @@ private fun GameBarButton(
             Modifier
                 .size(size)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xFF12161B))
+                .background(Palette.Card)
                 .border(1.dp, tint.copy(alpha = 0.45f), RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
@@ -1550,13 +1624,13 @@ private val MIN_TOUCH_TARGET: Dp = 48.dp
 @Composable
 private fun WallButton(enabled: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(14.dp)
-    val fill = if (enabled) KoridorGold else Color(0xFF20262D)
-    val ink = if (enabled) Color(0xFF1A1206) else Color(0xFF5C6169)
+    val fill = if (enabled) Palette.Gold else Palette.Inset
+    val ink = if (enabled) Palette.GoldInk else Palette.InkDisabled
     Row(
         Modifier
             .clip(shape)
             .background(fill)
-            .border(1.dp, if (enabled) KoridorGold else Color(0xFF2A3038), shape)
+            .border(Dimens.Hairline, if (enabled) Palette.Gold else Palette.Edge, shape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = Dimens.SpaceLg, vertical = 11.dp),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),

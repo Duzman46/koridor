@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Must equal DarkColors.background in theme/GridboundTheme.kt. -->
-<resources>
-    <color name="window_background">#FF060C0A</color>
-</resources>

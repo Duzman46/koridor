@@ -31,7 +31,6 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.GameStatistics
 import com.duzman46.gridbound.profile.domain.UserProfile
 import com.duzman46.gridbound.domain.models.AppLanguage
-import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.game.models.Difficulty
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.duzman46.gridbound.monetization.MonetizationState
@@ -55,15 +54,20 @@ import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.SectionLabel
 import com.duzman46.gridbound.ui.components.home.SettingsTile
-import com.duzman46.gridbound.ui.components.home.ThemePickerDialog
 import kotlin.math.roundToInt
 
 /**
  * The settings screen.
  *
  * Four sections, and what decides them is the *kind* of answer each setting has rather than what
- * it is about: two tiles for the settings whose answer is a named value, a card of switches for
+ * it is about: a tile for the setting whose answer is a named value, a card of switches for
  * the ones whose answer is yes or no, and cards of rows for the ones that open something.
+ *
+ * There were two tiles. The other one was Tema, and it is gone with light mode — the reasoning
+ * is in `GridboundTheme`'s KDoc and it is measured, not stylistic. What is left is honest: there
+ * is exactly one appearance setting in this app, so "Görünüm" holds exactly one card. A tile
+ * offering a single answer, or a section kept alive by a control that no longer changes
+ * anything, would be worse than the asymmetry of a full-width card sitting alone.
  *
  * **What the reference had that this does not.** Its top row is four tiles and two are
  * duplicates — a "Ses / Açık" tile above a "Sesler" switch, and an "Arayüz / Sistem" tile beside
@@ -83,7 +87,6 @@ fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
     onLanguage: (AppLanguage) -> Unit,
-    onThemeMode: (ThemeMode) -> Unit,
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onMatchMessages: (Boolean) -> Unit,
@@ -100,7 +103,6 @@ fun SettingsScreen(
     onRemoveAds: () -> Unit,
 ) {
     var languageOpen by rememberSaveable { mutableStateOf(false) }
-    var themeOpen by rememberSaveable { mutableStateOf(false) }
     val notificationsAllowed = rememberNotificationAccess()
 
     // Asked once, the first time this screen is opened while the switch is on and the system
@@ -129,19 +131,6 @@ fun SettingsScreen(
             onDismiss = { languageOpen = false },
         )
     }
-    val themes = ThemeMode.entries
-    if (themeOpen) {
-        ThemePickerDialog(
-            title = stringResource(R.string.settings_theme),
-            options = themes.map { it.label() },
-            selected = themes.indexOf(state.settings.themeMode),
-            onSelect = {
-                themeOpen = false
-                onThemeMode(themes[it])
-            },
-            onDismiss = { themeOpen = false },
-        )
-    }
 
     Column(
         Modifier
@@ -164,23 +153,12 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
             SectionLabel(stringResource(R.string.settings_appearance))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-            ) {
-                SettingsTile(
-                    icon = PremiumIcon.LANGUAGE,
-                    label = stringResource(R.string.settings_language),
-                    value = effective.endonym,
-                    onClick = { languageOpen = true },
-                )
-                SettingsTile(
-                    icon = PremiumIcon.CONTRAST,
-                    label = stringResource(R.string.settings_theme),
-                    value = state.settings.themeMode.label(),
-                    onClick = { themeOpen = true },
-                )
-            }
+            SettingsTile(
+                icon = PremiumIcon.LANGUAGE,
+                label = stringResource(R.string.settings_language),
+                value = effective.endonym,
+                onClick = { languageOpen = true },
+            )
 
             SectionLabel(stringResource(R.string.settings_game_experience))
             OptionGroup(
@@ -309,15 +287,6 @@ private fun rememberNotificationAccess(): Boolean {
     }
     return allowed
 }
-
-@Composable
-private fun ThemeMode.label(): String = stringResource(
-    when (this) {
-        ThemeMode.SYSTEM -> R.string.settings_theme_system
-        ThemeMode.LIGHT -> R.string.settings_theme_light
-        ThemeMode.DARK -> R.string.settings_theme_dark
-    },
-)
 
 /**
  * The career: the online record first, and everything that is not a ranked match after it.

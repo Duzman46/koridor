@@ -73,7 +73,6 @@
     <string name="auth_link_title">Keep your progress</string>
     <string name="auth_link_explainer">Link an account so your progress, purchases and friends stay with you on every device.</string>
     <string name="auth_link_with_google">Link with Google</string>
-    <string name="auth_link_with_email">Link with email</string>
     <string name="auth_link_success">Your account is linked. Your progress has been kept.</string>
     <string name="auth_link_account">Link an account</string>
     <string name="auth_existing_account_title">This account already exists</string>
@@ -113,15 +112,11 @@
     <string name="profile_losses">Losses</string>
     <string name="profile_win_streak">Win streak</string>
     <string name="profile_best_streak">Best streak</string>
-    <string name="profile_member_since">Member since %1$s</string>
     <string name="profile_player_title">Player profile</string>
     <string name="profile_recent_games">Recent games</string>
     <string name="profile_recent_empty">No online games played yet.</string>
     <string name="profile_recent_show_all">Show all (%1$d)</string>
     <string name="profile_recent_show_fewer">Show fewer</string>
-    <string name="profile_recent_result_win">Won</string>
-    <string name="profile_recent_result_loss">Lost</string>
-    <string name="profile_recent_result_draw">Draw</string>
     <string name="profile_recent_unranked">Casual</string>
     <string name="profile_recent_unknown_opponent">Deleted player</string>
 
@@ -307,9 +302,6 @@
     <string name="settings_language">Language</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_store">Store</string>
-    <string name="settings_theme_system">System</string>
-    <string name="settings_theme_light">Light</string>
-    <string name="settings_theme_dark">Dark</string>
     <string name="settings_game_experience">Game experience</string>
     <string name="settings_sounds">Sounds</string>
     <string name="settings_sounds_description">Move, wall, and result sounds.</string>
@@ -401,7 +393,6 @@
     <string name="paint_label">Your colour</string>
     <string name="online_quick_match_hint">You are matched with the closest rating in the queue.</string>
     <string name="nav_home">Home</string>
-    <string name="nav_games">Games</string>
     <string name="nav_profile">Profile</string>
     <string name="home_tagline">Plan. Block. Win.</string>
     <string name="home_play_subtitle">Start a match now</string>
@@ -532,7 +523,6 @@
     <string name="more_social">Social</string>
     <string name="more_social_hint">Follow the game</string>
     <string name="settings_subtitle">Make it yours</string>
-    <string name="settings_theme">Theme</string>
     <string name="settings_account_hint">Sign in, link and delete</string>
     <string name="settings_ad_privacy_hint">Manage your advertising choices</string>
     <string name="settings_remove_ads_hint">Play without interruption</string>
@@ -542,11 +532,6 @@
     <string name="notification_channel_description">The occasional nudge when you have not played for a while.</string>
     <string name="notification_come_back_title">The board is still set</string>
     <string name="notification_come_back_body">It has been a while. One match?</string>
-    <string name="profile_puzzle_title">Daily puzzle</string>
-    <string name="profile_puzzle_action">Solve</string>
-    <string name="profile_soon_badge">Soon</string>
-    <string name="profile_puzzle_soon_title">Not built yet</string>
-    <string name="profile_puzzle_soon_body">The daily puzzle is on the way. The card is here so you know it is coming — there is nothing to solve today.</string>
     <string name="profile_badges_action">View</string>
     <string name="profile_streak_action">Details</string>
     <string name="profile_recent_letter_win">W</string>
@@ -561,7 +546,6 @@
     <string name="account_privacy_note">See how your data is handled.</string>
     <string name="account_terms_note">The terms you agreed to.</string>
     <string name="account_or">or</string>
-    <string name="account_link_email_note">Set an address and a password</string>
     <string name="account_sign_up">Sign up</string>
     <string name="account_sign_up_note">Your rating, statistics and friends come with you</string>
     <string name="account_sign_in">Sign in</string>
@@ -570,5 +554,4 @@
     <string name="account_sign_in_warning">Signing in to that account permanently deletes everything you played as a guest — your rating, your statistics and your friends. That account’s own history comes back instead. Nothing is merged.</string>
     <string name="account_sign_in_confirm">Sign in anyway</string>
     <string name="auth_guest_card_note">Play local games and finish the tutorial.</string>
-    <string name="auth_guest_link_note">Link an account to add friends and play online.</string>
 </resources>

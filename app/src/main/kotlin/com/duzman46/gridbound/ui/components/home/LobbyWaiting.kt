@@ -41,7 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The panel a player looks at while nothing is happening.
@@ -92,7 +92,7 @@ fun SearchingPanel(
             .fillMaxWidth()
             .clip(shape)
             .background(PanelFill)
-            .border(BorderStroke(1.dp, PanelEdge), shape)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceLg),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
@@ -107,13 +107,13 @@ fun SearchingPanel(
                 text = title,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFF2F3F5),
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 textAlign = TextAlign.Center,
             )
         }
@@ -131,7 +131,7 @@ private fun RankedBadge(label: String) {
     Row(
         Modifier
             .clip(RoundedCornerShape(50))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.45f)), RoundedCornerShape(50))
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.45f)), RoundedCornerShape(50))
             .padding(horizontal = Dimens.SpaceLg, vertical = 7.dp),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
@@ -141,7 +141,7 @@ private fun RankedBadge(label: String) {
             text = label,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
-            color = KoridorGold,
+            color = Palette.Gold,
             maxLines = 1,
         )
     }
@@ -168,7 +168,7 @@ private fun SearchRing() {
     Box(Modifier.size(124.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(124.dp)) { drawRingTrack() }
         Canvas(Modifier.size(124.dp).rotate(turn)) { drawRingSweep() }
-        Canvas(Modifier.size(42.dp)) { drawPawn(KoridorGold) }
+        Canvas(Modifier.size(42.dp)) { drawPawn(Palette.Gold) }
     }
 }
 
@@ -191,7 +191,7 @@ private fun ConnectionRow(connectionLabel: String, stageLabel: String, connected
             Text(
                 text = connectionLabel,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (connected) Color(0xFFB6BCC3) else SignalLost,
+                color = if (connected) Palette.InkMuted else SignalLost,
                 maxLines = 1,
             )
         }
@@ -199,12 +199,12 @@ private fun ConnectionRow(connectionLabel: String, stageLabel: String, connected
             Modifier
                 .height(16.dp)
                 .width(Dimens.Hairline)
-                .background(PanelEdge),
+                .background(Palette.Edge),
         )
         Text(
             text = stageLabel,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -223,14 +223,14 @@ private fun DiamondRule() {
             Modifier
                 .weight(1f)
                 .height(Dimens.Hairline)
-                .background(PanelEdge),
+                .background(Palette.Edge),
         )
-        Canvas(Modifier.size(9.dp)) { drawDiamond(KoridorGold.copy(alpha = 0.8f)) }
+        Canvas(Modifier.size(9.dp)) { drawDiamond(Palette.Gold.copy(alpha = 0.8f)) }
         Box(
             Modifier
                 .weight(1f)
                 .height(Dimens.Hairline)
-                .background(PanelEdge),
+                .background(Palette.Edge),
         )
     }
 }
@@ -248,8 +248,8 @@ private fun ElapsedBox(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, PanelEdge), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .padding(vertical = Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -258,7 +258,7 @@ private fun ElapsedBox(
             Modifier
                 .height(38.dp)
                 .width(Dimens.Hairline)
-                .background(PanelEdge),
+                .background(Palette.Edge),
         )
         StatCell(Modifier.weight(1f), estimateLabel, estimateValue) { drawHourglass() }
     }
@@ -282,7 +282,7 @@ private fun StatCell(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 0.6.sp,
-                color = Color(0xFF7A7F86),
+                color = Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -290,7 +290,7 @@ private fun StatCell(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = KoridorGold,
+                color = Palette.Gold,
                 maxLines = 1,
             )
         }
@@ -305,7 +305,7 @@ private fun TipRow(tip: String) {
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF10141A))
+            .background(Palette.Card)
             .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.Top,
@@ -314,7 +314,7 @@ private fun TipRow(tip: String) {
         Text(
             text = tip,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF9AA0A8),
+            color = Palette.InkMuted,
         )
     }
 }
@@ -327,18 +327,17 @@ fun PanelFootnote(text: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.size(15.dp)) { drawShieldTick(Color(0xFF6F747B)) }
+        Canvas(Modifier.size(15.dp)) { drawShieldTick(Palette.InkGlyph) }
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF6F747B),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
         )
     }
 }
 
-private val PanelFill = Brush.verticalGradient(listOf(Color(0xFF14181D), Color(0xFF0B0E12)))
-private val PanelEdge = Color(0xFF2A3038)
+private val PanelFill = Brush.verticalGradient(listOf(Palette.Inset, Palette.Ground))
 private val SignalGood = Color(0xFF5FBF7A)
 private val SignalLost = Color(0xFFC96A5E)
 
@@ -349,7 +348,7 @@ private val SignalLost = Color(0xFFC96A5E)
 private fun DrawScope.drawRingTrack() {
     val s = size.minDimension
     drawCircle(
-        color = KoridorGold.copy(alpha = 0.22f),
+        color = Palette.Gold.copy(alpha = 0.22f),
         radius = s * 0.42f,
         style = Stroke(width = s * 0.016f),
     )
@@ -359,13 +358,13 @@ private fun DrawScope.drawRingTrack() {
     listOf(-1f, 0f, 1f).forEach { step ->
         val offset = inner * 0.5f * step
         drawLine(
-            KoridorGold.copy(alpha = 0.10f),
+            Palette.Gold.copy(alpha = 0.10f),
             Offset(s * 0.5f - inner + offset, s * 0.5f - inner - offset),
             Offset(s * 0.5f + inner + offset, s * 0.5f + inner - offset),
             strokeWidth = s * 0.006f,
         )
         drawLine(
-            KoridorGold.copy(alpha = 0.10f),
+            Palette.Gold.copy(alpha = 0.10f),
             Offset(s * 0.5f - inner + offset, s * 0.5f + inner + offset),
             Offset(s * 0.5f + inner + offset, s * 0.5f - inner + offset),
             strokeWidth = s * 0.006f,
@@ -379,7 +378,7 @@ private fun DrawScope.drawRingSweep() {
     drawArc(
         brush = Brush.sweepGradient(
             0f to Color.Transparent,
-            0.16f to KoridorGold,
+            0.16f to Palette.Gold,
             0.22f to Color(0xFFF3DFA8),
             0.30f to Color.Transparent,
             1f to Color.Transparent,
@@ -400,7 +399,7 @@ private fun DrawScope.drawRingSweep() {
             s * 0.5f + (r * Math.sin(angle)).toFloat(),
         ),
         s * 0.030f,
-        KoridorGold,
+        Palette.Gold,
     )
 }
 
@@ -461,7 +460,7 @@ private fun DrawScope.drawSmallCrown() {
             lineTo(s * 0.90f, s * 0.76f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
 }
 
@@ -480,16 +479,16 @@ private fun DrawScope.drawSignalBars(tint: Color) {
 private fun DrawScope.drawClock() {
     val s = size.minDimension
     val line = s * 0.085f
-    drawCircle(KoridorGold, s * 0.42f, style = Stroke(line))
+    drawCircle(Palette.Gold, s * 0.42f, style = Stroke(line))
     drawLine(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.5f, s * 0.5f),
         Offset(s * 0.5f, s * 0.26f),
         strokeWidth = line,
         cap = StrokeCap.Round,
     )
     drawLine(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.5f, s * 0.5f),
         Offset(s * 0.70f, s * 0.58f),
         strokeWidth = line,
@@ -500,8 +499,8 @@ private fun DrawScope.drawClock() {
 private fun DrawScope.drawHourglass() {
     val s = size.minDimension
     val line = s * 0.085f
-    drawLine(KoridorGold, Offset(s * 0.22f, s * 0.12f), Offset(s * 0.78f, s * 0.12f), line, StrokeCap.Round)
-    drawLine(KoridorGold, Offset(s * 0.22f, s * 0.88f), Offset(s * 0.78f, s * 0.88f), line, StrokeCap.Round)
+    drawLine(Palette.Gold, Offset(s * 0.22f, s * 0.12f), Offset(s * 0.78f, s * 0.12f), line, StrokeCap.Round)
+    drawLine(Palette.Gold, Offset(s * 0.22f, s * 0.88f), Offset(s * 0.78f, s * 0.88f), line, StrokeCap.Round)
     drawPath(
         Path().apply {
             moveTo(s * 0.28f, s * 0.14f)
@@ -512,7 +511,7 @@ private fun DrawScope.drawHourglass() {
             lineTo(s * 0.48f, s * 0.50f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
         style = Stroke(width = line * 0.85f),
     )
     // The sand that has already fallen.
@@ -523,23 +522,23 @@ private fun DrawScope.drawHourglass() {
             lineTo(s * 0.50f, s * 0.58f)
             close()
         },
-        KoridorGold.copy(alpha = 0.55f),
+        Palette.Gold.copy(alpha = 0.55f),
     )
 }
 
 private fun DrawScope.drawBulb() {
     val s = size.minDimension
     val line = s * 0.09f
-    drawCircle(KoridorGold, s * 0.31f, Offset(s * 0.5f, s * 0.40f), style = Stroke(line))
+    drawCircle(Palette.Gold, s * 0.31f, Offset(s * 0.5f, s * 0.40f), style = Stroke(line))
     drawLine(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.38f, s * 0.74f),
         Offset(s * 0.62f, s * 0.74f),
         strokeWidth = line,
         cap = StrokeCap.Round,
     )
     drawLine(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.42f, s * 0.90f),
         Offset(s * 0.58f, s * 0.90f),
         strokeWidth = line,

@@ -49,7 +49,9 @@ import com.duzman46.gridbound.presentation.social.RequestBarEvent
 import com.duzman46.gridbound.presentation.social.RequestChannelViewModel
 import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.RequestKind
+import androidx.compose.foundation.BorderStroke
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.util.rememberMotionEnabled
 
 /**
@@ -139,13 +141,20 @@ private fun RequestCard(
             // told about it the moment it does rather than when focus happens to reach it.
             .semantics { liveRegion = LiveRegionMode.Polite },
         shape = RoundedCornerShape(Dimens.RadiusMd),
-        // A failed answer recolours the whole bar rather than only its second line: error red
-        // on a primary container is a contrast gamble, and this way there is none to take.
-        color = if (message == null) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.errorContainer
-        },
+        // The card is the app's card, and a failed answer is said in the border and the second
+        // line rather than by repainting the whole bar.
+        //
+        // It used to take `primaryContainer` and `errorContainer`, neither of which this app
+        // sets — so every match invitation, over every screen, arrived as Material's baseline
+        // violet `#4F378B`, and a failure turned it crimson `#8C1D18`. Two hues from a palette
+        // Koridor does not use, on the one surface that appears unbidden on top of whatever the
+        // player was already looking at.
+        color = Palette.Card,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(
+            Dimens.Hairline,
+            if (message == null) Palette.Gold.copy(alpha = 0.45f) else MaterialTheme.colorScheme.error,
+        ),
         shadowElevation = 6.dp,
     ) {
         Row(
@@ -175,22 +184,32 @@ private fun RequestCard(
                     fontWeight = FontWeight.SemiBold,
                 )
                 message?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
             if (isAnswering) {
-                CircularProgressIndicator(Modifier.size(Dimens.IconSm), strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    Modifier.size(Dimens.IconSm),
+                    color = Palette.Gold,
+                    strokeWidth = 2.dp,
+                )
             } else {
                 IconButton(onClick = onAccept) {
                     Icon(
                         Icons.Rounded.Check,
                         contentDescription = stringResource(R.string.friends_accept),
+                        tint = Palette.Gold,
                     )
                 }
                 IconButton(onClick = onDecline) {
                     Icon(
                         Icons.Rounded.Close,
                         contentDescription = stringResource(R.string.friends_decline),
+                        tint = Palette.InkGlyph,
                     )
                 }
             }

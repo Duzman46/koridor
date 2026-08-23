@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -36,28 +35,34 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
- * The top of a screen the player opened and will come back from.
+ * The top of every screen in the app — the one the app had five of.
  *
- * The arrow leads, because on a pushed screen it is true: this place was entered from somewhere,
- * and the way out is the first thing on the line. The three places the docked bar switches
- * between deliberately have no arrow at all — there is no "back" from a place, only the place
- * beside it — which is why this is a component and not a rule applied everywhere.
+ * The arrow leads when there is one, because on a pushed screen it is true: this place was
+ * entered from somewhere, and the way out is the first thing on the line. The three places the
+ * docked bar switches between have no arrow at all — there is no "back" from a place, only the
+ * place beside it — and that is what a null [onBack] means. It used to mean a second header
+ * hand-built per screen, which is how one gold title ended up drawn at three font weights.
  *
  * [PremiumBackArrow] is the app's only back arrow. The lobby and the play screen each kept a
  * private copy, and each carried a comment explaining why it had to stay private; the two copies
  * were byte-for-byte the same box, the same canvas, the same right-to-left flip and the same path
  * to the third decimal, so neither comment was true of the code under it. They call this one now.
+ *
+ * The header is a row of slots rather than a fixed shape, so the screens that sit it over a
+ * photograph do not have to rebuild it: [overline] takes whatever belongs above the name, and the
+ * caller's [modifier] carries the inset — `statusBarsPadding()` over [HomeHero], for instance.
  */
 @Composable
 fun PremiumHeader(
     title: String,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     trailing: (@Composable () -> Unit)? = null,
+    overline: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier
@@ -66,8 +71,17 @@ fun PremiumHeader(
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumBackArrow(onBack)
-        Column(Modifier.weight(1f)) {
+        onBack?.let { PremiumBackArrow(it) }
+        Column(
+            Modifier
+                .weight(1f)
+                // Without an arrow in front of it the title would start 8dp from the edge, and
+                // every other first pixel on these screens starts at ScreenPadding — which is
+                // also where the arrow's own glyph lands. The two cases line up rather than
+                // merely both looking deliberate.
+                .padding(start = if (onBack == null) Dimens.SpaceMd else 0.dp),
+        ) {
+            overline?.invoke()
             Text(
                 text = title,
                 // The screen's name, marked as what it is. TalkBack's navigate-by-heading gesture
@@ -76,7 +90,7 @@ fun PremiumHeader(
                 modifier = Modifier.semantics { heading() },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = KoridorGold,
+                color = Palette.Gold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -84,7 +98,7 @@ fun PremiumHeader(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF8B9098),
+                    color = Palette.InkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -128,7 +142,7 @@ fun PremiumBackArrow(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     lineTo(s * 0.12f, s * 0.5f)
                     lineTo(s * 0.44f, s * 0.82f)
                 },
-                KoridorGold,
+                Palette.Gold,
                 style = Stroke(width = s * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
         }

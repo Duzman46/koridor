@@ -2,15 +2,25 @@ package com.duzman46.gridbound.domain.models
 
 import com.duzman46.gridbound.game.models.Difficulty
 
-enum class ThemeMode {
-    SYSTEM,
-    LIGHT,
-    DARK,
-}
-
+/**
+ * What the player has chosen, and nothing they have not been offered.
+ *
+ * There was a `themeMode` here, and a `ThemeMode` enum beside it. Both are gone: the app is
+ * dark-only, for the three measured reasons recorded in `GridboundTheme`'s KDoc, and a
+ * preference with one possible answer is a control that lies about being a choice.
+ *
+ * **What happens to an install that already stored one.** Nothing, and that is on purpose.
+ * `theme_mode = "LIGHT"` is still sitting in DataStore on every handset whose owner ever opened
+ * Settings, and it stays there. `DefaultGameRepository` no longer reads the key, so the value is
+ * never consulted, never parsed, and cannot fail to parse — there is no branch left for it to
+ * take. A `Preferences` store reads by key, so an unread row costs one short string in one small
+ * file. Writing a migration to remove it would mean shipping code that runs on every cold start
+ * for the rest of the app's life to reclaim eleven bytes, on a live closed test, for no visible
+ * effect. The constant and the key were deleted instead, so nothing in the codebase can reach
+ * the row again by accident.
+ */
 data class AppSettings(
     val language: AppLanguage = AppLanguage.SYSTEM,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     /**

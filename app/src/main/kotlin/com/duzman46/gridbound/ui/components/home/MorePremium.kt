@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * "More", as a screen made of two cards.
@@ -67,8 +65,11 @@ fun SupportCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF1B1710), Color(0xFF12161B))))
-            .border(BorderStroke(1.dp, Color(0xFF8D713B)), shape)
+            .background(Brush.horizontalGradient(listOf(Palette.GoldBandEnd, Palette.Card)))
+            // The band was drawn one unit of red away from the other four copies of it, and its
+            // hairline was a flat hex that happened to be gold at about 62%. Both are the shared
+            // values now, so the five cards are one card rather than five that resemble it.
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.35f)), shape)
             .heightIn(min = 96.dp)
             .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
@@ -87,7 +88,7 @@ fun SupportCard(
             Text(
                 text = body,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -116,7 +117,7 @@ private fun CompactOutline(label: String, onClick: () -> Unit, modifier: Modifie
     Row(
         modifier
             .clip(shape)
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.6f)), shape)
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.6f)), shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -133,10 +134,10 @@ private fun CompactOutline(label: String, onClick: () -> Unit, modifier: Modifie
             text = label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = KoridorGold,
+            color = Palette.Gold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        OptionChevron(KoridorGold)
+        OptionChevron(Palette.Gold)
     }
 }

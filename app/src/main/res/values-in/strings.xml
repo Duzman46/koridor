@@ -64,7 +64,6 @@
     <string name="auth_link_title">Simpan progresmu</string>
     <string name="auth_link_explainer">Tautkan akun agar progres, pembelian, dan temanmu ikut di setiap perangkat.</string>
     <string name="auth_link_with_google">Tautkan dengan Google</string>
-    <string name="auth_link_with_email">Tautkan dengan email</string>
     <string name="auth_link_success">Akunmu sudah tertaut. Progresmu tersimpan.</string>
     <string name="auth_link_account">Tautkan akun</string>
     <string name="auth_existing_account_title">Akun ini sudah ada</string>
@@ -100,15 +99,11 @@
     <string name="profile_losses">Kalah</string>
     <string name="profile_win_streak">Rentetan kemenangan</string>
     <string name="profile_best_streak">Rentetan terbaik</string>
-    <string name="profile_member_since">Anggota sejak %1$s</string>
     <string name="profile_player_title">Profil pemain</string>
     <string name="profile_recent_games">Permainan terbaru</string>
     <string name="profile_recent_empty">Belum ada permainan online yang dimainkan.</string>
     <string name="profile_recent_show_all">Tampilkan semua (%1$d)</string>
     <string name="profile_recent_show_fewer">Tampilkan lebih sedikit</string>
-    <string name="profile_recent_result_win">Menang</string>
-    <string name="profile_recent_result_loss">Kalah</string>
-    <string name="profile_recent_result_draw">Seri</string>
     <string name="profile_recent_unranked">Tanpa peringkat</string>
     <string name="profile_recent_unknown_opponent">Pemain terhapus</string>
 
@@ -276,9 +271,6 @@
     <string name="settings_language">Bahasa</string>
     <string name="settings_appearance">Tampilan</string>
     <string name="settings_store">Toko</string>
-    <string name="settings_theme_system">Sistem</string>
-    <string name="settings_theme_light">Terang</string>
-    <string name="settings_theme_dark">Gelap</string>
     <string name="settings_game_experience">Pengalaman bermain</string>
     <string name="settings_sounds">Suara</string>
     <string name="settings_sounds_description">Suara langkah, dinding, dan hasil.</string>
@@ -367,7 +359,6 @@
     <string name="paint_label">Warnamu</string>
     <string name="online_quick_match_hint">Kamu dipasangkan dengan peringkat terdekat di antrean.</string>
     <string name="nav_home">Beranda</string>
-    <string name="nav_games">Permainan</string>
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Rencanakan. Hadang. Menang.</string>
     <string name="home_play_subtitle">Mulai pertandingan sekarang</string>
@@ -498,7 +489,6 @@
     <string name="more_social">Media sosial</string>
     <string name="more_social_hint">Ikuti perkembangan game</string>
     <string name="settings_subtitle">Sesuaikan denganmu</string>
-    <string name="settings_theme">Tema</string>
     <string name="settings_account_hint">Masuk, tautkan, dan hapus</string>
     <string name="settings_ad_privacy_hint">Kelola pilihan iklanmu</string>
     <string name="settings_remove_ads_hint">Main tanpa gangguan</string>
@@ -508,11 +498,6 @@
     <string name="notification_channel_description">Pengingat sesekali saat kamu sudah lama tidak bermain.</string>
     <string name="notification_come_back_title">Papannya masih tersusun</string>
     <string name="notification_come_back_body">Sudah lama. Satu pertandingan?</string>
-    <string name="profile_puzzle_title">Teka-teki harian</string>
-    <string name="profile_puzzle_action">Pecahkan</string>
-    <string name="profile_soon_badge">Segera</string>
-    <string name="profile_puzzle_soon_title">Belum siap</string>
-    <string name="profile_puzzle_soon_body">Teka-teki harian sedang disiapkan. Kartu ini ada agar kamu tahu — hari ini belum ada yang bisa dipecahkan.</string>
     <string name="profile_badges_action">Lihat</string>
     <string name="profile_streak_action">Detail</string>
     <string name="profile_recent_letter_win">M</string>
@@ -527,7 +512,6 @@
     <string name="account_privacy_note">Bagaimana datamu diperlakukan.</string>
     <string name="account_terms_note">Ketentuan yang kamu setujui.</string>
     <string name="account_or">atau</string>
-    <string name="account_link_email_note">Tetapkan alamat dan kata sandi</string>
     <string name="account_sign_up">Daftar</string>
     <string name="account_sign_up_note">Peringkat, statistik, dan temanmu ikut serta</string>
     <string name="account_sign_in">Masuk</string>
@@ -536,5 +520,4 @@
     <string name="account_sign_in_warning">Masuk ke akun itu menghapus permanen semua yang kamu mainkan sebagai tamu — peringkat, statistik, dan teman. Riwayat akun itu yang kembali. Tidak ada yang digabungkan.</string>
     <string name="account_sign_in_confirm">Tetap masuk</string>
     <string name="auth_guest_card_note">Main lokal dan selesaikan tutorial.</string>
-    <string name="auth_guest_link_note">Tautkan akun untuk berteman dan bermain daring.</string>
 </resources>

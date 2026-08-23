@@ -15,20 +15,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,12 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.presentation.auth.AuthUiState
-import com.duzman46.gridbound.ui.components.CenteredContent
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.ScreenBackground
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SecondarySubmitButton
-import com.duzman46.gridbound.ui.components.SubmitButton
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -59,11 +48,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
+import com.duzman46.gridbound.ui.components.home.PremiumTextAction
 import com.duzman46.gridbound.ui.components.KoridorMark
 import com.duzman46.gridbound.ui.components.home.GoogleMark
 import com.duzman46.gridbound.ui.components.home.OptionChevron
@@ -112,13 +103,13 @@ fun WelcomeScreen(
                     text = stringResource(R.string.auth_welcome_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = KoridorGold,
+                    color = Palette.Gold,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = stringResource(R.string.auth_welcome_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Palette.InkMuted,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(Dimens.SpaceSm))
@@ -135,14 +126,14 @@ fun WelcomeScreen(
                     )
                 }
                 AuthChoice(
-                    mark = { PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), KoridorGold) },
+                    mark = { PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Palette.Gold) },
                     label = stringResource(R.string.auth_sign_in_with_email),
                     filled = false,
                     enabled = !state.isSubmitting,
                     onClick = onEmailSignIn,
                 )
                 AuthChoice(
-                    mark = { PremiumGlyph(PremiumIcon.PLUS, Modifier.size(20.dp), KoridorGold) },
+                    mark = { PremiumGlyph(PremiumIcon.PLUS, Modifier.size(20.dp), Palette.Gold) },
                     label = stringResource(R.string.auth_create_account),
                     filled = false,
                     enabled = !state.isSubmitting,
@@ -158,43 +149,33 @@ fun WelcomeScreen(
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(Dimens.RadiusMd))
-                        .background(Color(0xFF12161B))
-                        .border(1.dp, Color(0xFF2A3038), RoundedCornerShape(Dimens.RadiusMd))
+                        .background(Palette.Card)
+                        .border(Dimens.Hairline, Palette.Edge, RoundedCornerShape(Dimens.RadiusMd))
                         .clickable(enabled = !state.isSubmitting, role = Role.Button, onClick = onGuest)
                         .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
                     horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PremiumGlyph(PremiumIcon.PERSON, Modifier.size(22.dp), Color(0xFF8B9098))
+                    PremiumGlyph(PremiumIcon.PERSON, Modifier.size(22.dp), Palette.InkGlyph)
                     Column(Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.auth_play_as_guest),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = KoridorGold,
+                            color = Palette.Gold,
                         )
                         Text(
                             text = stringResource(R.string.auth_guest_card_note),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Palette.InkMuted,
                         )
                     }
                     OptionChevron()
                 }
 
-                Row(
-                    Modifier.fillMaxWidth().padding(top = Dimens.SpaceSm),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PremiumGlyph(PremiumIcon.SHIELD_STAR, Modifier.size(18.dp), KoridorGold.copy(alpha = 0.7f))
-                    Text(
-                        text = stringResource(R.string.auth_guest_link_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                // The shield row that stood here said a guest can link an account later. So
+                // does the guest card's own subtitle, eight dp above it. One fact, twice, on the
+                // first screen anybody sees.
                 state.error?.let { FormMessage(it) }
             }
         }
@@ -215,8 +196,8 @@ private fun AuthChoice(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (filled) KoridorGold else Color(0xFF12161B))
-            .border(1.dp, if (filled) KoridorGold else Color(0xFF2A3038), shape)
+            .background(if (filled) Palette.Gold else Palette.Card)
+            .border(Dimens.Hairline, if (filled) Palette.Gold else Palette.InkGlyph, shape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(vertical = 15.dp, horizontal = Dimens.SpaceLg),
         horizontalArrangement = Arrangement.Center,
@@ -229,7 +210,7 @@ private fun AuthChoice(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             // Near-black on the gold one: white on this yellow is under three to one.
-            color = if (filled) Color(0xFF1A1206) else MaterialTheme.colorScheme.onBackground,
+            color = if (filled) Palette.GoldInk else MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
         )
     }
@@ -243,14 +224,14 @@ private fun OrRule(text: String) {
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+        Box(Modifier.weight(1f).height(Dimens.Hairline).background(Palette.Edge))
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            color = KoridorGold.copy(alpha = 0.75f),
+            color = Palette.Gold.copy(alpha = 0.75f),
             letterSpacing = 2.sp,
         )
-        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+        Box(Modifier.weight(1f).height(Dimens.Hairline).background(Palette.Edge))
     }
 }
 
@@ -275,16 +256,19 @@ fun SignInScreen(
             onToggleVisibility = onTogglePasswordVisibility,
             onDone = { if (!state.isSubmitting) onSubmit() },
         )
-        SubmitButton(
-            text = stringResource(R.string.auth_sign_in_title),
+        PremiumActionButton(
+            label = stringResource(R.string.auth_sign_in_title),
             onClick = onSubmit,
-            isSubmitting = state.isSubmitting,
-            // Auto-mirrored: the arrow points the other way in right-to-left languages.
-            leadingIcon = Icons.AutoMirrored.Rounded.Login,
+            modifier = Modifier.fillMaxWidth(),
+            filled = true,
+            busy = state.isSubmitting,
+            icon = PremiumIcon.PERSON,
         )
-        TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.auth_forgot_password))
-        }
+        PremiumTextAction(
+            label = stringResource(R.string.auth_forgot_password),
+            onClick = onForgotPassword,
+            modifier = Modifier.fillMaxWidth(),
+        )
         state.error?.let { FormMessage(it) }
     }
 }
@@ -318,11 +302,13 @@ fun SignUpScreen(
             onToggleVisibility = onTogglePasswordVisibility,
             onDone = { if (!state.isSubmitting) onSubmit() },
         )
-        SubmitButton(
-            text = stringResource(R.string.auth_create_account),
+        PremiumActionButton(
+            label = stringResource(R.string.auth_create_account),
             onClick = onSubmit,
-            isSubmitting = state.isSubmitting,
-            leadingIcon = Icons.Rounded.PersonAdd,
+            modifier = Modifier.fillMaxWidth(),
+            filled = true,
+            busy = state.isSubmitting,
+            icon = PremiumIcon.PLUS,
         )
         state.error?.let { FormMessage(it) }
     }
@@ -339,7 +325,7 @@ fun ForgotPasswordScreen(
         Text(
             stringResource(R.string.auth_reset_explainer),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Palette.InkMuted,
         )
         EmailField(
             state.email,
@@ -347,10 +333,13 @@ fun ForgotPasswordScreen(
             imeAction = ImeAction.Done,
             onDone = { if (!state.isSubmitting) onSubmit() },
         )
-        SubmitButton(
-            text = stringResource(R.string.auth_reset_send),
+        PremiumActionButton(
+            label = stringResource(R.string.auth_reset_send),
             onClick = onSubmit,
-            isSubmitting = state.isSubmitting,
+            modifier = Modifier.fillMaxWidth(),
+            filled = true,
+            busy = state.isSubmitting,
+            icon = PremiumIcon.ENVELOPE,
         )
         state.error?.let { FormMessage(it) }
         state.info?.let { FormMessage(it, isError = false) }
@@ -363,21 +352,23 @@ private fun AuthFormScaffold(
     onBack: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Scaffold(topBar = { ScreenTopBar(title, onBack) }) { padding ->
-        ScreenBackground {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.TopCenter,
-            ) {
+    // No Scaffold. It painted `containerColor` across the whole window and ScreenBackground
+    // painted the background across it again — two full-screen overdraws a frame to hold a bar
+    // this screen no longer has. PremiumHeader is the app's own header and the only one that
+    // marks its title as a heading, which is what makes TalkBack's navigate-by-heading gesture
+    // land on anything at all.
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(title = title, onBack = onBack)
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 520.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                        .navigationBarsPadding()
+                        .padding(Dimens.ScreenPadding),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                 ) {
                     content()
                 }

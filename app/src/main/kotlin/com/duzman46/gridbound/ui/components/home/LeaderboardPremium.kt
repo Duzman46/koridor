@@ -9,7 +9,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -42,12 +41,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The standings, as a table with a stage in front of it.
@@ -60,7 +57,7 @@ import com.duzman46.gridbound.theme.KoridorGold
 
 /** Gold, silver, bronze — and the ring, the rule and the number all take their colour from here. */
 private fun placeMetal(place: Int): Color = when (place) {
-    1 -> KoridorGold
+    1 -> Palette.Gold
     2 -> Color(0xFFB9C0C9)
     else -> Color(0xFFC08552)
 }
@@ -101,9 +98,9 @@ fun RowScope.PodiumCard(
             .clip(shape)
             .background(
                 if (first) {
-                    Brush.verticalGradient(listOf(Color(0xFF1E1a12), Color(0xFF0D1015)))
+                    Brush.verticalGradient(listOf(Palette.GoldBandEnd, Palette.Ground))
                 } else {
-                    Brush.verticalGradient(listOf(Color(0xFF141920), Color(0xFF0D1015)))
+                    Brush.verticalGradient(listOf(Palette.Inset, Palette.Ground))
                 },
             )
             .border(BorderStroke(if (first) 1.5.dp else 1.dp, metal.copy(alpha = if (first) 0.75f else 0.35f)), shape)
@@ -141,7 +138,7 @@ fun RowScope.PodiumCard(
                     .size(head)
                     .clip(CircleShape)
                     .background(Color(0xFF2F6BE8))
-                    .border(BorderStroke(2.dp, Color(0xFF0D1015)), CircleShape),
+                    .border(BorderStroke(2.dp, Palette.Ground), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -177,7 +174,7 @@ fun RowScope.PodiumCard(
             Modifier
                 .fillMaxWidth()
                 .height(Dimens.Hairline)
-                .background(Color(0xFF2A3038)),
+                .background(Palette.Edge),
         )
         // Two columns, an initial over a number, the way the reference sets them. Its third
         // column has no data behind it in this app, so it is not invented here.
@@ -202,7 +199,7 @@ private fun PodiumFact(value: String, label: String, tint: Color, mark: DrawScop
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF6F747B),
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
         }
@@ -230,8 +227,8 @@ fun ScopeTabs(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, Color(0xFF2A3038)), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.InkGlyph), shape)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -248,11 +245,11 @@ fun ScopeTabs(
                     )
                     .semantics(mergeDescendants = true) { contentDescription = label }
                     .clip(RoundedCornerShape(13.dp))
-                    .background(if (active) KoridorGold.copy(alpha = 0.14f) else Color.Transparent)
+                    .background(if (active) Palette.Gold.copy(alpha = 0.14f) else Color.Transparent)
                     .then(
                         if (active) {
                             Modifier.border(
-                                BorderStroke(1.dp, KoridorGold.copy(alpha = 0.6f)),
+                                BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.6f)),
                                 RoundedCornerShape(13.dp),
                             )
                         } else {
@@ -267,14 +264,14 @@ fun ScopeTabs(
                 PremiumGlyph(
                     icons[index],
                     Modifier.size(17.dp),
-                    tint = if (active) KoridorGold else Color(0xFF7A7F86),
+                    tint = if (active) Palette.Gold else Palette.InkGlyph,
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (active) KoridorGold else Color(0xFF7A7F86),
+                    color = if (active) Palette.Gold else Palette.InkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -296,7 +293,7 @@ fun StandingsHeader(rankLabel: String, playerLabel: String, modifier: Modifier =
             text = rankLabel,
             modifier = Modifier.width(RANK_WIDTH),
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF6F747B),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
         Text(
@@ -305,13 +302,13 @@ fun StandingsHeader(rankLabel: String, playerLabel: String, modifier: Modifier =
                 .weight(1f)
                 .padding(start = AVATAR_SIZE + Dimens.SpaceSm),
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF6F747B),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
         // The three heads sit over their own columns, at exactly the widths the rows use.
         HeaderMark(WinGreen) { drawTinyTrophy(WinGreen) }
         HeaderMark(LossRed) { drawSwords(LossRed) }
-        HeaderMark(KoridorGold) { drawStar(KoridorGold) }
+        HeaderMark(Palette.Gold) { drawStar(Palette.Gold) }
     }
 }
 
@@ -367,10 +364,10 @@ fun StandingRow(
                 },
             )
             .clip(shape)
-            .background(if (highlighted) KoridorGold.copy(alpha = 0.09f) else Color(0xFF12161B))
+            .background(if (highlighted) Palette.Gold.copy(alpha = 0.09f) else Palette.Card)
             .then(
                 if (highlighted) {
-                    Modifier.border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.55f)), shape)
+                    Modifier.border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.55f)), shape)
                 } else {
                     Modifier
                 },
@@ -384,7 +381,7 @@ fun StandingRow(
             modifier = Modifier.width(RANK_WIDTH),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
         Box(
@@ -413,7 +410,7 @@ fun StandingRow(
         )
         StatCell(wins, WinGreen) { drawTinyTrophy(WinGreen) }
         StatCell(losses, LossRed) { drawSwords(LossRed) }
-        StatCell(rating, KoridorGold) { drawStar(KoridorGold) }
+        StatCell(rating, Palette.Gold) { drawStar(Palette.Gold) }
         // No chevron. The whole row is tappable and it was spending the width the names needed.
     }
 }
@@ -468,8 +465,8 @@ fun LinkAccountBanner(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF1A1710), Color(0xFF12161B))))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.35f)), shape)
+            .background(Brush.horizontalGradient(listOf(Palette.GoldBandEnd, Palette.Card)))
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.35f)), shape)
             .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
@@ -480,52 +477,23 @@ fun LinkAccountBanner(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = KoridorGold,
+                color = Palette.Gold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = hint,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        CompactGoldAction(label = action, onClick = onAction)
-    }
-}
-
-/** A gold control at the size a row can spare, rather than the size a page can. */
-@Composable
-private fun CompactGoldAction(label: String, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(11.dp)
-    Box(
-        Modifier
-            .clip(shape)
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47)),
-                ),
-            )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics { contentDescription = label }
-            .heightIn(min = 40.dp)
-            .padding(horizontal = Dimens.SpaceMd),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1206),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        PremiumActionButton(
+            label = action,
+            onClick = onAction,
+            filled = true,
+            size = ActionSize.Compact,
         )
     }
 }
@@ -643,7 +611,7 @@ private fun DrawScope.drawRowChevron() {
             lineTo(s * 0.68f, s * 0.50f)
             lineTo(s * 0.36f, s * 0.84f)
         },
-        KoridorGold.copy(alpha = 0.7f),
+        Palette.Gold.copy(alpha = 0.7f),
         style = Stroke(width = s * 0.14f, cap = StrokeCap.Round, join = StrokeJoin.Round),
     )
 }
@@ -677,7 +645,7 @@ private fun DrawScope.drawCrestedTrophy() {
             lineTo(s * 0.08f, s * 0.23f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
         style = Stroke(width = s * 0.075f, join = StrokeJoin.Round),
     )
     drawPath(
@@ -689,18 +657,12 @@ private fun DrawScope.drawCrestedTrophy() {
             cubicTo(s * 0.42f, s * 0.68f, s * 0.34f, s * 0.62f, s * 0.34f, s * 0.48f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
     drawRoundRect(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.36f, s * 0.74f),
         Size(s * 0.28f, s * 0.07f),
         androidx.compose.ui.geometry.CornerRadius(s * 0.035f),
     )
-}
-
-/** Keeps the file's column helper usable from a Column scope without importing the scope. */
-@Composable
-fun ColumnScope.PodiumSpacer(height: Int) {
-    Spacer(Modifier.height(height.dp))
 }

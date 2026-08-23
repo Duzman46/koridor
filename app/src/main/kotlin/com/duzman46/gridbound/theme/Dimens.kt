@@ -58,9 +58,14 @@ object Dimens {
     /** The home screen's board well. */
     val RadiusXl = 28.dp
 
-    /** Home screen control heights. Minimums, never fixed — long labels must be able to grow. */
-    val RoomHeight = 56.dp
-    val ChipHeight = 44.dp
+    /**
+     * The avatar crest's edge. A minimum, never fixed — a long name must be able to grow.
+     *
+     * It had two siblings, `RoomHeight` and `ChipHeight`, and both were removed because nothing
+     * read them: they named the control heights of a home screen that a redesign replaced. A
+     * spacing token nobody applies is worse than a literal — a literal is at least honest about
+     * being one place, while a dead token looks like a rule the layout is following.
+     */
     val CrestHeight = 44.dp
 
     /** How far a block sinks when pressed. The travel is the feedback; there is no ripple. */

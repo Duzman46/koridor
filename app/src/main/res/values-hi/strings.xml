@@ -61,7 +61,6 @@
     <string name="auth_link_title">अपनी प्रगति सहेजें</string>
     <string name="auth_link_explainer">खाता जोड़ें ताकि आपकी प्रगति, ख़रीदारी और दोस्त हर डिवाइस पर आपके साथ रहें।</string>
     <string name="auth_link_with_google">Google से जोड़ें</string>
-    <string name="auth_link_with_email">ईमेल से जोड़ें</string>
     <string name="auth_link_success">आपका खाता जुड़ गया। आपकी प्रगति सुरक्षित है।</string>
     <string name="auth_link_account">खाता जोड़ें</string>
     <string name="auth_existing_account_title">यह खाता पहले से मौजूद है</string>
@@ -99,15 +98,11 @@
     <string name="profile_losses">हार</string>
     <string name="profile_win_streak">मौजूदा लगातार जीत</string>
     <string name="profile_best_streak">सर्वश्रेष्ठ लगातार जीत</string>
-    <string name="profile_member_since">%1$s से सदस्य</string>
     <string name="profile_player_title">खिलाड़ी प्रोफ़ाइल</string>
     <string name="profile_recent_games">हाल के खेल</string>
     <string name="profile_recent_empty">अभी तक कोई ऑनलाइन खेल नहीं खेला गया।</string>
     <string name="profile_recent_show_all">सभी दिखाएँ (%1$d)</string>
     <string name="profile_recent_show_fewer">कम दिखाएँ</string>
-    <string name="profile_recent_result_win">जीत</string>
-    <string name="profile_recent_result_loss">हार</string>
-    <string name="profile_recent_result_draw">बराबरी</string>
     <string name="profile_recent_unranked">बिना रेटिंग</string>
     <string name="profile_recent_unknown_opponent">हटाया गया खिलाड़ी</string>
 
@@ -276,9 +271,6 @@
     <string name="settings_language">भाषा</string>
     <string name="settings_appearance">रूप</string>
     <string name="settings_store">स्टोर</string>
-    <string name="settings_theme_system">सिस्टम</string>
-    <string name="settings_theme_light">हल्का</string>
-    <string name="settings_theme_dark">गहरा</string>
     <string name="settings_game_experience">खेल का अनुभव</string>
     <string name="settings_sounds">आवाज़ें</string>
     <string name="settings_sounds_description">चाल, दीवार और नतीजे की आवाज़ें।</string>
@@ -367,7 +359,6 @@
     <string name="paint_label">आपका रंग</string>
     <string name="online_quick_match_hint">कतार में आपकी रेटिंग के सबसे नज़दीकी से मिलान होगा।</string>
     <string name="nav_home">होम</string>
-    <string name="nav_games">गेम</string>
     <string name="nav_profile">प्रोफ़ाइल</string>
     <string name="home_tagline">योजना बनाओ. रोको. जीतो.</string>
     <string name="home_play_subtitle">अभी मैच शुरू करें</string>
@@ -498,7 +489,6 @@
     <string name="more_social">सोशल मीडिया</string>
     <string name="more_social_hint">खेल को फ़ॉलो करें</string>
     <string name="settings_subtitle">अपने हिसाब से बनाएँ</string>
-    <string name="settings_theme">थीम</string>
     <string name="settings_account_hint">साइन इन, लिंक और हटाना</string>
     <string name="settings_ad_privacy_hint">विज्ञापन विकल्प प्रबंधित करें</string>
     <string name="settings_remove_ads_hint">बिना रुकावट खेलें</string>
@@ -508,11 +498,6 @@
     <string name="notification_channel_description">जब आप कुछ समय से नहीं खेले हों, तब कभी-कभार एक याद दिलावा।</string>
     <string name="notification_come_back_title">बिसात अब भी लगी है</string>
     <string name="notification_come_back_body">काफ़ी समय हो गया। एक मैच?</string>
-    <string name="profile_puzzle_title">रोज़ की पहेली</string>
-    <string name="profile_puzzle_action">हल करें</string>
-    <string name="profile_soon_badge">जल्द</string>
-    <string name="profile_puzzle_soon_title">अभी तैयार नहीं</string>
-    <string name="profile_puzzle_soon_body">रोज़ की पहेली आ रही है। यह कार्ड इसलिए है कि आपको पता रहे — आज हल करने को कुछ नहीं है।</string>
     <string name="profile_badges_action">देखें</string>
     <string name="profile_streak_action">विवरण</string>
     <string name="profile_recent_letter_win">ज</string>
@@ -527,7 +512,6 @@
     <string name="account_privacy_note">आपके डेटा का क्या होता है।</string>
     <string name="account_terms_note">वे शर्तें जो आपने मानी थीं।</string>
     <string name="account_or">या</string>
-    <string name="account_link_email_note">पता और पासवर्ड सेट करें</string>
     <string name="account_sign_up">साइन अप करें</string>
     <string name="account_sign_up_note">आपकी रेटिंग, आँकड़े और दोस्त साथ आते हैं</string>
     <string name="account_sign_in">साइन इन करें</string>
@@ -536,5 +520,4 @@
     <string name="account_sign_in_warning">उस खाते में साइन इन करने पर गेस्ट के रूप में खेला सब कुछ — रेटिंग, आँकड़े और दोस्त — हमेशा के लिए मिट जाएगा। उसकी जगह उस खाते का इतिहास लौटेगा। कुछ भी मर्ज नहीं होता।</string>
     <string name="account_sign_in_confirm">फिर भी साइन इन करें</string>
     <string name="auth_guest_card_note">लोकल गेम खेलें और ट्यूटोरियल पूरा करें।</string>
-    <string name="auth_guest_link_note">दोस्त जोड़ने और ऑनलाइन खेलने के लिए खाता जोड़ें।</string>
 </resources>

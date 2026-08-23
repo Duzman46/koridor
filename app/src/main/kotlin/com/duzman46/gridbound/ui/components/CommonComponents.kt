@@ -1,33 +1,21 @@
 package com.duzman46.gridbound.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
-import com.duzman46.gridbound.core.Constants
-import com.duzman46.gridbound.theme.Dimens
 
 /**
  * The background every screen sits on.
@@ -47,51 +35,26 @@ fun ScreenBackground(content: @Composable () -> Unit) {
     }
 }
 
-@Composable
-fun CenteredContent(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .widthIn(max = Constants.Ui.CONTENT_MAX_WIDTH_DP.dp)
-                .padding(Constants.Ui.DEFAULT_PADDING_DP.dp),
-        ) {
-            content()
-        }
-    }
-}
-
 /**
- * A titled group of related controls.
+ * The app's two remaining Material `TopAppBar`s, both of them dead ends kept alive by one line
+ * each.
  *
- * Settings and the online lobby each had their own near-identical card — same idea, different
- * radius and title size, which is exactly how a set of screens stops looking like one app.
- * This is the only card shape in the project.
+ * Every screen that drew a header now draws
+ * [com.duzman46.gridbound.ui.components.home.PremiumHeader] — the app's own, and the only one
+ * that marks its title as a heading, which is what gives TalkBack's navigate-by-heading gesture
+ * anything to land on. The app had five header idioms; this file held two of them.
+ *
+ * [ScreenTopBar] has **no call sites left at all**. It survives here only because one screen
+ * this change does not own still carries a dead `import` of it, and an import of a symbol that
+ * does not exist is a compile error where an unused one is merely a warning. Delete the import
+ * in `AccountScreen.kt` and this function goes with it.
+ *
+ * [GateTopBar] still has its one real call site — the username gate, the screen there is
+ * genuinely no way back from. It cannot move yet because `PremiumHeader` requires an `onBack`
+ * and the whole point of this bar is that there is nothing to pass. When that parameter becomes
+ * nullable the gate takes `PremiumHeader(onBack = null)`, and Material's app-bar family leaves
+ * the codebase entirely.
  */
-@Composable
-fun SectionCard(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Dimens.RadiusLg),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Column(
-            Modifier.padding(Dimens.SpaceLg),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            content()
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenTopBar(title: String, onBack: () -> Unit) {

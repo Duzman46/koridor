@@ -41,7 +41,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -61,7 +60,7 @@ import com.duzman46.gridbound.social.domain.FriendshipStatus
 import com.duzman46.gridbound.social.domain.PlayerRequest
 import com.duzman46.gridbound.social.domain.RequestKind
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.home.FieldLabel
 import com.duzman46.gridbound.ui.components.home.FormHeading
@@ -70,11 +69,11 @@ import com.duzman46.gridbound.ui.components.home.FriendCard
 import com.duzman46.gridbound.ui.components.home.FriendPerk
 import com.duzman46.gridbound.ui.components.home.FriendsEmptyPanel
 import com.duzman46.gridbound.ui.components.home.FriendsSectionHeader
-import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.InviteCard
 import com.duzman46.gridbound.ui.components.home.LinkAccountBanner
 import com.duzman46.gridbound.ui.components.home.LobbyField
 import com.duzman46.gridbound.ui.components.home.OutlineAction
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.SheetGrip
@@ -180,7 +179,7 @@ private fun FriendsScreen(
                         label = stringResource(R.string.friends_add_player),
                         onClick = { addOpen = true },
                         accented = true,
-                    ) { drawAddPerson(KoridorGold) }
+                    ) { drawAddPerson(Palette.Gold) }
                 }
             },
         )
@@ -227,7 +226,7 @@ private fun FriendsScreen(
                     .padding(horizontal = Dimens.ScreenPadding)
                     .navigationBarsPadding()
                     .padding(bottom = Dimens.SpaceMd),
-                mark = { drawPairMark(KoridorGold) },
+                mark = { drawPairMark(Palette.Gold) },
             )
         }
     }
@@ -330,10 +329,10 @@ private fun FriendsList(
             items(state.incomingRequests, key = FriendsRowKey::friend) { friend ->
                 PlayerRow(friend, online = false, status = offlineStatus) {
                     FriendAction(acceptLabel, { viewModel.accept(friend.userId) }, accented = true) {
-                        drawTick(KoridorGold)
+                        drawTick(Palette.Gold)
                     }
                     FriendAction(declineLabel, { viewModel.decline(friend.userId) }) {
-                        drawCross(Color(0xFF8B9098))
+                        drawCross(Palette.InkGlyph)
                     }
                 }
             }
@@ -362,7 +361,7 @@ private fun FriendsList(
             items(state.outgoingRequests, key = FriendsRowKey::friend) { friend ->
                 PlayerRow(friend, online = false, status = offlineStatus) {
                     FriendAction(cancelLabel, { viewModel.cancelRequest(friend.userId) }) {
-                        drawCross(Color(0xFF8B9098))
+                        drawCross(Palette.InkGlyph)
                     }
                 }
             }
@@ -373,7 +372,7 @@ private fun FriendsList(
             items(state.blocked, key = FriendsRowKey::friend) { friend ->
                 PlayerRow(friend, online = false, status = offlineStatus) {
                     FriendAction(unblockLabel, { viewModel.unblock(friend.userId) }) {
-                        drawTick(Color(0xFF8B9098))
+                        drawTick(Palette.InkGlyph)
                     }
                 }
             }
@@ -425,13 +424,13 @@ private fun RowScope.FriendMenu(
         label = stringResource(R.string.friends_invite),
         onClick = { viewModel.inviteToGame(friend) },
         accented = true,
-    ) { drawInviteMark(KoridorGold) }
+    ) { drawInviteMark(Palette.Gold) }
 
     Box {
         FriendAction(
             label = stringResource(R.string.friends_more_actions),
             onClick = { open = true },
-        ) { drawEllipsisMark(Color(0xFF8B9098)) }
+        ) { drawEllipsisMark(Palette.InkGlyph) }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(
                 text = { Text(removeLabel) },
@@ -498,7 +497,7 @@ private fun AddPlayerSheet(
             FormHeading(
                 title = stringResource(R.string.friends_add_player),
                 subtitle = stringResource(R.string.friends_add_player_hint),
-                mark = { drawAddPerson(KoridorGold) },
+                mark = { drawAddPerson(Palette.Gold) },
             )
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
                 FieldLabel(stringResource(R.string.friends_search_label))
@@ -515,7 +514,7 @@ private fun AddPlayerSheet(
                     keyboardActions = KeyboardActions(
                         onSearch = { if (state.query.isNotBlank() && !state.isSearching) viewModel.search() },
                     ),
-                    leading = { drawPersonMark(KoridorGold) },
+                    leading = { drawPersonMark(Palette.Gold) },
                     trailing = {
                         if (state.isSearching) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -523,12 +522,14 @@ private fun AddPlayerSheet(
                     },
                 )
             }
-            GoldSubmit(
+            PremiumActionButton(
                 label = stringResource(R.string.friends_search_action),
                 onClick = viewModel::search,
+                modifier = Modifier.fillMaxWidth(),
+                filled = true,
                 enabled = state.query.isNotBlank(),
                 busy = state.isSearching,
-                mark = { drawHash(Color(0xFF1A1206)) },
+                mark = { drawHash(Palette.GoldInk) },
             )
 
             state.searchResult?.let { profile ->
@@ -580,22 +581,26 @@ private fun SearchResult(
                     onBlock(
                         PendingConfirmation(blockLabel, blockMessage, blockLabel, blockAction),
                     )
-                }) { drawBlockMark(Color(0xFF8B9098)) }
+                }) { drawBlockMark(Palette.InkGlyph) }
             }
         }
         when (status) {
-            FriendshipStatus.NONE -> GoldSubmit(
+            FriendshipStatus.NONE -> PremiumActionButton(
                 label = stringResource(R.string.friends_add),
                 onClick = onAdd,
+                modifier = Modifier.fillMaxWidth(),
+                filled = true,
                 busy = busy,
-                mark = { drawAddPerson(Color(0xFF1A1206)) },
+                mark = { drawAddPerson(Palette.GoldInk) },
             )
 
-            FriendshipStatus.REQUEST_RECEIVED -> GoldSubmit(
+            FriendshipStatus.REQUEST_RECEIVED -> PremiumActionButton(
                 label = stringResource(R.string.friends_accept),
                 onClick = onAccept,
+                modifier = Modifier.fillMaxWidth(),
+                filled = true,
                 busy = busy,
-                mark = { drawTick(Color(0xFF1A1206)) },
+                mark = { drawTick(Palette.GoldInk) },
             )
 
             FriendshipStatus.REQUEST_SENT -> ResultNote(
@@ -619,7 +624,7 @@ private fun ResultNote(text: String) {
         text = text,
         modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.SpaceSm),
         style = MaterialTheme.typography.bodyMedium,
-        color = Color(0xFF8B9098),
+        color = Palette.InkMuted,
         textAlign = TextAlign.Center,
     )
 }
@@ -644,7 +649,7 @@ private fun HostedInvitePanel(hosted: HostedInvite, onCancel: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg, Alignment.CenterVertically),
     ) {
-        CircularProgressIndicator(color = KoridorGold)
+        CircularProgressIndicator(color = Palette.Gold)
         Text(
             text = stringResource(R.string.friends_invite_waiting, hosted.friendName),
             style = MaterialTheme.typography.titleLarge,
@@ -656,12 +661,12 @@ private fun HostedInvitePanel(hosted: HostedInvite, onCancel: () -> Unit) {
             text = hosted.session.roomCode,
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Black,
-            color = KoridorGold,
+            color = Palette.Gold,
         )
         Text(
             text = stringResource(R.string.room_code_hint),
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
         )
         OutlineAction(

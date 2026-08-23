@@ -27,13 +27,12 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.material3.Text
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The statistics screen's parts, in the premium language the rest of the app now speaks.
@@ -48,14 +47,12 @@ import com.duzman46.gridbound.theme.KoridorGold
  * local games are further down, in the sections that are about them.
  */
 
-private val CardFill = Color(0xFF12161B)
-private val Muted = Color(0xFF8B9098)
-private val Hairline = Color(0xFF20262D)
+
 
 /** The four bot levels, warmest to hottest, so the row reads as a ladder. */
 internal val DifficultyTones = listOf(
     Color(0xFF4CC38A),
-    Color(0xFFD0A653),
+    Palette.Gold,
     Color(0xFFDE8B4A),
     Color(0xFFE2776C),
 )
@@ -76,7 +73,7 @@ fun StatsTitle(title: String, note: String, modifier: Modifier = Modifier) {
                 words.forEachIndexed { index, word ->
                     if (index > 0) append(" ")
                     if (words.size > 1 && index == words.lastIndex) {
-                        withStyle(SpanStyle(color = KoridorGold)) { append(word) }
+                        withStyle(SpanStyle(color = Palette.Gold)) { append(word) }
                     } else {
                         append(word)
                     }
@@ -94,7 +91,7 @@ fun StatsTitle(title: String, note: String, modifier: Modifier = Modifier) {
         Text(
             text = note,
             style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
+            color = Palette.InkMuted,
         )
     }
 }
@@ -110,13 +107,13 @@ fun RowScope.StatsHeadlineCard(icon: PremiumIcon, value: String, label: String) 
             // its neighbours like a dropped tooth.
             .fillMaxHeight()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(1.dp, Hairline, RoundedCornerShape(Dimens.RadiusMd))
+            .background(Palette.Card)
+            .border(1.dp, Palette.Inset, RoundedCornerShape(Dimens.RadiusMd))
             .padding(vertical = Dimens.SpaceMd, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
+        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), Palette.Gold)
         // A quarter of a phone wide, not a third. These were sized when the row held three
         // cards; the win rate joined it and "Kazanma oranı" ran off the edge of the fourth.
         // Everything steps down one, and the value is allowed to shrink rather than clip --
@@ -132,7 +129,7 @@ fun RowScope.StatsHeadlineCard(icon: PremiumIcon, value: String, label: String) 
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Muted,
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -151,8 +148,8 @@ fun StatsCard(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(1.dp, Hairline, RoundedCornerShape(Dimens.RadiusMd))
+            .background(Palette.Card)
+            .border(1.dp, Palette.Inset, RoundedCornerShape(Dimens.RadiusMd))
             .padding(Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
@@ -174,7 +171,7 @@ fun StatsLine(icon: PremiumIcon, label: String, value: String, modifier: Modifie
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold.copy(alpha = 0.85f))
+        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), Palette.Gold.copy(alpha = 0.85f))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
@@ -241,17 +238,17 @@ fun StatsNote(text: String, modifier: Modifier = Modifier) {
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusSm))
-            .background(Color(0xFF0E1216))
-            .border(1.dp, Hairline, RoundedCornerShape(Dimens.RadiusSm))
+            .background(Palette.Card)
+            .border(1.dp, Palette.Inset, RoundedCornerShape(Dimens.RadiusSm))
             .padding(Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumGlyph(PremiumIcon.INFO, Modifier.size(Dimens.IconSm), Muted)
+        PremiumGlyph(PremiumIcon.INFO, Modifier.size(Dimens.IconSm), Palette.InkGlyph)
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = Muted,
+            color = Palette.InkMuted,
             modifier = Modifier.weight(1f),
         )
     }
@@ -260,5 +257,5 @@ fun StatsNote(text: String, modifier: Modifier = Modifier) {
 /** A rule between rows inside a card. */
 @Composable
 fun StatsDivider(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(1.dp).background(Hairline))
+    Box(modifier.fillMaxWidth().height(1.dp).background(Palette.Inset))
 }

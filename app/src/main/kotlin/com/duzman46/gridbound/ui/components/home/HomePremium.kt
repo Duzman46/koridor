@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -50,7 +49,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The home screen's premium surfaces: the one control that is gold, the ones that are not, and
@@ -114,19 +113,19 @@ private fun Modifier.pressLayer(scale: Float, shape: Shape): Modifier = graphics
 
 /** The play card's two fills. Built once each — they never change, and they are not cheap. */
 private val PlayCardResting = Brush.linearGradient(
-    colors = listOf(Color(0xFF171614), Color(0xFF332816)),
+    colors = listOf(Palette.Card, Color(0xFF332816)),
     start = Offset.Zero,
     end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
 )
 private val PlayCardPressed = Brush.linearGradient(
-    colors = listOf(Color(0xFF120F0B), Color(0xFF291F11)),
+    colors = listOf(Palette.Ground, Color(0xFF291F11)),
     start = Offset.Zero,
     end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
 )
 
 /** The leading play-mode card's fill, on the same terms. */
 private val ModeCardLeading =
-    Brush.horizontalGradient(listOf(Color(0xFF14120E), Color(0xFF1F1912)))
+    Brush.horizontalGradient(listOf(Palette.Card, Palette.GoldBandEnd))
 
 /**
  * The one way into a match.
@@ -166,7 +165,7 @@ fun PrimaryPlayCard(
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .pressLayer(scale, shape)
             .background(if (pressed) PlayCardPressed else PlayCardResting)
-            .border(BorderStroke(1.dp, Color(0xFF8D713B)), shape)
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.6f)), shape)
             .heightIn(min = 92.dp)
             .padding(horizontal = 22.dp, vertical = Dimens.SpaceMd),
         contentAlignment = Alignment.Center,
@@ -183,7 +182,7 @@ fun PrimaryPlayCard(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 3.sp,
-                    color = Color(0xFFF3EEE4),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -191,7 +190,7 @@ fun PrimaryPlayCard(
                     text = localeUpper(subtitle),
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp,
-                    color = Color(0xFFAAA59D),
+                    color = Palette.InkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -203,6 +202,9 @@ fun PrimaryPlayCard(
 /** A solid triangle. Drawn rather than imported so it carries no icon set's corner radius. */
 @Composable
 private fun PlayTriangle(modifier: Modifier = Modifier, rtl: Boolean) {
+    // The same ink as the word beside it: the triangle and the title are one mark, and they
+    // were two near-whites a hundredth of a ratio apart.
+    val ink = MaterialTheme.colorScheme.onSurface
     Canvas(modifier.scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f)) {
         val s = size.minDimension
         drawPath(
@@ -212,7 +214,7 @@ private fun PlayTriangle(modifier: Modifier = Modifier, rtl: Boolean) {
                 lineTo(s * 0.16f, s * 0.94f)
                 close()
             },
-            Color(0xFFF3EEE4),
+            ink,
         )
     }
 }
@@ -310,7 +312,7 @@ private fun MenuSurface(
         // it. Two of five marks being grey never said "these matter less"; it said the icon set
         // was inconsistent, because the two that were gold were gold for reasons no player could
         // read off the screen.
-        PremiumGlyph(icon, Modifier.size(26.dp), tint = KoridorGold)
+        PremiumGlyph(icon, Modifier.size(26.dp), tint = Palette.Gold)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 // The player's locale, not the invariant one: `uppercase()` alone turns the
@@ -326,7 +328,7 @@ private fun MenuSurface(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -351,7 +353,7 @@ private fun Chevron() {
                 lineTo(s * 0.66f, s * 0.50f)
                 lineTo(s * 0.38f, s * 0.78f)
             },
-            Color(0xFF6F747B),
+            Palette.InkGlyph,
             style = androidx.compose.ui.graphics.drawscope.Stroke(
                 width = s * 0.11f,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round,
@@ -393,7 +395,7 @@ fun PlayModeCard(
     val pressed by interaction.collectIsPressedAsState()
     val scale = pressScale(pressed)
     val shape = RoundedCornerShape(20.dp)
-    val ink = if (leading) KoridorGold else Color(0xFFB9BEC5)
+    val ink = if (leading) Palette.Gold else Palette.InkGlyph
 
     Row(
         modifier
@@ -415,7 +417,7 @@ fun PlayModeCard(
                 },
             )
             .border(
-                BorderStroke(1.dp, if (leading) Color(0xFF8D713B) else colors.outlineVariant),
+                BorderStroke(1.dp, if (leading) Palette.Gold.copy(alpha = 0.6f) else colors.outlineVariant),
                 shape,
             )
             .heightIn(min = 126.dp)
@@ -435,7 +437,7 @@ fun PlayModeCard(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (leading) KoridorGold else colors.onSurface,
+                color = if (leading) Palette.Gold else colors.onSurface,
                 // Two lines, because one is not enough for the honest name of this mode.
                 // "Aynı Cihazda İki Oyuncu" truncated to "Aynı Cihazda İki O…", and shortening
                 // the string would have cost the only thing it says — that both players are
@@ -446,7 +448,7 @@ fun PlayModeCard(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -499,15 +501,15 @@ fun PremiumTopBar(
                 Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF11151A))
-                    .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.55f)), CircleShape),
+                    .background(Palette.Card)
+                    .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.55f)), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = initial,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFE8E3D8),
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -528,7 +530,7 @@ fun PremiumTopBar(
                         Text(
                             text = rating,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFAFA187),
+                            color = Palette.InkMuted,
                             maxLines = 1,
                         )
                     }
@@ -559,7 +561,7 @@ private fun Crown(modifier: Modifier = Modifier) {
                 lineTo(w * 0.14f, h)
                 close()
             },
-            KoridorGold,
+            Palette.Gold,
         )
     }
 }
@@ -581,11 +583,11 @@ private fun RoundControl(icon: PremiumIcon, label: String, onClick: () -> Unit) 
             )
             .semantics { contentDescription = label }
             .pressLayer(pressScale(pressed), CircleShape)
-            .background(Color(0xFF11151A))
-            .border(BorderStroke(1.dp, Color(0xFF242A31)), CircleShape),
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        PremiumGlyph(icon, Modifier.size(21.dp), tint = KoridorGold)
+        PremiumGlyph(icon, Modifier.size(21.dp), tint = Palette.Gold)
     }
 }
 
@@ -608,8 +610,8 @@ fun KoridorBottomBar(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF0D1115))
-            .border(BorderStroke(1.dp, Color(0xFF24282D)), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .heightIn(min = 66.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
@@ -634,7 +636,7 @@ data class BottomItem(val label: String, val icon: PremiumIcon, val onClick: () 
  */
 @Composable
 private fun BottomTab(item: BottomItem, active: Boolean, modifier: Modifier) {
-    val tint = if (active) KoridorGold else KoridorGold.copy(alpha = 0.45f)
+    val tint = if (active) Palette.Gold else Palette.Gold.copy(alpha = 0.45f)
     Column(
         modifier
             .clip(RoundedCornerShape(18.dp))
@@ -652,7 +654,7 @@ private fun BottomTab(item: BottomItem, active: Boolean, modifier: Modifier) {
             Modifier
                 .height(2.dp)
                 .size(width = 22.dp, height = 2.dp)
-                .background(if (active) KoridorGold else Color.Transparent, CircleShape),
+                .background(if (active) Palette.Gold else Color.Transparent, CircleShape),
         )
         PremiumGlyph(item.icon, Modifier.size(22.dp), tint = tint)
         Text(

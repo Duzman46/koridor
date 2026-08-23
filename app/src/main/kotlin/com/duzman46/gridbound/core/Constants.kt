@@ -250,7 +250,9 @@ object Constants {
         const val SETTINGS_FILE_NAME = "gridbound_preferences"
         const val DEFAULT_VERSION_NAME = "0.4.0"
         const val KEY_LANGUAGE = "language"
-        const val KEY_THEME_MODE = "theme_mode"
+        // No KEY_THEME_MODE. The app is dark-only and nothing reads a theme any more. The row it
+        // named is still on disk on every handset that ever opened Settings, and it is left
+        // there — see the KDoc on AppSettings. The constant is gone so nothing can reach it.
         const val KEY_SOUND_ENABLED = "sound_enabled"
         const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         const val KEY_HAPTICS_ENABLED = "haptics_enabled"

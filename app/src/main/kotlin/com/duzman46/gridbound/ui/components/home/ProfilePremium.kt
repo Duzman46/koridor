@@ -52,7 +52,7 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.match.domain.MatchOutcome
 import com.duzman46.gridbound.match.domain.RecentMatch
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.PlayerAvatar
 import java.text.DateFormat
 import java.util.Date
@@ -66,12 +66,9 @@ import java.util.Date
  * arranged so the numbers lead and the navigation stops being a list.
  */
 
-/** The three card accents. Local to this screen on purpose — see [ProfileFeatureCard]. */
-internal val PuzzleAccent = Color(0xFF8B7BE8)
+/** The card accent. Local to this screen on purpose — see [ProfileFeatureCard]. */
 internal val BadgeAccent = Color(0xFF2FBF9B)
 
-private val CardFill = Color(0xFF12161B)
-private val Muted = Color(0xFF8B9098)
 
 
 /**
@@ -126,7 +123,7 @@ fun ProfileIdentity(
                 modifier = Modifier
                     .size(76.dp)
                     .align(Alignment.TopStart)
-                    .border(2.dp, KoridorGold.copy(alpha = 0.75f), CircleShape),
+                    .border(2.dp, Palette.Gold.copy(alpha = 0.75f), CircleShape),
                 size = 76.dp,
             )
             if (onEdit != null) PencilBadge(Modifier.align(Alignment.BottomEnd), size = 26.dp)
@@ -164,10 +161,10 @@ fun ProfileIdentity(
                 Text(
                     text = stringResource(R.string.auth_guest_badge),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Muted,
+                    color = Palette.InkMuted,
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF20262D))
+                        .background(Palette.Inset)
                         .padding(horizontal = Dimens.SpaceMd, vertical = 5.dp),
                 )
             }
@@ -196,15 +193,15 @@ fun FriendActionButton(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tone: Color = KoridorGold,
+    tone: Color = Palette.Gold,
 ) {
     Row(
         modifier
             .clip(RoundedCornerShape(50))
-            .background(if (enabled) tone.copy(alpha = 0.14f) else Color(0xFF171C22))
+            .background(if (enabled) tone.copy(alpha = 0.14f) else Palette.Inset)
             .border(
                 1.dp,
-                if (enabled) tone.copy(alpha = 0.55f) else Color(0xFF262C33),
+                if (enabled) tone.copy(alpha = 0.55f) else Palette.Edge,
                 RoundedCornerShape(50),
             )
             .then(if (enabled) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
@@ -213,12 +210,12 @@ fun FriendActionButton(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PremiumGlyph(icon, Modifier.size(18.dp), if (enabled) tone else Muted)
+        PremiumGlyph(icon, Modifier.size(18.dp), if (enabled) tone else Palette.InkGlyph)
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = if (enabled) tone else Muted,
+            color = if (enabled) tone else Palette.InkMuted,
             maxLines = 1,
         )
     }
@@ -240,8 +237,8 @@ fun ProfileDetailCard(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd))
+            .background(Palette.Card)
+            .border(1.dp, Palette.Edge, RoundedCornerShape(Dimens.RadiusMd))
             .padding(Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
@@ -261,7 +258,7 @@ fun ProfileDetailCard(
                         Text(
                             text = label,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Muted,
+                            color = Palette.InkMuted,
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -283,7 +280,7 @@ fun ProfileDetailCard(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = Muted,
+                color = Palette.InkMuted,
             )
         }
     }
@@ -308,13 +305,13 @@ fun PremiumIconButton(
         modifier
             .size(Dimens.CrestHeight)
             .clip(CircleShape)
-            .background(Color(0xFF12161B).copy(alpha = 0.86f))
-            .border(1.dp, KoridorGold.copy(alpha = 0.45f), CircleShape)
+            .background(Palette.Card.copy(alpha = 0.86f))
+            .border(1.dp, Palette.Gold.copy(alpha = 0.45f), CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), KoridorGold)
+        PremiumGlyph(icon, Modifier.size(Dimens.IconSm), Palette.Gold)
     }
 }
 
@@ -325,8 +322,8 @@ private fun PencilBadge(modifier: Modifier = Modifier, size: androidx.compose.ui
         modifier
             .size(size)
             .clip(CircleShape)
-            .background(Color(0xFF171C22))
-            .border(1.dp, KoridorGold.copy(alpha = 0.55f), CircleShape),
+            .background(Palette.Inset)
+            .border(1.dp, Palette.Gold.copy(alpha = 0.55f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(size * 0.46f)) {
@@ -335,13 +332,13 @@ private fun PencilBadge(modifier: Modifier = Modifier, size: androidx.compose.ui
             // A pencil is a bar on the diagonal with a point at one end. Drawn rather than
             // imported so it inherits nothing and needs no density set of its own.
             drawLine(
-                color = KoridorGold,
+                color = Palette.Gold,
                 start = Offset(edge * 0.14f, edge * 0.86f),
                 end = Offset(edge * 0.82f, edge * 0.18f),
                 strokeWidth = nib,
             )
             drawLine(
-                color = KoridorGold,
+                color = Palette.Gold,
                 start = Offset(edge * 0.08f, edge * 0.92f),
                 end = Offset(edge * 0.30f, edge * 0.86f),
                 strokeWidth = nib * 0.7f,
@@ -372,8 +369,8 @@ fun ProfileStatStrip(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd))
+            .background(Palette.Card)
+            .border(1.dp, Palette.Edge, RoundedCornerShape(Dimens.RadiusMd))
             .padding(vertical = Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -394,7 +391,7 @@ private fun RowScope.StatCell(icon: PremiumIcon, value: String, label: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
-        PremiumGlyph(icon, Modifier.size(15.dp), KoridorGold)
+        PremiumGlyph(icon, Modifier.size(15.dp), Palette.Gold)
         Text(
             text = value,
             // Tabular figures, so a rating that changes by one digit does not shuffle the cells
@@ -407,7 +404,7 @@ private fun RowScope.StatCell(icon: PremiumIcon, value: String, label: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Muted,
+            color = Palette.InkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -421,7 +418,7 @@ private fun StripDivider() {
         Modifier
             .width(1.dp)
             .fillMaxHeight()
-            .background(Color(0xFF20262D)),
+            .background(Palette.Inset),
     )
 }
 
@@ -454,7 +451,7 @@ fun RowScope.ProfileFeatureCard(
             // uses weight is both the expensive way and the fragile way to get that.
             .height(FEATURE_CARD_HEIGHT)
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
+            .background(Palette.Card)
             .border(1.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(Dimens.RadiusMd))
             .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceMd),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -468,7 +465,7 @@ fun RowScope.ProfileFeatureCard(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF0B0E11),
+                    color = Palette.Ground,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     modifier = Modifier
@@ -549,7 +546,7 @@ fun ProfileProgressBar(fraction: Float, accent: Color, modifier: Modifier = Modi
             .fillMaxWidth()
             .height(5.dp)
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFF20262D)),
+            .background(Palette.Inset),
     ) {
         if (fraction > 0f) {
             Box(
@@ -558,21 +555,6 @@ fun ProfileProgressBar(fraction: Float, accent: Color, modifier: Modifier = Modi
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(50))
                     .background(accent),
-            )
-        }
-    }
-}
-
-/** A run of pips, filled up to [filled]. The streak card's readout. */
-@Composable
-fun ProfilePips(filled: Int, total: Int, accent: Color, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        repeat(total) { index ->
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .background(if (index < filled) accent else Color(0xFF262C33)),
             )
         }
     }
@@ -611,8 +593,8 @@ fun RecentGamesPremium(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(1.dp, FieldEdge, RoundedCornerShape(Dimens.RadiusMd)),
+            .background(Palette.Card)
+            .border(1.dp, Palette.Edge, RoundedCornerShape(Dimens.RadiusMd)),
     ) {
         Row(
             Modifier
@@ -621,7 +603,7 @@ fun RecentGamesPremium(
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Muted)
+            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Palette.InkGlyph)
             Text(
                 text = stringResource(R.string.profile_recent_games),
                 style = MaterialTheme.typography.titleSmall,
@@ -640,7 +622,7 @@ fun RecentGamesPremium(
                     },
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = KoridorGold,
+                    color = Palette.Gold,
                     maxLines = 1,
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
@@ -655,7 +637,7 @@ fun RecentGamesPremium(
                     .fillMaxWidth()
                     .padding(start = if (index == 0) 0.dp else 60.dp)
                     .height(1.dp)
-                    .background(Color(0xFF20262D)),
+                    .background(Palette.Inset),
             )
             RecentGameRow(match, after.getOrNull(index), onOpenPlayer)
         }
@@ -670,7 +652,7 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
     val tone = when (match.outcome) {
         MatchOutcome.WIN -> Color(0xFF4CC38A)
         MatchOutcome.LOSS -> Color(0xFFE2776C)
-        MatchOutcome.DRAW -> Muted
+        MatchOutcome.DRAW -> Palette.InkMuted
     }
     val letter = stringResource(
         when (match.outcome) {
@@ -726,7 +708,7 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
                     DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(match.playedAt))
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = Muted,
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
         }
@@ -736,7 +718,7 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
                 horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PremiumGlyph(PremiumIcon.TROPHY, Modifier.size(15.dp), KoridorGold)
+                PremiumGlyph(PremiumIcon.TROPHY, Modifier.size(15.dp), Palette.Gold)
                 Text(
                     text = if (change >= 0) "+$change" else change.toString(),
                     style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
@@ -750,7 +732,7 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
                 Text(
                     text = it.toString(),
                     style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
-                    color = Muted,
+                    color = Palette.InkMuted,
                     maxLines = 1,
                 )
             }
@@ -758,7 +740,7 @@ private fun RecentGameRow(match: RecentMatch, after: Int?, onOpenPlayer: (String
             Text(
                 text = stringResource(R.string.profile_recent_unranked),
                 style = MaterialTheme.typography.bodySmall,
-                color = Muted,
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
         }
@@ -785,8 +767,8 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(CardFill)
-            .border(BorderStroke(1.dp, FieldEdge), RoundedCornerShape(Dimens.RadiusMd)),
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), RoundedCornerShape(Dimens.RadiusMd)),
     ) {
         Row(
             Modifier
@@ -795,7 +777,7 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Muted)
+            PremiumGlyph(PremiumIcon.CLOCK, Modifier.size(18.dp), Palette.InkGlyph)
             Text(
                 text = stringResource(R.string.profile_recent_games),
                 style = MaterialTheme.typography.titleSmall,
@@ -804,7 +786,7 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
                 maxLines = 1,
             )
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF20262D)))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Palette.Inset))
         Column(
             Modifier
                 .fillMaxWidth()
@@ -816,11 +798,11 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
                 Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF171C22))
-                    .border(1.dp, Color(0xFF262C33), CircleShape),
+                    .background(Palette.Inset)
+                    .border(1.dp, Palette.Edge, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                PremiumGlyph(PremiumIcon.GLOBE, Modifier.size(22.dp), Color(0xFF5C6169))
+                PremiumGlyph(PremiumIcon.GLOBE, Modifier.size(22.dp), Palette.InkGlyph)
             }
             Text(
                 text = stringResource(R.string.profile_recent_empty_title),
@@ -832,7 +814,7 @@ fun ProfileEmptyGames(modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(R.string.profile_recent_empty),
                 style = MaterialTheme.typography.bodySmall,
-                color = Muted,
+                color = Palette.InkMuted,
                 textAlign = TextAlign.Center,
             )
         }

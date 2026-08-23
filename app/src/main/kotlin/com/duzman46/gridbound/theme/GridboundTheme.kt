@@ -1,14 +1,10 @@
 package com.duzman46.gridbound.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
-import com.duzman46.gridbound.domain.models.AppSettings
-import com.duzman46.gridbound.domain.models.ThemeMode
 
 /**
  * The brand's jade: the accent, and the colour a wall is drawn in on a dark board.
@@ -43,99 +39,143 @@ val KoridorJade = Color(0xFF16E9A0)
 val KoridorGold = Color(0xFFD0A653)
 
 /**
- * A ground that is black first and green second, with the jade kept for things you can act on.
+ * Body ink: the near-white every screen reads through `colorScheme.onSurface`.
  *
- * Chroma in the ground is what makes a dark game screen look faded: a field with real green in
- * it turns pale the moment anything on it is also green, and it drags the accent down with it
- * by simultaneous contrast. So the neutrals here are black carrying only enough hue to keep
- * them from going blue-grey beside the accent, and every saturated green on the screen belongs
- * to a control.
- *
- * Black on its own is not enough either. Three near-identical blacks with grey lines drawn on
- * them give nothing a surface and nothing an edge, which is the other way a dark screen dies.
- * The three grounds therefore step apart in clear increments — 0x06 / 0x10 / 0x1E — so a card
- * is an object without a shadow under it, and the outlines keep the jade hue so an outlined
- * control is a green-edged thing rather than a grey rectangle.
- *
- * [outline] is pitched against the palest of the three grounds and not the darkest: it is the
- * entire boundary of a secondary button, so what it has to clear 3:1 on is `surfaceVariant`,
- * and a green mixed to look right on near-black is half of what that takes. [outlineVariant]
- * is the divider token and stays quieter on purpose — anything that has to be *identified*
- * rather than merely separated uses [outline] instead.
- *
- * `primary` is a fill colour and `secondary` is the same hue as ink — on a light ground a
- * fill bright enough to sit under white text is too light to be read as text itself. In dark
- * they are the same value, because there the ground does that work.
+ * It is declared here rather than added to [Palette] for two reasons. [Palette] is a contract
+ * shared with work happening in parallel and is additive-only once published, and — more to the
+ * point — every call site in the app already reads this value the correct way, through the
+ * scheme role three declarations below. A second public name for the same colour is precisely
+ * how sixty-five near-neutral literals came to exist in the first place.
  */
-private val DarkColors = darkColorScheme(
-    primary = KoridorGold,
-    onPrimary = Color(0xFF1A1206),
-    secondary = KoridorGold,
-    onSecondary = Color(0xFF1A1206),
-    tertiary = Color(0xFFC98A4B),
-    onTertiary = Color(0xFF241202),
-    background = Color(0xFF070A0D),
-    onBackground = Color(0xFFF2F0EB),
-    surface = Color(0xFF0E1216),
-    onSurface = Color(0xFFF2F0EB),
-    surfaceVariant = Color(0xFF15191E),
-    onSurfaceVariant = Color(0xFF93979D),
-    outline = Color(0xFF3A424B),
-    outlineVariant = Color(0xFF242A30),
-    error = Color(0xFFE2776C),
-    onError = Color(0xFF2C0704),
-)
+private val Ink = Color(0xFFF2F0EB)
 
 /**
- * The light scheme is a first-class surface, not the dark one inverted.
+ * The one colour scheme. There is no second one, and the [GridboundTheme] KDoc says why.
  *
- * Its ground is a pale mint paper rather than plain white: white behind white cards gives
- * nothing to separate them, and a green accent on neutral white is dulled by the same
- * simultaneous contrast that flattens a chroma-heavy dark ground. Cards stay pure white so
- * they lift off the paper, and the outline is a deep jade rather than near-black — a black
- * hairline on white is the heaviest mark on the screen and drags every button towards a
- * wireframe.
+ * **Every role Material3 has is set here, including the ones nothing in this app appears to
+ * use.** That is the whole point of the file and it is not defensive tidiness — it was a
+ * measured defect. `darkColorScheme` fills anything left blank from Material's *baseline* dark
+ * palette, which is built on a violet primary and a purple-tinted neutral, and four of those
+ * defaults were reachable inside a live match:
  *
- * `surfaceVariant` is doing two jobs at once and neither of them may be given up for the
- * other: it is the fill of a borderless section card, so it cannot be lightened towards the
- * paper without the card dissolving into it, and it is the board's alternate tile, so it
- * cannot be deepened without the two pawns losing 3:1 on the squares they stand on.
+ * - `secondaryContainer` `#4A4458`, a grey-violet, was the rival's chat bubble on the board.
+ * - `tertiaryContainer` `#633B48`, a wine, was the online status strip under the board.
+ * - `errorContainer` `#8C1D18`, a crimson from no palette this app owns, was the move clock.
+ * - `primaryContainer` `#4F378B`, a violet, was every match invitation, over every screen.
+ * - `surfaceContainerHigh` `#2B2930` was the container of every `AlertDialog` in the app, and
+ *   `surfaceContainerLow` `#1D1B20` the container of every `ModalBottomSheet`.
+ *
+ * Measured against [Palette.Card], those four containers sit at 1.95, 1.95, 1.99 and 1.95:1 —
+ * the same lightness as one another in four hues that belong to none of this app's screens.
+ * That is the mechanical definition of a colour inconsistency, and it was invisible to any
+ * audit that counts colour literals, because there is no literal to count. A role added by a
+ * future Material release will still fall back, so anything that starts looking foreign after
+ * a dependency bump should be looked for here first.
+ *
+ * `surfaceTint = Color.Transparent` is the other deliberate one. Material blends the tint over
+ * a `Surface` in proportion to its `tonalElevation`, and the default tint is `primary` — so any
+ * elevated surface quietly washed itself in gold at an opacity nobody chose. Transparent makes
+ * `tonalElevation` a no-op app-wide, which means a component cannot separate itself with a
+ * colour by accident; it has to use one of the three grounds like everything else.
+ *
+ * **`by lazy`, and it is not a performance choice — it breaks a class-initialisation cycle that
+ * would otherwise fail silently.** [Palette] reads [KoridorGold] out of this file, and this
+ * scheme reads its tokens back out of [Palette]. Whichever of the two the JVM initialises first
+ * re-enters the other mid-initialisation, and a re-entrant read is allowed rather than
+ * deadlocked: it simply returns whatever the field holds at that instant. If [Palette] went
+ * first, this list would read `Palette.GoldInk` before that line of [Palette] had run and get
+ * the zero value — which for an inline `Color` is not a crash but `Color.Unspecified`, i.e. the
+ * ink on every gold button quietly becoming nothing, in a way no test and no build would name.
+ * Deferring the whole scheme to first use means both objects are complete before either value is
+ * read. Anything added here that reads [Palette] at construction time must stay inside this lazy.
  */
-private val LightColors = lightColorScheme(
-    // The same brass, taken down until it can carry white text. #D0A653 is a fill on near-black
-    // and a smear on paper — 1.9:1 under white — so light gets the dark end of the same metal
-    // rather than a second accent. The brand is one colour in two lights, not two colours.
-    primary = Color(0xFF7A5C1E),
-    onPrimary = Color(0xFFFFFFFF),
-    secondary = Color(0xFF5E4614),
-    onSecondary = Color(0xFFFFFFFF),
-    tertiary = Color(0xFFB4400F),
-    onTertiary = Color(0xFFFFFFFF),
-    background = Color(0xFFEDF5F0),
-    onBackground = Color(0xFF08211A),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF08211A),
-    surfaceVariant = Color(0xFFD9EBE1),
-    onSurfaceVariant = Color(0xFF3D5A4D),
-    outline = Color(0xFF1E5643),
-    outlineVariant = Color(0xFF9DBFAE),
-    error = Color(0xFFC4261C),
-    onError = Color(0xFFFFFFFF),
-)
+private val DarkColors by lazy {
+    darkColorScheme(
+        primary = KoridorGold,
+        onPrimary = Palette.GoldInk,
+        primaryContainer = Palette.Card,
+        onPrimaryContainer = Ink,
+        inversePrimary = KoridorGold,
 
-@Composable
-fun GridboundTheme(settings: AppSettings, content: @Composable () -> Unit) {
-    val dark = when (settings.themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
-    // No dynamic colour branch. Material You repainted the game in whatever the wallpaper
-    // happened to be, which meant it had no look of its own and every screenshot was
-    // different. Light, dark and follow-the-system remain; the palette does not.
-    val scheme = if (dark) DarkColors else LightColors
-    CompositionLocalProvider(LocalKoridorColors provides if (dark) DarkKoridor else LightKoridor) {
-        MaterialTheme(colorScheme = scheme, content = content)
-    }
+        secondary = KoridorGold,
+        onSecondary = Palette.GoldInk,
+        secondaryContainer = Palette.Inset,
+        onSecondaryContainer = Ink,
+
+        // The one hue in the scheme that is neither gold nor neutral: a burnt orange kept for
+        // the rare tertiary accent. It is close enough to the gold's family not to read as a
+        // second brand, and far enough from it to be told apart when the two are adjacent.
+        tertiary = Color(0xFFC98A4B),
+        onTertiary = Color(0xFF241202),
+        tertiaryContainer = Palette.Inset,
+        onTertiaryContainer = Ink,
+
+        background = Palette.Ground,
+        onBackground = Ink,
+        surface = Palette.Card,
+        onSurface = Ink,
+        surfaceVariant = Palette.Inset,
+        onSurfaceVariant = Palette.InkMuted,
+        surfaceTint = Color.Transparent,
+
+        // The container steps collapse onto the three grounds rather than inventing five more.
+        // Material intends them as a tonal ladder; this app's ladder is Ground / Card / Inset,
+        // and a component that asks for "surfaceContainerHigh" is asking to be a card.
+        surfaceBright = Palette.Inset,
+        surfaceDim = Palette.Ground,
+        surfaceContainerLowest = Palette.Ground,
+        surfaceContainerLow = Palette.Card,
+        surfaceContainer = Palette.Card,
+        surfaceContainerHigh = Palette.Card,
+        surfaceContainerHighest = Palette.Inset,
+
+        // Set so a snackbar — the one component that inverts — does not fall back to Material's
+        // lavender-tinted pair.
+        inverseSurface = Ink,
+        inverseOnSurface = Palette.Ground,
+
+        // `outline` is the boundary that *identifies* a control, so it takes the token that
+        // clears 3:1 (4.50:1 on Card). `outlineVariant` is the divider and stays decorative.
+        // The old outline was #3A424B at 1.77:1 — a border doing an affordance's job, failing it.
+        outline = Palette.InkGlyph,
+        outlineVariant = Palette.Edge,
+
+        error = Color(0xFFE2776C),
+        onError = Color(0xFF2C0704),
+        errorContainer = Color(0xFF3A1714),
+        onErrorContainer = Color(0xFFF0BDB6),
+
+        scrim = Color(0xFF000000),
+    )
 }
 
+/**
+ * The app's theme. One scheme, unconditionally.
+ *
+ * Light mode is gone, and it was removed on measurement rather than taste. Three numbers
+ * decided it, and they are recorded here because the decision is the kind that gets reversed by
+ * somebody who only sees the missing setting:
+ *
+ * 1. [KoridorGold] on the old light background `#EDF5F0` is **1.89:1**, where large text needs
+ *    3:1. That is the title of every screen in the app. There was no light ground in this app
+ *    on which the brand's own accent was legible — on white it is 2.27:1, on the light
+ *    `surfaceVariant` 1.83:1.
+ * 2. The section label `#9AA0A8` on that same background is 2.37:1, against a 4.5:1 floor.
+ * 3. Light mode did not actually exist. All two hundred and fifty near-neutral colour literals
+ *    in the UI were unconditional — no theme branch anywhere — so "light mode" rendered the
+ *    finished dark app with a handful of Material leftovers flipping to white around it. The
+ *    board is a fixed dark render besides. There was nothing to port.
+ *
+ * The setting that chose between them is gone too, rather than reduced to a single-value
+ * preference. A control that offers one answer is a control that lies about being a choice.
+ *
+ * There is also no dynamic-colour branch, and that is a separate and older decision: Material
+ * You repainted the game in whatever the wallpaper happened to be, so it had no look of its own
+ * and no two screenshots matched.
+ */
+@Composable
+fun GridboundTheme(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalKoridorColors provides DarkKoridor) {
+        MaterialTheme(colorScheme = DarkColors, content = content)
+    }
+}

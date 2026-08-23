@@ -1,9 +1,6 @@
 package com.duzman46.gridbound.ui.screens
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,21 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,14 +38,13 @@ import com.duzman46.gridbound.leaderboard.domain.OwnStanding
 import com.duzman46.gridbound.presentation.leaderboard.LeaderboardUiState
 import com.duzman46.gridbound.presentation.leaderboard.LeaderboardViewModel
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.ErrorState
 import com.duzman46.gridbound.ui.components.LoadingState
-import com.duzman46.gridbound.ui.components.home.BottomItem
 import com.duzman46.gridbound.ui.components.home.LinkAccountBanner
-import com.duzman46.gridbound.ui.components.home.KoridorBottomBar
 import com.duzman46.gridbound.ui.components.home.PodiumCard
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.ScopeTabs
 import com.duzman46.gridbound.ui.components.home.StandingRow
@@ -130,32 +111,17 @@ private fun LeaderboardScreen(
         // for. An arrow here claimed the screen was something the player had opened and would
         // return from, sitting where the title of a destination belongs. System back still
         // works and still pops, for whoever arrived by the card on the home screen.
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceSm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = localeUpper(stringResource(R.string.leaderboard_title)),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = stringResource(R.string.leaderboard_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF8B9098),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            // No season selector. There is one season, the control offered no second choice,
-            // and a dropdown with nothing in it is a promise the app cannot keep.
-        }
+        // A null onBack is exactly the decision above, now said in one word instead of a
+        // hand-built row. The uppercase went with it: no other screen shouts its own name, and
+        // a fifth treatment of one gold title is what made five headers feel like five apps.
+        //
+        // No season selector either. There is one season, the control offered no second choice,
+        // and a dropdown with nothing in it is a promise the app cannot keep.
+        PremiumHeader(
+            title = stringResource(R.string.leaderboard_title),
+            onBack = null,
+            subtitle = stringResource(R.string.leaderboard_subtitle),
+        )
 
         ScopeTabs(
             labels = VISIBLE_SCOPES.map { it.label() },
@@ -352,7 +318,7 @@ private fun OwnStandingBar(state: LeaderboardUiState, onLinkAccount: () -> Unit)
             else -> Text(
                 text = state.noStandingMessage.asString(),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
             )
         }
         // No "the table updates live" line. It was a sentence about how the app works, sitting

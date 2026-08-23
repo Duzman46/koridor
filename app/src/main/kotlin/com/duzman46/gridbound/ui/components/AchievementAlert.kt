@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -49,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.presentation.achievements.AchievementAlertViewModel
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.home.PremiumGlyph
 import com.duzman46.gridbound.ui.components.home.emblem
@@ -103,7 +103,7 @@ fun AchievementAlert(
                         .clip(shape)
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color(0xFF221C10), Color(0xFF141A20)),
+                                listOf(Palette.GoldBandEnd, Palette.Card),
                             ),
                         )
                         .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.6f)), shape)

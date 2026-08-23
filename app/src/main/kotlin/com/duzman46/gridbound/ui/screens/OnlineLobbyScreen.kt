@@ -31,7 +31,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -48,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -82,7 +80,7 @@ import com.duzman46.gridbound.presentation.online.OnlineLobbyViewModel
 import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.social.domain.Friend as OnlineFriend
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.EmptyState
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.LoadingState
@@ -95,7 +93,6 @@ import com.duzman46.gridbound.ui.components.home.EmptyRoomsPanel
 import com.duzman46.gridbound.ui.components.home.FieldControl
 import com.duzman46.gridbound.ui.components.home.FieldLabel
 import com.duzman46.gridbound.ui.components.home.FormHeading
-import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.LobbyActionCard
 import com.duzman46.gridbound.ui.components.home.LobbyField
@@ -103,7 +100,8 @@ import com.duzman46.gridbound.ui.components.home.LobbySectionHeader
 import com.duzman46.gridbound.ui.components.home.OpenRoomCard
 import com.duzman46.gridbound.ui.components.home.OutlineAction
 import com.duzman46.gridbound.ui.components.home.PanelFootnote
-import com.duzman46.gridbound.ui.components.home.PremiumBackArrow
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.RankedQueueCard
 import com.duzman46.gridbound.ui.components.home.SearchingPanel
@@ -242,23 +240,11 @@ private fun OnlineLobbyScreen(
                 .weight(LOBBY_SCENE_SHARE),
         ) {
             HomeHero(Modifier.fillMaxSize())
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PremiumBackArrow(onBack)
-                Text(
-                    text = stringResource(R.string.online_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            PremiumHeader(
+                title = stringResource(R.string.online_title),
+                onBack = onBack,
+                modifier = Modifier.statusBarsPadding(),
+            )
         }
         // Everything under the picture, and the only part of the screen that scrolls.
         Box(
@@ -455,7 +441,9 @@ private fun LobbyFormSheet(
                 LobbyForm.JOIN -> JoinByCodeForm(state, viewModel)
                 LobbyForm.CREATE -> CreateRoomForm(state, viewModel)
             }
-            state.message?.let { FormMessage(it) }
+            // No message here. This sheet is modal over the lobby and composed inside it, so
+            // the lobby's own FormMessage — the one beside the controls that caused it — is
+            // already on screen behind the sheet. Two nodes, one visible instance.
         }
     }
 }
@@ -488,12 +476,14 @@ private fun JoinByCodeForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
         )
     }
     PanelFootnote(stringResource(R.string.join_code_note))
-    GoldSubmit(
+    PremiumActionButton(
         label = stringResource(R.string.online_join_by_code),
         onClick = viewModel::joinByCode,
+        modifier = Modifier.fillMaxWidth(),
+        filled = true,
         enabled = state.canJoinByCode,
         busy = state.isBusy,
-        mark = { drawPairMark(Color(0xFF1A1206)) },
+        mark = { drawPairMark(Palette.GoldInk) },
     )
 }
 
@@ -593,16 +583,18 @@ private fun CreateRoomForm(state: OnlineLobbyUiState, viewModel: OnlineLobbyView
                         if (passwordShown) R.string.room_password_hide else R.string.room_password_show,
                     ),
                     onClick = { passwordShown = !passwordShown },
-                ) { drawEye(Color(0xFF8B9098), open = passwordShown) }
+                ) { drawEye(Palette.InkGlyph, open = passwordShown) }
             },
         )
     }
 
-    GoldSubmit(
+    PremiumActionButton(
         label = stringResource(R.string.online_create_room),
         onClick = viewModel::createRoom,
+        modifier = Modifier.fillMaxWidth(),
+        filled = true,
         busy = state.isBusy,
-        mark = { drawPlusMark(Color(0xFF1A1206)) },
+        mark = { drawPlusMark(Palette.GoldInk) },
     )
 }
 
@@ -788,7 +780,7 @@ private fun RoomCodePlate(roomCode: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(KoridorGold.copy(alpha = 0.08f))
+            .background(Palette.Gold.copy(alpha = 0.08f))
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -815,7 +807,7 @@ private fun RoomCodePlate(roomCode: String) {
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.Black,
         letterSpacing = 4.sp,
-        color = KoridorGold,
+        color = Palette.Gold,
         textAlign = TextAlign.Center,
     )
 }
@@ -855,13 +847,13 @@ private fun InviteList(
                     Text(
                         stringResource(R.string.friends_invite_sent),
                         style = MaterialTheme.typography.bodySmall,
-                        color = KoridorGold,
+                        color = Palette.Gold,
                     )
                 } else {
                     FieldControl(
                         label = stringResource(R.string.friends_invite),
                         onClick = { onInvite(friend.userId) },
-                    ) { drawPlusMark(KoridorGold) }
+                    ) { drawPlusMark(Palette.Gold) }
                 }
             }
         }
@@ -907,7 +899,7 @@ private fun PasswordPromptDialog(
                         if (shown) R.string.room_password_hide else R.string.room_password_show,
                     ),
                     onClick = { shown = !shown },
-                ) { drawEye(Color(0xFF8B9098), open = shown) }
+                ) { drawEye(Palette.InkGlyph, open = shown) }
             },
         )
         Row(
@@ -919,11 +911,12 @@ private fun PasswordPromptDialog(
                 onClick = onDismiss,
                 modifier = Modifier.weight(1f),
             )
-            GoldSubmit(
+            PremiumActionButton(
                 label = stringResource(R.string.room_join_action),
                 onClick = onConfirm,
-                enabled = password.isNotBlank(),
                 modifier = Modifier.weight(1f),
+                filled = true,
+                enabled = password.isNotBlank(),
             )
         }
     }
@@ -956,7 +949,7 @@ private fun LobbyDialog(
                     .fillMaxWidth()
                     .clip(shape)
                     .background(MaterialTheme.colorScheme.surface)
-                    .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.35f)), shape)
+                    .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.35f)), shape)
                     .padding(Dimens.SpaceLg)
                     .padding(top = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -976,7 +969,7 @@ private fun LobbyDialog(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF8B9098),
+                        color = Palette.InkMuted,
                         textAlign = TextAlign.Center,
                     )
                 }

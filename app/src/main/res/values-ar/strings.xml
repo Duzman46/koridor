@@ -65,7 +65,6 @@
     <string name="auth_link_title">احتفظ بتقدّمك</string>
     <string name="auth_link_explainer">اربط حسابًا ليبقى تقدّمك ومشترياتك وأصدقاؤك معك على كل جهاز.</string>
     <string name="auth_link_with_google">الربط عبر Google</string>
-    <string name="auth_link_with_email">الربط بالبريد الإلكتروني</string>
     <string name="auth_link_success">تم ربط حسابك، وحُفظ تقدّمك.</string>
     <string name="auth_link_account">اربط حسابًا</string>
     <string name="auth_existing_account_title">هذا الحساب موجود بالفعل</string>
@@ -111,15 +110,11 @@
     <string name="profile_losses">الخسائر</string>
     <string name="profile_win_streak">سلسلة الانتصارات</string>
     <string name="profile_best_streak">أفضل سلسلة</string>
-    <string name="profile_member_since">عضو منذ %1$s</string>
     <string name="profile_player_title">ملف اللاعب</string>
     <string name="profile_recent_games">المباريات الأخيرة</string>
     <string name="profile_recent_empty">لم تُلعب أي مباراة عبر الإنترنت بعد.</string>
     <string name="profile_recent_show_all">عرض الكل (%1$d)</string>
     <string name="profile_recent_show_fewer">عرض أقل</string>
-    <string name="profile_recent_result_win">فوز</string>
-    <string name="profile_recent_result_loss">خسارة</string>
-    <string name="profile_recent_result_draw">تعادل</string>
     <string name="profile_recent_unranked">بدون تصنيف</string>
     <string name="profile_recent_unknown_opponent">لاعب محذوف</string>
 
@@ -292,9 +287,6 @@
     <string name="settings_language">اللغة</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_store">المتجر</string>
-    <string name="settings_theme_system">النظام</string>
-    <string name="settings_theme_light">فاتح</string>
-    <string name="settings_theme_dark">داكن</string>
     <string name="settings_game_experience">تجربة اللعب</string>
     <string name="settings_sounds">الأصوات</string>
     <string name="settings_sounds_description">أصوات النقلات والجدران والنتيجة.</string>
@@ -383,7 +375,6 @@
     <string name="paint_label">لونك</string>
     <string name="online_quick_match_hint">ستُقابَل بأقرب تقييم في قائمة الانتظار.</string>
     <string name="nav_home">الرئيسية</string>
-    <string name="nav_games">الألعاب</string>
     <string name="nav_profile">الملف</string>
     <string name="home_tagline">خطّط. اعترض. اربح.</string>
     <string name="home_play_subtitle">ابدأ مباراة الآن</string>
@@ -514,7 +505,6 @@
     <string name="more_social">التواصل الاجتماعي</string>
     <string name="more_social_hint">تابع اللعبة</string>
     <string name="settings_subtitle">اضبطها على ذوقك</string>
-    <string name="settings_theme">المظهر</string>
     <string name="settings_account_hint">الدخول والربط والحذف</string>
     <string name="settings_ad_privacy_hint">إدارة خيارات الإعلانات</string>
     <string name="settings_remove_ads_hint">العب دون انقطاع</string>
@@ -524,11 +514,6 @@
     <string name="notification_channel_description">تذكير من حين لآخر عندما تنقطع عن اللعب مدة.</string>
     <string name="notification_come_back_title">الرقعة ما زالت جاهزة</string>
     <string name="notification_come_back_body">مضى وقت. مباراة واحدة؟</string>
-    <string name="profile_puzzle_title">لغز اليوم</string>
-    <string name="profile_puzzle_action">حل</string>
-    <string name="profile_soon_badge">قريبًا</string>
-    <string name="profile_puzzle_soon_title">غير جاهز بعد</string>
-    <string name="profile_puzzle_soon_body">لغز اليوم قيد الإعداد. البطاقة هنا لتعرف أنه قادم — لا يوجد ما يُحل اليوم.</string>
     <string name="profile_badges_action">عرض</string>
     <string name="profile_streak_action">التفاصيل</string>
     <string name="profile_recent_letter_win">ف</string>
@@ -543,7 +528,6 @@
     <string name="account_privacy_note">كيف تُعالَج بياناتك.</string>
     <string name="account_terms_note">الشروط التي وافقت عليها.</string>
     <string name="account_or">أو</string>
-    <string name="account_link_email_note">حدِّد بريدًا وكلمة مرور</string>
     <string name="account_sign_up">إنشاء حساب</string>
     <string name="account_sign_up_note">تصنيفك وإحصاءاتك وأصدقاؤك ينتقلون معك</string>
     <string name="account_sign_in">تسجيل الدخول</string>
@@ -552,5 +536,4 @@
     <string name="account_sign_in_warning">تسجيل الدخول إلى ذلك الحساب يحذف نهائيًا كل ما لعبته كضيف — تصنيفك وإحصاءاتك وأصدقاؤك. يعود سجل ذلك الحساب بدلاً منه. لا يُدمج شيء.</string>
     <string name="account_sign_in_confirm">سجّل الدخول على أي حال</string>
     <string name="auth_guest_card_note">العب مباريات محلية وأكمل الدرس التعليمي.</string>
-    <string name="auth_guest_link_note">اربط حسابًا لإضافة الأصدقاء واللعب عبر الإنترنت.</string>
 </resources>

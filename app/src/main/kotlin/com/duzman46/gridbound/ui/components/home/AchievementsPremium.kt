@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.achievements.domain.Achievement
 import com.duzman46.gridbound.achievements.domain.AchievementTier
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The badge shelf.
@@ -53,7 +53,7 @@ import com.duzman46.gridbound.theme.KoridorGold
  */
 
 private fun tierMetal(tier: AchievementTier): Color = when (tier) {
-    AchievementTier.GOLD -> KoridorGold
+    AchievementTier.GOLD -> Palette.Gold
     AchievementTier.SILVER -> Color(0xFFB9C0C9)
     AchievementTier.BRONZE -> Color(0xFFC08552)
 }
@@ -91,8 +91,8 @@ fun AchievementSummary(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF1A1710), Color(0xFF12161B))))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.35f)), shape)
+            .background(Brush.horizontalGradient(listOf(Palette.GoldBandEnd, Palette.Card)))
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.35f)), shape)
             .semantics(mergeDescendants = true) { contentDescription = "$title. $unlocked / $total" }
             .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
@@ -104,7 +104,7 @@ fun AchievementSummary(
                 text = "$unlocked",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = KoridorGold,
+                color = Palette.Gold,
             )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -119,7 +119,7 @@ fun AchievementSummary(
             Text(
                 text = hint,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -145,14 +145,14 @@ fun AchievementGroupHeader(
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF9AA0A8),
+            color = Palette.InkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = earned,
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF6F747B),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
     }
@@ -183,9 +183,9 @@ fun AchievementRow(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (unlocked) metal.copy(alpha = 0.07f) else Color(0xFF12161B))
+            .background(if (unlocked) metal.copy(alpha = 0.07f) else Palette.Card)
             .border(
-                BorderStroke(1.dp, if (unlocked) metal.copy(alpha = 0.5f) else FieldEdge),
+                BorderStroke(1.dp, if (unlocked) metal.copy(alpha = 0.5f) else Palette.Edge),
                 shape,
             )
             .semantics(mergeDescendants = true) {
@@ -207,7 +207,7 @@ fun AchievementRow(
                 color = if (unlocked) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
-                    Color(0xFF9AA0A8)
+                    Palette.InkMuted
                 },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -215,7 +215,7 @@ fun AchievementRow(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF7A7F86),
+                color = Palette.InkMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -227,7 +227,7 @@ fun AchievementRow(
             Text(
                 text = "$progress/$target",
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
         }
@@ -241,11 +241,11 @@ private fun Medallion(metal: Color, emblem: PremiumIcon, unlocked: Boolean) {
         Modifier
             .size(46.dp)
             .clip(CircleShape)
-            .background(if (unlocked) metal.copy(alpha = 0.13f) else Color(0xFF161B21))
+            .background(if (unlocked) metal.copy(alpha = 0.13f) else Palette.Inset)
             .border(
                 BorderStroke(
                     if (unlocked) 1.5.dp else 1.dp,
-                    if (unlocked) metal.copy(alpha = 0.8f) else Color(0xFF2A3038),
+                    if (unlocked) metal.copy(alpha = 0.8f) else Palette.Edge,
                 ),
                 CircleShape,
             ),
@@ -254,7 +254,7 @@ private fun Medallion(metal: Color, emblem: PremiumIcon, unlocked: Boolean) {
         PremiumGlyph(
             emblem,
             Modifier.size(22.dp),
-            tint = if (unlocked) metal else Color(0xFF4A5058),
+            tint = if (unlocked) metal else Palette.InkGlyph,
         )
         if (unlocked) {
             // The tick hangs off the disc rather than replacing the mark: which badge this is
@@ -265,9 +265,9 @@ private fun Medallion(metal: Color, emblem: PremiumIcon, unlocked: Boolean) {
                     .size(17.dp)
                     .clip(CircleShape)
                     .background(metal)
-                    .border(BorderStroke(1.5.dp, Color(0xFF0D1015)), CircleShape),
+                    .border(BorderStroke(1.5.dp, Palette.Ground), CircleShape),
                 contentAlignment = Alignment.Center,
-            ) { Canvas(Modifier.size(9.dp)) { drawTick(Color(0xFF14181D)) } }
+            ) { Canvas(Modifier.size(9.dp)) { drawTick(Palette.GoldInk) } }
         }
     }
 }
@@ -279,7 +279,7 @@ private fun ProgressBar(fraction: Float, metal: Color) {
             .fillMaxWidth()
             .height(5.dp)
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFF20262D)),
+            .background(Palette.Inset),
     ) {
         Box(
             Modifier
@@ -296,10 +296,10 @@ private fun DrawScope.drawProgressRing(fraction: Float) {
     val s = size.minDimension
     val stroke = s * 0.09f
     val inset = stroke / 2f
-    drawCircle(Color(0xFF272D35), s / 2f - inset, style = Stroke(stroke))
+    drawCircle(Palette.Edge, s / 2f - inset, style = Stroke(stroke))
     if (fraction > 0f) {
         drawArc(
-            color = KoridorGold,
+            color = Palette.Gold,
             startAngle = -90f,
             sweepAngle = 360f * fraction.coerceIn(0f, 1f),
             useCenter = false,

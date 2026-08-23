@@ -831,7 +831,6 @@ fun AppNavigation(
                     state = state,
                     onBack = { navController.popFrom(entry) },
                     onLanguage = viewModel::setLanguage,
-                    onThemeMode = viewModel::setThemeMode,
                     onSound = viewModel::setSoundEnabled,
                     onHaptics = viewModel::setHapticsEnabled,
                     onMatchMessages = viewModel::setMatchMessagesEnabled,

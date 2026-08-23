@@ -9,7 +9,6 @@ import com.duzman46.gridbound.data.StatisticsManager
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.GameStatistics
-import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.game.ai.AIActionGenerator
 import com.duzman46.gridbound.game.ai.AIEngineFactory
@@ -254,7 +253,6 @@ private class RecordingGameRepository : GameRepository {
     override suspend fun markAchievementsSeen(ids: Set<String>) = Unit
     override suspend fun claimStatisticsFor(userId: String) = Unit
     override suspend fun setLanguage(language: AppLanguage) = Unit
-    override suspend fun setThemeMode(mode: ThemeMode) = Unit
     override suspend fun setSoundEnabled(enabled: Boolean) = Unit
     override suspend fun setNotificationsEnabled(enabled: Boolean) = Unit
     override suspend fun setHapticsEnabled(enabled: Boolean) = Unit

@@ -27,7 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The tutorial's parts, in the language the rest of the app now speaks.
@@ -40,8 +40,7 @@ import com.duzman46.gridbound.theme.KoridorGold
  * player sees, and it was teaching them a visual vocabulary the app then stopped speaking.
  */
 
-private val CardFill = Color(0xFF12161B)
-private val Muted = Color(0xFF8B9098)
+
 
 /**
  * The two things a step can say back to you, as colours.
@@ -69,21 +68,14 @@ fun TutorialStepDots(stepIndex: Int, stepCount: Int, modifier: Modifier = Modifi
                 Modifier
                     .size(if (index == stepIndex) 10.dp else 7.dp)
                     .clip(CircleShape)
-                    .background(if (index <= stepIndex) KoridorGold else DotTrack),
+                    // A step still to come is InkGlyph, not the disabled ink: how many are
+                    // left is the whole point of the row, so the dots have to be visible rather
+                    // than merely present. 4.50:1 on the card, against a 3:1 floor for a mark.
+                    .background(if (index <= stepIndex) Palette.Gold else Palette.InkGlyph),
             )
         }
     }
 }
-
-/**
- * The colour of a step still to come.
- *
- * It is the dark scheme's `outline` written out rather than read from the theme, which is what
- * every premium file here does with a colour it depends on. How many steps are left is the whole
- * point of the row, so those dots have to be visible rather than merely present — and read from
- * the theme this one would come back green on the light scheme, on a card that is dark either way.
- */
-private val DotTrack = Color(0xFF3A424B)
 
 /**
  * The card the lesson is delivered in, floating over the board.
@@ -111,10 +103,10 @@ fun TutorialCard(
             .widthIn(max = TutorialCardMaxWidth)
             .shadow(12.dp, shape)
             .clip(shape)
-            .background(CardFill)
+            .background(Palette.Card)
             .border(
                 width = if (solved) Dimens.BorderStrong else Dimens.Hairline,
-                color = if (solved) KoridorGold else FieldEdge,
+                color = if (solved) Palette.Gold else Palette.Edge,
                 shape = shape,
             )
             .padding(Dimens.SpaceLg),
@@ -139,14 +131,14 @@ fun TutorialStepHeading(
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PremiumGlyph(PremiumIcon.MORTARBOARD, Modifier.size(Dimens.IconSm), KoridorGold)
+            PremiumGlyph(PremiumIcon.MORTARBOARD, Modifier.size(Dimens.IconSm), Palette.Gold)
             Text(
                 text = progress,
                 // Tabular figures: the count changes under the reader seven times and the title
                 // below it should not shift sideways when "1" becomes "7".
                 style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                 fontWeight = FontWeight.Bold,
-                color = KoridorGold,
+                color = Palette.Gold,
             )
         }
         Text(
@@ -158,7 +150,7 @@ fun TutorialStepHeading(
         Text(
             text = body,
             style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
+            color = Palette.InkMuted,
         )
     }
 }

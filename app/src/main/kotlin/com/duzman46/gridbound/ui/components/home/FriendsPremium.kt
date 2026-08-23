@@ -35,7 +35,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -51,7 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The friends screen, in the app's own material.
@@ -100,12 +99,12 @@ fun FriendsEmptyPanel(
             // by the time the text begins, which is where the artwork has already faded out.
             .background(
                 Brush.verticalGradient(
-                    0f to Color(0xFF040507),
-                    HERO_SHARE to Color(0xFF141A20),
-                    1f to Color(0xFF0D1116),
+                    0f to Palette.Ground,
+                    HERO_SHARE to Palette.Inset,
+                    1f to Palette.Card,
                 ),
             )
-            .border(BorderStroke(1.dp, FieldEdge), shape),
+            .border(BorderStroke(1.dp, Palette.Edge), shape),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Edge to edge, outside the text's padding, and that is what the feathered border on
@@ -140,7 +139,7 @@ fun FriendsEmptyPanel(
         Text(
             text = body,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
@@ -163,18 +162,19 @@ fun FriendsEmptyPanel(
                         Modifier
                             .width(Dimens.Hairline)
                             .fillMaxHeight()
-                            .background(Color(0xFF232A32)),
+                            .background(Palette.Edge),
                     )
                 }
                 PerkColumn(perk)
             }
         }
         if (action != null) {
-            GoldSubmit(
+            PremiumActionButton(
                 label = action,
                 onClick = onAction,
-                modifier = Modifier.padding(top = Dimens.SpaceXs),
-                mark = { drawAddPerson(Color(0xFF1A1206)) },
+                modifier = Modifier.fillMaxWidth().padding(top = Dimens.SpaceXs),
+                filled = true,
+                mark = { drawAddPerson(Palette.GoldInk) },
             )
         }
         }
@@ -204,11 +204,11 @@ private fun RowScope.PerkColumn(perk: FriendPerk) {
             Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF15191F))
-                .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.45f)), CircleShape),
+                .background(Palette.Inset)
+                .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.45f)), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            PremiumGlyph(perk.icon, Modifier.size(20.dp), tint = KoridorGold)
+            PremiumGlyph(perk.icon, Modifier.size(20.dp), tint = Palette.Gold)
         }
         // Two lines whether it needs them or not, so the sentence under it starts at the same
         // height in all three columns.
@@ -225,7 +225,7 @@ private fun RowScope.PerkColumn(perk: FriendPerk) {
         Text(
             text = perk.body,
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF7A7F86),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -254,8 +254,8 @@ fun FriendCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF12161B))
-            .border(BorderStroke(1.dp, FieldEdge), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .heightIn(min = 68.dp)
             .padding(start = Dimens.SpaceMd, end = Dimens.SpaceXs, top = 6.dp, bottom = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
@@ -282,7 +282,7 @@ fun FriendCard(
                         .size(13.dp)
                         .clip(CircleShape)
                         .background(PresenceGreen)
-                        .border(BorderStroke(2.dp, Color(0xFF12161B)), CircleShape),
+                        .border(BorderStroke(2.dp, Palette.Card), CircleShape),
                 )
             }
         }
@@ -298,7 +298,7 @@ fun FriendCard(
             Text(
                 text = status,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (online) PresenceGreen else Color(0xFF7A7F86),
+                color = if (online) PresenceGreen else Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -327,7 +327,7 @@ fun FriendAction(
     accented: Boolean = false,
     mark: DrawScope.() -> Unit,
 ) {
-    val tint = if (accented) KoridorGold else Color(0xFF8B9098)
+    val tint = if (accented) Palette.Gold else Palette.InkGlyph
     Box(
         modifier
             .size(48.dp)
@@ -345,9 +345,9 @@ fun FriendAction(
             Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(if (accented) KoridorGold.copy(alpha = 0.10f) else Color(0xFF161B21))
+                .background(if (accented) Palette.Gold.copy(alpha = 0.10f) else Palette.Inset)
                 .border(
-                    BorderStroke(1.dp, if (accented) KoridorGold.copy(alpha = 0.5f) else FieldEdge),
+                    BorderStroke(1.dp, if (accented) Palette.Gold.copy(alpha = 0.5f) else Palette.Edge),
                     CircleShape,
                 ),
             contentAlignment = Alignment.Center,
@@ -373,14 +373,14 @@ fun FriendsSectionHeader(title: String, count: String, modifier: Modifier = Modi
                 .semantics { heading() },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF9AA0A8),
+            color = Palette.InkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = count,
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF6F747B),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
     }
@@ -401,14 +401,17 @@ fun InviteCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF1A1710), Color(0xFF12161B))))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.45f)), shape)
+            .background(Brush.horizontalGradient(listOf(Palette.GoldBandEnd, Palette.Card)))
+            // The same hairline the other three gold-band cards wear. It was drawn at three
+            // different alphas across four files, which on one card idiom is a difference the
+            // eye registers as untidiness without ever being able to name it.
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.35f)), shape)
             .heightIn(min = 66.dp)
             .padding(start = Dimens.SpaceMd, end = Dimens.SpaceXs, top = 6.dp, bottom = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.size(22.dp)) { drawPairMark(KoridorGold) }
+        Canvas(Modifier.size(22.dp)) { drawPairMark(Palette.Gold) }
         Text(
             text = text,
             modifier = Modifier.weight(1f),
@@ -417,8 +420,8 @@ fun InviteCard(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        FriendAction(joinLabel, onJoin, accented = true) { drawTick(KoridorGold) }
-        FriendAction(dismissLabel, onDismiss) { drawCross(Color(0xFF8B9098)) }
+        FriendAction(joinLabel, onJoin, accented = true) { drawTick(Palette.Gold) }
+        FriendAction(dismissLabel, onDismiss) { drawCross(Palette.InkGlyph) }
     }
 }
 

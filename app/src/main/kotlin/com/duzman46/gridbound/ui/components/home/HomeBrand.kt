@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import java.util.Locale
 
 /**
@@ -148,9 +148,9 @@ private fun WallLetter(size: TextUnit) {
         val h = this.size.height
         val stroke = w * 0.42f
         // The tittle, kept so the word still reads as the name rather than as KOR|DOR.
-        drawCircle(KoridorGold, radius = stroke * 0.5f, center = Offset(w / 2f, stroke * 0.5f))
+        drawCircle(Palette.Gold, radius = stroke * 0.5f, center = Offset(w / 2f, stroke * 0.5f))
         drawRoundRect(
-            color = KoridorGold,
+            color = Palette.Gold,
             topLeft = Offset((w - stroke) / 2f, h - cap.toPx()),
             size = Size(stroke, cap.toPx()),
             cornerRadius = CornerRadius(stroke / 2f),
@@ -179,7 +179,7 @@ fun HomeTagline(modifier: Modifier = Modifier) {
                 if (index > 0) append(" ")
                 val accented = words.size >= 3 && index == 1
                 if (accented) {
-                    withStyle(SpanStyle(color = KoridorGold)) { append(word) }
+                    withStyle(SpanStyle(color = Palette.Gold)) { append(word) }
                 } else {
                     append(word)
                 }

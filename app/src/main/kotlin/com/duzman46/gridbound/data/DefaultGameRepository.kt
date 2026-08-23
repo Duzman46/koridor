@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.edit
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
-import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
@@ -50,7 +49,9 @@ class DefaultGameRepository(
             // player in the world into Turkish on first launch, and disagreed with both
             // AppSettings() and SettingsBootstrap, which have always defaulted to SYSTEM.
             language = enumValueOrDefault(values[Keys.language], AppLanguage.SYSTEM),
-            themeMode = enumValueOrDefault(values[Keys.themeMode], ThemeMode.SYSTEM),
+            // No theme is read. The app is dark-only, and the `theme_mode` row an older build
+            // wrote is deliberately left on disk rather than migrated away — see the KDoc on
+            // [AppSettings] for why that costs nothing and a migration would not.
             soundEnabled = values[Keys.soundEnabled] ?: true,
             notificationsEnabled = values[Keys.notificationsEnabled] ?: true,
             hapticsEnabled = values[Keys.hapticsEnabled] ?: true,
@@ -104,7 +105,6 @@ class DefaultGameRepository(
         update(Keys.seenAchievements, ids)
 
     override suspend fun setLanguage(language: AppLanguage) = update(Keys.language, language.name)
-    override suspend fun setThemeMode(mode: ThemeMode) = update(Keys.themeMode, mode.name)
     override suspend fun setSoundEnabled(enabled: Boolean) = update(Keys.soundEnabled, enabled)
 
     override suspend fun setNotificationsEnabled(enabled: Boolean) =

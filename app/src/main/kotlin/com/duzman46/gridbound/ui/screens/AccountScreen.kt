@@ -11,22 +11,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Logout
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.DeleteForever
-import androidx.compose.material.icons.rounded.Gavel
-import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,11 +38,9 @@ import com.duzman46.gridbound.R
 import com.duzman46.gridbound.auth.domain.AccountType
 import com.duzman46.gridbound.presentation.account.AccountUiState
 import com.duzman46.gridbound.session.SessionState
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.FormMessage
 import com.duzman46.gridbound.ui.components.ScreenBackground
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SecondarySubmitButton
-import com.duzman46.gridbound.ui.components.SubmitButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,11 +50,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.home.GroupNote
 import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
@@ -299,8 +286,10 @@ private fun LinkCard(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.RadiusMd))
-            .background(Color(0xFF12161B))
-            .border(1.dp, Color(0xFF2A3038), RoundedCornerShape(Dimens.RadiusMd))
+            .background(Palette.Card)
+            // InkGlyph rather than Edge: this hairline is the whole boundary of the card,
+            // so it identifies it and has to clear 3:1 rather than merely decorate.
+            .border(1.dp, Palette.InkGlyph, RoundedCornerShape(Dimens.RadiusMd))
             .padding(Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
@@ -308,7 +297,7 @@ private fun LinkCard(
             text = stringResource(R.string.auth_link_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = KoridorGold,
+            color = Palette.Gold,
         )
         Text(
             text = stringResource(R.string.auth_link_explainer),
@@ -332,7 +321,7 @@ private fun LinkCard(
         // in place and keeps the same user id, so rating, statistics and friends come with it.
         LinkRow(
             mark = {
-                PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Color(0xFF9AA0A6))
+                PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Palette.InkGlyph)
             },
             title = stringResource(R.string.account_sign_up),
             subtitle = stringResource(R.string.account_sign_up_note),
@@ -344,7 +333,7 @@ private fun LinkCard(
         // and the subtitle says so rather than leaving the player to find out.
         LinkRow(
             mark = {
-                PremiumGlyph(PremiumIcon.PERSON, Modifier.size(20.dp), Color(0xFF9AA0A6))
+                PremiumGlyph(PremiumIcon.PERSON, Modifier.size(20.dp), Palette.InkGlyph)
             },
             title = stringResource(R.string.account_sign_in),
             subtitle = stringResource(R.string.account_sign_in_note),
@@ -412,40 +401,6 @@ private fun DangerRow(title: String, body: String, enabled: Boolean, onClick: ()
     }
 }
 
-@Composable
-private fun LinkRows(
-    googleAvailable: Boolean,
-    enabled: Boolean,
-    onLinkGoogle: () -> Unit,
-    onEmailRow: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
-        if (googleAvailable) {
-            // Its own row, bordered in gold, because it is the one that takes a single tap and
-            // the reference gives it that weight. Google's mark keeps Google's colours.
-            LinkRow(
-                mark = { GoogleMark(Modifier.size(22.dp)) },
-                title = stringResource(R.string.auth_link_with_google),
-                subtitle = null,
-                accented = true,
-                enabled = enabled,
-                onClick = onLinkGoogle,
-            )
-            OrDivider()
-        }
-        LinkRow(
-            mark = {
-                PremiumGlyph(PremiumIcon.ENVELOPE, Modifier.size(20.dp), Color(0xFF9AA0A6))
-            },
-            title = stringResource(R.string.auth_link_with_email),
-            subtitle = stringResource(R.string.account_link_email_note),
-            accented = false,
-            enabled = enabled,
-            onClick = onEmailRow,
-        )
-    }
-}
-
 /** One way in: a mark, a name, a reason, and a chevron saying it leads somewhere. */
 @Composable
 private fun LinkRow(
@@ -461,10 +416,10 @@ private fun LinkRow(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (accented) KoridorGold.copy(alpha = 0.07f) else Color(0xFF12161B))
+            .background(if (accented) Palette.Gold.copy(alpha = 0.07f) else Palette.Card)
             .border(
                 1.dp,
-                if (accented) KoridorGold.copy(alpha = 0.55f) else Color(0xFF2A3038),
+                if (accented) Palette.Gold.copy(alpha = 0.55f) else Palette.InkGlyph,
                 shape,
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -476,7 +431,7 @@ private fun LinkRow(
             Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF1B2027)),
+                .background(Palette.Inset),
             contentAlignment = Alignment.Center,
         ) { mark() }
         Column(Modifier.weight(1f)) {
@@ -508,13 +463,13 @@ private fun OrDivider() {
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+        Box(Modifier.weight(1f).height(Dimens.Hairline).background(Palette.Edge))
         Text(
             text = stringResource(R.string.account_or),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Box(Modifier.weight(1f).height(1.dp).background(Color(0xFF2A3038)))
+        Box(Modifier.weight(1f).height(Dimens.Hairline).background(Palette.Edge))
     }
 }
 
@@ -702,21 +657,3 @@ private fun ConfirmDialog(
     )
 }
 
-@Composable
-private fun AccountCard(
-    title: String,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        ),
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            content()
-        }
-    }
-}

@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.core.Constants
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The end of a match, as one object standing on an empty field.
@@ -70,7 +70,7 @@ fun WinnerPanel(
             .border(
                 BorderStroke(
                     if (lost) Dimens.Hairline else Dimens.BorderStrong,
-                    if (lost) FieldEdge else KoridorGold.copy(alpha = 0.35f),
+                    if (lost) Palette.Edge else Palette.Gold.copy(alpha = 0.35f),
                 ),
                 shape,
             )
@@ -98,13 +98,15 @@ fun WinnerMark(lost: Boolean, pulse: Float, modifier: Modifier = Modifier) {
             .size(MarkSize)
             .scale(pulse)
             .clip(CircleShape)
-            // The defeat disc is the app's recessed fill on purpose: the gamepad punches its pad
-            // and its buttons out in near-black, and any lighter ground shows them as grey chips.
-            .background(if (lost) Color(0xFF0E1216) else KoridorGold.copy(alpha = 0.12f))
+            // The defeat disc is the card fill on purpose: the gamepad glyph punches its pad and
+            // its buttons out in the same token, so the holes read as holes rather than as grey
+            // chips. They were two different near-blacks a hundredth of a ratio apart, which is
+            // how a knockout quietly stops lining up with the thing it is knocked out of.
+            .background(if (lost) Palette.Card else Palette.Gold.copy(alpha = 0.12f))
             .border(
                 BorderStroke(
                     if (lost) Dimens.Hairline else Dimens.BorderStrong,
-                    if (lost) FieldEdge else KoridorGold.copy(alpha = 0.55f),
+                    if (lost) Palette.Edge else Palette.Gold.copy(alpha = 0.55f),
                 ),
                 CircleShape,
             ),
@@ -113,7 +115,7 @@ fun WinnerMark(lost: Boolean, pulse: Float, modifier: Modifier = Modifier) {
         PremiumGlyph(
             if (lost) PremiumIcon.GAMEPAD else PremiumIcon.TROPHY,
             Modifier.size(MarkGlyphSize),
-            tint = if (lost) Color(0xFF8B9098) else KoridorGold,
+            tint = if (lost) Palette.InkGlyph else Palette.Gold,
         )
     }
 }
@@ -145,13 +147,13 @@ fun WinnerHeadline(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = if (lost) Color(0xFFF2F3F5) else KoridorGold,
+            color = if (lost) MaterialTheme.colorScheme.onSurface else Palette.Gold,
             textAlign = TextAlign.Center,
         )
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
         )
     }
@@ -178,8 +180,8 @@ fun WinnerStatusStrip(
     Row(
         modifier
             .clip(shape)
-            .background(Color(0xFF0E1216))
-            .border(BorderStroke(Dimens.Hairline, Color(0xFF20262D)), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(Dimens.Hairline, Palette.Inset), shape)
             // A floor, not a height: "your rival declined the rematch" is two lines in several
             // of the languages the app ships in.
             .heightIn(min = ActionHeight)
@@ -190,14 +192,14 @@ fun WinnerStatusStrip(
         if (busy) {
             CircularProgressIndicator(
                 modifier = Modifier.size(SpinnerSize).clearAndSetSemantics { },
-                color = KoridorGold,
+                color = Palette.Gold,
                 strokeWidth = 2.dp,
             )
         }
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF8B9098),
+            color = Palette.InkMuted,
             textAlign = TextAlign.Center,
         )
     }
@@ -233,8 +235,8 @@ fun WinnerConfetti(progress: Float, modifier: Modifier = Modifier) {
 }
 
 /** Barely a gradient. Enough for the card to catch a little light along its top edge. */
-private val VictoryFill = Brush.verticalGradient(listOf(Color(0xFF1B1710), Color(0xFF12161B)))
-private val DefeatFill = SolidColor(Color(0xFF12161B))
+private val VictoryFill = Brush.verticalGradient(listOf(Palette.GoldBandEnd, Palette.Card))
+private val DefeatFill = SolidColor(Palette.Card)
 
 private val ConfettiColours = listOf(
     Color(0xFF32D583),

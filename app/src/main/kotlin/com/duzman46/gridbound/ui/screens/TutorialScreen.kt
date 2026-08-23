@@ -117,8 +117,8 @@ private fun TutorialScreen(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 64.dp, bottom = 210.dp),
+                    .padding(horizontal = Dimens.SpaceLg)
+                    .padding(top = TutorialTopInset, bottom = InstructionCardReserve),
                 contentAlignment = Alignment.Center,
             ) {
                 GameBoard(
@@ -135,7 +135,7 @@ private fun TutorialScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = Dimens.SpaceLg),
             )
 
             InstructionCard(
@@ -145,7 +145,7 @@ private fun TutorialScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(16.dp),
+                    .padding(Dimens.SpaceLg),
             )
         }
     }
@@ -170,6 +170,18 @@ private fun StepProgress(
         PremiumTextAction(label = stringResource(R.string.action_skip), onClick = onSkip)
     }
 }
+
+/**
+ * What the board gives up at the top and the bottom of the lesson screen.
+ *
+ * [InstructionCardReserve] is the instruction card's own height plus the gap under it, and it is
+ * written here rather than at the call site because it has to be *this* card's height: the card
+ * floats over the board, and if the reserve is short the last row of squares sits under it — on
+ * a lesson, under the very control asking the player to tap them. Named for the same reason
+ * `WallBarHeight` is named on the board screen; the number is a dependency, not a taste.
+ */
+private val TutorialTopInset = 64.dp
+private val InstructionCardReserve = 210.dp
 
 @Composable
 private fun InstructionCard(

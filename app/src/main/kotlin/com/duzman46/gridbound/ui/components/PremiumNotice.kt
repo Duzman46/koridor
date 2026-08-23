@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.home.PremiumGlyph
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
@@ -78,7 +78,7 @@ fun PremiumNotice(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 textAlign = TextAlign.Center,
             )
             TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {

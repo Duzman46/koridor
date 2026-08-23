@@ -50,7 +50,6 @@ fun BillingNotice(message: BillingMessage?, onDismiss: () -> Unit) {
             val shown = message ?: return@AnimatedVisibility
             Surface(
                 shape = MaterialTheme.shapes.large,
-                tonalElevation = 6.dp,
                 shadowElevation = 6.dp,
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier

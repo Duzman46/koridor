@@ -67,7 +67,6 @@
     <string name="auth_link_title">İlerlemeni koru</string>
     <string name="auth_link_explainer">Hesabını bağla; ilerlemen, satın alımların ve arkadaşların her cihazda seninle kalsın.</string>
     <string name="auth_link_with_google">Google ile bağla</string>
-    <string name="auth_link_with_email">E-posta ile bağla</string>
     <string name="auth_link_success">Hesabın bağlandı. İlerlemen korundu.</string>
     <string name="auth_link_account">Hesap bağla</string>
     <string name="auth_existing_account_title">Bu hesap zaten var</string>
@@ -108,15 +107,11 @@
     <string name="profile_losses">Mağlubiyet</string>
     <string name="profile_win_streak">Galibiyet serisi</string>
     <string name="profile_best_streak">En iyi seri</string>
-    <string name="profile_member_since">%1$s tarihinden beri üye</string>
     <string name="profile_player_title">Oyuncu profili</string>
     <string name="profile_recent_games">Son oyunlar</string>
     <string name="profile_recent_empty">Henüz çevrim içi oyun oynanmadı.</string>
     <string name="profile_recent_show_all">Tümünü göster (%1$d)</string>
     <string name="profile_recent_show_fewer">Daha az göster</string>
-    <string name="profile_recent_result_win">Galibiyet</string>
-    <string name="profile_recent_result_loss">Mağlubiyet</string>
-    <string name="profile_recent_result_draw">Beraberlik</string>
     <string name="profile_recent_unranked">Derecesiz</string>
     <string name="profile_recent_unknown_opponent">Silinmiş oyuncu</string>
 
@@ -294,9 +289,6 @@
     <string name="settings_language">Dil</string>
     <string name="settings_appearance">Görünüm</string>
     <string name="settings_store">Mağaza</string>
-    <string name="settings_theme_system">Sistem</string>
-    <string name="settings_theme_light">Açık</string>
-    <string name="settings_theme_dark">Koyu</string>
     <string name="settings_game_experience">Oyun deneyimi</string>
     <string name="settings_sounds">Sesler</string>
     <string name="settings_sounds_description">Hamle, duvar ve sonuç sesleri.</string>
@@ -388,7 +380,6 @@
     <string name="paint_label">Rengin</string>
     <string name="online_quick_match_hint">Sırada puanı sana en yakın olanla eşleşirsin.</string>
     <string name="nav_home">Ana Sayfa</string>
-    <string name="nav_games">Oyunlar</string>
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Planla. Engelle. Kazan.</string>
     <string name="home_play_subtitle">Hemen bir maç başlat</string>
@@ -519,7 +510,6 @@
     <string name="more_social">Sosyal Medya</string>
     <string name="more_social_hint">Oyunu takip et</string>
     <string name="settings_subtitle">Deneyimini kişiselleştir</string>
-    <string name="settings_theme">Tema</string>
     <string name="settings_account_hint">Giriş, bağlama ve silme</string>
     <string name="settings_ad_privacy_hint">Reklam tercihlerini yönet</string>
     <string name="settings_remove_ads_hint">Kesintisiz oyna</string>
@@ -529,11 +519,6 @@
     <string name="notification_channel_description">Bir süredir oynamadığında gelen ara sıra bir hatırlatma.</string>
     <string name="notification_come_back_title">Tahta hâlâ kurulu</string>
     <string name="notification_come_back_body">Bir süre oldu. Bir maç?</string>
-    <string name="profile_puzzle_title">Günlük bulmaca</string>
-    <string name="profile_puzzle_action">Çöz</string>
-    <string name="profile_soon_badge">Yakında</string>
-    <string name="profile_puzzle_soon_title">Henüz hazır değil</string>
-    <string name="profile_puzzle_soon_body">Günlük bulmaca yolda. Kart, geleceğini bilesin diye burada — bugün çözülecek bir şey yok.</string>
     <string name="profile_badges_action">Görüntüle</string>
     <string name="profile_streak_action">Detaylar</string>
     <string name="profile_recent_letter_win">G</string>
@@ -548,7 +533,6 @@
     <string name="account_privacy_note">Verilerinin nasıl korunduğunu incele.</string>
     <string name="account_terms_note">Kabul ettiğin koşullar.</string>
     <string name="account_or">veya</string>
-    <string name="account_link_email_note">E-posta ve şifre belirle</string>
     <string name="account_sign_up">Kayıt ol</string>
     <string name="account_sign_up_note">Puanın, istatistiklerin ve arkadaşların seninle gelir</string>
     <string name="account_sign_in">Giriş yap</string>
@@ -557,5 +541,4 @@
     <string name="account_sign_in_warning">O hesaba giriş yaparsan misafirken oynadığın her şey — puanın, istatistiklerin ve arkadaşların — kalıcı olarak silinir. Onun yerine o hesabın kendi geçmişi gelir. Hiçbir şey birleştirilmez.</string>
     <string name="account_sign_in_confirm">Yine de giriş yap</string>
     <string name="auth_guest_card_note">Yerel oyunlar oynayabilir ve öğreticiyi bitirebilirsin.</string>
-    <string name="auth_guest_link_note">Arkadaş eklemek ve çevrim içi yarışmak için hesabını bağla.</string>
 </resources>

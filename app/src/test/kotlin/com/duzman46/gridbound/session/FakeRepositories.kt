@@ -11,7 +11,6 @@ import com.duzman46.gridbound.core.UsernameRules
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.GameStatistics
-import com.duzman46.gridbound.domain.models.ThemeMode
 import com.duzman46.gridbound.domain.repository.GameRepository
 import com.duzman46.gridbound.game.models.Difficulty
 import com.duzman46.gridbound.game.models.GameMode
@@ -477,10 +476,6 @@ class FakeGameRepository : GameRepository {
 
     override suspend fun setLanguage(language: AppLanguage) {
         settingsState.value = settingsState.value.copy(language = language)
-    }
-
-    override suspend fun setThemeMode(mode: ThemeMode) {
-        settingsState.value = settingsState.value.copy(themeMode = mode)
     }
 
     override suspend fun setSoundEnabled(enabled: Boolean) {

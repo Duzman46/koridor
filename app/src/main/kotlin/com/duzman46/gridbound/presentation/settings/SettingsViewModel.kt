@@ -8,7 +8,6 @@ import com.duzman46.gridbound.data.StatisticsManager
 import com.duzman46.gridbound.domain.models.AppSettings
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.domain.models.GameStatistics
-import com.duzman46.gridbound.domain.models.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +36,6 @@ class SettingsViewModel @Inject constructor(
         initialValue = SettingsUiState(),
     )
 
-    fun setThemeMode(mode: ThemeMode) = launchUpdate { settingsManager.setThemeMode(mode) }
     fun setLanguage(language: AppLanguage) = launchUpdate { settingsManager.setLanguage(language) }
     fun setSoundEnabled(enabled: Boolean) = launchUpdate { settingsManager.setSoundEnabled(enabled) }
     fun setNotificationsEnabled(enabled: Boolean) =

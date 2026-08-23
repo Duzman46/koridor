@@ -3,13 +3,15 @@ package com.duzman46.gridbound.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,7 +19,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.domain.models.AppLanguage
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import java.util.Locale
 
 /**
@@ -70,11 +72,16 @@ fun LanguagePickerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Scaffold(
-                topBar = { ScreenTopBar(stringResource(R.string.settings_language), onDismiss) },
-                contentWindowInsets = WindowInsets(0),
-            ) { padding ->
-                LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            // The app's own header, not Material's TopAppBar. This dialog fills the window, so
+            // what stood at the top of it was the last full-width Material bar a player could
+            // reach — a different title weight and a different back arrow from the screen they
+            // opened it from.
+            Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                PremiumHeader(
+                    title = stringResource(R.string.settings_language),
+                    onBack = onDismiss,
+                )
+                LazyColumn(Modifier.fillMaxSize().navigationBarsPadding()) {
                     items(AppLanguage.selectable, key = AppLanguage::name) { language ->
                         LanguageRow(
                             language = language,

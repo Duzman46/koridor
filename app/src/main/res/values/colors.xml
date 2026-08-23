@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Must equal LightColors.background in theme/GridboundTheme.kt, or the hand-off from
-     the launch window to Compose flashes. -->
+<!-- Must equal Palette.Ground in theme/PremiumPalette.kt, or the hand-off from the launch
+     window to Compose flashes.
+
+     There is no values-night copy of this any more, and that is the fix rather than a
+     simplification. There were two: this one bound to the light background, and a night one
+     whose comment claimed it equalled the dark background while holding #FF060C0A against the
+     scheme's #FF070A0D. Nobody ever saw the mismatch because the two are 1.006:1 apart, which
+     is exactly how a comment stays false for a release. One theme, one file, one value. -->
 <resources>
-    <color name="window_background">#FFEDF5F0</color>
+    <color name="window_background">#FF070A0D</color>
 </resources>

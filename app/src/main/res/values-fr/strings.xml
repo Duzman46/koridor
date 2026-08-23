@@ -61,7 +61,6 @@
     <string name="auth_link_title">Conserve ta progression</string>
     <string name="auth_link_explainer">Associe un compte pour que ta progression, tes achats et tes amis te suivent sur tous tes appareils.</string>
     <string name="auth_link_with_google">Associer avec Google</string>
-    <string name="auth_link_with_email">Associer par e-mail</string>
     <string name="auth_link_success">Ton compte est associé. Ta progression a été conservée.</string>
     <string name="auth_link_account">Associer un compte</string>
     <string name="auth_existing_account_title">Ce compte existe déjà</string>
@@ -101,15 +100,11 @@
     <string name="profile_losses">Défaites</string>
     <string name="profile_win_streak">Série en cours</string>
     <string name="profile_best_streak">Meilleure série</string>
-    <string name="profile_member_since">Membre depuis %1$s</string>
     <string name="profile_player_title">Profil du joueur</string>
     <string name="profile_recent_games">Parties récentes</string>
     <string name="profile_recent_empty">Aucune partie en ligne jouée pour l\'instant.</string>
     <string name="profile_recent_show_all">Tout afficher (%1$d)</string>
     <string name="profile_recent_show_fewer">Afficher moins</string>
-    <string name="profile_recent_result_win">Victoire</string>
-    <string name="profile_recent_result_loss">Défaite</string>
-    <string name="profile_recent_result_draw">Match nul</string>
     <string name="profile_recent_unranked">Non classée</string>
     <string name="profile_recent_unknown_opponent">Joueur supprimé</string>
 
@@ -279,9 +274,6 @@
     <string name="settings_language">Langue</string>
     <string name="settings_appearance">Apparence</string>
     <string name="settings_store">Boutique</string>
-    <string name="settings_theme_system">Système</string>
-    <string name="settings_theme_light">Clair</string>
-    <string name="settings_theme_dark">Sombre</string>
     <string name="settings_game_experience">Expérience de jeu</string>
     <string name="settings_sounds">Sons</string>
     <string name="settings_sounds_description">Sons des coups, des murs et des résultats.</string>
@@ -370,7 +362,6 @@
     <string name="paint_label">Ta couleur</string>
     <string name="online_quick_match_hint">Tu es apparié au classement le plus proche de la file.</string>
     <string name="nav_home">Accueil</string>
-    <string name="nav_games">Parties</string>
     <string name="nav_profile">Profil</string>
     <string name="home_tagline">Planifie. Bloque. Gagne.</string>
     <string name="home_play_subtitle">Lance une partie maintenant</string>
@@ -501,7 +492,6 @@
     <string name="more_social">Réseaux sociaux</string>
     <string name="more_social_hint">Suivez le jeu</string>
     <string name="settings_subtitle">À votre main</string>
-    <string name="settings_theme">Thème</string>
     <string name="settings_account_hint">Connexion, liaison et suppression</string>
     <string name="settings_ad_privacy_hint">Gérer vos choix publicitaires</string>
     <string name="settings_remove_ads_hint">Jouer sans interruption</string>
@@ -511,11 +501,6 @@
     <string name="notification_channel_description">Le rappel occasionnel quand vous n’avez pas joué depuis un moment.</string>
     <string name="notification_come_back_title">Le plateau est toujours prêt</string>
     <string name="notification_come_back_body">Cela fait un moment. Une partie ?</string>
-    <string name="profile_puzzle_title">Énigme du jour</string>
-    <string name="profile_puzzle_action">Résoudre</string>
-    <string name="profile_soon_badge">Bientôt</string>
-    <string name="profile_puzzle_soon_title">Pas encore prêt</string>
-    <string name="profile_puzzle_soon_body">L\'énigme du jour arrive. La carte est là pour que vous le sachiez — il n\'y a rien à résoudre aujourd\'hui.</string>
     <string name="profile_badges_action">Voir</string>
     <string name="profile_streak_action">Détails</string>
     <string name="profile_recent_letter_win">V</string>
@@ -530,7 +515,6 @@
     <string name="account_privacy_note">Comment vos données sont traitées.</string>
     <string name="account_terms_note">Les conditions que vous avez acceptées.</string>
     <string name="account_or">ou</string>
-    <string name="account_link_email_note">Définissez une adresse et un mot de passe</string>
     <string name="account_sign_up">Créer un compte</string>
     <string name="account_sign_up_note">Votre classement, vos stats et vos amis vous suivent</string>
     <string name="account_sign_in">Se connecter</string>
@@ -539,5 +523,4 @@
     <string name="account_sign_in_warning">Se connecter à ce compte supprime définitivement tout ce que vous avez joué en invité : classement, statistiques et amis. L’historique de ce compte revient à la place. Rien n’est fusionné.</string>
     <string name="account_sign_in_confirm">Se connecter quand même</string>
     <string name="auth_guest_card_note">Jouez en local et terminez le tutoriel.</string>
-    <string name="auth_guest_link_note">Associez un compte pour les amis et le jeu en ligne.</string>
 </resources>

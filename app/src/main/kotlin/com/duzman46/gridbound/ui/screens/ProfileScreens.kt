@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,23 +17,17 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,11 +44,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,33 +68,26 @@ import com.duzman46.gridbound.ui.components.GateTopBar
 import com.duzman46.gridbound.ui.components.ReportDialog
 import com.duzman46.gridbound.ui.components.ScreenBackground
 import com.duzman46.gridbound.ui.components.EmptyState
-import com.duzman46.gridbound.ui.components.SecondarySubmitButton
 import com.duzman46.gridbound.ui.components.LoadingState
 import com.duzman46.gridbound.ui.components.PlayerAvatar
-import com.duzman46.gridbound.ui.components.PremiumNotice
-import com.duzman46.gridbound.ui.components.ScreenTopBar
-import com.duzman46.gridbound.ui.components.SubmitButton
 import com.duzman46.gridbound.navigation.DockedBarSpace
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.home.BadgeAccent
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
 import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
-import com.duzman46.gridbound.ui.components.home.PremiumIconButton
 import com.duzman46.gridbound.ui.components.home.OptionEntry
 import com.duzman46.gridbound.ui.components.home.OptionGroup
 import com.duzman46.gridbound.ui.components.home.ProfileEmptyGames
 import com.duzman46.gridbound.ui.components.home.ProfileFeatureCard
 import com.duzman46.gridbound.ui.components.home.FriendActionButton
-import com.duzman46.gridbound.ui.components.home.ProfileDetailCard
 import com.duzman46.gridbound.ui.components.home.ProfileIdentity as PremiumProfileIdentity
 import com.duzman46.gridbound.ui.components.home.ProfileProgressBar
 import com.duzman46.gridbound.ui.components.home.ProfileStatStrip
 import com.duzman46.gridbound.ui.components.home.SectionLabel
-import com.duzman46.gridbound.ui.components.home.PuzzleAccent
 import com.duzman46.gridbound.ui.components.home.RecentGamesPremium
-import java.text.DateFormat
-import java.util.Date
 
 /**
  * The gate every real account passes through once, before it ever reaches the game.
@@ -141,7 +124,7 @@ fun UsernameScreen(
                     Text(
                         stringResource(R.string.username_explainer),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Palette.InkMuted,
                     )
                     // Gated on the name being available, not merely on it being typed.
                     //
@@ -156,11 +139,13 @@ fun UsernameScreen(
                         onUsername = onUsername,
                         onDone = { if (canContinue && !state.isSubmitting) onSubmit() },
                     )
-                    SubmitButton(
-                        text = stringResource(R.string.action_continue),
+                    PremiumActionButton(
+                        label = stringResource(R.string.action_continue),
                         onClick = onSubmit,
+                        modifier = Modifier.fillMaxWidth(),
+                        filled = true,
                         enabled = canContinue,
-                        isSubmitting = state.isSubmitting,
+                        busy = state.isSubmitting,
                     )
                     state.error?.let { FormMessage(it) }
                 }
@@ -206,16 +191,6 @@ fun ProfileScreen(
     onStatistics: () -> Unit,
     onOpenPlayer: (String) -> Unit,
 ) {
-    var puzzleNotice by remember { mutableStateOf(false) }
-    if (puzzleNotice) {
-        PremiumNotice(
-            title = stringResource(R.string.profile_puzzle_soon_title),
-            message = stringResource(R.string.profile_puzzle_soon_body),
-            icon = PremiumIcon.CALENDAR,
-            onDismiss = { puzzleNotice = false },
-        )
-    }
-
     ScreenBackground {
         if (profile == null) {
             // A null profile is only a loading state when there is an account behind it.
@@ -231,9 +206,12 @@ fun ProfileScreen(
                     // this screen told a guest what to do and then gave them nowhere to
                     // do it — the one screen they would go to in order to do it.
                     action = {
-                        Button(onClick = onAccount) {
-                            Text(stringResource(R.string.auth_link_account))
-                        }
+                        PremiumActionButton(
+                            label = stringResource(R.string.auth_link_account),
+                            onClick = onAccount,
+                            filled = true,
+                            icon = PremiumIcon.PLUS,
+                        )
                     },
                 )
             }
@@ -248,16 +226,13 @@ fun ProfileScreen(
         // every other premium screen does. Inside the scroll, the cards ran up under the status
         // bar and printed themselves across the clock.
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            // No cog. Settings is a tile on the home grid and a row inside More, and this
+            // was a third way to the same place from a screen that already lists two of them.
+            // MoreScreen states the rule this follows: one destination reachable twice from one
+            // screen teaches the player that neither route is real.
             PremiumHeader(
                 title = stringResource(R.string.profile_title),
                 onBack = onBack,
-                trailing = {
-                    PremiumIconButton(
-                        icon = PremiumIcon.COG,
-                        label = stringResource(R.string.game_settings),
-                        onClick = onSettings,
-                    )
-                },
             )
             Column(
                 modifier = Modifier
@@ -298,18 +273,6 @@ fun ProfileScreen(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
                     ) {
-                        // Marked "soon" rather than given the reference's red dot. A dot means
-                        // something is waiting for the player; nothing is, and the button opens
-                        // a notice that says so.
-                        ProfileFeatureCard(
-                            icon = PremiumIcon.PUZZLE,
-                            accent = PuzzleAccent,
-                            title = stringResource(R.string.profile_puzzle_title),
-                            headline = null,
-                            action = stringResource(R.string.profile_puzzle_action),
-                            onAction = { puzzleNotice = true },
-                            badge = stringResource(R.string.profile_soon_badge),
-                        )
                         ProfileFeatureCard(
                             icon = PremiumIcon.TARGET,
                             accent = BadgeAccent,
@@ -444,27 +407,22 @@ private fun PlayerProfileScreen(
     // The player's own name once it is known: a bar reading "Player profile" above a page with
     // their name on it says nothing the page does not already say.
     val title = state.profile?.username ?: stringResource(R.string.profile_player_title)
-    Scaffold(topBar = { ScreenTopBar(title, onBack) }) { padding ->
-        ScreenBackground {
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(title = title, onBack = onBack)
             val profile = state.profile
             if (profile == null) {
                 if (state.isLoading) {
-                    LoadingState(Modifier.padding(padding))
+                    LoadingState()
                 } else {
                     ErrorState(
                         message = (state.error ?: AppError.UNKNOWN.message).asString(),
                         onRetry = onRetry,
-                        modifier = Modifier.padding(padding),
                     )
                 }
-                return@ScreenBackground
+                return@Column
             }
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.TopCenter,
-            ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -498,19 +456,11 @@ private fun PlayerProfileScreen(
                         wins = profile.wins,
                         losses = profile.losses,
                     )
-                    // No streaks and no peak rating. Somebody else's run of form is theirs to
-                    // know: the four public figures are what a stranger needs to size up an
-                    // opponent, and how hot they are running right now is not one of them.
-                    profile.createdAt.takeIf { it > 0L }?.let {
-                        Text(
-                            text = stringResource(
-                                R.string.profile_member_since,
-                                formatDate(it),
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    // No streaks, no peak rating and no join date. The four public figures
+                    // are what a stranger needs to size up an opponent; a join date is not one
+                    // of them, and it was the only unlabelled line on the page — a bare
+                    // sentence floating between the stat strip and the safety actions, in no
+                    // card and under no heading.
                     state.message?.let { FormMessage(it) }
                     SafetyActions(state, onBlock, onReport)
                     SectionLabel(stringResource(R.string.profile_recent_games))
@@ -680,28 +630,6 @@ private fun SafetyActions(
     }
 }
 
-/** A relationship with nothing to press says so in words, never as a disabled button. */
-@Composable
-private fun RelationshipNote(
-    text: String,
-    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = color,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
 
 /**
  * Everything about a player that is theirs to set — with one exception that depends on who
@@ -726,23 +654,21 @@ fun EditProfileScreen(
     onLinkAccount: () -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Scaffold(
-        topBar = { ScreenTopBar(stringResource(R.string.profile_edit_title), onBack) },
-    ) { padding ->
-        ScreenBackground {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.TopCenter,
-            ) {
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            PremiumHeader(
+                title = stringResource(R.string.profile_edit_title),
+                onBack = onBack,
+            )
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 620.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                        .navigationBarsPadding()
+                        .padding(Dimens.SpaceLg),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
                 ) {
                     if (canChangeUsername) {
                         UsernameField(
@@ -753,16 +679,14 @@ fun EditProfileScreen(
                     } else {
                         GuestUsernameNote(onLinkAccount)
                     }
-                    Text(
-                        stringResource(R.string.profile_avatar_label),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                    SectionLabel(stringResource(R.string.profile_avatar_label))
                     AvatarPicker(state.avatarId, state.username.value, onAvatar)
-                    SubmitButton(
-                        text = stringResource(R.string.action_save),
+                    PremiumActionButton(
+                        label = stringResource(R.string.action_save),
                         onClick = onSubmit,
-                        isSubmitting = state.isSubmitting,
+                        modifier = Modifier.fillMaxWidth(),
+                        filled = true,
+                        busy = state.isSubmitting,
                     )
                     state.error?.let { FormMessage(it) }
                 }
@@ -828,12 +752,14 @@ private fun GuestUsernameNote(onLinkAccount: () -> Unit) {
         Text(
             stringResource(R.string.profile_username_guest_explainer),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Palette.InkMuted,
         )
-        SubmitButton(
-            text = stringResource(R.string.auth_link_account),
+        PremiumActionButton(
+            label = stringResource(R.string.auth_link_account),
             onClick = onLinkAccount,
-            leadingIcon = Icons.Rounded.PersonAdd,
+            modifier = Modifier.fillMaxWidth(),
+            filled = true,
+            icon = PremiumIcon.PLUS,
         )
     }
 }
@@ -905,7 +831,3 @@ private fun UsernameField(
         }
     }
 }
-
-/** Uses the platform formatter so the date follows the active locale. */
-private fun formatDate(epochMillis: Long): String =
-    DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epochMillis))

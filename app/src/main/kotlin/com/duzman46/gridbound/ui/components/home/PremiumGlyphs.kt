@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The home screen's icon set: the plain, universal marks a player already knows.
@@ -697,7 +698,7 @@ private fun DrawScope.shieldStar(s: Float, tint: Color) {
         if (index == 0) star.moveTo(x, y) else star.lineTo(x, y)
     }
     star.close()
-    drawPath(star, Color(0xFF0E1216))
+    drawPath(star, Palette.Card)
 }
 
 private fun DrawScope.house(s: Float, tint: Color) {
@@ -716,7 +717,7 @@ private fun DrawScope.house(s: Float, tint: Color) {
     )
     // A door punched through, so the mass reads as a house rather than an arrow.
     drawRoundRect(
-        Color(0xFF0D1115),
+        Palette.Card,
         Offset(s * 0.40f, s * 0.58f),
         Size(s * 0.20f, s * 0.32f),
         CornerRadius(s * 0.04f),
@@ -734,7 +735,7 @@ private fun DrawScope.gamepad(s: Float, tint: Color) {
     drawCircle(tint, s * 0.145f, Offset(s * 0.20f, s * 0.72f))
     drawCircle(tint, s * 0.145f, Offset(s * 0.80f, s * 0.72f))
     // The pad and two buttons, punched out.
-    val hole = Color(0xFF0D1115)
+    val hole = Palette.Card
     drawRoundRect(hole, Offset(s * 0.16f, s * 0.455f), Size(s * 0.20f, s * 0.07f), CornerRadius(s * 0.035f))
     drawRoundRect(hole, Offset(s * 0.225f, s * 0.39f), Size(s * 0.07f, s * 0.20f), CornerRadius(s * 0.035f))
     drawCircle(hole, s * 0.055f, Offset(s * 0.70f, s * 0.43f))
@@ -780,7 +781,7 @@ private fun DrawScope.cog(s: Float, tint: Color, line: Float) {
     }
     path.close()
     drawPath(path, tint)
-    drawCircle(Color(0xFF11151A), s * 0.155f, Offset(s * 0.5f, s * 0.5f))
+    drawCircle(Palette.Card, s * 0.155f, Offset(s * 0.5f, s * 0.5f))
     drawCircle(tint, s * 0.155f, Offset(s * 0.5f, s * 0.5f), style = Stroke(line * 0.5f))
 }
 
@@ -816,7 +817,7 @@ private fun DrawScope.puzzle(s: Float, tint: Color) {
         tint,
     )
     // The socket, punched with the tile behind it. Same reason the flame's core is punched.
-    drawCircle(Color(0xFF12161B), knob, Offset(left, s * 0.58f))
+    drawCircle(Palette.Card, knob, Offset(left, s * 0.58f))
 }
 
 /** Two rings and a dart in the middle: something aimed at, and hit. */
@@ -882,7 +883,7 @@ private fun DrawScope.flame(s: Float, tint: Color) {
             cubicTo(s * 0.36f, s * 0.68f, s * 0.40f, s * 0.58f, s * 0.50f, s * 0.48f)
             close()
         },
-        Color(0xFF12161B),
+        Palette.Card,
     )
 }
 

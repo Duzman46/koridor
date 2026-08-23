@@ -3,15 +3,14 @@ package com.duzman46.gridbound.ui.screens
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.style.TextOverflow
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.ui.components.home.BotLevelRow
 import com.duzman46.gridbound.ui.components.home.FieldLabel
-import com.duzman46.gridbound.ui.components.home.GoldSubmit
 import com.duzman46.gridbound.ui.components.home.HomeHero
 import com.duzman46.gridbound.ui.components.home.HomeSceneShare
 import com.duzman46.gridbound.ui.components.home.PlayModeCard
-import com.duzman46.gridbound.ui.components.home.PremiumBackArrow
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
+import com.duzman46.gridbound.ui.components.home.PremiumHeader
 import com.duzman46.gridbound.ui.components.home.PremiumIcon
 import com.duzman46.gridbound.ui.components.home.SeatCard
 import androidx.compose.foundation.background
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.game.board.SeatColors
 import com.duzman46.gridbound.game.models.Difficulty
@@ -79,23 +76,15 @@ fun PlayModeScreen(
                 .weight(HomeSceneShare),
         ) {
             HomeHero(Modifier.fillMaxSize())
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PremiumBackArrow(onBack)
-                Text(
-                    text = stringResource(R.string.menu_play),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            // The app's one header, over the picture rather than instead of it. This was a
+            // hand-built row here, another on the difficulty screen and a third in the lobby —
+            // three copies of an arrow and a gold word, and the only thing they did differently
+            // from PremiumHeader was set the title SemiBold instead of Bold.
+            PremiumHeader(
+                title = stringResource(R.string.menu_play),
+                onBack = onBack,
+                modifier = Modifier.statusBarsPadding(),
+            )
         }
         Column(
             Modifier
@@ -170,23 +159,11 @@ fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> U
                 .weight(DIFFICULTY_SCENE_SHARE),
         ) {
             HomeHero(Modifier.fillMaxSize())
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = Dimens.SpaceSm, vertical = Dimens.SpaceSm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PremiumBackArrow(onBack)
-                Text(
-                    text = stringResource(R.string.difficulty_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = KoridorGold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            PremiumHeader(
+                title = stringResource(R.string.difficulty_title),
+                onBack = onBack,
+                modifier = Modifier.statusBarsPadding(),
+            )
         }
         Column(
             Modifier
@@ -236,10 +213,12 @@ fun DifficultyScreen(onBack: () -> Unit, onSelected: (Difficulty, PlayerId) -> U
                 )
             }
 
-            GoldSubmit(
+            PremiumActionButton(
                 label = stringResource(R.string.difficulty_start),
                 onClick = { onSelected(level, seat) },
-                mark = { drawStartTriangle(Color(0xFF1A1206)) },
+                modifier = Modifier.fillMaxWidth(),
+                filled = true,
+                mark = { drawStartTriangle(Palette.GoldInk) },
             )
         }
     }

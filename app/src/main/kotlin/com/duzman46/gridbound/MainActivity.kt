@@ -2,9 +2,11 @@ package com.duzman46.gridbound
 
 import android.Manifest
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -70,7 +72,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Pinned to dark, not left on the default, and this fixes a bug that was shipping.
+        //
+        // `enableEdgeToEdge()` with no arguments uses `SystemBarStyle.auto`, and auto decides
+        // which way to draw the status-bar icons from `resources.configuration.uiMode` — the
+        // *operating system's* night setting. That has never been the same thing as the app's
+        // own theme. A player whose phone was in light mode got black clock, battery and signal
+        // glyphs painted over this app's #070A0D: a contrast ratio of 1.06:1, which is to say
+        // the top of their screen was blank for the whole session.
+        //
+        // Now that there is one theme, the premise auto is trying to guess at is simply true —
+        // there is always a near-black behind those bars — so it is stated instead of guessed.
+        // Leaving it on auto would keep consulting the OS and keep being wrong half the time.
+        // `SystemBarStyle.dark` means "a dark background is behind this bar, draw light icons".
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         Notifications.ensureChannel(this)
         // Stamps "the app was opened" and makes sure the daily check is scheduled. Both live
         // together in the worker's companion, because the timestamp is the only thing the
@@ -99,7 +117,7 @@ class MainActivity : ComponentActivity() {
             // The locale wraps the theme so a language change also re-lays-out right-to-left
             // scripts, not just the strings inside them.
             ProvideAppLocale(settings.language) {
-                GridboundTheme(settings) {
+                GridboundTheme {
                     CompositionLocalProvider(LocalHapticsManager provides haptics) {
                     AppNavigation(
                         session = session,

@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
@@ -57,7 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The online lobby's surfaces.
@@ -103,19 +101,18 @@ private fun Modifier.pressLayer(scale: Float, shape: Shape): Modifier = graphics
     clip = true
 }
 
-/** The queue card's ground and the gold control's two fills. Built once; they never change. */
-private val QueueCardFill = Brush.verticalGradient(listOf(Color(0xFF12151A), Color(0xFF0C0F13)))
-private val GoldResting =
-    Brush.horizontalGradient(listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47)))
-private val GoldPressed =
-    Brush.horizontalGradient(listOf(Color(0xFFB98F3F), Color(0xFFCEA75B)))
+/** The queue card's ground. Built once; it never changes. */
+private val QueueCardFill = Brush.verticalGradient(listOf(Palette.Card, Palette.Ground))
 
 /**
- * The queue, and the only filled gold control in the app.
+ * The queue, and the only filled gold control on this screen.
  *
- * Everything else that is gold is an edge, a mark or a word; this is a slab of it, and that is
+ * Everything else gold here is an edge, a mark or a word; this is a slab of it, and that is
  * deliberate — it is the single action the whole screen exists to offer, and the two cards
- * under it are alternatives to it rather than peers of it.
+ * under it are alternatives to it rather than peers of it. "Only in the app" is what this line
+ * used to claim, and it was never true: the forms had their own filled gold button and so did
+ * the leaderboard. What is true now is that all three are the same [PremiumActionButton], so
+ * "filled" means one thing wherever a player meets it.
  *
  * The crest is a pawn wearing a crown inside a laurel. It is the only heraldic thing in the app
  * and it is here because this is the only ranked surface: a match from this queue moves a
@@ -137,7 +134,7 @@ fun RankedQueueCard(
             .fillMaxWidth()
             .clip(shape)
             .background(QueueCardFill)
-            .border(BorderStroke(1.dp, Color(0xFF2A3038)), shape)
+            .border(BorderStroke(1.dp, Palette.InkGlyph), shape)
             .padding(Dimens.SpaceLg),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
@@ -158,60 +155,18 @@ fun RankedQueueCard(
                 Text(
                     text = hint,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF8B9098),
+                    color = Palette.InkMuted,
                 )
             }
         }
-        GoldButton(label = action, onClick = onClick, busy = busy)
-    }
-}
-
-/** The one filled gold control. Bolt, rule, label — the same three parts the mockup asks for. */
-@Composable
-private fun GoldButton(label: String, onClick: () -> Unit, busy: Boolean) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val shape = RoundedCornerShape(14.dp)
-    val ink = Color(0xFF1A1206)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            // Click outside the scale. See pressScale.
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                enabled = !busy,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics { contentDescription = label }
-            .pressLayer(pressScale(pressed), shape)
-            .background(if (pressed) GoldPressed else GoldResting)
-            .heightIn(min = 56.dp)
-            .padding(horizontal = Dimens.SpaceLg),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (busy) {
-            CircularProgressIndicator(Modifier.size(22.dp), color = ink, strokeWidth = 2.dp)
-        } else {
-            Canvas(Modifier.size(22.dp)) { drawBolt(ink) }
-            Box(
-                Modifier
-                    .padding(horizontal = Dimens.SpaceLg)
-                    .height(26.dp)
-                    .width(Dimens.Hairline)
-                    .background(ink.copy(alpha = 0.35f)),
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = ink,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        PremiumActionButton(
+            label = action,
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            filled = true,
+            busy = busy,
+            icon = PremiumIcon.BOLT,
+        )
     }
 }
 
@@ -257,11 +212,11 @@ fun RowScope.LobbyActionCard(
             Modifier
                 .size(38.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF161B21))
-                .border(BorderStroke(Dimens.Hairline, Color(0xFF2A3038)), CircleShape),
+                .background(Palette.Inset)
+                .border(BorderStroke(Dimens.Hairline, Palette.Edge), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            PremiumGlyph(icon, Modifier.size(18.dp), tint = KoridorGold)
+            PremiumGlyph(icon, Modifier.size(18.dp), tint = Palette.Gold)
         }
         Text(
             text = label,
@@ -319,7 +274,7 @@ fun LobbySectionHeader(title: String, refreshLabel: String, onRefresh: () -> Uni
                 text = refreshLabel,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
-                color = KoridorGold,
+                color = Palette.Gold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -364,7 +319,7 @@ fun EmptyRoomsPanel(title: String, hint: String, modifier: Modifier = Modifier) 
                 Text(
                     text = hint,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6F747B),
+                    color = Palette.InkMuted,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -387,7 +342,7 @@ private fun DrawScope.drawRankedCrest() {
     val s = size.minDimension
     val centre = Offset(s * 0.5f, s * 0.56f)
     val ring = s * 0.30f
-    drawCircle(KoridorGold.copy(alpha = 0.45f), ring, centre, style = Stroke(s * 0.016f))
+    drawCircle(Palette.Gold.copy(alpha = 0.45f), ring, centre, style = Stroke(s * 0.016f))
 
     // The crown, clear above the ring with air under it.
     drawPath(
@@ -401,13 +356,13 @@ private fun DrawScope.drawRankedCrest() {
             lineTo(s * 0.63f, s * 0.19f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
 
     // Pawn: head, collar, body, base — the same silhouette the board uses.
-    drawCircle(KoridorGold, s * 0.058f, Offset(s * 0.5f, s * 0.455f))
+    drawCircle(Palette.Gold, s * 0.058f, Offset(s * 0.5f, s * 0.455f))
     drawRoundRect(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.437f, s * 0.515f),
         Size(s * 0.126f, s * 0.026f),
         CornerRadius(s * 0.013f),
@@ -420,10 +375,10 @@ private fun DrawScope.drawRankedCrest() {
             cubicTo(s * 0.572f, s * 0.625f, s * 0.557f, s * 0.60f, s * 0.548f, s * 0.545f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
     drawRoundRect(
-        KoridorGold,
+        Palette.Gold,
         Offset(s * 0.395f, s * 0.65f),
         Size(s * 0.21f, s * 0.032f),
         CornerRadius(s * 0.016f),
@@ -449,7 +404,7 @@ private fun DrawScope.drawRankedCrest() {
         }
         drawPath(
             stem,
-            KoridorGold.copy(alpha = 0.45f),
+            Palette.Gold.copy(alpha = 0.45f),
             style = Stroke(width = s * 0.013f, cap = StrokeCap.Round),
         )
 
@@ -463,7 +418,7 @@ private fun DrawScope.drawRankedCrest() {
                 rotate(degrees = side * (degrees.toFloat() + 38f), pivot = Offset.Zero)
             }) {
                 drawOval(
-                    color = KoridorGold.copy(alpha = 0.85f - index * 0.09f),
+                    color = Palette.Gold.copy(alpha = 0.85f - index * 0.09f),
                     topLeft = Offset(-s * 0.05f, -s * 0.021f),
                     size = Size(s * 0.10f, s * 0.042f),
                 )
@@ -472,30 +427,13 @@ private fun DrawScope.drawRankedCrest() {
     }
 }
 
-/** A lightning bolt, for the control that puts you in the queue. */
-private fun DrawScope.drawBolt(tint: Color) {
-    val s = size.minDimension
-    drawPath(
-        Path().apply {
-            moveTo(s * 0.58f, s * 0.04f)
-            lineTo(s * 0.20f, s * 0.56f)
-            lineTo(s * 0.45f, s * 0.56f)
-            lineTo(s * 0.38f, s * 0.96f)
-            lineTo(s * 0.80f, s * 0.42f)
-            lineTo(s * 0.53f, s * 0.42f)
-            close()
-        },
-        tint,
-    )
-}
-
 /** Two arrows chasing each other round a circle. */
 private fun DrawScope.drawRefresh() {
     val s = size.minDimension
     val stroke = s * 0.10f
     listOf(0f, 180f).forEach { start ->
         drawArc(
-            color = KoridorGold,
+            color = Palette.Gold,
             startAngle = start + 20f,
             sweepAngle = 140f,
             useCenter = false,
@@ -512,7 +450,7 @@ private fun DrawScope.drawRefresh() {
             lineTo(s * 0.64f, s * 0.16f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
     drawPath(
         Path().apply {
@@ -521,7 +459,7 @@ private fun DrawScope.drawRefresh() {
             lineTo(s * 0.36f, s * 0.84f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
 }
 
@@ -531,7 +469,7 @@ private fun DrawScope.drawCornerBrackets() {
     val h = size.height
     val arm = 22.dp.toPx()
     val stroke = 1.dp.toPx()
-    val ink = Color(0xFF2A3038)
+    val ink = Palette.InkGlyph
     val corners = listOf(
         Offset(0f, 0f) to Pair(1f, 1f),
         Offset(w, 0f) to Pair(-1f, 1f),
@@ -564,11 +502,11 @@ private fun DrawScope.drawCornerBrackets() {
 private fun DrawScope.drawEmptyDoorway() {
     val s = size.minDimension
     val stroke = s * 0.018f
-    val ink = KoridorGold.copy(alpha = 0.75f)
+    val ink = Palette.Gold.copy(alpha = 0.75f)
 
     // The arc the scene sits in, open at the bottom.
     drawArc(
-        color = KoridorGold.copy(alpha = 0.35f),
+        color = Palette.Gold.copy(alpha = 0.35f),
         startAngle = 155f,
         sweepAngle = 230f,
         useCenter = false,
@@ -600,7 +538,7 @@ private fun DrawScope.drawEmptyDoorway() {
 
     // The floor it stands on.
     drawLine(
-        KoridorGold.copy(alpha = 0.45f),
+        Palette.Gold.copy(alpha = 0.45f),
         Offset(s * 0.24f, s * 0.80f),
         Offset(s * 0.80f, s * 0.80f),
         strokeWidth = stroke,
@@ -628,12 +566,12 @@ private fun DrawScope.drawEmptyDoorway() {
         Triple(0.78f, 0.34f, 0.013f),
         Triple(0.84f, 0.52f, 0.009f),
     ).forEach { (x, y, r) ->
-        drawCircle(KoridorGold.copy(alpha = 0.6f), s * r, Offset(s * x, s * y))
+        drawCircle(Palette.Gold.copy(alpha = 0.6f), s * r, Offset(s * x, s * y))
     }
 
     // And a dashed suggestion of the threshold.
     drawLine(
-        KoridorGold.copy(alpha = 0.30f),
+        Palette.Gold.copy(alpha = 0.30f),
         Offset(s * 0.62f, s * 0.80f),
         Offset(s * 0.86f, s * 0.80f),
         strokeWidth = stroke * 0.8f,

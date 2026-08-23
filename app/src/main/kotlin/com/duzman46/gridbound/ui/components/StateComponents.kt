@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Inbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -19,11 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.core.UiText
 import com.duzman46.gridbound.core.asString
+import com.duzman46.gridbound.theme.Palette
+import com.duzman46.gridbound.ui.components.home.PremiumActionButton
+import com.duzman46.gridbound.ui.components.home.PremiumGlyph
+import com.duzman46.gridbound.ui.components.home.PremiumIcon
 
 /**
  * The loading, empty and error treatments every screen shares, so the states look and behave
@@ -43,11 +45,11 @@ fun LoadingState(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = Palette.Gold, strokeWidth = 2.dp)
             Text(
                 stringResource(R.string.state_loading),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Palette.InkMuted,
             )
         }
     }
@@ -57,7 +59,7 @@ fun LoadingState(modifier: Modifier = Modifier) {
 fun EmptyState(
     message: String,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Rounded.Inbox,
+    icon: PremiumIcon = PremiumIcon.INFO,
     title: String = stringResource(R.string.state_empty_title),
     /** Whatever the message tells the player to do, so the screen is not a dead end. */
     action: @Composable (() -> Unit)? = null,
@@ -72,13 +74,18 @@ fun ErrorState(
     modifier: Modifier = Modifier,
 ) {
     InfoState(
-        icon = Icons.Rounded.ErrorOutline,
+        icon = PremiumIcon.SHIELD_STAR,
         title = stringResource(R.string.state_error_title),
         message = message,
         modifier = modifier,
         tint = MaterialTheme.colorScheme.error,
     ) {
-        Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
+        PremiumActionButton(
+            label = stringResource(R.string.action_retry),
+            onClick = onRetry,
+            filled = true,
+            icon = PremiumIcon.REPLAY,
+        )
     }
 }
 
@@ -112,8 +119,20 @@ fun FormMessage(
 }
 
 /**
- * A primary button that shows progress and refuses further taps while busy, which is how
- * every submit in the app avoids sending a duplicate request.
+ * The last Material button family in the app, and **neither of these has a call site.**
+ *
+ * Every submit in the app now draws
+ * [com.duzman46.gridbound.ui.components.home.PremiumActionButton], which already had the
+ * identical busy-spinner-replaces-the-mark behaviour and a better-documented reason for it — so
+ * a form's button and the button on the screen either side of it stopped being two
+ * near-identical things, which is exactly the seam an eye finds. [SecondarySubmitButton] never
+ * had a call site at all: three screens imported it and none of them invoked it.
+ *
+ * They stay here for one reason and it is not a design one. A screen this change does not own
+ * still carries dead `import` lines for both, and an import of a symbol that does not exist is
+ * a compile error where an unused one is only a warning. Delete those imports in
+ * `AccountScreen.kt` and both of these go, taking `Button` and `OutlinedButton` out of the
+ * codebase with them.
  */
 @Composable
 fun SubmitButton(
@@ -163,13 +182,22 @@ fun SecondarySubmitButton(
     }
 }
 
+/**
+ * The shared body of [EmptyState] and [ErrorState].
+ *
+ * The mark is a [PremiumIcon] rather than a Material `ImageVector`, and that is the whole of
+ * what changed here. These three states are where a player lands when a leaderboard is empty or
+ * a lobby will not load — inside screens of gold-edged cards — and they were answering with
+ * Material's inbox tray, Material's outlined error circle and a Material filled button. Three
+ * borrowed shapes in the one place the app has nothing else to show.
+ */
 @Composable
 private fun InfoState(
-    icon: ImageVector,
+    icon: PremiumIcon,
     title: String,
     message: String,
     modifier: Modifier = Modifier,
-    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    tint: Color = Palette.InkGlyph,
     action: @Composable (() -> Unit)? = null,
 ) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -178,12 +206,12 @@ private fun InfoState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(44.dp), tint = tint)
+            PremiumGlyph(icon, Modifier.size(44.dp), tint)
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
                 message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Palette.InkMuted,
                 textAlign = TextAlign.Center,
             )
             action?.invoke()

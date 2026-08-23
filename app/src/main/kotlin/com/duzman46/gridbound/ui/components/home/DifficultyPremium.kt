@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -38,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * How hard the bot plays, as four things you can tell apart at a glance.
@@ -81,8 +80,8 @@ fun BotLevelRow(
             )
             .semantics(mergeDescendants = true) { contentDescription = "$title. $subtitle" }
             .clip(shape)
-            .background(if (chosen) KoridorGold.copy(alpha = 0.07f) else Color(0xFF12161B))
-            .border(BorderStroke(if (chosen) 1.5.dp else 1.dp, if (chosen) KoridorGold else FieldEdge), shape)
+            .background(if (chosen) Palette.Gold.copy(alpha = 0.07f) else Palette.Card)
+            .border(BorderStroke(if (chosen) 1.5.dp else 1.dp, if (chosen) Palette.Gold else Palette.Edge), shape)
             // A floor, not a height. The screen no longer scrolls, so four of these share what
             // the scene and the colour cards leave — and on a short phone that is less than the
             // ninety-two a fixed row would have insisted on.
@@ -97,14 +96,14 @@ fun BotLevelRow(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (chosen) KoridorGold else MaterialTheme.colorScheme.onSurface,
+                color = if (chosen) Palette.Gold else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -119,7 +118,7 @@ fun BotLevelRow(
                         Modifier
                             .size(9.dp)
                             .clip(CircleShape)
-                            .background(if (index < rank) KoridorGold else Color(0xFF3A414A)),
+                            .background(if (index < rank) Palette.Gold else Palette.InkGlyph),
                     )
                 }
             }
@@ -128,9 +127,9 @@ fun BotLevelRow(
                     Modifier
                         .size(30.dp)
                         .clip(CircleShape)
-                        .background(KoridorGold),
+                        .background(Palette.Gold),
                     contentAlignment = Alignment.Center,
-                ) { Canvas(Modifier.size(15.dp)) { drawTick(Color(0xFF1A1206)) } }
+                ) { Canvas(Modifier.size(15.dp)) { drawTick(Palette.GoldInk) } }
             }
         }
     }
@@ -147,7 +146,7 @@ const val BOT_LEVELS = 4
  */
 private fun DrawScope.drawBotMark(rank: Int) {
     when (rank) {
-        1 -> drawPawn(KoridorGold.copy(alpha = 0.85f))
+        1 -> drawPawn(Palette.Gold.copy(alpha = 0.85f))
         2 -> drawScales()
         3 -> drawTower()
         else -> drawBigCrown()
@@ -158,7 +157,7 @@ private fun DrawScope.drawBotMark(rank: Int) {
 private fun DrawScope.drawScales() {
     val s = size.minDimension
     val line = s * 0.055f
-    val tint = KoridorGold
+    val tint = Palette.Gold
     // The column and its foot.
     drawLine(tint, Offset(s * 0.5f, s * 0.16f), Offset(s * 0.5f, s * 0.80f), line, StrokeCap.Round)
     drawRoundRect(tint, Offset(s * 0.30f, s * 0.80f), Size(s * 0.40f, s * 0.07f), CornerRadius(s * 0.035f))
@@ -188,7 +187,7 @@ private fun DrawScope.drawScales() {
 /** A tower with battlements. The bot that has dug in. */
 private fun DrawScope.drawTower() {
     val s = size.minDimension
-    val tint = KoridorGold
+    val tint = Palette.Gold
     drawPath(
         Path().apply {
             moveTo(s * 0.24f, s * 0.30f)
@@ -217,7 +216,7 @@ private fun DrawScope.drawTower() {
 /** A crown, filled. The bot that outranks you. */
 private fun DrawScope.drawBigCrown() {
     val s = size.minDimension
-    val tint = KoridorGold
+    val tint = Palette.Gold
     drawPath(
         Path().apply {
             moveTo(s * 0.16f, s * 0.68f)
@@ -234,6 +233,6 @@ private fun DrawScope.drawBigCrown() {
     drawRoundRect(tint, Offset(s * 0.16f, s * 0.72f), Size(s * 0.68f, s * 0.10f), CornerRadius(s * 0.05f))
     // Three stones set along it, because a flat crown reads as a bar chart.
     listOf(0.28f, 0.5f, 0.72f).forEach { x ->
-        drawCircle(Color(0xFF12161B), s * 0.035f, Offset(s * x, s * 0.58f))
+        drawCircle(Palette.Card, s * 0.035f, Offset(s * x, s * 0.58f))
     }
 }

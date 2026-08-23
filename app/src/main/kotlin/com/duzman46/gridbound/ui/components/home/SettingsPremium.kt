@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -23,30 +22,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.duzman46.gridbound.theme.Dimens
 import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * A setting whose answer is a value rather than yes or no.
  *
- * Two of them, side by side, and only two: the reference has four across the top and two of the
- * four are duplicates — a tile called "Ses / Açık" over a switch called "Sesler", and a tile
- * called "Arayüz / Sistem" beside one called "Tema / Koyu". Language and theme are the only
- * settings in this app whose answer is one of several named things, so they are the only tiles.
+ * There is exactly one — language — and there used to be two. The reference this screen was
+ * measured against has four tiles across the top and two of the four are duplicates: a tile
+ * called "Ses / Açık" over a switch called "Sesler", and a tile called "Arayüz / Sistem" beside
+ * one called "Tema / Koyu". The rule that killed those also killed this component's sibling:
+ * a tile earns its place only when the answer is one of several named things. The app is
+ * dark-only now, so theme is not one of those, and the tile that offered it is gone rather than
+ * reduced to a control with a single answer.
+ *
+ * **Which is why this is full width and takes no [androidx.compose.foundation.layout.RowScope].**
+ * It was `RowScope.SettingsTile` with `weight(1f)`, because there were two of them side by side.
+ * With one left, a half-width card with dead space beside it would be a visible hole where a
+ * setting used to be — the interface admitting it had been edited. It keeps its 108 dp minimum
+ * height, its glyph well and its value line; only its width changed.
  *
  * The current answer is on the face of the tile. A control that opens a chooser without saying
  * what it is currently set to makes the player open it to find out.
  */
 @Composable
-fun RowScope.SettingsTile(
+fun SettingsTile(
     icon: PremiumIcon,
     label: String,
     value: String,
@@ -55,10 +62,12 @@ fun RowScope.SettingsTile(
     val shape = RoundedCornerShape(18.dp)
     Column(
         Modifier
-            .weight(1f)
+            .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF12161B))
-            .border(BorderStroke(1.dp, FieldEdge), shape)
+            .background(Palette.Card)
+            // InkGlyph rather than the decorative Edge: this hairline is the whole boundary of a
+            // tappable card, so it is the affordance and has to clear 3:1 (4.50:1 on Card).
+            .border(BorderStroke(1.dp, Palette.InkGlyph), shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -96,58 +105,10 @@ fun RowScope.SettingsTile(
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF7A7F86),
+                color = Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        }
-    }
-}
-
-/**
- * The theme chooser.
- *
- * A dialog rather than the full screen the language picker takes, and the difference is the list:
- * eleven languages is something a player reads, three themes is something they glance at.
- */
-@Composable
-fun ThemePickerDialog(
-    title: String,
-    options: List<String>,
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        val shape = RoundedCornerShape(22.dp)
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(Color(0xFF12161B))
-                .border(BorderStroke(1.dp, FieldEdge), shape)
-                .padding(Dimens.SpaceLg),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-        ) {
-            DialogCrest(mark = { drawPremiumIcon(PremiumIcon.CONTRAST, KoridorGold) })
-            Text(
-                text = title,
-                modifier = Modifier.padding(vertical = Dimens.SpaceXs),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            // No mark beside the three. "Sistem", "Açık" and "Koyu" are one word each and the
-            // ring at the trailing edge already says which is chosen; a sun and a moon here
-            // would be decoration on a list that is three words long.
-            options.forEachIndexed { index, label ->
-                ChoiceRow(
-                    label = label,
-                    chosen = index == selected,
-                    onClick = { onSelect(index) },
-                )
-            }
         }
     }
 }

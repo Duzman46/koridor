@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +30,7 @@ import androidx.compose.ui.window.Dialog
 import com.duzman46.gridbound.R
 import com.duzman46.gridbound.social.domain.ContentReportReason
 import com.duzman46.gridbound.theme.Dimens
+import com.duzman46.gridbound.theme.Palette
 import com.duzman46.gridbound.theme.KoridorGold
 import com.duzman46.gridbound.ui.components.home.ChoiceRow
 import com.duzman46.gridbound.ui.components.home.DialogCrest
@@ -90,7 +90,7 @@ fun ReportDialog(
                 Text(
                     text = stringResource(R.string.report_message),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF8B9098),
+                    color = Palette.InkMuted,
                     textAlign = TextAlign.Center,
                 )
                 Column(
@@ -137,7 +137,7 @@ private fun PanelNote(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall,
-        color = Color(0xFF6F747B),
+        color = Palette.InkMuted,
         textAlign = TextAlign.Center,
     )
 }

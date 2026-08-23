@@ -7,14 +7,23 @@ import androidx.compose.ui.graphics.Color
 /**
  * The colour roles Material3 has no slot for.
  *
- * Two invariants live here, and both exist because breaking them produces something that
- * looks fine in the IDE preview and fails on a real screen:
+ * One invariant lives here, and it exists because breaking it produces something that looks
+ * fine in the IDE preview and fails on a real screen:
  *
- * - `colorScheme.primary` is a **fill**. When the accent has to be text or an icon, use
- *   `colorScheme.secondary`, which is the same hue darkened enough to be read as ink.
- * - `live` is the ember, and it is budgeted: at most one live control on a screen, and never
- *   on a screen that draws a board. Warm already belongs to a seat wherever there are pawns,
- *   and two warm accents in one frame make neither of them mean anything.
+ * - `live` is the ember, and it is budgeted: at most one live control on a screen, and no
+ *   PERSISTENT live control on a screen that draws a board. Warm already belongs to a seat
+ *   wherever there are pawns, and two standing warm accents in one frame make neither of them
+ *   mean anything.
+ *
+ *   The move clock in its last seconds is the one exemption, and it is worth writing down why
+ *   rather than leaving the next reader to think the rule simply broke. What that clock used to
+ *   paint was `errorContainer` — a role this app never set, so it resolved to Material's own
+ *   baseline crimson `#8C1D18`, a filled slab of a hue that appears nowhere else in Koridor,
+ *   eight dp under a gold-edged card. So the choice was never warm against not-warm; it was the
+ *   app's own ember against a framework's default. The ember is also transient and it is
+ *   *earned*: it appears only while a turn is genuinely running out, which is the one moment the
+ *   screen should be shouting. And it costs less warm area than what it replaced — a border, four
+ *   digits and a near-black wash, where there used to be a filled bar.
  */
 @Immutable
 data class KoridorColors(
@@ -44,9 +53,8 @@ data class KoridorColors(
  *
  * Each tone is a pair, because a tinted square has two jobs and one value cannot do both:
  * [Tone.fill] is the square, mixed to sit a step off the card behind it, and [Tone.ink] is the
- * glyph on it, which has to clear 3:1 on that square in both themes. The dark inks are close
- * to the source hue; the light fills are much paler than their inks, because on white paper a
- * fill saturated enough to be seen is far too dark to draw a glyph on.
+ * glyph on it, which has to clear 3:1 on that square. The inks stay close to the source hue;
+ * the fills are that hue taken down until a near-black page can still be seen behind it.
  */
 @Immutable
 data class AccentPalette(
@@ -81,33 +89,11 @@ private val DarkAccents = AccentPalette(
     system = AccentPalette.Tone(fill = Color(0xFF232B28), ink = Color(0xFFB9CCC4)),
 )
 
-private val LightAccents = AccentPalette(
-    online = AccentPalette.Tone(fill = Color(0xFFD3F0E2), ink = Color(0xFF00694A)),
-    bot = AccentPalette.Tone(fill = Color(0xFFE6E0FB), ink = Color(0xFF5334B8)),
-    local = AccentPalette.Tone(fill = Color(0xFFDCE8FB), ink = Color(0xFF1A4E93)),
-    learn = AccentPalette.Tone(fill = Color(0xFFFAE6CE), ink = Color(0xFF8A4B08)),
-    social = AccentPalette.Tone(fill = Color(0xFFD1EFEC), ink = Color(0xFF0A5E58)),
-    reward = AccentPalette.Tone(fill = Color(0xFFFBDDE7), ink = Color(0xFF9B2B51)),
-    system = AccentPalette.Tone(fill = Color(0xFFE2EAE6), ink = Color(0xFF3A4A44)),
-)
-
-val LightKoridor = KoridorColors(
-    primaryPressed = Color(0xFF005E3E),
-    live = Color(0xFFBE3A0E),
-    onLive = Color(0xFFFFFFFF),
-    livePressed = Color(0xFF9E2F08),
-    liveInk = Color(0xFF9A3208),
-    // A darkened sibling of the dark scheme's ring below: that value is only 2.05:1 on a light
-    // tile, this is 3.96:1. The same mark, still readable on the opposite ground.
-    provisionalRing = Color(0xFF5E7568),
-    // WCAG exempts inactive controls, and this pair still clears 3:1 anyway. "Unavailable" is
-    // carried by the flat fill and the missing border; it does not also need a label nobody
-    // with low vision can read.
-    disabledFill = Color(0xFFD3D6D2),
-    disabledInk = Color(0xFF6F7572),
-    accents = LightAccents,
-)
-
+/**
+ * The one set of roles. There used to be a light sibling of this and of [DarkAccents]; both
+ * went with light mode, and `GridboundTheme`'s KDoc records the three measurements that
+ * decided it.
+ */
 val DarkKoridor = KoridorColors(
     primaryPressed = Color(0xFF08CB86),
     live = Color(0xFFFF6A2B),
@@ -117,11 +103,25 @@ val DarkKoridor = KoridorColors(
     // The provisional mark reads the same everywhere it appears on a dark ground — the crest's
     // dashed ring and a provisional rating are one idea, so they are one colour.
     provisionalRing = Color(0xFF8FA79A),
-    // The fill sits one step off the near-black ground so a dead control is still a control,
-    // and the ink clears 3:1 on it; see the light pair above for why.
+    // WCAG exempts inactive controls, and this pair still clears 3:1 anyway. The fill sits one
+    // step off the near-black ground so a dead control is still a control, and "unavailable" is
+    // carried by that flat fill and the missing border — it does not also need a label nobody
+    // with low vision can read.
     disabledFill = Color(0xFF1A211E),
     disabledInk = Color(0xFF6E7A75),
     accents = DarkAccents,
 )
 
-val LocalKoridorColors = staticCompositionLocalOf { LightKoridor }
+/**
+ * The roles Material has no slot for, read through a composition local.
+ *
+ * **The default matters and it used to be wrong.** It was `LightKoridor` — so anything composed
+ * outside `GridboundTheme`, which is every `@Preview` and every test harness, silently got the
+ * light palette while the running app got the dark one. The provider in `GridboundTheme` hid it
+ * from the only place anybody looked.
+ *
+ * With one palette left this local now has exactly one possible value, and the indirection could
+ * in principle be dropped for a plain `val`. It is kept for now because the read sites live in
+ * files being reworked in parallel; collapsing it is a mechanical follow-up, not a decision.
+ */
+val LocalKoridorColors = staticCompositionLocalOf { DarkKoridor }

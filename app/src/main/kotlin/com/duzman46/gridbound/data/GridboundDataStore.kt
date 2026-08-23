@@ -35,7 +35,9 @@ internal const val GRIDBOUND_SCHEMA_VERSION = 2
  */
 internal object Keys {
     val language = stringPreferencesKey(Constants.Data.KEY_LANGUAGE)
-    val themeMode = stringPreferencesKey(Constants.Data.KEY_THEME_MODE)
+    // There is no `themeMode` key. The app is dark-only, and the `theme_mode` string a build
+    // before that wrote is left where it lies — unreachable from here on purpose, so nothing can
+    // read it back or write it again. [AppSettings] carries the reasoning.
     val soundEnabled = booleanPreferencesKey(Constants.Data.KEY_SOUND_ENABLED)
     val notificationsEnabled = booleanPreferencesKey(Constants.Data.KEY_NOTIFICATIONS_ENABLED)
     val hapticsEnabled = booleanPreferencesKey(Constants.Data.KEY_HAPTICS_ENABLED)

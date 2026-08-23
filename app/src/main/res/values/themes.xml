@@ -3,9 +3,14 @@
   Pre-Compose window theme. It only needs to paint the window background so that the
   hand-off from the system splash screen to the Compose UI has no colour flash.
   All in-app colours come from GridboundTheme.
+
+  The parent is the dark Material theme unconditionally. It used to be `.Light` here with a
+  dark override in values-night, which meant a phone in light mode put a light-flavoured system
+  default — light default text, light default widget tints — behind a near-black app for the
+  moments before Compose exists. With one theme in the app there is one launch window too.
 -->
 <resources>
-    <style name="Theme.Koridor" parent="@android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Koridor" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

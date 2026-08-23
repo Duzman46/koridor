@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The card-of-rows that Settings and More are both made of.
@@ -80,8 +80,8 @@ fun OptionGroup(entries: List<OptionEntry>, modifier: Modifier = Modifier) {
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF12161B))
-            .border(BorderStroke(1.dp, FieldEdge), shape),
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape),
     ) {
         entries.forEachIndexed { index, entry ->
             if (index > 0) {
@@ -92,7 +92,7 @@ fun OptionGroup(entries: List<OptionEntry>, modifier: Modifier = Modifier) {
                         // rather than cutting the column of marks in half.
                         .padding(start = 60.dp)
                         .height(Dimens.Hairline)
-                        .background(Color(0xFF20262D)),
+                        .background(Palette.Inset),
                 )
             }
             OptionRow(entry)
@@ -162,11 +162,11 @@ private fun OptionRow(entry: OptionEntry) {
             Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(KoridorGold.copy(alpha = 0.10f))
-                .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.30f)), RoundedCornerShape(12.dp)),
+                .background(Palette.Gold.copy(alpha = 0.10f))
+                .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.30f)), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            PremiumGlyph(entry.icon, Modifier.size(21.dp), tint = KoridorGold)
+            PremiumGlyph(entry.icon, Modifier.size(21.dp), tint = Palette.Gold)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -181,7 +181,7 @@ private fun OptionRow(entry: OptionEntry) {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF7A7F86),
+                    color = Palette.InkMuted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -192,7 +192,7 @@ private fun OptionRow(entry: OptionEntry) {
             entry.value != null -> Text(
                 text = entry.value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF7A7F86),
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
 
@@ -215,7 +215,7 @@ private fun OptionRow(entry: OptionEntry) {
 @Composable
 private fun GoldSwitch(checked: Boolean) {
     val track by animateColorAsState(
-        targetValue = if (checked) KoridorGold else Color(0xFF262C34),
+        targetValue = if (checked) Palette.Gold else Palette.Edge,
         animationSpec = tween(160),
         label = "switchTrack",
     )
@@ -230,7 +230,7 @@ private fun GoldSwitch(checked: Boolean) {
             .clip(CircleShape)
             .background(track)
             .border(
-                BorderStroke(1.dp, if (checked) Color.Transparent else Color(0xFF3A424C)),
+                BorderStroke(1.dp, if (checked) Color.Transparent else Palette.InkGlyph),
                 CircleShape,
             ),
         contentAlignment = Alignment.CenterStart,
@@ -241,14 +241,24 @@ private fun GoldSwitch(checked: Boolean) {
                 .offset(x = offset)
                 .size(22.dp)
                 .clip(CircleShape)
-                .background(if (checked) Color(0xFF14181D) else Color(0xFF6F757D)),
+                // On, the thumb sits on the gold track, so it takes the ink that goes on gold —
+                // the same token as every other dark mark struck into this metal. Off, it is a
+                // mark on a dark track and takes the glyph ink.
+                .background(if (checked) Palette.GoldInk else Palette.InkGlyph),
         )
     }
 }
 
-/** The mark on a row that opens something. Mirrored in a right-to-left layout. */
+/**
+ * The mark on a row that opens something. Mirrored in a right-to-left layout.
+ *
+ * [InkGlyph][Palette.InkGlyph] rather than the disabled ink it used to default to. Every row that
+ * draws one of these is live, so the chevron is a non-text affordance and WCAG 1.4.11 asks 3:1 of
+ * it; the old default measured 2.91:1 on the card and failed by nine hundredths. It now measures
+ * 4.50:1, which is the difference between a mark you can see and a mark you assume is there.
+ */
 @Composable
-internal fun OptionChevron(tint: Color = Color(0xFF5C6169)) {
+internal fun OptionChevron(tint: Color = Palette.InkGlyph) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Canvas(
         Modifier
@@ -293,7 +303,7 @@ fun SectionLabel(title: String, modifier: Modifier = Modifier, trailing: String?
                 .semantics { heading() },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF9AA0A8),
+            color = Palette.InkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -301,7 +311,7 @@ fun SectionLabel(title: String, modifier: Modifier = Modifier, trailing: String?
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF6F747B),
+                color = Palette.InkMuted,
                 maxLines = 1,
             )
         }
@@ -315,7 +325,7 @@ internal fun GroupNote(text: String, modifier: Modifier = Modifier) {
         text = text,
         modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceXs),
         style = MaterialTheme.typography.bodySmall,
-        color = Color(0xFF8B9098),
+        color = Palette.InkMuted,
     )
 }
 

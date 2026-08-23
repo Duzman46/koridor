@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -51,9 +49,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.duzman46.gridbound.theme.Dimens
-import com.duzman46.gridbound.theme.KoridorGold
+import com.duzman46.gridbound.theme.Palette
 
 /**
  * The lobby's forms and dialogs, in the same material as the screen behind them.
@@ -87,7 +84,7 @@ fun FormHeading(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF8B9098),
+                color = Palette.InkMuted,
             )
         }
         mark?.let { Canvas(Modifier.size(64.dp)) { it() } }
@@ -106,13 +103,13 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier, trailing: String? = 
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFFB6BCC3),
+            color = Palette.InkMuted,
         )
         trailing?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF6F747B),
+                color = Palette.InkMuted,
             )
         }
     }
@@ -156,8 +153,8 @@ fun LobbyField(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, FieldEdge), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .heightIn(min = 60.dp)
             .padding(horizontal = Dimens.SpaceMd),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
@@ -168,8 +165,8 @@ fun LobbyField(
                 Modifier
                     .size(34.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF141A21))
-                    .border(BorderStroke(Dimens.Hairline, FieldEdge), RoundedCornerShape(10.dp)),
+                    .background(Palette.Inset)
+                    .border(BorderStroke(Dimens.Hairline, Palette.Edge), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center,
             ) { Canvas(Modifier.size(18.dp)) { it() } }
         }
@@ -178,7 +175,7 @@ fun LobbyField(
                 Text(
                     text = placeholder,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color(0xFF5C6169),
+                    color = Palette.InkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -195,7 +192,7 @@ fun LobbyField(
                         color = MaterialTheme.colorScheme.onSurface,
                     ),
                 ),
-                cursorBrush = SolidColor(KoridorGold),
+                cursorBrush = SolidColor(Palette.Gold),
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics { contentDescription = label },
@@ -232,10 +229,15 @@ fun FieldControl(label: String, onClick: () -> Unit, mark: DrawScope.() -> Unit)
 }
 
 /**
- * The one filled control on a form.
+ * The forms' filled control — now only a name in front of [PremiumActionButton].
  *
- * Shared with the queue card's button, and deliberately: gold that is filled means "this is the
- * thing you came to do", and a screen with two of them has no such thing.
+ * It used to be its own button: a 58dp row with a three-stop gold gradient that a second file
+ * drew byte-for-byte the same. That was one of the app's four golds and one of its five button
+ * heights, and a form whose submit control does not match the one on the screen before it is how
+ * an app comes to read as assembled. What is left forwards, so the two cannot drift again.
+ *
+ * It survives at all because `ReportDialog` still calls it; when that file moves to
+ * [PremiumActionButton] this whole declaration goes with it.
  */
 @Composable
 fun GoldSubmit(
@@ -245,46 +247,15 @@ fun GoldSubmit(
     enabled: Boolean = true,
     busy: Boolean = false,
     mark: (DrawScope.() -> Unit)? = null,
-) {
-    val shape = RoundedCornerShape(14.dp)
-    val ink = Color(0xFF1A1206)
-    val live = enabled && !busy
-    Row(
-        modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(if (live) GoldFill else GoldSpent)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = live,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics { contentDescription = label }
-            .heightIn(min = 58.dp)
-            .padding(horizontal = Dimens.SpaceLg),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (busy) {
-            CircularProgressIndicator(Modifier.size(22.dp), color = ink, strokeWidth = 2.dp)
-        } else {
-            mark?.let {
-                Canvas(Modifier.size(20.dp)) { it() }
-                Box(Modifier.width(Dimens.SpaceMd))
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (live) ink else ink.copy(alpha = 0.5f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
+) = PremiumActionButton(
+    label = label,
+    onClick = onClick,
+    modifier = modifier.fillMaxWidth(),
+    filled = true,
+    enabled = enabled,
+    busy = busy,
+    mark = mark,
+)
 
 /** The way out of a form or a dialog: an outline, never a fill. */
 @Composable
@@ -297,7 +268,7 @@ fun OutlineAction(
     Box(
         modifier
             .clip(shape)
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.55f)), shape)
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.55f)), shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -313,7 +284,7 @@ fun OutlineAction(
             text = label,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
-            color = KoridorGold,
+            color = Palette.Gold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -340,9 +311,9 @@ fun RowScope.SeatCard(
         Modifier
             .weight(1f)
             .clip(shape)
-            .background(if (chosen) swatch.copy(alpha = 0.10f) else Color(0xFF0D1116))
+            .background(if (chosen) swatch.copy(alpha = 0.10f) else Palette.Card)
             .border(
-                BorderStroke(if (chosen) Dimens.BorderStrong else 1.dp, if (chosen) swatch else FieldEdge),
+                BorderStroke(if (chosen) Dimens.BorderStrong else 1.dp, if (chosen) swatch else Palette.Edge),
                 shape,
             )
             .selectable(
@@ -375,10 +346,10 @@ fun RowScope.SeatCard(
                     Modifier
                         .size(16.dp)
                         .clip(CircleShape)
-                        .background(KoridorGold)
-                        .border(BorderStroke(1.5.dp, Color(0xFF0D1116)), CircleShape),
+                        .background(Palette.Gold)
+                        .border(BorderStroke(1.5.dp, Palette.Card), CircleShape),
                     contentAlignment = Alignment.Center,
-                ) { Canvas(Modifier.size(8.dp)) { drawTick(Color(0xFF1A1206)) } }
+                ) { Canvas(Modifier.size(8.dp)) { drawTick(Palette.GoldInk) } }
             }
         }
         Column(Modifier.weight(1f)) {
@@ -393,7 +364,7 @@ fun RowScope.SeatCard(
             Text(
                 text = role,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (chosen) swatch else Color(0xFF7A7F86),
+                color = if (chosen) swatch else Palette.InkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -421,8 +392,8 @@ fun RowScope.DurationChip(
         Modifier
             .weight(1f)
             .clip(shape)
-            .background(if (chosen) KoridorGold.copy(alpha = 0.10f) else Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, if (chosen) KoridorGold else FieldEdge), shape)
+            .background(if (chosen) Palette.Gold.copy(alpha = 0.10f) else Palette.Card)
+            .border(BorderStroke(1.dp, if (chosen) Palette.Gold else Palette.Edge), shape)
             .selectable(
                 selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
@@ -440,13 +411,13 @@ fun RowScope.DurationChip(
             text = label,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = if (chosen) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (chosen) KoridorGold else Color(0xFFB6BCC3),
+            color = if (chosen) Palette.Gold else Palette.InkMuted,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Canvas(Modifier.size(15.dp)) {
-            val tint = if (chosen) KoridorGold else Color(0xFF6F747B)
+            val tint = if (chosen) Palette.Gold else Palette.InkGlyph
             if (unlimited) drawInfinity(tint) else drawSmallClock(tint)
         }
     }
@@ -459,8 +430,8 @@ fun DialogCrest(mark: DrawScope.() -> Unit, modifier: Modifier = Modifier) {
         modifier
             .size(64.dp)
             .clip(CircleShape)
-            .background(Color(0xFF14181D))
-            .border(BorderStroke(1.dp, KoridorGold.copy(alpha = 0.55f)), CircleShape),
+            .background(Palette.Inset)
+            .border(BorderStroke(1.dp, Palette.Gold.copy(alpha = 0.55f)), CircleShape),
         contentAlignment = Alignment.Center,
     ) { Canvas(Modifier.size(28.dp)) { mark() } }
 }
@@ -479,8 +450,8 @@ fun ChoiceRow(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (chosen) KoridorGold.copy(alpha = 0.08f) else Color(0xFF0D1116))
-            .border(BorderStroke(1.dp, if (chosen) KoridorGold else FieldEdge), shape)
+            .background(if (chosen) Palette.Gold.copy(alpha = 0.08f) else Palette.Card)
+            .border(BorderStroke(1.dp, if (chosen) Palette.Gold else Palette.Edge), shape)
             .selectable(
                 selected = chosen,
                 interactionSource = remember { MutableInteractionSource() },
@@ -507,14 +478,14 @@ fun ChoiceRow(
             Modifier
                 .size(24.dp)
                 .clip(CircleShape)
-                .background(if (chosen) KoridorGold else Color.Transparent)
+                .background(if (chosen) Palette.Gold else Color.Transparent)
                 .border(
-                    BorderStroke(1.5.dp, if (chosen) KoridorGold else Color(0xFF4A5058)),
+                    BorderStroke(1.5.dp, if (chosen) Palette.Gold else Palette.InkGlyph),
                     CircleShape,
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            if (chosen) Canvas(Modifier.size(13.dp)) { drawTick(Color(0xFF1A1206)) }
+            if (chosen) Canvas(Modifier.size(13.dp)) { drawTick(Palette.GoldInk) }
         }
     }
 }
@@ -527,7 +498,7 @@ fun SheetGrip(modifier: Modifier = Modifier) {
             .width(46.dp)
             .height(4.dp)
             .clip(RoundedCornerShape(50))
-            .background(KoridorGold.copy(alpha = 0.55f)),
+            .background(Palette.Gold.copy(alpha = 0.55f)),
     )
 }
 
@@ -564,8 +535,8 @@ fun OpenRoomCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF12161B))
-            .border(BorderStroke(1.dp, FieldEdge), shape)
+            .background(Palette.Card)
+            .border(BorderStroke(1.dp, Palette.Edge), shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -612,18 +583,18 @@ fun OpenRoomCard(
                     Text(
                         text = host,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF7A7F86),
+                        color = Palette.InkMuted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    Text("·", style = MaterialTheme.typography.bodySmall, color = Color(0xFF4A5058))
+                    Text("·", style = MaterialTheme.typography.bodySmall, color = Palette.InkMuted)
                 }
                 Canvas(Modifier.size(12.dp)) { drawRatingCrown() }
                 Text(
                     text = "$rating",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF9AA0A8),
+                    color = Palette.InkMuted,
                     maxLines = 1,
                 )
             }
@@ -637,7 +608,7 @@ fun OpenRoomCard(
         RoomFact(durationLabel) { drawTinyClock() }
         RoomFact(players) { drawTinyPair() }
         Canvas(Modifier.size(15.dp)) {
-            drawLock(if (locked) KoridorGold else Color(0xFF41464D))
+            drawLock(if (locked) Palette.Gold else Palette.InkGlyph)
         }
         // Forty-eight for the touch box, fifteen for the flag. The mark stays the size the row
         // can afford — the argument above about width still holds — but the thing a finger has
@@ -655,7 +626,7 @@ fun OpenRoomCard(
                 )
                 .semantics { contentDescription = reportLabel },
             contentAlignment = Alignment.Center,
-        ) { Canvas(Modifier.size(15.dp)) { drawFlag(Color(0xFF6F747B)) } }
+        ) { Canvas(Modifier.size(15.dp)) { drawFlag(Palette.InkGlyph) } }
         // No chevron. A row this crowded cannot spend twenty-four pixels saying "tappable" when
         // the whole row is tappable and the arrow is the only thing on it that says nothing.
     }
@@ -671,7 +642,7 @@ private fun RoomFact(value: String, mark: DrawScope.() -> Unit) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFB6BCC3),
+            color = Palette.InkMuted,
             maxLines = 1,
         )
     }
@@ -679,7 +650,7 @@ private fun RoomFact(value: String, mark: DrawScope.() -> Unit) {
 
 private fun DrawScope.drawTinyClock() {
     val s = size.minDimension
-    val tint = Color(0xFF6F747B)
+    val tint = Palette.InkGlyph
     val line = s * 0.12f
     drawCircle(tint, s * 0.42f, style = Stroke(line))
     drawLine(tint, Offset(s * 0.5f, s * 0.5f), Offset(s * 0.5f, s * 0.28f), line, StrokeCap.Round)
@@ -688,7 +659,7 @@ private fun DrawScope.drawTinyClock() {
 
 private fun DrawScope.drawTinyPair() {
     val s = size.minDimension
-    val tint = Color(0xFF6F747B)
+    val tint = Palette.InkGlyph
     drawCircle(tint.copy(alpha = 0.6f), s * 0.16f, Offset(s * 0.72f, s * 0.34f))
     drawArc(
         color = tint.copy(alpha = 0.6f),
@@ -722,7 +693,7 @@ private fun DrawScope.drawRatingCrown() {
             lineTo(s * 0.92f, s * 0.80f)
             close()
         },
-        KoridorGold,
+        Palette.Gold,
     )
 }
 
@@ -734,16 +705,11 @@ private fun DrawScope.drawSmallChevron() {
             lineTo(s * 0.68f, s * 0.50f)
             lineTo(s * 0.36f, s * 0.84f)
         },
-        KoridorGold.copy(alpha = 0.75f),
+        Palette.Gold.copy(alpha = 0.75f),
         style = Stroke(width = s * 0.14f, cap = StrokeCap.Round, join = StrokeJoin.Round),
     )
 }
 
-internal val FieldEdge = Color(0xFF2A3038)
-private val GoldFill =
-    Brush.horizontalGradient(listOf(Color(0xFFCFA455), Color(0xFFEBCB84), Color(0xFFC79B47)))
-private val GoldSpent =
-    Brush.horizontalGradient(listOf(Color(0xFF6A5730), Color(0xFF7C6738)))
 
 // ---------------------------------------------------------------------------------------------
 // Marks used by the forms, drawn to the same weight as the rest of the app.
@@ -763,7 +729,7 @@ internal fun DrawScope.drawTick(tint: Color) {
 }
 
 /** A hash, for the room code. It is what a code looks like before you know what it says. */
-internal fun DrawScope.drawHash(tint: Color = KoridorGold) {
+internal fun DrawScope.drawHash(tint: Color = Palette.Gold) {
     val s = size.minDimension
     val line = s * 0.10f
     listOf(0.34f, 0.66f).forEach { at ->
@@ -773,7 +739,7 @@ internal fun DrawScope.drawHash(tint: Color = KoridorGold) {
 }
 
 /** A padlock, closed. */
-internal fun DrawScope.drawLock(tint: Color = KoridorGold) {
+internal fun DrawScope.drawLock(tint: Color = Palette.Gold) {
     val s = size.minDimension
     val line = s * 0.11f
     drawArc(
@@ -791,7 +757,7 @@ internal fun DrawScope.drawLock(tint: Color = KoridorGold) {
         Size(s * 0.66f, s * 0.46f),
         CornerRadius(s * 0.12f),
     )
-    drawCircle(Color(0xFF0D1116), s * 0.075f, Offset(s * 0.5f, s * 0.63f))
+    drawCircle(Palette.Card, s * 0.075f, Offset(s * 0.5f, s * 0.63f))
 }
 
 /** An eye, and the same eye struck through. */
@@ -821,7 +787,7 @@ internal fun DrawScope.drawEye(tint: Color, open: Boolean) {
 }
 
 /** A tower on a shield: the mark for a room, which is a place with a name. */
-internal fun DrawScope.drawRoomCrest(tint: Color = KoridorGold) {
+internal fun DrawScope.drawRoomCrest(tint: Color = Palette.Gold) {
     val s = size.minDimension
     drawPath(
         Path().apply {
@@ -949,11 +915,11 @@ internal fun DrawScope.drawFoulMark(tint: Color) {
         },
         tint,
     )
-    drawCircle(Color(0xFF0D1116), s * 0.045f, Offset(s * 0.60f, s * 0.28f))
+    drawCircle(Palette.Card, s * 0.045f, Offset(s * 0.60f, s * 0.28f))
 }
 
 /** A shield with a tick, for the dialog that files a report. */
-internal fun DrawScope.drawShieldBadge(tint: Color = KoridorGold) {
+internal fun DrawScope.drawShieldBadge(tint: Color = Palette.Gold) {
     val s = size.minDimension
     drawPath(
         Path().apply {
@@ -973,7 +939,7 @@ internal fun DrawScope.drawShieldBadge(tint: Color = KoridorGold) {
             lineTo(s * 0.46f, s * 0.63f)
             lineTo(s * 0.68f, s * 0.38f)
         },
-        Color(0xFF14181D),
+        Palette.GoldInk,
         style = Stroke(width = s * 0.09f, cap = StrokeCap.Round, join = StrokeJoin.Round),
     )
 }
